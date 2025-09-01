@@ -1,0 +1,6 @@
+ChasmaWebApi/.vs/
+ChasmaWebApi/bin/
+ChasmaWebApi/obj/
+chasma-thin-client/.idea/
+chasma-thin-client/build/
+chasma-thin-client/node_modules/
