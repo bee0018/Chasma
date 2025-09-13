@@ -30,7 +30,7 @@
         /// <summary>
         /// Gets or sets the task to complete.
         /// </summary>
-        public string Todo { get; set; }
+        public required string Todo { get; set; }
 
         /// <summary>
         /// Gets or sets the flag indicating whether the task is complete or not.

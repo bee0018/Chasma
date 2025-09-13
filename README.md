@@ -5,6 +5,7 @@
 - Download [Node.js](https://nodejs.org/en/download/).
 - Download [WebStorm](https://www.jetbrains.com/webstorm/promo/?source=google&medium=cpc&campaign=AMER_en_US-CST_WebStorm_Branded&term=webstorm&content=717267885243&gad_source=1&gad_campaignid=9641686287&gbraid=0AAAAADloJzjM8YwGuomM1PAAElS0TYUtX&gclid=Cj0KCQjw2IDFBhDCARIsABDKOJ6ZAX4ejAlVLQhNXvOmGcZ6rUg8tSvULOMdTD4DFZLUPnMA5E5bJkIaAmStEALw_wcB). Suggested that you use the non-commercial version for the time being.
 - Download the [.NET8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) SDK. This will be used for running the backend and other dependencies such as the runtime environment.
+- Download the [PostgresSQL](https://www.postgresql.org/download/) database platform. The tool to interact with the database will be pgAdmin4.
 - Download IDE for C# development. Preferred is [Visual Studio](https://visualstudio.microsoft.com/vs/professional/) or [Rider](https://www.jetbrains.com/rider/download/?section=windows).
 	- If using Visual Studio, make sure to install the workloads for:
  		- ASP.NET and web development
@@ -33,5 +34,62 @@
 ## Extra Documentation
 - For the video I used to help start this project: https://www.youtube.com/watch?v=dFIfZBEyZ90&t=1209s
 - For setting up the endpoints and basis for talking to frontend to backend: https://fast-endpoints.com/docs/get-started
-- For making the endpoints secure: https://fast-endpoints.com/docs/security#introduction.
-	- At this point this has not been implemented but will need to be done.
+
+## Database
+- We will be using Entity Framework Core for database operations. Doing so will require PostgresSQL database installations.
+
+### Adding/Updating Tables in the Database via Visual Studio
+- We are able to add/update tables in the database without having to write database scripts. To do so, we must make models that Entity Framework Core will translate and migrate into the database. Note the following example:
+
+1. Create a database schema(table) to be added to the database.
+```c#
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace ChasmaWebApi.Data.Models
+{
+    /// <summary>
+    /// Class representing the user_accounts table in the database.
+    /// </summary>
+    [Table("user_accounts")]
+    public class UserAccount
+    {
+        /// <summary>
+        /// Gets or sets the identifier of the account user.
+        /// </summary>
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("id")]
+        public int Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets  the name of the account.
+        /// </summary>
+        [Column("name")]
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user name of the account.
+        /// </summary>
+        [Column("user_name")]
+        public string UserName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the password of the account.
+        /// </summary>
+        [Column("password")]
+        public string Password { get; set; }
+    }
+}
+
+```
+2. Open the Package Manager Console:
+<img width="945" height="556" alt="image" src="https://github.com/user-attachments/assets/a7c021d2-1f9a-43dc-a15b-96d81805a564" />
+
+3. Add the migration using your custom name of choice. Refer to the example :  `Add-Migration ChasmaIntegration`
+4. After the build succeeds, you should see the latest integration files in the `Migrations` folder. Refer to the example:
+<img width="2372" height="685" alt="image" src="https://github.com/user-attachments/assets/f72c301a-cfd3-43bb-9b37-e309b6bb3c58" />
+
+5. In the Package Manager Console, input the following to update/add the tables: `Update-Database`
+6. In pgAdmin4, you will see the reflected changes. Refer to the screenshot:
+<img width="528" height="984" alt="image" src="https://github.com/user-attachments/assets/303f9246-254a-41e3-983c-36a47af888b1" />

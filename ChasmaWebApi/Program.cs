@@ -1,4 +1,6 @@
 
+using Microsoft.EntityFrameworkCore;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
 builder.Services.AddControllers();
 builder.Services.AddCors()
@@ -7,7 +9,8 @@ builder.Services.AddCors()
     {
         config.Title = "Chasma Web API";
         config.Version = "v1";
-    });
+    })
+    .AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 WebApplication app = builder.Build();
 app.UseCors(i => i.AllowAnyOrigin())
