@@ -11,6 +11,62 @@
     }
   ],
   "paths": {
+    "/api/Database": {
+      "get": {
+        "tags": [
+          "Database"
+        ],
+        "operationId": "Database_GetUserAcccounts",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserAccount"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Database/addUserAccount": {
+      "post": {
+        "tags": [
+          "Database"
+        ],
+        "operationId": "Database_AddUserAccount",
+        "requestBody": {
+          "x-name": "account",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserAccount"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Products": {
       "get": {
         "tags": [
@@ -92,10 +148,62 @@
           }
         }
       }
+    },
+    "/addTodo": {
+      "post": {
+        "tags": [
+          "Products"
+        ],
+        "operationId": "Products_AddTodo",
+        "requestBody": {
+          "x-name": "todoRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TodoRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "UserAccount": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
       "TodoResponse": {
         "type": "object",
         "additionalProperties": false,
@@ -104,6 +212,19 @@
             "type": "string"
           },
           "isDone": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TodoRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scream": {
             "type": "boolean"
           }
         }
