@@ -51,7 +51,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(account);
             }
 
-            return BadRequest("User could not be added");
+            return Problem("User could not be added");
         }
     }
 }
