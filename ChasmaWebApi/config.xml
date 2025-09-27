@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configurations xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <webApiUrl>https://localhost:44349/</webApiUrl>
+	<thinClientUrl>http://localhost:3000</thinClientUrl>
   <databaseConfiguration>
     <host>localhost</host>
     <port>5432</port>

@@ -101,7 +101,7 @@ export class DatabaseClient {
     }
 }
 
-export class ProductsClient {
+export class LoginClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
@@ -111,45 +111,11 @@ export class ProductsClient {
         this.baseUrl = baseUrl ?? "https://localhost:44349";
     }
 
-    getProducts(): Promise<TodoResponse> {
-        let url_ = this.baseUrl + "/api/Products";
+    handleLoginRequest(loginRequest: LoginRequest): Promise<LoginResponse> {
+        let url_ = this.baseUrl + "/api/Login";
         url_ = url_.replace(/[?&]$/, "");
 
-        let options_: RequestInit = {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetProducts(_response);
-        });
-    }
-
-    protected processGetProducts(response: Response): Promise<TodoResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = TodoResponse.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<TodoResponse>(null as any);
-    }
-
-    addProduct(value: string): Promise<string> {
-        let url_ = this.baseUrl + "/api/Products";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(value);
+        const content_ = JSON.stringify(loginRequest);
 
         let options_: RequestInit = {
             body: content_,
@@ -161,19 +127,18 @@ export class ProductsClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processAddProduct(_response);
+            return this.processHandleLoginRequest(_response);
         });
     }
 
-    protected processAddProduct(response: Response): Promise<string> {
+    protected processHandleLoginRequest(response: Response): Promise<LoginResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : null as any;
-    
+            result200 = LoginResponse.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -181,87 +146,7 @@ export class ProductsClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<string>(null as any);
-    }
-
-    getProductsById(id: number): Promise<string> {
-        let url_ = this.baseUrl + "/api/Products/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetProductsById(_response);
-        });
-    }
-
-    protected processGetProductsById(response: Response): Promise<string> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : null as any;
-    
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<string>(null as any);
-    }
-
-    addTodo(todoRequest: TodoRequest): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/addTodo";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(todoRequest);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processAddTodo(_response);
-        });
-    }
-
-    protected processAddTodo(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
+        return Promise.resolve<LoginResponse>(null as any);
     }
 }
 
@@ -313,11 +198,9 @@ export interface IUserAccount {
     password?: string;
 }
 
-export class TodoResponse implements ITodoResponse {
-    todo?: string;
-    isDone?: boolean;
+export class ChasmaXmlBase implements IChasmaXmlBase {
 
-    constructor(data?: ITodoResponse) {
+    constructor(data?: IChasmaXmlBase) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -327,70 +210,133 @@ export class TodoResponse implements ITodoResponse {
     }
 
     init(_data?: any) {
-        if (_data) {
-            this.todo = _data["todo"];
-            this.isDone = _data["isDone"];
-        }
     }
 
-    static fromJS(data: any): TodoResponse {
+    static fromJS(data: any): ChasmaXmlBase {
         data = typeof data === 'object' ? data : {};
-        let result = new TodoResponse();
+        let result = new ChasmaXmlBase();
         result.init(data);
         return result;
     }
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["todo"] = this.todo;
-        data["isDone"] = this.isDone;
         return data;
     }
 }
 
-export interface ITodoResponse {
-    todo?: string;
-    isDone?: boolean;
+export interface IChasmaXmlBase {
 }
 
-export class TodoRequest implements ITodoRequest {
-    id?: number;
-    scream?: boolean;
+export class ChasmaResponse extends ChasmaXmlBase implements IChasmaResponse {
+    isErrorMessage?: boolean;
+    message?: string;
 
-    constructor(data?: ITodoRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
+    constructor(data?: IChasmaResponse) {
+        super(data);
     }
 
     init(_data?: any) {
+        super.init(_data);
         if (_data) {
-            this.id = _data["id"];
-            this.scream = _data["scream"];
+            this.isErrorMessage = _data["isErrorMessage"];
+            this.message = _data["message"];
         }
     }
 
-    static fromJS(data: any): TodoRequest {
+    static fromJS(data: any): ChasmaResponse {
         data = typeof data === 'object' ? data : {};
-        let result = new TodoRequest();
+        let result = new ChasmaResponse();
         result.init(data);
         return result;
     }
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["scream"] = this.scream;
+        data["isErrorMessage"] = this.isErrorMessage;
+        data["message"] = this.message;
+        super.toJSON(data);
         return data;
     }
 }
 
-export interface ITodoRequest {
-    id?: number;
-    scream?: boolean;
+export interface IChasmaResponse extends IChasmaXmlBase {
+    isErrorMessage?: boolean;
+    message?: string;
+}
+
+export class LoginResponse extends ChasmaResponse implements ILoginResponse {
+    userName?: string;
+    name?: string;
+
+    constructor(data?: ILoginResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.userName = _data["userName"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): LoginResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new LoginResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userName"] = this.userName;
+        data["name"] = this.name;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ILoginResponse extends IChasmaResponse {
+    userName?: string;
+    name?: string;
+}
+
+export class LoginRequest extends ChasmaXmlBase implements ILoginRequest {
+    userName?: string;
+    password?: string;
+
+    constructor(data?: ILoginRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.userName = _data["userName"];
+            this.password = _data["password"];
+        }
+    }
+
+    static fromJS(data: any): LoginRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new LoginRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userName"] = this.userName;
+        data["password"] = this.password;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ILoginRequest extends IChasmaXmlBase {
+    userName?: string;
+    password?: string;
 }
 
 export interface FileResponse {

@@ -21,18 +21,18 @@ namespace ChasmaWebApi.Data.Models
         /// Gets or sets  the name of the account.
         /// </summary>
         [Column("name")]
-        public required string Name { get; set; }
+        public string Name { get; set; }
 
         /// <summary>
         /// Gets or sets the user name of the account.
         /// </summary>
         [Column("user_name")]
-        public required string UserName { get; set; }
+        public string UserName { get; set; }
 
         /// <summary>
         /// Gets or sets the password of the account.
         /// </summary>
         [Column("password")]
-        public required string Password { get; set; }
+        public string Password { get; set; }
     }
 }
