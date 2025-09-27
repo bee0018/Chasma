@@ -52,11 +52,6 @@ namespace ChasmaWebApi.Util
                 throw new Exception("Cannot generate XML from null object.");
             }
 
-            if (xmlObject is not ChasmaXmlBase)
-            {
-                throw new InvalidOperationException($"The object does not inherit from {nameof(ChasmaXmlBase)}");
-            }
-
             XmlSerializer serializer = new(typeof(T));
             using StringWriter writer = new();
             serializer.Serialize(writer, xmlObject);

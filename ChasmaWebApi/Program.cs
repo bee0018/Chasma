@@ -13,8 +13,17 @@ if (webApiConfigurations == null)
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
 builder.Services.AddControllers();
-builder.Services.AddCors()
+builder.Services
     .AddSingleton(webApiConfigurations)
+    .AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy =>
+        {
+            policy.WithOrigins(webApiConfigurations.ThinClientUrl)
+            .AllowAnyMethod()
+            .WithHeaders("Content-Type", "Authorization");
+        });
+    })
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>
     {
@@ -24,7 +33,7 @@ builder.Services.AddCors()
     .AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(webApiConfigurations.DatabaseConfigurations.GetConnectionString()));
 
 WebApplication app = builder.Build();
-app.UseCors(i => i.AllowAnyOrigin())
+app.UseCors()
     .UseAuthorization()
     .UseOpenApi()
     .UseRouting()

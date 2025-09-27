@@ -1,0 +1,54 @@
+.landing-page-title {
+    font-size: 36px;
+    color: #00bfff;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 2px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    width: 320px;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: #1e1e1e;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.input-field {
+    padding: 12px;
+    margin-bottom: 18px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background-color: #2c2c2c;
+    color: #ffffff;
+    font-size: 16px;
+}
+
+.input-field::placeholder {
+    color: #aaa;
+}
+
+.input-field:focus {
+    border-color: #00bfff;
+    outline: none;
+    box-shadow: 0 0 6px rgba(0, 191, 255, 0.4);
+}
+
+.submit-button {
+    padding: 12px;
+    background-color: #00bfff;
+    color: #ffffff;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+    background-color: #009acd;
+}

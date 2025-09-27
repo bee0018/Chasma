@@ -44,14 +44,21 @@ namespace ChasmaWebApi.Controllers
         [Route("addUserAccount")]
         public async Task<ActionResult> AddUserAccount(UserAccount account)
         {
-            await applicationDbContext.UserAccounts.AddAsync(account);
-            int rowsAffected = await applicationDbContext.SaveChangesAsync();
-            if (rowsAffected > 0)
+            try
             {
-                return Ok(account);
-            }
+                await applicationDbContext.UserAccounts.AddAsync(account);
+                int rowsAffected = await applicationDbContext.SaveChangesAsync();
+                if (rowsAffected > 0)
+                {
+                    return Ok(account);
+                }
 
-            return Problem("User could not be added");
+                return Problem("User could not be added");
+            }
+            catch
+            {
+                return Problem("User could not be added");
+            }
         }
     }
 }
