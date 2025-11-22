@@ -90,7 +90,7 @@ const EncodeJwtTab: React.FC = () => {
 
             setNotification({
                 title: `Successfully generated encoded JWT for user ${encodeJwtRequest.username}!`,
-                message: `The encoded is: ${response.token}`,
+                message: `The encoded token is: ${response.token}`,
                 isError: response.isErrorResponse,
             });
         } catch (e) {
