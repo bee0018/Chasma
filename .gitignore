@@ -7,3 +7,5 @@ chasma-thin-client/node_modules/
 ChasmaWebApi/Migrations/
 ChasmaWebApi.Tests/bin/
 ChasmaWebApi.Tests/obj/
+ChasmaWebApi/.idea/
+chasma-thin-client/src/API/

@@ -9,7 +9,7 @@ namespace ChasmaWebApi.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class ProductsController : ControllerBase
+    public class DebugController : ControllerBase
     {
         [HttpGet]
         [ProducesResponseType(typeof(TodoResponse), StatusCodes.Status200OK)]
@@ -18,7 +18,7 @@ namespace ChasmaWebApi.Controllers
             TodoResponse response = new()
             {
                 IsDone = true,
-                Todo = "This is a todo"
+                Todo = "This is a todo",
             };
 
             return Ok(response);

@@ -1,4 +1,5 @@
-﻿using ChasmaWebApi.Data.Models;
+﻿using ChasmaWebApi.Data;
+using ChasmaWebApi.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,14 +16,21 @@ namespace ChasmaWebApi.Controllers
         /// The database context used for interacting with the database.
         /// </summary>
         private readonly ApplicationDbContext applicationDbContext;
+        
+        /// <summary>
+        /// The internal logger for logging status.
+        /// </summary>
+        private readonly ILogger<DatabaseController> logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DatabaseController"/> class.
         /// </summary>
         /// <param name="dbContext">The application database context.</param>
-        public DatabaseController(ApplicationDbContext dbContext)
+        /// <param name="log">The injected internal logger.</param>
+        public DatabaseController(ApplicationDbContext dbContext, ILogger<DatabaseController> log)
         {
             applicationDbContext = dbContext;
+            logger = log;
         }
 
         /// <summary>
@@ -48,9 +56,11 @@ namespace ChasmaWebApi.Controllers
             int rowsAffected = await applicationDbContext.SaveChangesAsync();
             if (rowsAffected > 0)
             {
+                logger.LogInformation("User {username} has been added to the system successfully", account.UserName);
                 return Ok(account);
             }
 
+            logger.LogError("User {username} could not be added to the system. Sending error response", account.UserName);
             return Problem("User could not be added");
         }
     }

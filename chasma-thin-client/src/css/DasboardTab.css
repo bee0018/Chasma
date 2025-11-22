@@ -1,0 +1,19 @@
+﻿.tab {
+    padding: 15px 20px;
+    margin: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #2c2c2c;
+    color: #ddd;
+    transition: all 0.3s ease;
+}
+
+.tab:hover {
+    background-color: #333;
+    color: #00bfff;
+}
+
+.tab.active {
+    background-color: #00bfff;
+    color: #121212;
+}

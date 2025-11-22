@@ -1,5 +1,6 @@
-
 using ChasmaWebApi;
+using ChasmaWebApi.Controllers;
+using ChasmaWebApi.Data;
 using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,19 +13,49 @@ if (webApiConfigurations == null)
 }
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
-builder.Services.AddControllers();
-builder.Services.AddCors()
+builder.Logging
+    .ClearProviders()
+    .AddConsole()
+    .AddDebug();
+builder.Services.AddControllers()
+    .ConfigureApplicationPartManager(manager =>
+    {
+        if (webApiConfigurations.ShowDebugControllers) return;
+        
+        // Exclude the debug controllers in a production setting.
+        List<ExcludeControllerFeatureProvider> controllersToExclude =
+        [
+            new(typeof(DatabaseController)),
+            new(typeof(DebugController))
+        ];
+
+        foreach (ExcludeControllerFeatureProvider debugController in controllersToExclude)
+        {
+            manager.FeatureProviders.Add(debugController);
+        }
+    });
+
+const string thinClientCorPolicy = "AllowThinClientOriginAndHeaders";
+builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(thinClientCorPolicy, policy =>
+        {
+            policy.WithOrigins(webApiConfigurations.ThinClientUrl)
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        });
+    })
     .AddSingleton(webApiConfigurations)
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>
     {
-        config.Title = "Chasma Web API";
+        config.Title = "Developer Toolbox API";
         config.Version = "v1";
     })
     .AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(webApiConfigurations.DatabaseConfigurations.GetConnectionString()));
 
 WebApplication app = builder.Build();
-app.UseCors(i => i.AllowAnyOrigin())
+app.UseCors(thinClientCorPolicy)
     .UseAuthorization()
     .UseOpenApi()
     .UseRouting()

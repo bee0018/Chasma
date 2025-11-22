@@ -1,6 +1,8 @@
 ﻿using ChasmaWebApi.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
+namespace ChasmaWebApi.Data;
+
 /// <summary>
 /// Class representing the database context of the Chasma application.
 /// </summary>

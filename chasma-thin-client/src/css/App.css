@@ -36,3 +36,16 @@
     transform: rotate(360deg);
   }
 }
+
+/* Apply dark background to the whole page */
+body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
