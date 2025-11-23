@@ -1083,10 +1083,10 @@ export interface IClaimsIdentity {
 }
 
 export class DecodeJwtRequest implements IDecodeJwtRequest {
-    username?: string;
     secretKey?: string;
     audience?: string;
     issuer?: string;
+    encodedToken?: string;
 
     constructor(data?: IDecodeJwtRequest) {
         if (data) {
@@ -1099,10 +1099,10 @@ export class DecodeJwtRequest implements IDecodeJwtRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.username = _data["username"];
             this.secretKey = _data["secretKey"];
             this.audience = _data["audience"];
             this.issuer = _data["issuer"];
+            this.encodedToken = _data["encodedToken"];
         }
     }
 
@@ -1115,19 +1115,19 @@ export class DecodeJwtRequest implements IDecodeJwtRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["username"] = this.username;
         data["secretKey"] = this.secretKey;
         data["audience"] = this.audience;
         data["issuer"] = this.issuer;
+        data["encodedToken"] = this.encodedToken;
         return data;
     }
 }
 
 export interface IDecodeJwtRequest {
-    username?: string;
     secretKey?: string;
     audience?: string;
     issuer?: string;
+    encodedToken?: string;
 }
 
 export class ApiException extends Error {

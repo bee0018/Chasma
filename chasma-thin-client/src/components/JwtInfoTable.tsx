@@ -65,6 +65,28 @@ const JwtInfoTable: React.FC<IProps> = (props) => {
                 </tr>
                 </tbody>
             </table>
+            <br/>
+            {props.payload.claims && props.payload.claims.length > 0 && (
+                <table className="info-table">
+                    <caption>JWT Claims</caption>
+                    <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {props.payload.claims.map(claim => {
+                        return (
+                                <tr>
+                                    <td>{claim.type}</td>
+                                    <td>{claim.value}</td>
+                                </tr>
+                        );
+                    })}
+                    </tbody>
+                </table>
+            )}
         </div>
     );
 };

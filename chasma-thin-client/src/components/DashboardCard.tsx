@@ -13,6 +13,7 @@ interface IProps {
  * @constructor Initializes a new instance of the DashboardCard.
  */
 const DashboardCard: React.FC<IProps> = (props) => {
+    /** Handles the event of when the user clicks on a card. **/
     const handleClick = () => {
         window.open(props.url, "_blank");
     };

@@ -6,11 +6,6 @@
     public class DecodeJwtRequest
     {
         /// <summary>
-        /// Gets or sets the username associated with the JWT.
-        /// </summary>
-        public string Username { get; set; }
-
-        /// <summary>
         /// Gets or sets the secret key for the JWT.
         /// </summary>
         public string SecretKey { get; set; }
@@ -25,5 +20,9 @@
         /// </summary>
         public string Issuer { get; set; }
 
+        /// <summary>
+        /// Gets or sets the encoded token.
+        /// </summary>
+        public string EncodedToken { get; set; }
     }
 }

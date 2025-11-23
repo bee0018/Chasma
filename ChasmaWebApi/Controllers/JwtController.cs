@@ -11,6 +11,7 @@ namespace ChasmaWebApi.Controllers;
 /// <summary>
 /// Class containing the routes for manipulating JSON Web Tokens.
 /// </summary>
+[Route("api")]
 public class JwtController : ControllerBase
 {
     /// <summary>
@@ -43,7 +44,7 @@ public class JwtController : ControllerBase
     /// <param name="encodeJwtRequest">The request to encode the JWT.</param>
     /// <returns>Result signifying if the operation was successful or not.</returns>
     [HttpPost]
-    [Route("api/encodeJwt")]
+    [Route("encodeJwt")]
     public ActionResult<EncodeJwtResponse> EncodeJwt([FromBody] EncodeJwtRequest encodeJwtRequest)
     {
         EncodeJwtResponse encodeJwtResponse = new();
@@ -90,7 +91,6 @@ public class JwtController : ControllerBase
                 Token = encodedToken,
                 ExpirationTime = expirationTime,
             };
-            CacheManager.EncodedTokenMappings[username] = encodedToken;
             logger.LogInformation("Successfully created an encoded JWT token.");
             return Ok(encodeJwtResponse);
         }
@@ -109,13 +109,13 @@ public class JwtController : ControllerBase
     /// <param name="decodeJwtRequest">The request to decode the JWT.</param>
     /// <returns>Result signifying if the operation was successful or not.</returns>
     [HttpPost]
-    [Route("api/decodeJwt")]
+    [Route("decodeJwt")]
     public ActionResult<DecodeJwtResponse> DecodeJwt([FromBody] DecodeJwtRequest decodeJwtRequest)
     {
-        if (decodeJwtRequest is null)
+        if (string.IsNullOrEmpty(decodeJwtRequest.EncodedToken))
         {
             logger.LogError("Cannot decode JWT since the request has null data.");
-            return Problem("There is no data to process!");
+            return BadRequest("There is no data to process!");
         }
 
         byte[] secretInBytes = System.Text.Encoding.UTF8.GetBytes(decodeJwtRequest.SecretKey);
@@ -132,17 +132,12 @@ public class JwtController : ControllerBase
             ClockSkew = TimeSpan.Zero
         };
 
-        string username = decodeJwtRequest.Username;
-        DecodeJwtResponse decodeJwtResponse = new() { IsValidToken = false };
-        if (!CacheManager.EncodedTokenMappings.TryGetValue(username, out string encodedJwt))
-        {
-            logger.LogError("There are no encoded tokens to decode for user {user}.", username);
-            return Problem("Cannot decode token for user {} because there is any registered tokens in cache for the user.", username);
-        }
-
+        DecodeJwtResponse decodeJwtResponse = new();
+        string errorMessage;
         try
         {
-            tokenHandler.ValidateToken(encodedJwt, tokenValidationParameters, out SecurityToken validatedToken);
+            string encodedJwt = decodeJwtRequest.EncodedToken;
+            tokenHandler.ValidateToken(decodeJwtRequest.EncodedToken, tokenValidationParameters, out SecurityToken validatedToken);
             logger.LogInformation("Token is valid with identifier: {userId}", validatedToken.Id);
             JwtSecurityToken decodedJwt = tokenHandler.ReadJwtToken(encodedJwt);
             decodeJwtResponse.IsValidToken = true;
@@ -153,21 +148,26 @@ public class JwtController : ControllerBase
         }
         catch (SecurityTokenExpiredException)
         {
-            logger.LogError("Token has expired, removing from cache.");
-            CacheManager.EncodedTokenMappings.TryRemove(username, out _);
-            return Problem("Token has expired.");
+            errorMessage = "Token is invalid because the it is expired.";
+            logger.LogError(errorMessage);
+            decodeJwtResponse.IsErrorResponse = true;
+            decodeJwtResponse.ErrorMessage = errorMessage;
+            return Ok(decodeJwtResponse);
         }
         catch (SecurityTokenValidationException)
         {
-            logger.LogError("Token validation failed (e.g., invalid signature or claims). Removing from cache.");
-            CacheManager.EncodedTokenMappings.TryRemove(username, out _);
-            return Problem("Token validation has failed.");
+            errorMessage = "Token validation failed (e.g., invalid signature or claims).";
+            logger.LogError(errorMessage);
+            decodeJwtResponse.IsErrorResponse = true;
+            decodeJwtResponse.ErrorMessage = errorMessage;
+            return Ok(decodeJwtResponse);
         }
         catch (Exception ex)
         {
-            logger.LogError($"An error occurred: {ex.Message}. Removing from cache.");
-            CacheManager.EncodedTokenMappings.TryRemove(username, out _);
-            return Problem("An unexpected error occurred while decoding the JWT.");
+            logger.LogError($"An error occurred: {ex.Message}.");
+            decodeJwtResponse.IsErrorResponse = true;
+            decodeJwtResponse.ErrorMessage = "An unexpected error occurred. Check server logs.";
+            return Ok(decodeJwtResponse);
         }
     }
 }

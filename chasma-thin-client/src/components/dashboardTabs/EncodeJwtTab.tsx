@@ -2,10 +2,10 @@
 import '../../css/DasboardTab.css';
 import {EncodeJwtRequest, JwtClient} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
-import {isBlankOrUndefined} from "../../StringHelperUtil";
+import {copyToClipboard, isBlankOrUndefined} from "../../stringHelperUtil";
 
 /** The JWT controller interface to the Chasma Web API. **/
-const jwtController = new JwtClient();
+const jwtClient = new JwtClient();
 
 /**
  * The Encode Tab contents and display components.
@@ -30,9 +30,8 @@ const EncodeJwtTab: React.FC = () => {
     /** Gets or sets the issuer. **/
     const [issuer, setIssuer] = useState<string>('');
 
-    /** Gets or sets the custom claims.
-     * todo const [customClaims, setCustomClaims] = useState<Map<string, string | null>>();
-     */
+    /** Gets or sets the custom claims. **/
+    // todo const [customClaims, setCustomClaims] = useState<Map<string, string | null>>();
 
     /** Gets or sets the minutes in which the token will expire. **/
     const [expirationMinutes, setExpirationMinutes] = useState<number>(0);
@@ -40,12 +39,17 @@ const EncodeJwtTab: React.FC = () => {
     /** Gets or sets the notification **/
     const [notification, setNotification] = useState<{title: string, message: string | undefined, isError: boolean | undefined, loading?: boolean } | null>(null);
 
+    /** Gets or sets a value indicating whether a valid encoded token has been received. **/
+    const [encodedTokenReceived, setEncodedTokenReceived] = useState<boolean>(false);
+
+    /** Gets or sets the encoded token. **/
+    const [encodedToken, setEncodedToken] = useState<string | undefined>('');
+
     /**
      * Closes the modal once the user confirms the message
      */
     const closeModal = () => {
         setNotification(null);
-        // display table
     }
 
     /** Flag indicating if all fields are valid **/
@@ -79,28 +83,56 @@ const EncodeJwtTab: React.FC = () => {
         encodeJwtRequest.expireInMinutes = expirationMinutes;
 
         try {
-            const response = await jwtController.encodeJwt(encodeJwtRequest);
+            const response = await jwtClient.encodeJwt(encodeJwtRequest);
             if (response.isErrorResponse) {
                 setNotification({
                     title: "Failed to Generate JWT",
                     message: response.errorMessage,
                     isError: response.isErrorResponse,
                 });
+                setEncodedTokenReceived(false);
+                setEncodedToken(undefined);
+                return;
             }
 
             setNotification({
-                title: `Successfully generated encoded JWT for user ${encodeJwtRequest.username}!`,
-                message: `The encoded token is: ${response.token}`,
+                title: "Encoded JWT Request Successful",
+                message: `Successfully generated encoded JWT for user ${encodeJwtRequest.username}!`,
                 isError: response.isErrorResponse,
             });
+            setEncodedTokenReceived(true);
+            setEncodedToken(response.token);
         } catch (e) {
             setNotification({
                 title: "Failed to Generate JWT",
                 message: "An internal server error has occurred. Review logs.",
                 isError: true,
             });
+            setEncodedTokenReceived(false);
+            setEncodedToken(undefined);
         }
     }, [secretKey, username, role, audience, name, issuer, expirationMinutes]);
+
+    /**
+     * Handles the event when the user wants to copy encoded token to clipboard
+     * @param encodedToken The encoded token.
+     */
+    const handleCopyTextToClipboard = async (encodedToken: string) => {
+        const textCopiedSuccessfully = await copyToClipboard(encodedToken)
+        if (textCopiedSuccessfully) {
+            setNotification({
+                title: "Successfully copied!",
+                message: "Token has been successfully copied to your clipboard.",
+                isError: false,
+            });
+        } else {
+            setNotification({
+                title: "Failed to copy",
+                message: "Check console log for more information.",
+                isError: true,
+            });
+        }
+    }
 
     return (
         <div>
@@ -108,9 +140,10 @@ const EncodeJwtTab: React.FC = () => {
             <p className="page-description">
                 Fill out the following fields to generate an encoded JWT.
             </p>
-            <p className="note"><i>Note: Custom claims is still in the process of being implemented</i>.</p>
+            <p className="note"><i>Note: Custom claims are still in the process of being implemented</i>.</p>
             <br/>
-            <form className="request-form" onSubmit={handleEncodeJwtRequest}>
+            <form className="info-container" onSubmit={handleEncodeJwtRequest}>
+                <h2>Default Token Properties</h2>
                 <input
                     className="input-field"
                     type="text"
@@ -153,12 +186,25 @@ const EncodeJwtTab: React.FC = () => {
                     placeholder="Enter Expiration Minutes"
                     value={expirationMinutes}
                     onChange={(e) => setExpirationMinutes(Number(e.target.value))}/>
+                <br/>
+                <div className="header-row">
+                    <h2>Custom Claims</h2>
+                    <button
+                        type="button"
+                        id="addClaimButton"
+                        className="circle-button"
+                    >
+                        +
+                    </button>
+                </div>
+                <div id="customClaimsContainer" />
+                <br/>
                 <button
                     className="submit-button"
                     type="submit"
                     disabled={!formIsValid}
                 >
-                    Generate Encoded JWT
+                    Generate Encoded JSON Web Token
                 </button>
             </form>
             {notification && (
@@ -168,6 +214,26 @@ const EncodeJwtTab: React.FC = () => {
                     isError={notification.isError}
                     loading={notification.loading}
                     onClose={closeModal} />
+            )}
+            {encodedTokenReceived && encodedToken !== undefined && (
+                <div>
+                    <br/>
+                    <h1>Encoded Token</h1>
+                    <div className="info-container">
+                        <input
+                            className="input-field"
+                            type="text"
+                            disabled={true}
+                            value={encodedToken} />
+                        <button
+                            className="submit-button"
+                            type="submit"
+                            onClick={() => handleCopyTextToClipboard(encodedToken)}
+                        >
+                            Copy to Clipboard
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

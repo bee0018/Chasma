@@ -646,9 +646,6 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "username": {
-            "type": "string"
-          },
           "secretKey": {
             "type": "string"
           },
@@ -656,6 +653,9 @@
             "type": "string"
           },
           "issuer": {
+            "type": "string"
+          },
+          "encodedToken": {
             "type": "string"
           }
         }

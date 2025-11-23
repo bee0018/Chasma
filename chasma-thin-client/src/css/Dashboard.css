@@ -86,7 +86,7 @@ body {
     color: gold;
 }
 
-.request-form {
+.info-container {
     display: flex;
     flex-direction: column;
     width: 100vh;
@@ -171,3 +171,35 @@ body {
     font-size: 16px;
     color: #aaa;
 }
+
+.header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-row h2 {
+    margin: 0;
+}
+
+.circle-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #00bfff;
+    color: white;
+    font-size: 20px;
+    border: none;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: background-color 0.2s;
+}
+
+.circle-btn:hover {
+    background-color: #0095cc;
+}
+
