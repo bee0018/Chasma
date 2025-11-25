@@ -5,13 +5,11 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Dashboard Layout */
 .dashboard-container {
     display: flex;
     height: 100vh;
 }
 
-/* Docked sidebar */
 .sidebar {
     position: fixed;
     left: 0;
@@ -33,7 +31,6 @@ body {
     letter-spacing: 1px;
 }
 
-/* Tabs (Sidebar Buttons) */
 .tab {
     padding: 15px 20px;
     margin: 6px 10px;

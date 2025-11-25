@@ -74,6 +74,26 @@
           }
         }
       }
+    },
+    "/api/uuid": {
+      "get": {
+        "tags": [
+          "Uuid"
+        ],
+        "operationId": "Uuid_GenerateUuid",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

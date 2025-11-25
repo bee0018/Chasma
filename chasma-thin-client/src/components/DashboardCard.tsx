@@ -2,8 +2,13 @@
 
 /** The properties of the Card component. */
 interface IProps {
+    /** The title of the card. **/
     title: string;
+
+    /** The description of the card. **/
     description: string;
+
+    /** The URL of the card to navigate to. **/
     url: string;
 }
 

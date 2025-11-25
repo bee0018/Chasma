@@ -3,6 +3,7 @@ import '../css/Dashboard.css';
 import HomeTab from "./dashboardTabs/HomeTab";
 import EncodeJwtTab from "./dashboardTabs/EncodeJwtTab";
 import DecodeJwtTab from "./dashboardTabs/DecodeJwtTab";
+import UuidGeneratorTab from "./dashboardTabs/UuidGeneratorTab";
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -40,11 +41,19 @@ const Dashboard: React.FC = () => {
                 >
                     🔓 Decode JWT
                 </div>
+
+                <div
+                    className={`tab ${activeTab === "uuidGenerator" ? "active" : ""}`}
+                    onClick={() => handleTabClick("uuidGenerator")}
+                >
+                    🔄 Generate UUID
+                </div>
             </aside>
             <main className="content">
                 {activeTab === "home" && <HomeTab/>}
                 {activeTab === "jwtEncoder" && <EncodeJwtTab/>}
                 {activeTab === "jwtDecoder" && <DecodeJwtTab/>}
+                {activeTab === "uuidGenerator" && <UuidGeneratorTab/>}
             </main>
         </div>
     );
