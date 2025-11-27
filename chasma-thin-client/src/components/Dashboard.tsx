@@ -4,6 +4,7 @@ import HomeTab from "./dashboardTabs/HomeTab";
 import EncodeJwtTab from "./dashboardTabs/EncodeJwtTab";
 import DecodeJwtTab from "./dashboardTabs/DecodeJwtTab";
 import UuidGeneratorTab from "./dashboardTabs/UuidGeneratorTab";
+import ApiStatusTab from "./dashboardTabs/ApiStatusTab";
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -48,12 +49,20 @@ const Dashboard: React.FC = () => {
                 >
                     🔄 Generate UUID
                 </div>
+
+                <div
+                    className={`tab ${activeTab === "apiStatus" ? "active" : ""}`}
+                    onClick={() => handleTabClick("apiStatus")}
+                >
+                    &#x23FB; API Status
+                </div>
             </aside>
             <main className="content">
                 {activeTab === "home" && <HomeTab/>}
                 {activeTab === "jwtEncoder" && <EncodeJwtTab/>}
                 {activeTab === "jwtDecoder" && <DecodeJwtTab/>}
                 {activeTab === "uuidGenerator" && <UuidGeneratorTab/>}
+                {activeTab === "apiStatus" && <ApiStatusTab/>}
             </main>
         </div>
     );

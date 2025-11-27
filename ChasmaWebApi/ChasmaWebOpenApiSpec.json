@@ -11,6 +11,26 @@
     }
   ],
   "paths": {
+    "/api/Health/heartbeat": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "Health_GetHeartbeat",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/encodeJwt": {
       "post": {
         "tags": [
@@ -98,6 +118,46 @@
   },
   "components": {
     "schemas": {
+      "HeartbeatMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/HeartbeatStatus"
+          }
+        }
+      },
+      "HeartbeatStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enum-names": [
+          "Ok",
+          "Error"
+        ],
+        "x-enum-varnames": [
+          "Ok",
+          "Error"
+        ],
+        "x-enumNames": [
+          "Ok",
+          "Error"
+        ],
+        "x-enum-descriptions": [
+          null,
+          null
+        ],
+        "x-enumDescriptions": [
+          null,
+          null
+        ],
+        "enum": [
+          0,
+          1
+        ]
+      },
       "EncodeJwtResponse": {
         "allOf": [
           {

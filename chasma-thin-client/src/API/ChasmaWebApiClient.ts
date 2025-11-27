@@ -7,6 +7,51 @@
 /* eslint-disable */
 // ReSharper disable InconsistentNaming
 
+export class HealthClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:44349";
+    }
+
+    getHeartbeat(): Promise<HeartbeatMessage> {
+        let url_ = this.baseUrl + "/api/Health/heartbeat";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetHeartbeat(_response);
+        });
+    }
+
+    protected processGetHeartbeat(response: Response): Promise<HeartbeatMessage> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = HeartbeatMessage.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<HeartbeatMessage>(null as any);
+    }
+}
+
 export class JwtClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -138,6 +183,51 @@ export class UuidClient {
         }
         return Promise.resolve<string>(null as any);
     }
+}
+
+export class HeartbeatMessage implements IHeartbeatMessage {
+    message?: string;
+    status?: HeartbeatStatus;
+
+    constructor(data?: IHeartbeatMessage) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.message = _data["message"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): HeartbeatMessage {
+        data = typeof data === 'object' ? data : {};
+        let result = new HeartbeatMessage();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["message"] = this.message;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IHeartbeatMessage {
+    message?: string;
+    status?: HeartbeatStatus;
+}
+
+export enum HeartbeatStatus {
+    Ok = 0,
+    Error = 1,
 }
 
 export class ChasmaXmlBase implements IChasmaXmlBase {
