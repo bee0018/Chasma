@@ -8,8 +8,7 @@ string configFilePath = "config.xml";
 ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
 if (webApiConfigurations == null)
 {
-    Console.WriteLine("Error has occurred deserializing configuration file.");
-    return;
+    throw new Exception("Error has occurred deserializing configuration file.");
 }
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
