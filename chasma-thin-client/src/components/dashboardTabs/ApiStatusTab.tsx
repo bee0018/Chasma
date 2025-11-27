@@ -69,7 +69,7 @@ const ApiStatusTab: React.FC = () => {
 
         setInterval(async () => {
             await isApiRunning();
-        }, 5000);
+        }, 1000);
     }, []);
 
     return (
