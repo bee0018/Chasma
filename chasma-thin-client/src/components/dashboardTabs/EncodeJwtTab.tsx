@@ -70,6 +70,16 @@ const EncodeJwtTab: React.FC = () => {
         ]);
     };
 
+    /**
+     * Deletes the row with the specified row identifier.
+     * @param rowId The row identifier.
+     */
+    function deleteClaimRow(rowId: string) {
+        console.log("deleteClaimRow");
+        const filteredRows = rows.filter(row => row.id !== rowId);
+        setRows(filteredRows);
+    }
+
     /** Handles custom claim row changes in the form. **/
     const handleClaimChange = (
         id: string,
@@ -245,7 +255,6 @@ const EncodeJwtTab: React.FC = () => {
                                 value={row.first}
                                 onChange={e => handleClaimChange(row.id, "first", e.target.value)}
                             />
-
                             <input
                                 type="text"
                                 placeholder="Claim Value"
@@ -253,6 +262,13 @@ const EncodeJwtTab: React.FC = () => {
                                 value={row.second}
                                 onChange={e => handleClaimChange(row.id, "second", e.target.value)}
                             />
+                            <button
+                                className="delete-button"
+                                type="button"
+                                onClick={() => deleteClaimRow(row.id)}
+                            >
+                                Remove
+                            </button>
                         </div>
                     ))}
                     <br/>
