@@ -26,4 +26,15 @@ public class DecodeJwtResponse : ResponseBase
     /// Gets or sets the JwtPayload on the decoded security token.
     /// </summary>
     public JwtPayload Payload { get; set; }
+
+    /// <summary>
+    /// Gets or sets all claim types to include in the JSON web token.
+    /// </summary>
+    public List<string> ClaimTypes { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets all claim values to include in the JSON web token.
+    /// </summary>
+    public List<string> ClaimValues { get; set; } = new();
+
 }

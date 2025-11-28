@@ -224,10 +224,15 @@
           "issuer": {
             "type": "string"
           },
-          "customClaims": {
-            "type": "object",
-            "nullable": true,
-            "additionalProperties": {
+          "customClaimTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "customClaimValues": {
+            "type": "array",
+            "items": {
               "type": "string"
             }
           },
@@ -257,6 +262,18 @@
               },
               "payload": {
                 "$ref": "#/components/schemas/JwtPayload"
+              },
+              "claimTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "claimValues": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }

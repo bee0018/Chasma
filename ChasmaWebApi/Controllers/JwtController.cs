@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using ChasmaWebApi.Data;
 
 namespace ChasmaWebApi.Controllers;
 
@@ -66,12 +65,17 @@ public class JwtController : ControllerBase
            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         ];
 
-        if (encodeJwtRequest.CustomClaims is not null)
+        if (encodeJwtRequest.CustomClaimTypes.Count > 0 && encodeJwtRequest.CustomClaimValues.Count > 0)
         {
-            List<Claim> customClaims = encodeJwtRequest.CustomClaims
-                .Select(claim => new Claim(claim.Key, claim.Value))
-                .ToList();
-            claims.AddRange(customClaims);
+            // The two lists will always have the same number of elements.
+            int claimCount = encodeJwtRequest.CustomClaimTypes.Count;
+            for (int i = 0; i < claimCount; i++)
+            {
+                string claimType = encodeJwtRequest.CustomClaimTypes[i];
+                string claimValue = encodeJwtRequest.CustomClaimValues[i];
+                Claim customClaim = new(claimType, claimValue);
+                claims.Add(customClaim);
+            }
         }
 
         DateTime expirationTime = DateTime.UtcNow.AddMinutes(encodeJwtRequest.ExpireInMinutes);
@@ -144,6 +148,12 @@ public class JwtController : ControllerBase
             decodeJwtResponse.DecodedJwtTokenString = decodedJwt.ToString();
             decodeJwtResponse.Header = decodedJwt.Header;
             decodeJwtResponse.Payload =  decodedJwt.Payload;
+            foreach (Claim claim in decodedJwt.Claims)
+            {
+                decodeJwtResponse.ClaimTypes.Add(claim.Type);
+                decodeJwtResponse.ClaimValues.Add(claim.Value);
+            }
+            
             return Ok(decodeJwtResponse);
         }
         catch (SecurityTokenExpiredException)

@@ -36,9 +36,14 @@ public class EncodeJwtRequest
     public required string Issuer { get; set; }
 
     /// <summary>
-    /// Gets or sets any custom claims to include in the JSON web token.
+    /// Gets or sets any custom claim types to include in the JSON web token.
     /// </summary>
-    public Dictionary<string, string>? CustomClaims { get; set; }
+    public List<string> CustomClaimTypes { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets any custom claim values to include in the JSON web token.
+    /// </summary>
+    public List<string> CustomClaimValues { get; set; } = new();
 
     /// <summary>
     /// Gets or sets the expiration time in minutes for the JSON web token.

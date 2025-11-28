@@ -11,6 +11,12 @@ interface IProps {
 
     /** The payload of the decoded JWT. **/
     payload : JwtPayload | undefined;
+
+    /** The claim types in the token. **/
+    claimTypes: string[];
+
+    /** The claim values in the token. **/
+    claimValues: string[];
 }
 
 /**
@@ -22,6 +28,23 @@ const JwtInfoTable: React.FC<IProps> = (props) => {
     if (!props.header || !props.payload) {
         console.error("Cannot show contents of decoded JWT because the header and payload are not both populated.")
         return null;
+    }
+
+    /**
+     * Gets the display rows for the claims in the token.
+     */
+    function getClaimRows() {
+        let rows = []
+        for (let i = 0; i < props.claimTypes.length; i++) {
+            rows.push(
+                <tr>
+                    <td>{props.claimTypes[i]}</td>
+                    <td>{props.claimValues[i]}</td>
+                </tr>
+            );
+        }
+
+        return rows;
     }
 
     return (
@@ -66,7 +89,7 @@ const JwtInfoTable: React.FC<IProps> = (props) => {
                 </tbody>
             </table>
             <br/>
-            {props.payload.claims && props.payload.claims.length > 0 && (
+            {props.claimTypes && props.claimValues && props.claimTypes.length > 0 && (
                 <table className="info-table">
                     <caption>JWT Claims</caption>
                     <thead>
@@ -76,14 +99,7 @@ const JwtInfoTable: React.FC<IProps> = (props) => {
                     </tr>
                     </thead>
                     <tbody>
-                    {props.payload.claims.map(claim => {
-                        return (
-                                <tr>
-                                    <td>{claim.type}</td>
-                                    <td>{claim.value}</td>
-                                </tr>
-                        );
-                    })}
+                    {getClaimRows()}
                     </tbody>
                 </table>
             )}

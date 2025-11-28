@@ -83,7 +83,7 @@ const UuidGeneratorTab: React.FC = () => {
         <>
             <h1 className="page-title">UUID Generator 🔄</h1>
             <div style={{ textAlign: "center" }}>
-                <p className="page-description">Click the button below to generate a UUID.</p>
+                <p className="page-description">Click the button below to generate a Universally Unique Identifier.</p>
                 <br/>
 
                 <button

@@ -3,6 +3,7 @@ import '../../css/DasboardTab.css';
 import {EncodeJwtRequest, JwtClient} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
 import {copyToClipboard, isBlankOrUndefined} from "../../stringHelperUtil";
+import {Row} from "../types/CustomTypes";
 
 /** The JWT controller interface to the Chasma Web API. **/
 const jwtClient = new JwtClient();
@@ -31,7 +32,7 @@ const EncodeJwtTab: React.FC = () => {
     const [issuer, setIssuer] = useState<string>('');
 
     /** Gets or sets the custom claims. **/
-    // todo const [customClaims, setCustomClaims] = useState<Map<string, string | null>>();
+    const [rows, setRows] = useState<Row[]>([]);
 
     /** Gets or sets the minutes in which the token will expire. **/
     const [expirationMinutes, setExpirationMinutes] = useState<number>(0);
@@ -61,6 +62,27 @@ const EncodeJwtTab: React.FC = () => {
         && !isBlankOrUndefined(issuer)
         && expirationMinutes > 0;
 
+    /** Adds a custom claim row to the form. **/
+    const addCustomClaimRow = () => {
+        setRows(prev => [
+            ...prev,
+            { id: crypto.randomUUID(), first: "", second: "" }
+        ]);
+    };
+
+    /** Handles custom claim row changes in the form. **/
+    const handleClaimChange = (
+        id: string,
+        field: "first" | "second",
+        value: string
+    ) => {
+        setRows(prev =>
+            prev.map(row =>
+                row.id === id ? { ...row, [field]: value } : row
+            )
+        );
+    };
+
     /**
      * Handles the request to encode a JWT.
      **/
@@ -81,6 +103,14 @@ const EncodeJwtTab: React.FC = () => {
         encodeJwtRequest.name = name;
         encodeJwtRequest.issuer = issuer;
         encodeJwtRequest.expireInMinutes = expirationMinutes;
+        encodeJwtRequest.customClaimTypes = [];
+        encodeJwtRequest.customClaimValues = []
+        rows.forEach(row => {
+            if (!isBlankOrUndefined(row.first) &&  !isBlankOrUndefined(row.second) && encodeJwtRequest.customClaimTypes && encodeJwtRequest.customClaimValues) {
+                encodeJwtRequest.customClaimTypes.push(row.first);
+                encodeJwtRequest.customClaimValues.push(row.second);
+            }
+        });
 
         try {
             const response = await jwtClient.encodeJwt(encodeJwtRequest);
@@ -111,7 +141,7 @@ const EncodeJwtTab: React.FC = () => {
             setEncodedTokenReceived(false);
             setEncodedToken(undefined);
         }
-    }, [secretKey, username, role, audience, name, issuer, expirationMinutes]);
+    }, [secretKey, username, role, audience, name, issuer, expirationMinutes, rows]);
 
     /**
      * Handles the event when the user wants to copy encoded token to clipboard
@@ -138,9 +168,8 @@ const EncodeJwtTab: React.FC = () => {
         <div>
             <h1 className="page-title">JWT Encoder 🔒</h1>
             <p className="page-description">
-                Fill out the following fields to generate an encoded JWT.
+                Fill out the following fields to generate an encoded JSON Web Token.
             </p>
-            <p className="note"><i>Note: Custom claims are still in the process of being implemented</i>.</p>
             <br/>
             <form className="info-container" onSubmit={handleEncodeJwtRequest}>
                 <h2>Default Token Properties</h2>
@@ -193,11 +222,41 @@ const EncodeJwtTab: React.FC = () => {
                         type="button"
                         id="addClaimButton"
                         className="circle-button"
+                        onClick={addCustomClaimRow}
                     >
                         +
                     </button>
                 </div>
-                <div id="customClaimsContainer" />
+                <br/>
+                <div id="customClaimsContainer">
+                    {rows.map(row => (
+                        <div
+                            key={row.id}
+                            style={{
+                                display: "flex",
+                                gap: "10px",
+                                marginBottom: "10px"
+                            }}
+                        >
+                            <input
+                                type="text"
+                                placeholder="Claim Type"
+                                className="input-field"
+                                value={row.first}
+                                onChange={e => handleClaimChange(row.id, "first", e.target.value)}
+                            />
+
+                            <input
+                                type="text"
+                                placeholder="Claim Value"
+                                className="input-field"
+                                value={row.second}
+                                onChange={e => handleClaimChange(row.id, "second", e.target.value)}
+                            />
+                        </div>
+                    ))}
+                    <br/>
+                </div>
                 <br/>
                 <button
                     className="submit-button"

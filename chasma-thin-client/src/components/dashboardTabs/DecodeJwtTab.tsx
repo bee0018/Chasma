@@ -22,6 +22,12 @@ const DecodeJwtTab: React.FC = () => {
     /** Gets or sets the decoded JWT payload. **/
     const [jwtPayload, setJwtPayload] = useState<JwtPayload | undefined>(undefined);
 
+    /** Gets or sets the claim types from the JWT. **/
+    const [claimTypes, setClaimTypes] = useState<string[]>([]);
+
+    /** Gets or sets the claim values from the JWT. **/
+    const [claimValues, setClaimValues] = useState<string[]>([]);
+
     /** Gets or sets the secret key. **/
     const [secretKey, setSecretKey] = useState<string>('');
 
@@ -85,6 +91,10 @@ const DecodeJwtTab: React.FC = () => {
 
             setJwtHeader(response.header);
             setJwtPayload(response.payload);
+            if (response.claimTypes && response.claimValues) {
+                setClaimTypes(response.claimTypes)
+                setClaimValues(response.claimValues)
+            }
         } catch (e) {
             setNotification({
                 title: "Failed to Decode JWT",
@@ -97,8 +107,7 @@ const DecodeJwtTab: React.FC = () => {
     return (
         <div>
             <h1 className="page-title">JWT Decoder 🔓</h1>
-            <p className="page-description">Fill out the following fields to decode the provided JWT.</p>
-            <p className="note"><i>Note: Displaying claims are still in the process of being implemented.</i>.</p>
+            <p className="page-description">Fill out the following fields to decode the provided JSON Web Token.</p>
             <br/>
             <form className="info-container" onSubmit={handleDecodeJwtRequest}>
                 <input
@@ -141,7 +150,9 @@ const DecodeJwtTab: React.FC = () => {
                 <div className="info-container">
                     <JwtInfoTable
                         header={jwtHeader}
-                        payload={jwtPayload}/>
+                        payload={jwtPayload}
+                        claimTypes={claimTypes}
+                        claimValues={claimValues} />
                 </div>
             )}
             {notification && (

@@ -341,7 +341,8 @@ export class EncodeJwtRequest implements IEncodeJwtRequest {
     role?: string;
     audience?: string;
     issuer?: string;
-    customClaims?: { [key: string]: string; } | undefined;
+    customClaimTypes?: string[];
+    customClaimValues?: string[];
     expireInMinutes?: number;
 
     constructor(data?: IEncodeJwtRequest) {
@@ -361,12 +362,15 @@ export class EncodeJwtRequest implements IEncodeJwtRequest {
             this.role = _data["role"];
             this.audience = _data["audience"];
             this.issuer = _data["issuer"];
-            if (_data["customClaims"]) {
-                this.customClaims = {} as any;
-                for (let key in _data["customClaims"]) {
-                    if (_data["customClaims"].hasOwnProperty(key))
-                        (this.customClaims as any)![key] = _data["customClaims"][key];
-                }
+            if (Array.isArray(_data["customClaimTypes"])) {
+                this.customClaimTypes = [] as any;
+                for (let item of _data["customClaimTypes"])
+                    this.customClaimTypes!.push(item);
+            }
+            if (Array.isArray(_data["customClaimValues"])) {
+                this.customClaimValues = [] as any;
+                for (let item of _data["customClaimValues"])
+                    this.customClaimValues!.push(item);
             }
             this.expireInMinutes = _data["expireInMinutes"];
         }
@@ -387,12 +391,15 @@ export class EncodeJwtRequest implements IEncodeJwtRequest {
         data["role"] = this.role;
         data["audience"] = this.audience;
         data["issuer"] = this.issuer;
-        if (this.customClaims) {
-            data["customClaims"] = {};
-            for (let key in this.customClaims) {
-                if (this.customClaims.hasOwnProperty(key))
-                    (data["customClaims"] as any)[key] = (this.customClaims as any)[key];
-            }
+        if (Array.isArray(this.customClaimTypes)) {
+            data["customClaimTypes"] = [];
+            for (let item of this.customClaimTypes)
+                data["customClaimTypes"].push(item);
+        }
+        if (Array.isArray(this.customClaimValues)) {
+            data["customClaimValues"] = [];
+            for (let item of this.customClaimValues)
+                data["customClaimValues"].push(item);
         }
         data["expireInMinutes"] = this.expireInMinutes;
         return data;
@@ -406,7 +413,8 @@ export interface IEncodeJwtRequest {
     role?: string;
     audience?: string;
     issuer?: string;
-    customClaims?: { [key: string]: string; } | undefined;
+    customClaimTypes?: string[];
+    customClaimValues?: string[];
     expireInMinutes?: number;
 }
 
@@ -415,6 +423,8 @@ export class DecodeJwtResponse extends ResponseBase implements IDecodeJwtRespons
     isValidToken?: boolean;
     header?: JwtHeader;
     payload?: JwtPayload;
+    claimTypes?: string[];
+    claimValues?: string[];
 
     constructor(data?: IDecodeJwtResponse) {
         super(data);
@@ -427,6 +437,16 @@ export class DecodeJwtResponse extends ResponseBase implements IDecodeJwtRespons
             this.isValidToken = _data["isValidToken"];
             this.header = _data["header"] ? JwtHeader.fromJS(_data["header"]) : undefined as any;
             this.payload = _data["payload"] ? JwtPayload.fromJS(_data["payload"]) : undefined as any;
+            if (Array.isArray(_data["claimTypes"])) {
+                this.claimTypes = [] as any;
+                for (let item of _data["claimTypes"])
+                    this.claimTypes!.push(item);
+            }
+            if (Array.isArray(_data["claimValues"])) {
+                this.claimValues = [] as any;
+                for (let item of _data["claimValues"])
+                    this.claimValues!.push(item);
+            }
         }
     }
 
@@ -443,6 +463,16 @@ export class DecodeJwtResponse extends ResponseBase implements IDecodeJwtRespons
         data["isValidToken"] = this.isValidToken;
         data["header"] = this.header ? this.header.toJSON() : undefined as any;
         data["payload"] = this.payload ? this.payload.toJSON() : undefined as any;
+        if (Array.isArray(this.claimTypes)) {
+            data["claimTypes"] = [];
+            for (let item of this.claimTypes)
+                data["claimTypes"].push(item);
+        }
+        if (Array.isArray(this.claimValues)) {
+            data["claimValues"] = [];
+            for (let item of this.claimValues)
+                data["claimValues"].push(item);
+        }
         super.toJSON(data);
         return data;
     }
@@ -453,6 +483,8 @@ export interface IDecodeJwtResponse extends IResponseBase {
     isValidToken?: boolean;
     header?: JwtHeader;
     payload?: JwtPayload;
+    claimTypes?: string[];
+    claimValues?: string[];
 }
 
 /** Initializes a new instance of JwtHeader which contains JSON objects representing the cryptographic operations applied to the JWT and optionally any additional properties of the JWT. The member names within the JWT Header are referred to as Header Parameter Names. These names MUST be unique and the values must be String(s). The corresponding values are referred to as Header Parameter Values. */
