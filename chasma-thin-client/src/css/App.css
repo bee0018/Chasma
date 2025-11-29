@@ -37,7 +37,6 @@
   }
 }
 
-/* Apply dark background to the whole page */
 body {
     background-color: #121212;
     color: #ffffff;
@@ -48,4 +47,53 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.checkmark {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #28a745;
+    position: relative;
+}
+
+.checkmark::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.red-x {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    position: relative;
+    margin-left: 6px;
+}
+
+.red-x::before,
+.red-x::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 2px;
+    height: 100%;
+    background-color: red;
+    transform-origin: center;
+}
+
+.red-x::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.red-x::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
 }

@@ -75,7 +75,6 @@ const EncodeJwtTab: React.FC = () => {
      * @param rowId The row identifier.
      */
     function deleteClaimRow(rowId: string) {
-        console.log("deleteClaimRow");
         const filteredRows = rows.filter(row => row.id !== rowId);
         setRows(filteredRows);
     }

@@ -10,4 +10,7 @@
   </databaseConfiguration>
   <showDebugControllers>false</showDebugControllers>
   <thinClientUrl>http://localhost:3000</thinClientUrl>
+  <githubRepoOwner>bee0018</githubRepoOwner>
+  <gitHubRepoName>Chasma</gitHubRepoName>
+  <workflowRunReportThreshold>30</workflowRunReportThreshold>
 </configurations>

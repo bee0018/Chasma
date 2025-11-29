@@ -11,6 +11,26 @@
     }
   ],
   "paths": {
+    "/api/GitHub/workflowRuns": {
+      "get": {
+        "tags": [
+          "GitHub"
+        ],
+        "operationId": "GitHub_GetChasmaWorkflowResults",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubWorkflowRunMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Health/heartbeat": {
       "get": {
         "tags": [
@@ -118,17 +138,111 @@
   },
   "components": {
     "schemas": {
-      "HeartbeatMessage": {
+      "GitHubWorkflowRunMessage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryName": {
+                "type": "string"
+              },
+              "buildCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "workflowRunResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WorkflowRunResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WorkflowRunResult": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "message": {
+          "branchName": {
             "type": "string"
           },
-          "status": {
-            "$ref": "#/components/schemas/HeartbeatStatus"
+          "runNumber": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "buildTrigger": {
+            "type": "string"
+          },
+          "commitMessage": {
+            "type": "string"
+          },
+          "buildStatus": {
+            "type": "string"
+          },
+          "buildConclusion": {
+            "type": "string"
+          },
+          "createdDate": {
+            "type": "string"
+          },
+          "updatedDate": {
+            "type": "string"
+          },
+          "workflowUrl": {
+            "type": "string"
+          },
+          "authorName": {
+            "type": "string"
           }
         }
+      },
+      "ResponseBase": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "isErrorResponse": {
+                "type": "boolean"
+              },
+              "errorMessage": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
+      "ChasmaXmlBase": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "HeartbeatMessage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/components/schemas/HeartbeatStatus"
+              }
+            }
+          }
+        ]
       },
       "HeartbeatStatus": {
         "type": "integer",
@@ -177,30 +291,6 @@
             }
           }
         ]
-      },
-      "ResponseBase": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "isErrorResponse": {
-                "type": "boolean"
-              },
-              "errorMessage": {
-                "type": "string",
-                "nullable": true
-              }
-            }
-          }
-        ]
-      },
-      "ChasmaXmlBase": {
-        "type": "object",
-        "additionalProperties": false
       },
       "EncodeJwtRequest": {
         "type": "object",

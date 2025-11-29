@@ -7,6 +7,51 @@
 /* eslint-disable */
 // ReSharper disable InconsistentNaming
 
+export class GitHubClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:44349";
+    }
+
+    getChasmaWorkflowResults(): Promise<GitHubWorkflowRunMessage> {
+        let url_ = this.baseUrl + "/api/GitHub/workflowRuns";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetChasmaWorkflowResults(_response);
+        });
+    }
+
+    protected processGetChasmaWorkflowResults(response: Response): Promise<GitHubWorkflowRunMessage> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GitHubWorkflowRunMessage.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GitHubWorkflowRunMessage>(null as any);
+    }
+}
+
 export class HealthClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -185,51 +230,6 @@ export class UuidClient {
     }
 }
 
-export class HeartbeatMessage implements IHeartbeatMessage {
-    message?: string;
-    status?: HeartbeatStatus;
-
-    constructor(data?: IHeartbeatMessage) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.message = _data["message"];
-            this.status = _data["status"];
-        }
-    }
-
-    static fromJS(data: any): HeartbeatMessage {
-        data = typeof data === 'object' ? data : {};
-        let result = new HeartbeatMessage();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["message"] = this.message;
-        data["status"] = this.status;
-        return data;
-    }
-}
-
-export interface IHeartbeatMessage {
-    message?: string;
-    status?: HeartbeatStatus;
-}
-
-export enum HeartbeatStatus {
-    Ok = 0,
-    Error = 1,
-}
-
 export class ChasmaXmlBase implements IChasmaXmlBase {
 
     constructor(data?: IChasmaXmlBase) {
@@ -295,6 +295,169 @@ export class ResponseBase extends ChasmaXmlBase implements IResponseBase {
 export interface IResponseBase extends IChasmaXmlBase {
     isErrorResponse?: boolean;
     errorMessage?: string | undefined;
+}
+
+export class GitHubWorkflowRunMessage extends ResponseBase implements IGitHubWorkflowRunMessage {
+    repositoryName?: string;
+    buildCount?: number;
+    workflowRunResults?: WorkflowRunResult[];
+
+    constructor(data?: IGitHubWorkflowRunMessage) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repositoryName = _data["repositoryName"];
+            this.buildCount = _data["buildCount"];
+            if (Array.isArray(_data["workflowRunResults"])) {
+                this.workflowRunResults = [] as any;
+                for (let item of _data["workflowRunResults"])
+                    this.workflowRunResults!.push(WorkflowRunResult.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): GitHubWorkflowRunMessage {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitHubWorkflowRunMessage();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryName"] = this.repositoryName;
+        data["buildCount"] = this.buildCount;
+        if (Array.isArray(this.workflowRunResults)) {
+            data["workflowRunResults"] = [];
+            for (let item of this.workflowRunResults)
+                data["workflowRunResults"].push(item ? item.toJSON() : undefined as any);
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitHubWorkflowRunMessage extends IResponseBase {
+    repositoryName?: string;
+    buildCount?: number;
+    workflowRunResults?: WorkflowRunResult[];
+}
+
+export class WorkflowRunResult implements IWorkflowRunResult {
+    branchName?: string;
+    runNumber?: number;
+    buildTrigger?: string;
+    commitMessage?: string;
+    buildStatus?: string;
+    buildConclusion?: string;
+    createdDate?: string;
+    updatedDate?: string;
+    workflowUrl?: string;
+    authorName?: string;
+
+    constructor(data?: IWorkflowRunResult) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.branchName = _data["branchName"];
+            this.runNumber = _data["runNumber"];
+            this.buildTrigger = _data["buildTrigger"];
+            this.commitMessage = _data["commitMessage"];
+            this.buildStatus = _data["buildStatus"];
+            this.buildConclusion = _data["buildConclusion"];
+            this.createdDate = _data["createdDate"];
+            this.updatedDate = _data["updatedDate"];
+            this.workflowUrl = _data["workflowUrl"];
+            this.authorName = _data["authorName"];
+        }
+    }
+
+    static fromJS(data: any): WorkflowRunResult {
+        data = typeof data === 'object' ? data : {};
+        let result = new WorkflowRunResult();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["branchName"] = this.branchName;
+        data["runNumber"] = this.runNumber;
+        data["buildTrigger"] = this.buildTrigger;
+        data["commitMessage"] = this.commitMessage;
+        data["buildStatus"] = this.buildStatus;
+        data["buildConclusion"] = this.buildConclusion;
+        data["createdDate"] = this.createdDate;
+        data["updatedDate"] = this.updatedDate;
+        data["workflowUrl"] = this.workflowUrl;
+        data["authorName"] = this.authorName;
+        return data;
+    }
+}
+
+export interface IWorkflowRunResult {
+    branchName?: string;
+    runNumber?: number;
+    buildTrigger?: string;
+    commitMessage?: string;
+    buildStatus?: string;
+    buildConclusion?: string;
+    createdDate?: string;
+    updatedDate?: string;
+    workflowUrl?: string;
+    authorName?: string;
+}
+
+export class HeartbeatMessage extends ResponseBase implements IHeartbeatMessage {
+    message?: string;
+    status?: HeartbeatStatus;
+
+    constructor(data?: IHeartbeatMessage) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.message = _data["message"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): HeartbeatMessage {
+        data = typeof data === 'object' ? data : {};
+        let result = new HeartbeatMessage();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["message"] = this.message;
+        data["status"] = this.status;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IHeartbeatMessage extends IResponseBase {
+    message?: string;
+    status?: HeartbeatStatus;
+}
+
+export enum HeartbeatStatus {
+    Ok = 0,
+    Error = 1,
 }
 
 export class EncodeJwtResponse extends ResponseBase implements IEncodeJwtResponse {
