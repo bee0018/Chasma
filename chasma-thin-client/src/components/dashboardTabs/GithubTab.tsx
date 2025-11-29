@@ -84,14 +84,10 @@ const GithubTab: React.FC = () => {
 
         workflows.forEach(build => {
             rows.push(
-                <tr>
+                <tr onClick={() => window.open(build.workflowUrl, '_blank')}>
                     <td>{build.buildConclusion === "success" ? <span className="checkmark"/> : <i className="red-x"/>}</td>
                     <td>{build.branchName}</td>
-                    <td>
-                        <a href={build.workflowUrl} target="_blank" rel="noopener noreferrer">
-                            {build.runNumber}
-                        </a>
-                    </td>
+                    <td>{build.runNumber}</td>
                     <td>{build.buildTrigger}</td>
                     <td>{build.commitMessage}</td>
                     <td>{build.buildStatus}</td>
