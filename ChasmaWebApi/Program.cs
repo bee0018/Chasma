@@ -1,6 +1,8 @@
 using ChasmaWebApi;
 using ChasmaWebApi.Controllers;
 using ChasmaWebApi.Data;
+using ChasmaWebApi.Data.Interfaces;
+using ChasmaWebApi.Data.Managers;
 using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,6 +47,7 @@ builder.Services.AddCors(options =>
         });
     })
     .AddSingleton(webApiConfigurations)
+    .AddSingleton<IWorkFlowManager, WorkflowManager>()
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>
     {

@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Requests;
+﻿namespace ChasmaWebApi.Data.Requests;
 
 /// <summary>
 /// Class representing the request to encode a JSON Web Token.

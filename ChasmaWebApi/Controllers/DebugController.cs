@@ -1,5 +1,5 @@
-using ChasmaWebApi.Requests;
-using ChasmaWebApi.Responses;
+using ChasmaWebApi.Data.Requests;
+using ChasmaWebApi.Data.Responses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers

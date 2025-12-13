@@ -1,12 +1,11 @@
 ﻿using ChasmaWebApi.Data.Objects;
-using ChasmaWebApi.Responses;
 
-namespace ChasmaWebApi.Messages;
+namespace ChasmaWebApi.Data.Responses;
 
 /// <summary>
 /// Class representing the details of the GitHub Workflow runs.
 /// </summary>
-public class GitHubWorkflowRunMessage : ResponseBase
+public class GitHubWorkflowRunResponse : ResponseBase
 {
     /// <summary>
     /// Gets or sets the repository name.

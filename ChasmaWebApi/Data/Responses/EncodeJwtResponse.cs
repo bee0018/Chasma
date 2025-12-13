@@ -1,6 +1,4 @@
-﻿using System.Xml.Serialization;
-
-namespace ChasmaWebApi.Responses;
+﻿namespace ChasmaWebApi.Data.Responses;
 
 /// <summary>
 /// Class representing the encoded JSON web token details.

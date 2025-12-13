@@ -29,6 +29,9 @@ const GithubTab: React.FC = () => {
     /** Gets or sets the repository name. **/
     const [repoName, setRepoName] = useState<string | undefined>(undefined);
 
+    /** Gets or sets the repository owner. **/
+    const [repoOwner, setRepoOwner] = useState<string | undefined>(undefined);
+
     /**
      * Closes the modal once the user confirms the message
      */
@@ -46,7 +49,7 @@ const GithubTab: React.FC = () => {
         });
 
         try {
-            const response = await gitHubClient.getChasmaWorkflowResults();
+            const response = await gitHubClient.getChasmaWorkflowResults(repoName, repoOwner);
             if (response.isErrorResponse) {
                 setNotification({
                     title: "Retrieval failed!",
@@ -85,7 +88,7 @@ const GithubTab: React.FC = () => {
         workflows.forEach(build => {
             rows.push(
                 <tr onClick={() => window.open(build.workflowUrl, '_blank')}>
-                    <td>{build.buildConclusion === "success" ? <span className="checkmark"/> : <i className="red-x"/>}</td>
+                    <td>{build.buildConclusion === "success" ? <i className="checkmark"/> : <i className="red-x"/>}</td>
                     <td>{build.branchName}</td>
                     <td>{build.runNumber}</td>
                     <td>{build.buildTrigger}</td>
@@ -107,6 +110,20 @@ const GithubTab: React.FC = () => {
             <h1 className="page-title">GitHub Builds Board 📊</h1>
             <div style={{ textAlign: "center" }}>
                 <p className="page-description">Click the button below to retrieve build queue results.</p>
+                <br/>
+                <input
+                    className="input-field"
+                    type="text"
+                    placeholder="Enter Repository Name"
+                    value={repoName}
+                    onChange={(e) => setRepoName(e.target.value)}/>
+                <br/>
+                <input
+                    className="input-field"
+                    type="text"
+                    placeholder="Enter Repository Owner"
+                    value={repoOwner}
+                    onChange={(e) => setRepoOwner(e.target.value)}/>
                 <br/>
                 <button
                     className="submit-button"
@@ -149,6 +166,7 @@ const GithubTab: React.FC = () => {
                 </table>
             )
             }
+            <br/>
         </>
     );
 }

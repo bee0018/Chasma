@@ -1,5 +1,5 @@
-﻿using ChasmaWebApi.Data.Objects;
-using ChasmaWebApi.Messages;
+﻿using ChasmaWebApi.Data.Messages;
+using ChasmaWebApi.Data.Objects;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers;
@@ -32,7 +32,7 @@ public class HealthController : ControllerBase
     [Route("heartbeat")]
     public ActionResult<HeartbeatMessage> GetHeartbeat()
     {
-        logger.LogTrace("Received request to get heartbeat at {}.", DateTimeOffset.Now);
+        logger.LogTrace("Received request to get heartbeat at {now}.", DateTimeOffset.Now);
         HeartbeatMessage heartbeatMessage = new()
         {
             Message = $"Heartbeat has been registered at {DateTimeOffset.Now}",

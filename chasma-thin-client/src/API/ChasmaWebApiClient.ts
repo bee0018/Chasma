@@ -17,8 +17,16 @@ export class GitHubClient {
         this.baseUrl = baseUrl ?? "https://localhost:44349";
     }
 
-    getChasmaWorkflowResults(): Promise<GitHubWorkflowRunMessage> {
-        let url_ = this.baseUrl + "/api/GitHub/workflowRuns";
+    getChasmaWorkflowResults(repositoryName: string | undefined, repositoryOwner: string | undefined): Promise<GitHubWorkflowRunResponse> {
+        let url_ = this.baseUrl + "/api/GitHub/workflowRuns?";
+        if (repositoryName === null)
+            throw new globalThis.Error("The parameter 'repositoryName' cannot be null.");
+        else if (repositoryName !== undefined)
+            url_ += "RepositoryName=" + encodeURIComponent("" + repositoryName) + "&";
+        if (repositoryOwner === null)
+            throw new globalThis.Error("The parameter 'repositoryOwner' cannot be null.");
+        else if (repositoryOwner !== undefined)
+            url_ += "RepositoryOwner=" + encodeURIComponent("" + repositoryOwner) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -33,14 +41,14 @@ export class GitHubClient {
         });
     }
 
-    protected processGetChasmaWorkflowResults(response: Response): Promise<GitHubWorkflowRunMessage> {
+    protected processGetChasmaWorkflowResults(response: Response): Promise<GitHubWorkflowRunResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = GitHubWorkflowRunMessage.fromJS(resultData200);
+            result200 = GitHubWorkflowRunResponse.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -48,7 +56,7 @@ export class GitHubClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<GitHubWorkflowRunMessage>(null as any);
+        return Promise.resolve<GitHubWorkflowRunResponse>(null as any);
     }
 }
 
@@ -297,12 +305,12 @@ export interface IResponseBase extends IChasmaXmlBase {
     errorMessage?: string | undefined;
 }
 
-export class GitHubWorkflowRunMessage extends ResponseBase implements IGitHubWorkflowRunMessage {
+export class GitHubWorkflowRunResponse extends ResponseBase implements IGitHubWorkflowRunResponse {
     repositoryName?: string;
     buildCount?: number;
     workflowRunResults?: WorkflowRunResult[];
 
-    constructor(data?: IGitHubWorkflowRunMessage) {
+    constructor(data?: IGitHubWorkflowRunResponse) {
         super(data);
     }
 
@@ -319,9 +327,9 @@ export class GitHubWorkflowRunMessage extends ResponseBase implements IGitHubWor
         }
     }
 
-    static fromJS(data: any): GitHubWorkflowRunMessage {
+    static fromJS(data: any): GitHubWorkflowRunResponse {
         data = typeof data === 'object' ? data : {};
-        let result = new GitHubWorkflowRunMessage();
+        let result = new GitHubWorkflowRunResponse();
         result.init(data);
         return result;
     }
@@ -340,7 +348,7 @@ export class GitHubWorkflowRunMessage extends ResponseBase implements IGitHubWor
     }
 }
 
-export interface IGitHubWorkflowRunMessage extends IResponseBase {
+export interface IGitHubWorkflowRunResponse extends IResponseBase {
     repositoryName?: string;
     buildCount?: number;
     workflowRunResults?: WorkflowRunResult[];
@@ -418,7 +426,7 @@ export interface IWorkflowRunResult {
     authorName?: string;
 }
 
-export class HeartbeatMessage extends ResponseBase implements IHeartbeatMessage {
+export class HeartbeatMessage extends ChasmaXmlBase implements IHeartbeatMessage {
     message?: string;
     status?: HeartbeatStatus;
 
@@ -450,7 +458,7 @@ export class HeartbeatMessage extends ResponseBase implements IHeartbeatMessage 
     }
 }
 
-export interface IHeartbeatMessage extends IResponseBase {
+export interface IHeartbeatMessage extends IChasmaXmlBase {
     message?: string;
     status?: HeartbeatStatus;
 }

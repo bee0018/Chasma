@@ -17,13 +17,31 @@
           "GitHub"
         ],
         "operationId": "GitHub_GetChasmaWorkflowResults",
+        "parameters": [
+          {
+            "name": "RepositoryName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "RepositoryOwner",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GitHubWorkflowRunMessage"
+                  "$ref": "#/components/schemas/GitHubWorkflowRunResponse"
                 }
               }
             }
@@ -138,7 +156,7 @@
   },
   "components": {
     "schemas": {
-      "GitHubWorkflowRunMessage": {
+      "GitHubWorkflowRunResponse": {
         "allOf": [
           {
             "$ref": "#/components/schemas/ResponseBase"
@@ -228,7 +246,7 @@
       "HeartbeatMessage": {
         "allOf": [
           {
-            "$ref": "#/components/schemas/ResponseBase"
+            "$ref": "#/components/schemas/ChasmaXmlBase"
           },
           {
             "type": "object",

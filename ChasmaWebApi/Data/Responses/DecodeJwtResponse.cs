@@ -1,6 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 
-namespace ChasmaWebApi.Responses;
+namespace ChasmaWebApi.Data.Responses;
 
 /// <summary>
 /// Class representing the contents of the decoded JSON Web token.

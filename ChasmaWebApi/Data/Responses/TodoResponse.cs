@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Responses
+﻿namespace ChasmaWebApi.Data.Responses
 {
     /// <summary>
     /// Class representing the basis for a todo response.
