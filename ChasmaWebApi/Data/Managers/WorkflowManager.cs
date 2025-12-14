@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Objects;
 using LibGit2Sharp;
 using Octokit;
@@ -12,16 +11,14 @@ namespace ChasmaWebApi.Data.Managers;
 /// Class representing the manager for processing workflow run data.
 /// </summary>
 /// <param name="logger">The internal server logger.</param>
-public class WorkflowManager(ILogger<WorkflowManager> logger)
-    : ClientManagerBase<WorkflowManager>(logger), IWorkFlowManager
+/// <param name="cacheManager">The internal API cache manager.</param>
+public class WorkflowManager(ILogger<WorkflowManager> logger, ICacheManager cacheManager)
+    : ClientManagerBase<WorkflowManager>(logger, cacheManager), IWorkFlowManager
 {
     /// <summary>
     /// The lock object used for concurrency.
     /// </summary>
     private readonly object lockObject = new();
-    
-    // <inheritdoc/>
-    public ConcurrentDictionary<string, LocalGitRepository> Repositories { get; } = new();
     
     // <inheritdoc/>
     public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, int buildCount, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
@@ -110,7 +107,7 @@ public class WorkflowManager(ILogger<WorkflowManager> logger)
             LocalGitRepository existingRepository;
             lock (lockObject)
             {
-                existingRepository = Repositories.Values.FirstOrDefault(i => i.RepositoryName == repositoryName);
+                existingRepository = CacheManager.Repositories.Values.FirstOrDefault(i => i.RepositoryName == repositoryName);
             }
             
             if (existingRepository?.Repository.Info.WorkingDirectory == workingDirectory)
@@ -154,11 +151,11 @@ public class WorkflowManager(ILogger<WorkflowManager> logger)
                 RepositoryOwner = repositoryOwner,
                 Repository = repo,
             };
-            Repositories.TryAdd(repoCacheKey, localRepo);
+            CacheManager.Repositories.TryAdd(repoCacheKey, localRepo);
         }
         
-        ClientLogger.LogInformation("Found {totalCount} valid repo(s) on the filesystem.", Repositories.Count);
-        return Repositories.Values.Select(i => i.RepositoryName).ToList();
+        ClientLogger.LogInformation("Found {totalCount} valid repo(s) on the filesystem.", CacheManager.Repositories.Count);
+        return CacheManager.Repositories.Values.Select(i => i.RepositoryName).ToList();
     }
 
     /// <summary>

@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using ChasmaWebApi.Data.Objects;
+﻿using ChasmaWebApi.Data.Objects;
 
 namespace ChasmaWebApi.Data.Interfaces;
 
@@ -8,11 +7,6 @@ namespace ChasmaWebApi.Data.Interfaces;
 /// </summary>
 public interface IWorkFlowManager
 {
-    /// <summary>
-    /// Gets the validated local git repositories found on the system.
-    /// </summary>
-    ConcurrentDictionary<string, LocalGitRepository> Repositories { get; }
-
     /// <summary>
     /// Tries to get the workflow run results for the repo with specified details.
     /// </summary>

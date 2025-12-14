@@ -47,6 +47,7 @@ builder.Services.AddCors(options =>
         });
     })
     .AddSingleton(webApiConfigurations)
+    .AddSingleton<ICacheManager, CacheManager>()
     .AddSingleton<IWorkFlowManager, WorkflowManager>()
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>

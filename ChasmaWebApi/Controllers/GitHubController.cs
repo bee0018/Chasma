@@ -27,6 +27,8 @@ public class GitHubController : ControllerBase
     /// </summary>
     private readonly IWorkFlowManager workflowManager;
 
+    #region Constructor
+
     /// <summary>
     /// Instantiates a new <see cref="GitHubController"/> class.
     /// </summary>
@@ -39,6 +41,8 @@ public class GitHubController : ControllerBase
         webApiConfigurations = config;
         workflowManager = manager;
     }
+
+    #endregion
 
     /// <summary>
     /// Gets the Chasma workflow results via the GitHub API.
