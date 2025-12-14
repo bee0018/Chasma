@@ -1,4 +1,5 @@
-﻿using ChasmaWebApi.Data.Objects;
+﻿using System.Collections.Concurrent;
+using ChasmaWebApi.Data.Objects;
 
 namespace ChasmaWebApi.Data.Interfaces;
 
@@ -7,6 +8,11 @@ namespace ChasmaWebApi.Data.Interfaces;
 /// </summary>
 public interface IWorkFlowManager
 {
+    /// <summary>
+    /// Gets the validated local git repositories found on the system.
+    /// </summary>
+    ConcurrentDictionary<string, LocalGitRepository> Repositories { get; }
+
     /// <summary>
     /// Tries to get the workflow run results for the repo with specified details.
     /// </summary>
@@ -17,6 +23,11 @@ public interface IWorkFlowManager
     /// <param name="workflowRunResults">The list of workflow run results.</param>
     /// <param name="errorMessage">The error message if there was a failure to retrieve runs.</param>
     /// <returns>True if the workflow runs were retrieved; false otherwise.</returns>
-    public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, int buildCount,
+    bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, int buildCount,
         out List<WorkflowRunResult> workflowRunResults, out string errorMessage);
+
+    /// <summary>
+    /// Finds the local git repositories on the local machine.
+    /// </summary>
+    List<string> FindLocalGitRepositories();
 }

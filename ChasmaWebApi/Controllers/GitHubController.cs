@@ -76,4 +76,26 @@ public class GitHubController : ControllerBase
             return BadRequest(gitHubWorkflowRunResponse);
         }
     }
+
+    /// <summary>
+    /// Gets the valid git repositories found on this system.
+    /// </summary>
+    /// <returns>The validated, local git repositories.</returns>
+    [HttpGet]
+    [Route("findLocalGitRepositories")]
+    public List<string> GetLocalGitRepositories()
+    {
+        logger.LogInformation("Attempting to get local git repositories on this filesystem.");
+        List<string> repositories = workflowManager.FindLocalGitRepositories();
+        if (repositories.Count > 0)
+        {
+            logger.LogInformation("Found {count} repositories on this machine.", repositories.Count);
+        }
+        else
+        {
+            logger.LogInformation("No local git repositories found.");
+        }
+        
+        return repositories;
+    }
 }
