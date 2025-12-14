@@ -8,17 +8,22 @@ namespace ChasmaWebApi.Data.Objects;
 public class LocalGitRepository
 {
     /// <summary>
+    /// Gets or sets the local repository identifier.
+    /// </summary>
+    public string Id { get; set; }
+    
+    /// <summary>
     /// Gets or sets the name of the repository.
     /// </summary>
-    public string RepositoryName { get; set; }
+    public string Name { get; set; }
     
     /// <summary>
     /// Gets or sets the name of the repository owner.
     /// </summary>
-    public string RepositoryOwner { get; set; }
+    public string Owner { get; set; }
     
     /// <summary>
-    /// Gets or sets the local git repository.
+    /// Gets or sets the url of the git repository.
     /// </summary>
-    public Repository Repository { get; set; }
+    public string Url { get; set; }
 }

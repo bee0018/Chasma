@@ -5,7 +5,7 @@ import EncodeJwtTab from "./dashboardTabs/EncodeJwtTab";
 import DecodeJwtTab from "./dashboardTabs/DecodeJwtTab";
 import UuidGeneratorTab from "./dashboardTabs/UuidGeneratorTab";
 import ApiStatusTab from "./dashboardTabs/ApiStatusTab";
-import GithubTab from "./dashboardTabs/GithubTab";
+import WorkflowRunsTab from "./dashboardTabs/WorkflowRunsTab";
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
                 {activeTab === "jwtEncoder" && <EncodeJwtTab/>}
                 {activeTab === "jwtDecoder" && <DecodeJwtTab/>}
                 {activeTab === "uuidGenerator" && <UuidGeneratorTab/>}
-                {activeTab === "github" && <GithubTab/>}
+                {activeTab === "github" && <WorkflowRunsTab/>}
                 {activeTab === "apiStatus" && <ApiStatusTab/>}
             </main>
         </div>

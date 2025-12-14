@@ -23,5 +23,5 @@ public interface IWorkFlowManager
     /// <summary>
     /// Finds the local git repositories on the local machine.
     /// </summary>
-    List<string> FindLocalGitRepositories();
+    List<LocalGitRepository> FindLocalGitRepositories();
 }

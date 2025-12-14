@@ -59,7 +59,108 @@ public class WorkflowManager(ILogger<WorkflowManager> logger, ICacheManager cach
     }
 
     // <inheritdoc/>
-    public List<string> FindLocalGitRepositories()
+    public List<LocalGitRepository> FindLocalGitRepositories()
+    {
+        List<Repository> validGitRepos = SearchLogicalDrivesForGitRepos();
+        foreach (Repository repo in validGitRepos)
+        {
+            string workingDirectory = repo.Info.WorkingDirectory;
+            Remote? remoteRepository = repo.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
+            if (remoteRepository == null)
+            {
+                ClientLogger.LogWarning("Failed to find remote repository in {repoPath}, so it will not be added to cache.", workingDirectory);
+                continue;
+            }
+           
+            string repositoryName = new DirectoryInfo(workingDirectory).Name?.Replace(".git", "");
+            if (string.IsNullOrWhiteSpace(repositoryName))
+            {
+                ClientLogger.LogWarning("Could get repository name for the file directory {path} so it will be ignored.", workingDirectory);
+                continue;
+            }
+
+            lock (lockObject)
+            {
+                if (!CacheManager.WorkingDirectories.Add(workingDirectory))
+                {
+                    // Allowed to have the same repos duplicated in cache, but it MUST be in different working directories.
+                    continue;
+                }
+            }
+
+            string repoCacheKey = Guid.NewGuid().ToString();
+            string pushUrl = remoteRepository.PushUrl;
+            if (string.IsNullOrEmpty(pushUrl))
+            {
+                ClientLogger.LogWarning("Failed to find push url for {repoName}, so it will be ignored.", repositoryName);
+                continue;
+            }
+            
+            string repositoryOwner;
+            if (pushUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                // HTTPS: https://github.com/OWNER/REPO.git
+                Uri pushUri = new(pushUrl);
+                string[] httpParts = pushUri.AbsolutePath.Trim('/').Split('/');
+                repositoryOwner = httpParts[0];
+            }
+            else
+            {
+                // SSH: git@github.com:OWNER/REPO.git
+                string path = pushUrl.Split(':')[1];
+                string[] sshParts = path.Split('/');
+                repositoryOwner = sshParts[0];
+            }
+            
+            if (string.IsNullOrEmpty(repositoryOwner))
+            {
+                ClientLogger.LogWarning("Failed to find repository owner for {repoName}, so it will be ignored.", repositoryName);
+                continue;
+            }
+            
+            LocalGitRepository localRepo = new LocalGitRepository
+            {
+                Id = repoCacheKey,
+                Name = repositoryName,
+                Owner = repositoryOwner,
+                Url = pushUrl,
+            };
+            CacheManager.Repositories.TryAdd(localRepo.Id, localRepo);
+        }
+        
+        ClientLogger.LogInformation("Found {totalCount} valid repo(s) on the filesystem.", CacheManager.Repositories.Count);
+
+        lock (lockObject)
+        { 
+            return CacheManager.Repositories.Values.ToList();
+        }
+    }
+
+    /// <summary>
+    /// Gets the workflow run for the specified repository.
+    /// </summary>
+    /// <param name="client">The GitHub API client.</param>
+    /// <param name="repoOwner">The repository owner.</param>
+    /// <param name="repoName">The repository name.</param>
+    /// <returns>Task containing the workflow run response from the API client.</returns>
+    private async Task<WorkflowRunsResponse?> GetWorkFlowRuns(GitHubClient client, string repoOwner, string repoName)
+    {
+        try
+        {
+            return await client.Actions.Workflows.Runs.List(repoOwner, repoName);
+        }
+        catch (Exception e)
+        {
+            ClientLogger.LogError("Error when trying to retrieve workflow runs for {repoName}: {error}", repoName, e);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Searches for git repositories on the logical drives on the machine running this application.
+    /// </summary>
+    /// <returns>The list of valid git repositories.</returns>
+    private static List<Repository> SearchLogicalDrivesForGitRepos()
     {
         Stack<string> stack = new();
         List<string> roots = Directory.GetLogicalDrives().ToList();
@@ -86,95 +187,9 @@ public class WorkflowManager(ILogger<WorkflowManager> logger, ICacheManager cach
             }
         }
         
-        List<Repository> validGitRepos = unvalidatedGitPaths.Where(Repository.IsValid).Select(i => new Repository(i)).ToList();
-        foreach (Repository repo in validGitRepos)
-        {
-            string workingDirectory = repo.Info.WorkingDirectory;
-            Remote? remoteRepository = repo.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
-            if (remoteRepository == null)
-            {
-                ClientLogger.LogWarning("Failed to find remote repository in {repoPath}, so it will not be added to cache.", workingDirectory);
-                continue;
-            }
-           
-            string repositoryName = new DirectoryInfo(workingDirectory).Name?.Replace(".git", "");
-            if (string.IsNullOrWhiteSpace(repositoryName))
-            {
-                ClientLogger.LogWarning("Could get repository name for the file directory {path} so it will be ignored.", workingDirectory);
-                continue;
-            }
-
-            LocalGitRepository existingRepository;
-            lock (lockObject)
-            {
-                existingRepository = CacheManager.Repositories.Values.FirstOrDefault(i => i.RepositoryName == repositoryName);
-            }
-            
-            if (existingRepository?.Repository.Info.WorkingDirectory == workingDirectory)
-            {
-                // Allowed to have the same repos duplicated in cache, but it MUST be in different working directories.
-                continue;
-            }
-
-            string repoCacheKey = Guid.NewGuid().ToString();
-            string repositoryOwner;
-            string pushUrl = remoteRepository.PushUrl;
-            if (string.IsNullOrEmpty(pushUrl))
-            {
-                ClientLogger.LogWarning("Failed to find push url for {repoName}, so it will be ignored.", repositoryName);
-                continue;
-            }
-            
-            if (pushUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            {
-                // HTTPS
-                string[] httpParts = new Uri(pushUrl).AbsolutePath.Trim('/').Split('/');
-                repositoryOwner = httpParts[0];
-            }
-            else
-            {
-                // SSH: git@github.com:OWNER/REPO.git
-                string path = pushUrl.Split(':')[1];
-                string[] sshParts = path.Split('/');
-                repositoryOwner = sshParts[0];
-            }
-            
-            if (string.IsNullOrEmpty(repositoryOwner))
-            {
-                ClientLogger.LogWarning("Failed to find repository owner for {repoName}, so it will be ignored.", repositoryName);
-                continue;
-            }
-            
-            LocalGitRepository localRepo = new LocalGitRepository
-            {
-                RepositoryName = repositoryName,
-                RepositoryOwner = repositoryOwner,
-                Repository = repo,
-            };
-            CacheManager.Repositories.TryAdd(repoCacheKey, localRepo);
-        }
-        
-        ClientLogger.LogInformation("Found {totalCount} valid repo(s) on the filesystem.", CacheManager.Repositories.Count);
-        return CacheManager.Repositories.Values.Select(i => i.RepositoryName).ToList();
-    }
-
-    /// <summary>
-    /// Gets the workflow run for the specified repository.
-    /// </summary>
-    /// <param name="client">The GitHub API client.</param>
-    /// <param name="repoOwner">The repository owner.</param>
-    /// <param name="repoName">The repository name.</param>
-    /// <returns>Task containing the workflow run response from the API client.</returns>
-    private async Task<WorkflowRunsResponse?> GetWorkFlowRuns(GitHubClient client, string repoOwner, string repoName)
-    {
-        try
-        {
-            return await client.Actions.Workflows.Runs.List(repoOwner, repoName);
-        }
-        catch (Exception e)
-        {
-            ClientLogger.LogError("Error when trying to retrieve workflow runs for {repoName}: {error}", repoName, e);
-            return null;
-        }
+        return unvalidatedGitPaths
+            .Where(Repository.IsValid)
+            .Select(i => new Repository(i))
+            .ToList();
     }
 }

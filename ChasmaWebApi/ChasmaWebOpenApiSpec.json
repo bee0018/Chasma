@@ -49,6 +49,26 @@
         }
       }
     },
+    "/api/GitHub/findLocalGitRepositories": {
+      "get": {
+        "tags": [
+          "GitHub"
+        ],
+        "operationId": "GitHub_GetLocalGitRepositories",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalRepositoriesInfoMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Health/heartbeat": {
       "get": {
         "tags": [
@@ -242,6 +262,47 @@
       "ChasmaXmlBase": {
         "type": "object",
         "additionalProperties": false
+      },
+      "LocalRepositoriesInfoMessage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "repositories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LocalGitRepository"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "LocalGitRepository": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
       },
       "HeartbeatMessage": {
         "allOf": [

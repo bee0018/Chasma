@@ -58,6 +58,40 @@ export class GitHubClient {
         }
         return Promise.resolve<GitHubWorkflowRunResponse>(null as any);
     }
+
+    getLocalGitRepositories(): Promise<LocalRepositoriesInfoMessage> {
+        let url_ = this.baseUrl + "/api/GitHub/findLocalGitRepositories";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetLocalGitRepositories(_response);
+        });
+    }
+
+    protected processGetLocalGitRepositories(response: Response): Promise<LocalRepositoriesInfoMessage> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LocalRepositoriesInfoMessage.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<LocalRepositoriesInfoMessage>(null as any);
+    }
 }
 
 export class HealthClient {
@@ -424,6 +458,99 @@ export interface IWorkflowRunResult {
     updatedDate?: string;
     workflowUrl?: string;
     authorName?: string;
+}
+
+export class LocalRepositoriesInfoMessage extends ChasmaXmlBase implements ILocalRepositoriesInfoMessage {
+    timestamp?: Date;
+    repositories?: LocalGitRepository[];
+
+    constructor(data?: ILocalRepositoriesInfoMessage) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.timestamp = _data["timestamp"] ? new Date(_data["timestamp"].toString()) : undefined as any;
+            if (Array.isArray(_data["repositories"])) {
+                this.repositories = [] as any;
+                for (let item of _data["repositories"])
+                    this.repositories!.push(LocalGitRepository.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): LocalRepositoriesInfoMessage {
+        data = typeof data === 'object' ? data : {};
+        let result = new LocalRepositoriesInfoMessage();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["timestamp"] = this.timestamp ? this.timestamp.toISOString() : undefined as any;
+        if (Array.isArray(this.repositories)) {
+            data["repositories"] = [];
+            for (let item of this.repositories)
+                data["repositories"].push(item ? item.toJSON() : undefined as any);
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ILocalRepositoriesInfoMessage extends IChasmaXmlBase {
+    timestamp?: Date;
+    repositories?: LocalGitRepository[];
+}
+
+export class LocalGitRepository implements ILocalGitRepository {
+    id?: string;
+    name?: string;
+    owner?: string;
+    url?: string;
+
+    constructor(data?: ILocalGitRepository) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.owner = _data["owner"];
+            this.url = _data["url"];
+        }
+    }
+
+    static fromJS(data: any): LocalGitRepository {
+        data = typeof data === 'object' ? data : {};
+        let result = new LocalGitRepository();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["owner"] = this.owner;
+        data["url"] = this.url;
+        return data;
+    }
+}
+
+export interface ILocalGitRepository {
+    id?: string;
+    name?: string;
+    owner?: string;
+    url?: string;
 }
 
 export class HeartbeatMessage extends ChasmaXmlBase implements IHeartbeatMessage {

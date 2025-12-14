@@ -11,10 +11,10 @@ import { JSX } from "react/jsx-runtime";
 const gitHubClient = new GitHubClient();
 
 /**
- * Initializes a new instance of the GithubTab.
+ * Initializes a new instance of the WorkflowRunsTab.
  * @constructor
  */
-const GithubTab: React.FC = () => {
+const WorkflowRunsTab: React.FC = () => {
     /** Gets or sets the notification **/
     const [notification, setNotification] = useState<{
         title: string,
@@ -171,4 +171,4 @@ const GithubTab: React.FC = () => {
     );
 }
 
-export default GithubTab;
+export default WorkflowRunsTab;
