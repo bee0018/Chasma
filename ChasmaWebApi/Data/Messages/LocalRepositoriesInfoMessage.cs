@@ -11,7 +11,7 @@ public class LocalRepositoriesInfoMessage : ChasmaXmlBase
     /// <summary>
     /// Gets or sets the timestamp at which the repositories were retrieved on the filesystem.
     /// </summary>
-    public DateTimeOffset Timestamp { get; set; }
+    public string Timestamp { get; set; }
     
     /// <summary>
     /// Gets or sets the validated local git repositories on the filesystem.

@@ -9,16 +9,10 @@ namespace ChasmaWebApi.Data.Objects
     public class DatabaseConfigurations : ChasmaXmlBase
     {
         /// <summary>
-        /// Gets the host name of the database.
+        /// Gets the server name of the database.
         /// </summary>
-        [XmlElement("host")]
-        public required string Host { get; set; }
-
-        /// <summary>
-        /// Gets the port number of the database.
-        /// </summary>
-        [XmlElement("port")]
-        public required int Port { get; set; }
+        [XmlElement("server")]
+        public required string Server { get; set; }
 
         /// <summary>
         /// Gets the name of the database.
@@ -27,16 +21,16 @@ namespace ChasmaWebApi.Data.Objects
         public required string DatabaseName { get; set; }
 
         /// <summary>
-        /// Gets the user name of the database.
+        /// Gets or sets a value indicating whether the connection is trusted.
         /// </summary>
-        [XmlElement("username")]
-        public required string Username { get; set; }
+        [XmlElement("trustedConnection")]
+        public required bool TrustedConnection { get; set; }
 
         /// <summary>
-        /// Gets the encrypted password of the database.
+        /// Gets or sets a value indicating whether the certificate is trusted.
         /// </summary>
-        [XmlElement("password")]
-        public required string Password { get; set; }
+        [XmlElement("trustedCertificate")]
+        public required bool TrustedCertificate{ get; set; }
 
         /// <summary>
         /// Gets the connection string in the format that is expected of PostgresSQL database connections.
@@ -44,7 +38,7 @@ namespace ChasmaWebApi.Data.Objects
         /// <returns>The formatted database connection string.</returns>
         public string GetConnectionString()
         {
-            return $"Host={Host};Port={Port};Database={DatabaseName};Username={Username};Password={Password}";
+            return $"Server={Server};Database={DatabaseName};Trusted_Connection={TrustedConnection};TrustServerCertificate=True;";
         }
     }
 }

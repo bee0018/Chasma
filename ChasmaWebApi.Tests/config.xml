@@ -2,10 +2,13 @@
 <configurations xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <webApiUrl>https://localhost:44349/</webApiUrl>
   <databaseConfiguration>
-    <host>localhost</host>
-    <port>5432</port>
-    <databaseName>chasma</databaseName>
-    <username>postgres</username>
-    <password>password</password>
+    <server>localhost\SQLEXPRESS</server>
+    <databaseName>Chasma</databaseName>
+    <trustedConnection>true</trustedConnection>
+    <trustedCertificate>true</trustedCertificate>
   </databaseConfiguration>
+  <showDebugControllers>false</showDebugControllers>
+  <thinClientUrl>http://localhost:3000</thinClientUrl>
+  <githubApiToken>token</githubApiToken>
+  <workflowRunReportThreshold>30</workflowRunReportThreshold>
 </configurations>

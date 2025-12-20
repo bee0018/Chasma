@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import '../css/Dashboard.css';
 import HomeTab from "./dashboardTabs/HomeTab";
-import EncodeJwtTab from "./dashboardTabs/EncodeJwtTab";
-import DecodeJwtTab from "./dashboardTabs/DecodeJwtTab";
-import UuidGeneratorTab from "./dashboardTabs/UuidGeneratorTab";
 import ApiStatusTab from "./dashboardTabs/ApiStatusTab";
-import WorkflowRunsTab from "./dashboardTabs/WorkflowRunsTab";
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -29,35 +25,6 @@ const Dashboard: React.FC = () => {
                 >
                     🏠 Home
                 </div>
-
-                <div
-                    className={`tab ${activeTab === "jwtEncoder" ? "active" : ""}`}
-                    onClick={() => handleTabClick("jwtEncoder")}
-                >
-                    🔒 Encode JWT
-                </div>
-
-                <div
-                    className={`tab ${activeTab === "jwtDecoder" ? "active" : ""}`}
-                    onClick={() => handleTabClick("jwtDecoder")}
-                >
-                    🔓 Decode JWT
-                </div>
-
-                <div
-                    className={`tab ${activeTab === "uuidGenerator" ? "active" : ""}`}
-                    onClick={() => handleTabClick("uuidGenerator")}
-                >
-                    🔄 Generate UUID
-                </div>
-
-                <div
-                    className={`tab ${activeTab === "github" ? "active" : ""}`}
-                    onClick={() => handleTabClick("github")}
-                >
-                    📊 GitHub Builds
-                </div>
-
                 <div
                     className={`tab ${activeTab === "apiStatus" ? "active" : ""}`}
                     onClick={() => handleTabClick("apiStatus")}
@@ -67,10 +34,6 @@ const Dashboard: React.FC = () => {
             </aside>
             <main className="content">
                 {activeTab === "home" && <HomeTab/>}
-                {activeTab === "jwtEncoder" && <EncodeJwtTab/>}
-                {activeTab === "jwtDecoder" && <DecodeJwtTab/>}
-                {activeTab === "uuidGenerator" && <UuidGeneratorTab/>}
-                {activeTab === "github" && <WorkflowRunsTab/>}
                 {activeTab === "apiStatus" && <ApiStatusTab/>}
             </main>
         </div>

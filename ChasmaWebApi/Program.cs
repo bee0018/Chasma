@@ -7,12 +7,7 @@ using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 
 string configFilePath = "config.xml";
-ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
-if (webApiConfigurations == null)
-{
-    throw new Exception("Error has occurred deserializing configuration file.");
-}
-
+ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
 builder.Logging
     .ClearProviders()
@@ -26,7 +21,6 @@ builder.Services.AddControllers()
         // Exclude the debug controllers in a production setting.
         List<ExcludeControllerFeatureProvider> controllersToExclude =
         [
-            new(typeof(DatabaseController)),
             new(typeof(DebugController))
         ];
 
@@ -48,14 +42,15 @@ builder.Services.AddCors(options =>
     })
     .AddSingleton(webApiConfigurations)
     .AddSingleton<ICacheManager, CacheManager>()
-    .AddSingleton<IWorkFlowManager, WorkflowManager>()
+    .AddSingleton<IRepositoryConfigurationManager, RepositoryConfigurationManager>()
+    .AddSingleton<IRepositoryStatusManager, RepositoryStatusManager>()
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>
     {
         config.Title = "Developer Toolbox API";
         config.Version = "v1";
     })
-    .AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(webApiConfigurations.DatabaseConfigurations.GetConnectionString()));
+    .AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(webApiConfigurations.DatabaseConfigurations.GetConnectionString()));
 
 WebApplication app = builder.Build();
 app.UseCors(thinClientCorPolicy)

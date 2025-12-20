@@ -1,17 +1,56 @@
-﻿import React, {useState} from "react";
+﻿import React, {useEffect, useState} from "react";
 import '../../css/DasboardTab.css';
 import GitRepoOverviewCard from "../GitRepoOverviewCard";
-import {GitHubClient, LocalGitRepository} from "../../API/ChasmaWebApiClient";
+import {LocalGitRepository, RepositoryConfigurationClient} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
 
 /** The Git API client. **/
-const gitClient = new GitHubClient()
+const configClient = new RepositoryConfigurationClient()
+
+/** Gets the userId from local storage. **/
+const getUserId = () => {
+    const userIdJson = localStorage.getItem("userId");
+    if (!userIdJson) return undefined;
+    return Number(userIdJson)
+};
+
+/** Gets the username from local storage. **/
+const getUsername = () => {
+    const userNameJson = localStorage.getItem("username");
+    if (!userNameJson) return undefined;
+    return JSON.parse(userNameJson)
+};
 
 /**
  * The Home tab contents and display components.
  * @constructor Initializes a new instance of the HomeTab.
  */
 const HomeTab: React.FC = () => {
+    useEffect(() => {
+        /** Retrieves the repository data from the web API. **/
+        const retrieveUserRepositoryConfiguration = async () => {
+            try {
+                const userId = getUserId();
+                const message = await configClient.getLocalGitRepositories(userId);
+                setLocalGitRepositories(message.repositories);
+            }
+            catch (e) {
+                setNotification({
+                    title: "Git repository retrieval failed!",
+                    message: "Review server logs for more information.",
+                    isError: true,
+                });
+                setLocalGitRepositories(undefined);
+                console.error(`Could not get git repositories from filesystem: ${e}`);
+            }
+        };
+
+        retrieveUserRepositoryConfiguration()
+            .catch(e => {
+            console.error(e.message);
+        });
+    }, []);
+
     /** Gets or sets the notification **/
     const [notification, setNotification] = useState<{
         title: string,
@@ -27,33 +66,24 @@ const HomeTab: React.FC = () => {
         return JSON.parse(repos);
     });
 
-    /** Gets or sets the time at which the last successful filesystem retrieval was conducted. **/
-    const [retrievalTimestamp, setRetrievalTimestamp] = useState<Date | undefined>(() => {
-        const timestamp = localStorage.getItem("retrievalTimestamp")
-        if (!timestamp) return undefined;
-        return JSON.parse(timestamp);
-    });
-
-    /** Sends a request to the retrieve the local git repositories on the filesystem. **/
-    async function handleGetLocalGitRepositories() {
+    /** Sends a request to the add the local git repositories on the filesystem. **/
+    async function handleAddLocalGitRepositories() {
         setNotification({
-            title: "Retrieving local git repositories on your filesystem...",
+            title: "Adding local git repositories from logical drives...",
             message: "Please wait while your request is being processed. May take a while depending on how large your filesystem is.",
             isError: false,
             loading: true
         });
 
         try {
-            const response = await gitClient.getLocalGitRepositories();
+            const userId = getUserId();
+            const response = await configClient.addLocalGitRepositories(userId);
             setNotification({
                 title: "Git repository retrieval finished!",
                 message: "Close the modal to find the repositories found on your system.",
                 isError: false,
             });
-            setLocalGitRepositories(response.repositories);
-            setRetrievalTimestamp(response.timestamp);
-            localStorage.setItem("gitRepositories", JSON.stringify(response.repositories));
-            localStorage.setItem("retrievalTimestamp", JSON.stringify(response.timestamp));
+            setLocalGitRepositories(response.currentRepositories);
         }
         catch (e) {
             setNotification({
@@ -62,9 +92,6 @@ const HomeTab: React.FC = () => {
                 isError: true,
             });
             setLocalGitRepositories(undefined);
-            setRetrievalTimestamp(undefined);
-            localStorage.removeItem("gitRepositories");
-            localStorage.removeItem("retrievalTimestamp");
             console.error(`Could not get git repositories from filesystem: ${e}`);
         }
     }
@@ -76,43 +103,60 @@ const HomeTab: React.FC = () => {
         setNotification(null);
     }
 
+    /** Cleanup function to remove repository from cache after successful deletion. **/
+    const handleRepoDelete = (repoId: string | undefined) => {
+        setLocalGitRepositories(prev =>
+            prev?.filter(repo => repo.id !== repoId)
+        );
+    };
+
+    /** Handles the event when there is an error deleting a repository. **/
+    const handleRepoDeletionError = (errorMessage: string | undefined) => {
+        setNotification({
+            title: "Could not delete repository!",
+            message: errorMessage,
+            isError: true,
+        });
+    }
+
     return (
-        <div>
-            <h1 className="page-title">Multi-Repository Manager Home🏠</h1>
-            <p className="page-description"
-                style={{ textAlign: "center" }}>Manage any of the registered repositories found on your filesystem.</p>
-            {retrievalTimestamp && (
-                <h3 style={{ color: "lightgreen" }}>{`Results shown from ${retrievalTimestamp}.`}</h3>
-            )}
-            {notification && (
-                <NotificationModal
-                    title={notification.title}
-                    message={notification.message}
-                    isError={notification.isError}
-                    loading={notification.loading}
-                    onClose={closeModal} />
-            )}
-            <div className="card-container">
-                {localGitRepositories && localGitRepositories.length > 0 && (
-                    localGitRepositories.map((repo) => (
-                        <GitRepoOverviewCard key={repo.id}
-                                             repoName={repo.name}
-                                             repoOwner={repo.owner}
-                                             url={repo.url} />
-                    ))
+        <>
+            <div className="page">
+                <h1 className="page-title">Multi-Repository Manager Home🏠</h1>
+                <p className="page-description"
+                   style={{ textAlign: "center" }}>{`${getUsername()}, manage any of the registered repositories found on your filesystem.`}</p>
+                {notification && (
+                    <NotificationModal
+                        title={notification.title}
+                        message={notification.message}
+                        isError={notification.isError}
+                        loading={notification.loading}
+                        onClose={closeModal} />
                 )}
-            </div>
-            <div style={{ justifySelf: "center" }}>
+                <div className="card-container">
+                    {localGitRepositories && localGitRepositories.length > 0 && (
+                        localGitRepositories.map((repo) => (
+                            <GitRepoOverviewCard key={repo.id}
+                                                 repoId={repo.id}
+                                                 repoName={repo.name}
+                                                 repoOwner={repo.owner}
+                                                 url={repo.url}
+                                                 onDelete={handleRepoDelete}
+                                                 onError={handleRepoDeletionError} />
+                        ))
+                    )}
+                </div>
+                    <br/>
+                    <button
+                        className="submit-button"
+                        type="submit"
+                        onClick={handleAddLocalGitRepositories}
+                    >
+                        Add Git Repos from Local Machine
+                    </button>
                 <br/>
-                <button
-                    className="submit-button"
-                    type="submit"
-                    onClick={handleGetLocalGitRepositories}
-                >
-                    Find Git Repos from Local Machine
-                </button>
             </div>
-        </div>
+        </>
     );
 }
 

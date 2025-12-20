@@ -97,3 +97,10 @@ body {
 .red-x::after {
     transform: translate(-50%, -50%) rotate(-45deg);
 }
+
+.project-logo {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

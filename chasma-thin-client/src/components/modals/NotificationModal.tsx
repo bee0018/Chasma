@@ -93,14 +93,13 @@ const NotificationModal: React.FC<INotificationModalProps> = (props: INotificati
     return (
         <div className="modal-backdrop" onClick={props.onClose}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
-                {props.isError && icon}
-                {!props.isError && icon}
+                {icon}
                 <h2 className="modal-title">{props.title}</h2>
                 <p className="modal-message">{props.message}</p>
                 {props.loading && (
                     <div>
                         <div className="modal-spinner">
-                            <div className="spinner"></div>
+                            <div className="spinner" />
                         </div>
                     </div>
                 )}

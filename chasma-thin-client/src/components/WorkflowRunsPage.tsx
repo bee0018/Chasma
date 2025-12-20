@@ -1,20 +1,24 @@
 ﻿import React, {useState} from "react";
-import NotificationModal from "../modals/NotificationModal";
-import {GitHubClient, WorkflowRunResult} from "../../API/ChasmaWebApiClient";
-import "../../css/Dashboard.css"
-import "../../css/App.css"
+import NotificationModal from "./modals/NotificationModal";
+import {GetWorkflowResultsRequest, RepositoryStatusClient, WorkflowRunResult} from "../API/ChasmaWebApiClient";
+import "../css/Dashboard.css"
+import "../css/App.css"
 import { JSX } from "react/jsx-runtime";
+import {useParams} from "react-router-dom";
 
 /**
- * The GitHub client that interfaces with the web API.
+ * The repository status client that interfaces with the web API.
  */
-const gitHubClient = new GitHubClient();
+const statusClient = new RepositoryStatusClient();
 
 /**
- * Initializes a new instance of the WorkflowRunsTab.
+ * Initializes a new instance of the WorkflowRunsPage.
  * @constructor
  */
-const WorkflowRunsTab: React.FC = () => {
+const WorkflowRunsPage: React.FC = () => {
+    /** The repository name and owner from the url. **/
+    const {repoName, repoOwner} = useParams<{repoName: string, repoOwner: string}>();
+
     /** Gets or sets the notification **/
     const [notification, setNotification] = useState<{
         title: string,
@@ -26,12 +30,6 @@ const WorkflowRunsTab: React.FC = () => {
     /** Gets or sets the GitHub workflow results. **/
     const [workflows, setWorkflows] = useState<WorkflowRunResult[] | undefined>(undefined);
 
-    /** Gets or sets the repository name. **/
-    const [repoName, setRepoName] = useState<string | undefined>(undefined);
-
-    /** Gets or sets the repository owner. **/
-    const [repoOwner, setRepoOwner] = useState<string | undefined>(undefined);
-
     /**
      * Closes the modal once the user confirms the message
      */
@@ -41,6 +39,7 @@ const WorkflowRunsTab: React.FC = () => {
 
     /** Handles the event when the user request to get the workflow statuses. **/
     async function handleGetWorkFlowStatuses() {
+        console.log("GetWorkFlowStatuses");
         setNotification({
             title: "Retrieving workflow runs...",
             message: "Please wait while your request is being processed.",
@@ -49,7 +48,12 @@ const WorkflowRunsTab: React.FC = () => {
         });
 
         try {
-            const response = await gitHubClient.getChasmaWorkflowResults(repoName, repoOwner);
+            const request = new GetWorkflowResultsRequest();
+            request.repositoryName = repoName;
+            request.repositoryOwner = repoOwner;
+
+            console.log(request);
+            const response = await statusClient.getChasmaWorkflowResults(request);
             if (response.isErrorResponse) {
                 setNotification({
                     title: "Retrieval failed!",
@@ -60,13 +64,13 @@ const WorkflowRunsTab: React.FC = () => {
             }
 
             setWorkflows(response.workflowRunResults)
-            setRepoName(response.repositoryName);
             setNotification({
                 title: `Successfully retrieved ${response.repositoryName} workflows!`,
                 message: `Close this modal and view the previous ${response.repositoryName} workflow build contents.`,
                 isError: response.isErrorResponse,
             });
         } catch (e) {
+            console.error(e);
             setNotification({
                 title: "Failed to retrieve workflows!",
                 message: "An internal server error has occurred. Review logs.",
@@ -106,35 +110,13 @@ const WorkflowRunsTab: React.FC = () => {
     }
 
     return (
-        <>
-            <h1 className="page-title">GitHub Builds Board 📊</h1>
-            <div style={{ textAlign: "center" }}>
-                <p className="page-description">Click the button below to retrieve build queue results.</p>
-                <br/>
-                <input
-                    className="input-field"
-                    type="text"
-                    placeholder="Enter Repository Name"
-                    value={repoName}
-                    onChange={(e) => setRepoName(e.target.value)}/>
-                <br/>
-                <input
-                    className="input-field"
-                    type="text"
-                    placeholder="Enter Repository Owner"
-                    value={repoOwner}
-                    onChange={(e) => setRepoOwner(e.target.value)}/>
-                <br/>
-                <button
-                    className="submit-button"
-                    type="submit"
-                    onClick={handleGetWorkFlowStatuses}
-                >
-                    Retrieve
-                </button>
+        <div className="page">
+            <div className="page-header">
+                <h1 className="page-title">GitHub Builds Board 📊</h1>
+                <div style={{ textAlign: "center" }}>
+                    <p className="page-description">Click the button below to retrieve build queue results.</p>
+                </div>
             </div>
-            <br/>
-            <br/>
             {notification && (
                 <NotificationModal
                     title={notification.title}
@@ -144,31 +126,43 @@ const WorkflowRunsTab: React.FC = () => {
                     onClose={closeModal} />
             )}
             {repoName && workflows && workflows.length > 0 && (
-                <table className="info-table">
-                    <caption style={{textAlign: "left"}}>{`${repoName} Most Recent ${workflows.length} Builds:`}</caption>
-                    <thead>
-                    <tr>
-                        <th>Result</th>
-                        <th>Branch Name</th>
-                        <th>Run Number</th>
-                        <th>Trigger</th>
-                        <th>Commit Message</th>
-                        <th>Status</th>
-                        <th>Conclusion</th>
-                        <th>Created</th>
-                        <th>Updated</th>
-                        <th>Author</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {getWorkFlowRows()}
-                    </tbody>
-                </table>
+                <div>
+                    <table className="info-table"
+                           style={{display: "contents"}}>
+                        <caption style={{textAlign: "left"}}>{`${repoName} Most Recent ${workflows.length} Builds:`}</caption>
+                        <thead>
+                        <tr>
+                            <th>Result</th>
+                            <th>Branch Name</th>
+                            <th>Run Number</th>
+                            <th>Trigger</th>
+                            <th>Commit Message</th>
+                            <th>Status</th>
+                            <th>Conclusion</th>
+                            <th>Created</th>
+                            <th>Updated</th>
+                            <th>Author</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {getWorkFlowRows()}
+                        </tbody>
+                    </table>
+                </div>
+
             )
             }
             <br/>
-        </>
+            <button
+                className="submit-button"
+                type="submit"
+                onClick={handleGetWorkFlowStatuses}
+            >
+                Retrieve
+            </button>
+            <br/>
+        </div>
     );
 }
 
-export default WorkflowRunsTab;
+export default WorkflowRunsPage;

@@ -1,8 +1,6 @@
 ﻿using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Objects;
 using LibGit2Sharp;
-using Octokit;
-using Credentials = Octokit.Credentials;
 using Repository = LibGit2Sharp.Repository;
 
 namespace ChasmaWebApi.Data.Managers;
@@ -12,55 +10,18 @@ namespace ChasmaWebApi.Data.Managers;
 /// </summary>
 /// <param name="logger">The internal server logger.</param>
 /// <param name="cacheManager">The internal API cache manager.</param>
-public class WorkflowManager(ILogger<WorkflowManager> logger, ICacheManager cacheManager)
-    : ClientManagerBase<WorkflowManager>(logger, cacheManager), IWorkFlowManager
+public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManager> logger, ICacheManager cacheManager)
+    : ClientManagerBase<RepositoryConfigurationManager>(logger, cacheManager), IRepositoryConfigurationManager
 {
     /// <summary>
     /// The lock object used for concurrency.
     /// </summary>
     private readonly object lockObject = new();
-    
-    // <inheritdoc/>
-    public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, int buildCount, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
-    {
-        errorMessage = string.Empty;
-        workflowRunResults = new();
-        ProductHeaderValue productHeader = new ProductHeaderValue(repoName);
-        Client = new(productHeader) { Credentials = new Credentials(token) };
-        Task<WorkflowRunsResponse?> workflowRunsResponseTask = GetWorkFlowRuns(Client, repoOwner, repoName);
-        WorkflowRunsResponse workFlowRunsResponse = workflowRunsResponseTask.Result;
-        if (workFlowRunsResponse == null)
-        {
-            errorMessage = $"Failed to fetch workflow runs for {repoName}. Check server logs for more information.";
-            return false;
-        }
-        
-        List<WorkflowRun> runs = workFlowRunsResponse.WorkflowRuns.Take(buildCount).ToList();
-        foreach (WorkflowRun run in runs)
-        {
-            WorkflowRunResult buildResult = new()
-            {
-                BranchName = run.HeadBranch,
-                RunNumber = run.RunNumber,
-                BuildTrigger = run.Event,
-                CommitMessage = run.HeadCommit.Message,
-                BuildStatus = run.Status.StringValue,
-                BuildConclusion = run.Conclusion.HasValue ? run.Conclusion.Value.ToString() : "Unknown",
-                CreatedDate = run.CreatedAt.ToString("g"),
-                UpdatedDate = run.UpdatedAt.ToString("g"),
-                WorkflowUrl = run.HtmlUrl,
-                AuthorName = run.Actor.Login,
-            };
-            workflowRunResults.Add(buildResult);
-        }
-        
-        ClientLogger.LogInformation("Retrieved {count} build runs from {repo}.", runs.Count, repoName);
-        return true;
-    }
 
     // <inheritdoc/>
-    public List<LocalGitRepository> FindLocalGitRepositories()
+    public bool TryAddLocalGitRepositories(int userId, out List<LocalGitRepository> newRepositories)
     {
+        newRepositories = new();
         List<Repository> validGitRepos = SearchLogicalDrivesForGitRepos();
         foreach (Repository repo in validGitRepos)
         {
@@ -79,16 +40,16 @@ public class WorkflowManager(ILogger<WorkflowManager> logger, ICacheManager cach
                 continue;
             }
 
+            string repoCacheKey = Guid.NewGuid().ToString();
             lock (lockObject)
             {
-                if (!CacheManager.WorkingDirectories.Add(workingDirectory))
+                if (CacheManager.WorkingDirectories.Values.Contains(workingDirectory))
                 {
                     // Allowed to have the same repos duplicated in cache, but it MUST be in different working directories.
                     continue;
                 }
             }
 
-            string repoCacheKey = Guid.NewGuid().ToString();
             string pushUrl = remoteRepository.PushUrl;
             if (string.IsNullOrEmpty(pushUrl))
             {
@@ -121,39 +82,64 @@ public class WorkflowManager(ILogger<WorkflowManager> logger, ICacheManager cach
             LocalGitRepository localRepo = new LocalGitRepository
             {
                 Id = repoCacheKey,
+                UserId = userId,
                 Name = repositoryName,
                 Owner = repositoryOwner,
                 Url = pushUrl,
             };
-            CacheManager.Repositories.TryAdd(localRepo.Id, localRepo);
-        }
-        
-        ClientLogger.LogInformation("Found {totalCount} valid repo(s) on the filesystem.", CacheManager.Repositories.Count);
 
-        lock (lockObject)
-        { 
-            return CacheManager.Repositories.Values.ToList();
+            // Do not add duplicate repositories to cache.
+            if (CacheManager.Repositories.Values.Any(i => RepositoriesMatch(localRepo, i))) 
+            {
+                ClientLogger.LogWarning("Repository {repoName} already exists in cache, so it will be ignored.", localRepo.Name);
+                continue;
+            }
+
+            newRepositories.Add(localRepo);
+            CacheManager.WorkingDirectories.TryAdd(localRepo.Id, workingDirectory);
         }
+
+        foreach (LocalGitRepository repository in newRepositories)
+        {
+            CacheManager.Repositories.TryAdd(repository.Id, repository);
+            ClientLogger.LogInformation("Added repository {repoName} to cache for user {userId}.", repository.Name, userId);
+        }
+
+        newRepositories = newRepositories.OrderBy(i => i.Name).ToList();
+        return newRepositories.Count > 0;
     }
 
-    /// <summary>
-    /// Gets the workflow run for the specified repository.
-    /// </summary>
-    /// <param name="client">The GitHub API client.</param>
-    /// <param name="repoOwner">The repository owner.</param>
-    /// <param name="repoName">The repository name.</param>
-    /// <returns>Task containing the workflow run response from the API client.</returns>
-    private async Task<WorkflowRunsResponse?> GetWorkFlowRuns(GitHubClient client, string repoOwner, string repoName)
+    // <inheritdoc/>
+    public bool TryDeleteRepository(string repositoryId, int userId, out List<LocalGitRepository> localGitRepositories, out string errorMessage)
     {
-        try
+        localGitRepositories = new();
+        errorMessage = string.Empty;
+        string repoName;
+        lock (lockObject)
         {
-            return await client.Actions.Workflows.Runs.List(repoOwner, repoName);
+            if (!CacheManager.Repositories.TryRemove(repositoryId, out LocalGitRepository repository))
+            {
+                errorMessage = $"Failed to find repository with id {repositoryId} in cache.";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            repoName = repository.Name;
+            if (!CacheManager.WorkingDirectories.TryRemove(repositoryId, out string _))
+            {
+                errorMessage = $"Failed to find working directory for repository {repoName} in cache.";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            localGitRepositories = CacheManager.Repositories.Values
+                .Where(i => i.UserId == userId)
+                .OrderBy(i => i.Name)
+                .ToList();
         }
-        catch (Exception e)
-        {
-            ClientLogger.LogError("Error when trying to retrieve workflow runs for {repoName}: {error}", repoName, e);
-            return null;
-        }
+
+        ClientLogger.LogInformation("Successfully deleted repository {repoName} from cache.", repoName);
+        return true;
     }
 
     /// <summary>
@@ -164,7 +150,7 @@ public class WorkflowManager(ILogger<WorkflowManager> logger, ICacheManager cach
     {
         Stack<string> stack = new();
         List<string> roots = Directory.GetLogicalDrives().ToList();
-        roots.ForEach(root => stack.Push(root));
+        roots.ForEach(stack.Push);
         List<string> unvalidatedGitPaths = new();
         while (stack.Count > 0)
         {
@@ -179,7 +165,7 @@ public class WorkflowManager(ILogger<WorkflowManager> logger, ICacheManager cach
                 }
 
                 List<string> subDirectories = Directory.EnumerateDirectories(path).ToList();
-                subDirectories.ForEach(sub => stack.Push(sub));
+                subDirectories.ForEach(stack.Push);
             }
             catch
             {
@@ -191,5 +177,19 @@ public class WorkflowManager(ILogger<WorkflowManager> logger, ICacheManager cach
             .Where(Repository.IsValid)
             .Select(i => new Repository(i))
             .ToList();
+    }
+
+    /// <summary>
+    /// Determines if two repositories match based on their properties.
+    /// </summary>
+    /// <param name="incomingRepo">The newly created repository.</param>
+    /// <param name="existingRepo">The existing cached repository.</param>
+    /// <returns>True if the repositories match; false otherwise.</returns>
+    private static bool RepositoriesMatch(LocalGitRepository incomingRepo, LocalGitRepository existingRepo)
+    {
+        return incomingRepo.Name == existingRepo.Name &&
+               incomingRepo.UserId == existingRepo.UserId &&
+               incomingRepo.Owner == existingRepo.Owner &&
+               incomingRepo.Url == existingRepo.Url;
     }
 }

@@ -12,9 +12,9 @@ public interface ICacheManager
     /// Gets the validated local git repositories found on the system.
     /// </summary>
     ConcurrentDictionary<string, LocalGitRepository> Repositories { get; }
-    
+
     /// <summary>
-    /// Gets the working directories for the repos in the system.
+    /// Gets the mapping of repository identifiers to working directories for the repos in the system.
     /// </summary>
-    HashSet<string> WorkingDirectories { get; }
+    ConcurrentDictionary<string, string> WorkingDirectories { get; }
 }

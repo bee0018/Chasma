@@ -7,93 +7,6 @@
 /* eslint-disable */
 // ReSharper disable InconsistentNaming
 
-export class GitHubClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "https://localhost:44349";
-    }
-
-    getChasmaWorkflowResults(repositoryName: string | undefined, repositoryOwner: string | undefined): Promise<GitHubWorkflowRunResponse> {
-        let url_ = this.baseUrl + "/api/GitHub/workflowRuns?";
-        if (repositoryName === null)
-            throw new globalThis.Error("The parameter 'repositoryName' cannot be null.");
-        else if (repositoryName !== undefined)
-            url_ += "RepositoryName=" + encodeURIComponent("" + repositoryName) + "&";
-        if (repositoryOwner === null)
-            throw new globalThis.Error("The parameter 'repositoryOwner' cannot be null.");
-        else if (repositoryOwner !== undefined)
-            url_ += "RepositoryOwner=" + encodeURIComponent("" + repositoryOwner) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetChasmaWorkflowResults(_response);
-        });
-    }
-
-    protected processGetChasmaWorkflowResults(response: Response): Promise<GitHubWorkflowRunResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = GitHubWorkflowRunResponse.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<GitHubWorkflowRunResponse>(null as any);
-    }
-
-    getLocalGitRepositories(): Promise<LocalRepositoriesInfoMessage> {
-        let url_ = this.baseUrl + "/api/GitHub/findLocalGitRepositories";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetLocalGitRepositories(_response);
-        });
-    }
-
-    protected processGetLocalGitRepositories(response: Response): Promise<LocalRepositoriesInfoMessage> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = LocalRepositoriesInfoMessage.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<LocalRepositoriesInfoMessage>(null as any);
-    }
-}
-
 export class HealthClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -226,6 +139,384 @@ export class JwtClient {
     }
 }
 
+export class RepositoryConfigurationClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:44349";
+    }
+
+    getLocalGitRepositories(userId: number | undefined): Promise<LocalRepositoriesInfoMessage> {
+        let url_ = this.baseUrl + "/api/RepositoryConfiguration/getLocalGitRepositories?";
+        if (userId === null)
+            throw new globalThis.Error("The parameter 'userId' cannot be null.");
+        else if (userId !== undefined)
+            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetLocalGitRepositories(_response);
+        });
+    }
+
+    protected processGetLocalGitRepositories(response: Response): Promise<LocalRepositoriesInfoMessage> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LocalRepositoriesInfoMessage.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<LocalRepositoriesInfoMessage>(null as any);
+    }
+
+    addLocalGitRepositories(userId: number | undefined): Promise<AddLocalRepositoriesResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryConfiguration/addLocalGitRepositories?";
+        if (userId === null)
+            throw new globalThis.Error("The parameter 'userId' cannot be null.");
+        else if (userId !== undefined)
+            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processAddLocalGitRepositories(_response);
+        });
+    }
+
+    protected processAddLocalGitRepositories(response: Response): Promise<AddLocalRepositoriesResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AddLocalRepositoriesResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<AddLocalRepositoriesResponse>(null as any);
+    }
+
+    deleteRepository(request: DeleteRepositoryRequest): Promise<DeleteRepositoryResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryConfiguration/deleteRepository";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDeleteRepository(_response);
+        });
+    }
+
+    protected processDeleteRepository(response: Response): Promise<DeleteRepositoryResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DeleteRepositoryResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeleteRepositoryResponse>(null as any);
+    }
+}
+
+export class RepositoryStatusClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:44349";
+    }
+
+    getChasmaWorkflowResults(request: GetWorkflowResultsRequest): Promise<GitHubWorkflowRunResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryStatus/workflowRuns";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetChasmaWorkflowResults(_response);
+        });
+    }
+
+    protected processGetChasmaWorkflowResults(response: Response): Promise<GitHubWorkflowRunResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GitHubWorkflowRunResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GitHubWorkflowRunResponse>(null as any);
+    }
+
+    getRepoStatus(gitStatusRequest: GitStatusRequest): Promise<GitStatusResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryStatus/gitStatus";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(gitStatusRequest);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetRepoStatus(_response);
+        });
+    }
+
+    protected processGetRepoStatus(response: Response): Promise<GitStatusResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GitStatusResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GitStatusResponse>(null as any);
+    }
+
+    applyStagingAction(applyStagingActionRequest: ApplyStagingActionRequest): Promise<ApplyStagingActionResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryStatus/applyStagingAction";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(applyStagingActionRequest);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processApplyStagingAction(_response);
+        });
+    }
+
+    protected processApplyStagingAction(response: Response): Promise<ApplyStagingActionResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ApplyStagingActionResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ApplyStagingActionResponse>(null as any);
+    }
+}
+
+export class UserClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:44349";
+    }
+
+    getUserAcccounts(): Promise<UserAccountModel[]> {
+        let url_ = this.baseUrl + "/api/User";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetUserAcccounts(_response);
+        });
+    }
+
+    protected processGetUserAcccounts(response: Response): Promise<UserAccountModel[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(UserAccountModel.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<UserAccountModel[]>(null as any);
+    }
+
+    login(request: LoginRequest): Promise<LoginResponse> {
+        let url_ = this.baseUrl + "/api/User/login";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processLogin(_response);
+        });
+    }
+
+    protected processLogin(response: Response): Promise<LoginResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LoginResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<LoginResponse>(null as any);
+    }
+
+    addUserAccount(request: AddUserRequest): Promise<AddUserResponse> {
+        let url_ = this.baseUrl + "/api/User/addUserAccount";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processAddUserAccount(_response);
+        });
+    }
+
+    protected processAddUserAccount(response: Response): Promise<AddUserResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AddUserResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<AddUserResponse>(null as any);
+    }
+}
+
 export class UuidClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -302,257 +593,6 @@ export class ChasmaXmlBase implements IChasmaXmlBase {
 export interface IChasmaXmlBase {
 }
 
-export class ResponseBase extends ChasmaXmlBase implements IResponseBase {
-    isErrorResponse?: boolean;
-    errorMessage?: string | undefined;
-
-    constructor(data?: IResponseBase) {
-        super(data);
-    }
-
-    init(_data?: any) {
-        super.init(_data);
-        if (_data) {
-            this.isErrorResponse = _data["isErrorResponse"];
-            this.errorMessage = _data["errorMessage"];
-        }
-    }
-
-    static fromJS(data: any): ResponseBase {
-        data = typeof data === 'object' ? data : {};
-        let result = new ResponseBase();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["isErrorResponse"] = this.isErrorResponse;
-        data["errorMessage"] = this.errorMessage;
-        super.toJSON(data);
-        return data;
-    }
-}
-
-export interface IResponseBase extends IChasmaXmlBase {
-    isErrorResponse?: boolean;
-    errorMessage?: string | undefined;
-}
-
-export class GitHubWorkflowRunResponse extends ResponseBase implements IGitHubWorkflowRunResponse {
-    repositoryName?: string;
-    buildCount?: number;
-    workflowRunResults?: WorkflowRunResult[];
-
-    constructor(data?: IGitHubWorkflowRunResponse) {
-        super(data);
-    }
-
-    init(_data?: any) {
-        super.init(_data);
-        if (_data) {
-            this.repositoryName = _data["repositoryName"];
-            this.buildCount = _data["buildCount"];
-            if (Array.isArray(_data["workflowRunResults"])) {
-                this.workflowRunResults = [] as any;
-                for (let item of _data["workflowRunResults"])
-                    this.workflowRunResults!.push(WorkflowRunResult.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): GitHubWorkflowRunResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new GitHubWorkflowRunResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["repositoryName"] = this.repositoryName;
-        data["buildCount"] = this.buildCount;
-        if (Array.isArray(this.workflowRunResults)) {
-            data["workflowRunResults"] = [];
-            for (let item of this.workflowRunResults)
-                data["workflowRunResults"].push(item ? item.toJSON() : undefined as any);
-        }
-        super.toJSON(data);
-        return data;
-    }
-}
-
-export interface IGitHubWorkflowRunResponse extends IResponseBase {
-    repositoryName?: string;
-    buildCount?: number;
-    workflowRunResults?: WorkflowRunResult[];
-}
-
-export class WorkflowRunResult implements IWorkflowRunResult {
-    branchName?: string;
-    runNumber?: number;
-    buildTrigger?: string;
-    commitMessage?: string;
-    buildStatus?: string;
-    buildConclusion?: string;
-    createdDate?: string;
-    updatedDate?: string;
-    workflowUrl?: string;
-    authorName?: string;
-
-    constructor(data?: IWorkflowRunResult) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.branchName = _data["branchName"];
-            this.runNumber = _data["runNumber"];
-            this.buildTrigger = _data["buildTrigger"];
-            this.commitMessage = _data["commitMessage"];
-            this.buildStatus = _data["buildStatus"];
-            this.buildConclusion = _data["buildConclusion"];
-            this.createdDate = _data["createdDate"];
-            this.updatedDate = _data["updatedDate"];
-            this.workflowUrl = _data["workflowUrl"];
-            this.authorName = _data["authorName"];
-        }
-    }
-
-    static fromJS(data: any): WorkflowRunResult {
-        data = typeof data === 'object' ? data : {};
-        let result = new WorkflowRunResult();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["branchName"] = this.branchName;
-        data["runNumber"] = this.runNumber;
-        data["buildTrigger"] = this.buildTrigger;
-        data["commitMessage"] = this.commitMessage;
-        data["buildStatus"] = this.buildStatus;
-        data["buildConclusion"] = this.buildConclusion;
-        data["createdDate"] = this.createdDate;
-        data["updatedDate"] = this.updatedDate;
-        data["workflowUrl"] = this.workflowUrl;
-        data["authorName"] = this.authorName;
-        return data;
-    }
-}
-
-export interface IWorkflowRunResult {
-    branchName?: string;
-    runNumber?: number;
-    buildTrigger?: string;
-    commitMessage?: string;
-    buildStatus?: string;
-    buildConclusion?: string;
-    createdDate?: string;
-    updatedDate?: string;
-    workflowUrl?: string;
-    authorName?: string;
-}
-
-export class LocalRepositoriesInfoMessage extends ChasmaXmlBase implements ILocalRepositoriesInfoMessage {
-    timestamp?: Date;
-    repositories?: LocalGitRepository[];
-
-    constructor(data?: ILocalRepositoriesInfoMessage) {
-        super(data);
-    }
-
-    init(_data?: any) {
-        super.init(_data);
-        if (_data) {
-            this.timestamp = _data["timestamp"] ? new Date(_data["timestamp"].toString()) : undefined as any;
-            if (Array.isArray(_data["repositories"])) {
-                this.repositories = [] as any;
-                for (let item of _data["repositories"])
-                    this.repositories!.push(LocalGitRepository.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): LocalRepositoriesInfoMessage {
-        data = typeof data === 'object' ? data : {};
-        let result = new LocalRepositoriesInfoMessage();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["timestamp"] = this.timestamp ? this.timestamp.toISOString() : undefined as any;
-        if (Array.isArray(this.repositories)) {
-            data["repositories"] = [];
-            for (let item of this.repositories)
-                data["repositories"].push(item ? item.toJSON() : undefined as any);
-        }
-        super.toJSON(data);
-        return data;
-    }
-}
-
-export interface ILocalRepositoriesInfoMessage extends IChasmaXmlBase {
-    timestamp?: Date;
-    repositories?: LocalGitRepository[];
-}
-
-export class LocalGitRepository implements ILocalGitRepository {
-    id?: string;
-    name?: string;
-    owner?: string;
-    url?: string;
-
-    constructor(data?: ILocalGitRepository) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.name = _data["name"];
-            this.owner = _data["owner"];
-            this.url = _data["url"];
-        }
-    }
-
-    static fromJS(data: any): LocalGitRepository {
-        data = typeof data === 'object' ? data : {};
-        let result = new LocalGitRepository();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["name"] = this.name;
-        data["owner"] = this.owner;
-        data["url"] = this.url;
-        return data;
-    }
-}
-
-export interface ILocalGitRepository {
-    id?: string;
-    name?: string;
-    owner?: string;
-    url?: string;
-}
-
 export class HeartbeatMessage extends ChasmaXmlBase implements IHeartbeatMessage {
     message?: string;
     status?: HeartbeatStatus;
@@ -593,6 +633,43 @@ export interface IHeartbeatMessage extends IChasmaXmlBase {
 export enum HeartbeatStatus {
     Ok = 0,
     Error = 1,
+}
+
+export class ResponseBase extends ChasmaXmlBase implements IResponseBase {
+    isErrorResponse?: boolean;
+    errorMessage?: string | undefined;
+
+    constructor(data?: IResponseBase) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.isErrorResponse = _data["isErrorResponse"];
+            this.errorMessage = _data["errorMessage"];
+        }
+    }
+
+    static fromJS(data: any): ResponseBase {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseBase();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["isErrorResponse"] = this.isErrorResponse;
+        data["errorMessage"] = this.errorMessage;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IResponseBase extends IChasmaXmlBase {
+    isErrorResponse?: boolean;
+    errorMessage?: string | undefined;
 }
 
 export class EncodeJwtResponse extends ResponseBase implements IEncodeJwtResponse {
@@ -1594,6 +1671,806 @@ export interface IDecodeJwtRequest {
     audience?: string;
     issuer?: string;
     encodedToken?: string;
+}
+
+export class LocalRepositoriesInfoMessage extends ChasmaXmlBase implements ILocalRepositoriesInfoMessage {
+    timestamp?: string;
+    repositories?: LocalGitRepository[];
+
+    constructor(data?: ILocalRepositoriesInfoMessage) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.timestamp = _data["timestamp"];
+            if (Array.isArray(_data["repositories"])) {
+                this.repositories = [] as any;
+                for (let item of _data["repositories"])
+                    this.repositories!.push(LocalGitRepository.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): LocalRepositoriesInfoMessage {
+        data = typeof data === 'object' ? data : {};
+        let result = new LocalRepositoriesInfoMessage();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["timestamp"] = this.timestamp;
+        if (Array.isArray(this.repositories)) {
+            data["repositories"] = [];
+            for (let item of this.repositories)
+                data["repositories"].push(item ? item.toJSON() : undefined as any);
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ILocalRepositoriesInfoMessage extends IChasmaXmlBase {
+    timestamp?: string;
+    repositories?: LocalGitRepository[];
+}
+
+export class LocalGitRepository implements ILocalGitRepository {
+    id?: string;
+    userId?: number;
+    name?: string;
+    owner?: string;
+    url?: string;
+
+    constructor(data?: ILocalGitRepository) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.userId = _data["userId"];
+            this.name = _data["name"];
+            this.owner = _data["owner"];
+            this.url = _data["url"];
+        }
+    }
+
+    static fromJS(data: any): LocalGitRepository {
+        data = typeof data === 'object' ? data : {};
+        let result = new LocalGitRepository();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["userId"] = this.userId;
+        data["name"] = this.name;
+        data["owner"] = this.owner;
+        data["url"] = this.url;
+        return data;
+    }
+}
+
+export interface ILocalGitRepository {
+    id?: string;
+    userId?: number;
+    name?: string;
+    owner?: string;
+    url?: string;
+}
+
+export class AddLocalRepositoriesResponse extends ResponseBase implements IAddLocalRepositoriesResponse {
+    currentRepositories?: LocalGitRepository[];
+
+    constructor(data?: IAddLocalRepositoriesResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            if (Array.isArray(_data["currentRepositories"])) {
+                this.currentRepositories = [] as any;
+                for (let item of _data["currentRepositories"])
+                    this.currentRepositories!.push(LocalGitRepository.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): AddLocalRepositoriesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new AddLocalRepositoriesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.currentRepositories)) {
+            data["currentRepositories"] = [];
+            for (let item of this.currentRepositories)
+                data["currentRepositories"].push(item ? item.toJSON() : undefined as any);
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IAddLocalRepositoriesResponse extends IResponseBase {
+    currentRepositories?: LocalGitRepository[];
+}
+
+export class DeleteRepositoryResponse extends ResponseBase implements IDeleteRepositoryResponse {
+    repositories?: LocalGitRepository[];
+
+    constructor(data?: IDeleteRepositoryResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            if (Array.isArray(_data["repositories"])) {
+                this.repositories = [] as any;
+                for (let item of _data["repositories"])
+                    this.repositories!.push(LocalGitRepository.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): DeleteRepositoryResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new DeleteRepositoryResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.repositories)) {
+            data["repositories"] = [];
+            for (let item of this.repositories)
+                data["repositories"].push(item ? item.toJSON() : undefined as any);
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDeleteRepositoryResponse extends IResponseBase {
+    repositories?: LocalGitRepository[];
+}
+
+export class DeleteRepositoryRequest extends ChasmaXmlBase implements IDeleteRepositoryRequest {
+    repositoryId?: string;
+    userId?: number;
+
+    constructor(data?: IDeleteRepositoryRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repositoryId = _data["repositoryId"];
+            this.userId = _data["userId"];
+        }
+    }
+
+    static fromJS(data: any): DeleteRepositoryRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new DeleteRepositoryRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryId"] = this.repositoryId;
+        data["userId"] = this.userId;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDeleteRepositoryRequest extends IChasmaXmlBase {
+    repositoryId?: string;
+    userId?: number;
+}
+
+export class GitHubWorkflowRunResponse extends ResponseBase implements IGitHubWorkflowRunResponse {
+    repositoryName?: string;
+    buildCount?: number;
+    workflowRunResults?: WorkflowRunResult[];
+
+    constructor(data?: IGitHubWorkflowRunResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repositoryName = _data["repositoryName"];
+            this.buildCount = _data["buildCount"];
+            if (Array.isArray(_data["workflowRunResults"])) {
+                this.workflowRunResults = [] as any;
+                for (let item of _data["workflowRunResults"])
+                    this.workflowRunResults!.push(WorkflowRunResult.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): GitHubWorkflowRunResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitHubWorkflowRunResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryName"] = this.repositoryName;
+        data["buildCount"] = this.buildCount;
+        if (Array.isArray(this.workflowRunResults)) {
+            data["workflowRunResults"] = [];
+            for (let item of this.workflowRunResults)
+                data["workflowRunResults"].push(item ? item.toJSON() : undefined as any);
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitHubWorkflowRunResponse extends IResponseBase {
+    repositoryName?: string;
+    buildCount?: number;
+    workflowRunResults?: WorkflowRunResult[];
+}
+
+export class WorkflowRunResult implements IWorkflowRunResult {
+    branchName?: string;
+    runNumber?: number;
+    buildTrigger?: string;
+    commitMessage?: string;
+    buildStatus?: string;
+    buildConclusion?: string;
+    createdDate?: string;
+    updatedDate?: string;
+    workflowUrl?: string;
+    authorName?: string;
+
+    constructor(data?: IWorkflowRunResult) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.branchName = _data["branchName"];
+            this.runNumber = _data["runNumber"];
+            this.buildTrigger = _data["buildTrigger"];
+            this.commitMessage = _data["commitMessage"];
+            this.buildStatus = _data["buildStatus"];
+            this.buildConclusion = _data["buildConclusion"];
+            this.createdDate = _data["createdDate"];
+            this.updatedDate = _data["updatedDate"];
+            this.workflowUrl = _data["workflowUrl"];
+            this.authorName = _data["authorName"];
+        }
+    }
+
+    static fromJS(data: any): WorkflowRunResult {
+        data = typeof data === 'object' ? data : {};
+        let result = new WorkflowRunResult();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["branchName"] = this.branchName;
+        data["runNumber"] = this.runNumber;
+        data["buildTrigger"] = this.buildTrigger;
+        data["commitMessage"] = this.commitMessage;
+        data["buildStatus"] = this.buildStatus;
+        data["buildConclusion"] = this.buildConclusion;
+        data["createdDate"] = this.createdDate;
+        data["updatedDate"] = this.updatedDate;
+        data["workflowUrl"] = this.workflowUrl;
+        data["authorName"] = this.authorName;
+        return data;
+    }
+}
+
+export interface IWorkflowRunResult {
+    branchName?: string;
+    runNumber?: number;
+    buildTrigger?: string;
+    commitMessage?: string;
+    buildStatus?: string;
+    buildConclusion?: string;
+    createdDate?: string;
+    updatedDate?: string;
+    workflowUrl?: string;
+    authorName?: string;
+}
+
+export class GetWorkflowResultsRequest implements IGetWorkflowResultsRequest {
+    repositoryName?: string;
+    repositoryOwner?: string;
+
+    constructor(data?: IGetWorkflowResultsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.repositoryName = _data["repositoryName"];
+            this.repositoryOwner = _data["repositoryOwner"];
+        }
+    }
+
+    static fromJS(data: any): GetWorkflowResultsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetWorkflowResultsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryName"] = this.repositoryName;
+        data["repositoryOwner"] = this.repositoryOwner;
+        return data;
+    }
+}
+
+export interface IGetWorkflowResultsRequest {
+    repositoryName?: string;
+    repositoryOwner?: string;
+}
+
+export class GitStatusResponse extends ResponseBase implements IGitStatusResponse {
+    statusElements?: RepositoryStatusElement[];
+
+    constructor(data?: IGitStatusResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            if (Array.isArray(_data["statusElements"])) {
+                this.statusElements = [] as any;
+                for (let item of _data["statusElements"])
+                    this.statusElements!.push(RepositoryStatusElement.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): GitStatusResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitStatusResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.statusElements)) {
+            data["statusElements"] = [];
+            for (let item of this.statusElements)
+                data["statusElements"].push(item ? item.toJSON() : undefined as any);
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitStatusResponse extends IResponseBase {
+    statusElements?: RepositoryStatusElement[];
+}
+
+export class RepositoryStatusElement extends ChasmaXmlBase implements IRepositoryStatusElement {
+    repositoryId?: string;
+    filePath?: string;
+    state?: FileStatus;
+    isStaged?: boolean;
+
+    constructor(data?: IRepositoryStatusElement) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repositoryId = _data["repositoryId"];
+            this.filePath = _data["filePath"];
+            this.state = _data["state"];
+            this.isStaged = _data["isStaged"];
+        }
+    }
+
+    static fromJS(data: any): RepositoryStatusElement {
+        data = typeof data === 'object' ? data : {};
+        let result = new RepositoryStatusElement();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryId"] = this.repositoryId;
+        data["filePath"] = this.filePath;
+        data["state"] = this.state;
+        data["isStaged"] = this.isStaged;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IRepositoryStatusElement extends IChasmaXmlBase {
+    repositoryId?: string;
+    filePath?: string;
+    state?: FileStatus;
+    isStaged?: boolean;
+}
+
+/** Calculated status of a filepath in the working directory considering the current Index and the Head. */
+export enum FileStatus {
+    Unaltered = 0,
+    NewInIndex = 1,
+    ModifiedInIndex = 2,
+    DeletedFromIndex = 4,
+    RenamedInIndex = 8,
+    TypeChangeInIndex = 16,
+    NewInWorkdir = 128,
+    ModifiedInWorkdir = 256,
+    DeletedFromWorkdir = 512,
+    TypeChangeInWorkdir = 1024,
+    RenamedInWorkdir = 2048,
+    Unreadable = 4096,
+    Ignored = 16384,
+    Conflicted = 32768,
+    Nonexistent = -2147483648,
+}
+
+export class GitStatusRequest extends ChasmaXmlBase implements IGitStatusRequest {
+    repositoryId?: string;
+
+    constructor(data?: IGitStatusRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repositoryId = _data["repositoryId"];
+        }
+    }
+
+    static fromJS(data: any): GitStatusRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitStatusRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryId"] = this.repositoryId;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitStatusRequest extends IChasmaXmlBase {
+    repositoryId?: string;
+}
+
+export class ApplyStagingActionResponse extends ResponseBase implements IApplyStagingActionResponse {
+    statusElements?: RepositoryStatusElement[];
+
+    constructor(data?: IApplyStagingActionResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            if (Array.isArray(_data["statusElements"])) {
+                this.statusElements = [] as any;
+                for (let item of _data["statusElements"])
+                    this.statusElements!.push(RepositoryStatusElement.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ApplyStagingActionResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ApplyStagingActionResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.statusElements)) {
+            data["statusElements"] = [];
+            for (let item of this.statusElements)
+                data["statusElements"].push(item ? item.toJSON() : undefined as any);
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IApplyStagingActionResponse extends IResponseBase {
+    statusElements?: RepositoryStatusElement[];
+}
+
+export class ApplyStagingActionRequest extends ChasmaXmlBase implements IApplyStagingActionRequest {
+    repoKey?: string;
+    fileName?: string;
+    isStaging?: boolean;
+
+    constructor(data?: IApplyStagingActionRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repoKey = _data["repoKey"];
+            this.fileName = _data["fileName"];
+            this.isStaging = _data["isStaging"];
+        }
+    }
+
+    static fromJS(data: any): ApplyStagingActionRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ApplyStagingActionRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repoKey"] = this.repoKey;
+        data["fileName"] = this.fileName;
+        data["isStaging"] = this.isStaging;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IApplyStagingActionRequest extends IChasmaXmlBase {
+    repoKey?: string;
+    fileName?: string;
+    isStaging?: boolean;
+}
+
+export class UserAccountModel implements IUserAccountModel {
+    id?: number;
+    name?: string;
+    userName?: string;
+    password?: string;
+    salt?: string;
+
+    constructor(data?: IUserAccountModel) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.userName = _data["userName"];
+            this.password = _data["password"];
+            this.salt = _data["salt"];
+        }
+    }
+
+    static fromJS(data: any): UserAccountModel {
+        data = typeof data === 'object' ? data : {};
+        let result = new UserAccountModel();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["userName"] = this.userName;
+        data["password"] = this.password;
+        data["salt"] = this.salt;
+        return data;
+    }
+}
+
+export interface IUserAccountModel {
+    id?: number;
+    name?: string;
+    userName?: string;
+    password?: string;
+    salt?: string;
+}
+
+export class LoginResponse extends ResponseBase implements ILoginResponse {
+    userName?: string;
+    userId?: number;
+
+    constructor(data?: ILoginResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.userName = _data["userName"];
+            this.userId = _data["userId"];
+        }
+    }
+
+    static fromJS(data: any): LoginResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new LoginResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userName"] = this.userName;
+        data["userId"] = this.userId;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ILoginResponse extends IResponseBase {
+    userName?: string;
+    userId?: number;
+}
+
+export class LoginRequest extends ChasmaXmlBase implements ILoginRequest {
+    userName?: string;
+    password?: string;
+
+    constructor(data?: ILoginRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.userName = _data["userName"];
+            this.password = _data["password"];
+        }
+    }
+
+    static fromJS(data: any): LoginRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new LoginRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userName"] = this.userName;
+        data["password"] = this.password;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ILoginRequest extends IChasmaXmlBase {
+    userName?: string;
+    password?: string;
+}
+
+export class AddUserResponse extends ResponseBase implements IAddUserResponse {
+    userName?: string;
+
+    constructor(data?: IAddUserResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.userName = _data["userName"];
+        }
+    }
+
+    static fromJS(data: any): AddUserResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new AddUserResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userName"] = this.userName;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IAddUserResponse extends IResponseBase {
+    userName?: string;
+}
+
+export class AddUserRequest implements IAddUserRequest {
+    name?: string;
+    userName?: string;
+    password?: string;
+
+    constructor(data?: IAddUserRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.userName = _data["userName"];
+            this.password = _data["password"];
+        }
+    }
+
+    static fromJS(data: any): AddUserRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new AddUserRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["userName"] = this.userName;
+        data["password"] = this.password;
+        return data;
+    }
+}
+
+export interface IAddUserRequest {
+    name?: string;
+    userName?: string;
+    password?: string;
 }
 
 export class ApiException extends Error {

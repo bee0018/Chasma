@@ -38,18 +38,6 @@ namespace ChasmaWebApi
         public required string GitHubApiToken { get; set; }
         
         /// <summary>
-        /// Gets or sets the GitHub repository owner.
-        /// </summary>
-        [XmlElement("githubRepoOwner")]
-        public required string GitHubRepoOwner { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the GitHub repository name.
-        /// </summary>
-        [XmlElement("gitHubRepoName")]
-        public required string GitHubRepoName { get; set; }
-        
-        /// <summary>
         /// Gets or sets the maximum number of workflows to report to the client.
         /// </summary>
         [XmlElement("workflowRunReportThreshold")]

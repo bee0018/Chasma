@@ -11,7 +11,7 @@ public class CacheManager : ICacheManager
 {
     // <inheritdoc />
     public ConcurrentDictionary<string, LocalGitRepository> Repositories { get; } = new();
-    
+
     // <inheritdoc />
-    public HashSet<string> WorkingDirectories { get; } = new();
+    public ConcurrentDictionary<string, string> WorkingDirectories { get; } = new();
 }

@@ -7,7 +7,7 @@ namespace ChasmaWebApi.Data.Models
     /// Class representing the user_accounts table in the database.
     /// </summary>
     [Table("user_accounts")]
-    public class UserAccount
+    public class UserAccountModel
     {
         /// <summary>
         /// Gets or sets the identifier of the account user.
@@ -30,9 +30,15 @@ namespace ChasmaWebApi.Data.Models
         public required string UserName { get; set; }
 
         /// <summary>
-        /// Gets or sets the password of the account.
+        /// Gets or sets the hashed password of the account.
         /// </summary>
         [Column("password")]
         public required string Password { get; set; }
+
+        /// <summary>
+        /// Gets or sets the salt used for hashing the password.
+        /// </summary>
+        [Column("salt")]
+        public required byte[] Salt { get; set; }
     }
 }

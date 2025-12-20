@@ -21,9 +21,9 @@ namespace ChasmaWebApi.Tests
             Assert.IsNotNull(webApiConfigurations);
             Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.WebApiUrl));
             Assert.AreEqual(databaseConfig.DatabaseName, webApiConfigurations.DatabaseConfigurations.DatabaseName);
-            Assert.AreEqual(databaseConfig.Username, webApiConfigurations.DatabaseConfigurations.Username);
-            Assert.AreEqual(databaseConfig.Password, webApiConfigurations.DatabaseConfigurations.Password);
-            Assert.AreEqual(databaseConfig.Port, webApiConfigurations.DatabaseConfigurations.Port);
+            Assert.AreEqual(databaseConfig.Server, webApiConfigurations.DatabaseConfigurations.Server);
+            Assert.AreEqual(databaseConfig.TrustedConnection, webApiConfigurations.DatabaseConfigurations.TrustedConnection);
+            Assert.AreEqual(databaseConfig.TrustedCertificate, webApiConfigurations.DatabaseConfigurations.TrustedCertificate);
         }
 
         /// <summary>
@@ -37,9 +37,9 @@ namespace ChasmaWebApi.Tests
             DatabaseConfigurations? generatedConfig = ChasmaXmlBase.DeserializeToObject<DatabaseConfigurations>(xmlText);
             Assert.IsNotNull(generatedConfig);
             Assert.AreEqual(databaseConfig.DatabaseName, generatedConfig.DatabaseName);
-            Assert.AreEqual(databaseConfig.Username, generatedConfig.Username);
-            Assert.AreEqual(databaseConfig.Password, generatedConfig.Password);
-            Assert.AreEqual(databaseConfig.Port, generatedConfig.Port);
+            Assert.AreEqual(databaseConfig.Server, generatedConfig.Server);
+            Assert.AreEqual(databaseConfig.TrustedConnection, generatedConfig.TrustedConnection);
+            Assert.AreEqual(databaseConfig.TrustedCertificate, generatedConfig.TrustedCertificate);
         }
 
         /// <summary>
@@ -50,11 +50,10 @@ namespace ChasmaWebApi.Tests
         {
             return new DatabaseConfigurations
             {
-                DatabaseName = "chasma",
-                Host = "localhost",
-                Password = "password",
-                Port = 5432,
-                Username = "postgres",
+                DatabaseName = "Chasma",
+                Server = "localhost\\SQLEXPRESS",
+                TrustedConnection = true,
+                TrustedCertificate = true,
             };
         }
     }

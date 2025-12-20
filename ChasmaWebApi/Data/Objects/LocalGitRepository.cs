@@ -11,6 +11,11 @@ public class LocalGitRepository
     /// Gets or sets the local repository identifier.
     /// </summary>
     public string Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets user identifier that this repository belongs to.
+    /// </summary>
+    public int UserId { get; set; }
     
     /// <summary>
     /// Gets or sets the name of the repository.

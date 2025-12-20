@@ -9,9 +9,19 @@ namespace ChasmaWebApi.Data;
 public class ApplicationDbContext : DbContext
 {
     /// <summary>
-    /// The entity used to represent the user accounts of the Chasma system.
+    /// The entity set used to represent the user accounts of application.
     /// </summary>
-    public DbSet<UserAccount> UserAccounts { get; set; }
+    public DbSet<UserAccountModel> UserAccounts { get; set; }
+
+    /// <summary>
+    /// The entity set used to represent the repositories maintained by the users in the system.
+    /// </summary>
+    public DbSet<RepositoryModel> Repositories { get; set; }
+
+    /// <summary>
+    /// The entity set used to represent the working directories maintained by the users in the system.
+    /// </summary>
+    public DbSet<WorkingDirectoryModel> WorkingDirectories { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ApplicationDbContext"/> class.

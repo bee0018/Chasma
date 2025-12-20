@@ -11,64 +11,6 @@
     }
   ],
   "paths": {
-    "/api/GitHub/workflowRuns": {
-      "get": {
-        "tags": [
-          "GitHub"
-        ],
-        "operationId": "GitHub_GetChasmaWorkflowResults",
-        "parameters": [
-          {
-            "name": "RepositoryName",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
-          },
-          {
-            "name": "RepositoryOwner",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 2
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GitHubWorkflowRunResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/GitHub/findLocalGitRepositories": {
-      "get": {
-        "tags": [
-          "GitHub"
-        ],
-        "operationId": "GitHub_GetLocalGitRepositories",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LocalRepositoriesInfoMessage"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/Health/heartbeat": {
       "get": {
         "tags": [
@@ -153,6 +95,283 @@
         }
       }
     },
+    "/api/RepositoryConfiguration/getLocalGitRepositories": {
+      "get": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_GetLocalGitRepositories",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalRepositoriesInfoMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryConfiguration/addLocalGitRepositories": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_AddLocalGitRepositories",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddLocalRepositoriesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryConfiguration/deleteRepository": {
+      "delete": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_DeleteRepository",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteRepositoryRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteRepositoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryStatus/workflowRuns": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_GetChasmaWorkflowResults",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetWorkflowResultsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubWorkflowRunResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryStatus/gitStatus": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_GetRepoStatus",
+        "requestBody": {
+          "x-name": "gitStatusRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitStatusRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryStatus/applyStagingAction": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_ApplyStagingAction",
+        "requestBody": {
+          "x-name": "applyStagingActionRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyStagingActionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyStagingActionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_GetUserAcccounts",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserAccountModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/login": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_Login",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/addUserAccount": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_AddUserAccount",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddUserResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/uuid": {
       "get": {
         "tags": [
@@ -176,134 +395,6 @@
   },
   "components": {
     "schemas": {
-      "GitHubWorkflowRunResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryName": {
-                "type": "string"
-              },
-              "buildCount": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "workflowRunResults": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/WorkflowRunResult"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "WorkflowRunResult": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "branchName": {
-            "type": "string"
-          },
-          "runNumber": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "buildTrigger": {
-            "type": "string"
-          },
-          "commitMessage": {
-            "type": "string"
-          },
-          "buildStatus": {
-            "type": "string"
-          },
-          "buildConclusion": {
-            "type": "string"
-          },
-          "createdDate": {
-            "type": "string"
-          },
-          "updatedDate": {
-            "type": "string"
-          },
-          "workflowUrl": {
-            "type": "string"
-          },
-          "authorName": {
-            "type": "string"
-          }
-        }
-      },
-      "ResponseBase": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "isErrorResponse": {
-                "type": "boolean"
-              },
-              "errorMessage": {
-                "type": "string",
-                "nullable": true
-              }
-            }
-          }
-        ]
-      },
-      "ChasmaXmlBase": {
-        "type": "object",
-        "additionalProperties": false
-      },
-      "LocalRepositoriesInfoMessage": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "timestamp": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "repositories": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/LocalGitRepository"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "LocalGitRepository": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "owner": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        }
-      },
       "HeartbeatMessage": {
         "allOf": [
           {
@@ -351,6 +442,10 @@
           1
         ]
       },
+      "ChasmaXmlBase": {
+        "type": "object",
+        "additionalProperties": false
+      },
       "EncodeJwtResponse": {
         "allOf": [
           {
@@ -366,6 +461,26 @@
               "expirationTime": {
                 "type": "string",
                 "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "ResponseBase": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "isErrorResponse": {
+                "type": "boolean"
+              },
+              "errorMessage": {
+                "type": "string",
+                "nullable": true
               }
             }
           }
@@ -922,6 +1037,484 @@
             "type": "string"
           },
           "encodedToken": {
+            "type": "string"
+          }
+        }
+      },
+      "LocalRepositoriesInfoMessage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "timestamp": {
+                "type": "string"
+              },
+              "repositories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LocalGitRepository"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "LocalGitRepository": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "AddLocalRepositoriesResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "currentRepositories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LocalGitRepository"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeleteRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LocalGitRepository"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeleteRepositoryRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "GitHubWorkflowRunResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryName": {
+                "type": "string"
+              },
+              "buildCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "workflowRunResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WorkflowRunResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WorkflowRunResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "branchName": {
+            "type": "string"
+          },
+          "runNumber": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "buildTrigger": {
+            "type": "string"
+          },
+          "commitMessage": {
+            "type": "string"
+          },
+          "buildStatus": {
+            "type": "string"
+          },
+          "buildConclusion": {
+            "type": "string"
+          },
+          "createdDate": {
+            "type": "string"
+          },
+          "updatedDate": {
+            "type": "string"
+          },
+          "workflowUrl": {
+            "type": "string"
+          },
+          "authorName": {
+            "type": "string"
+          }
+        }
+      },
+      "GetWorkflowResultsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryName": {
+            "type": "string"
+          },
+          "repositoryOwner": {
+            "type": "string"
+          }
+        }
+      },
+      "GitStatusResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "statusElements": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepositoryStatusElement"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "RepositoryStatusElement": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "filePath": {
+                "type": "string"
+              },
+              "state": {
+                "$ref": "#/components/schemas/FileStatus"
+              },
+              "isStaged": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "FileStatus": {
+        "type": "integer",
+        "description": "Calculated status of a filepath in the working directory considering the current Index and the Head.",
+        "x-enumFlags": true,
+        "x-enum-names": [
+          "Unaltered",
+          "NewInIndex",
+          "ModifiedInIndex",
+          "DeletedFromIndex",
+          "RenamedInIndex",
+          "TypeChangeInIndex",
+          "NewInWorkdir",
+          "ModifiedInWorkdir",
+          "DeletedFromWorkdir",
+          "TypeChangeInWorkdir",
+          "RenamedInWorkdir",
+          "Unreadable",
+          "Ignored",
+          "Conflicted",
+          "Nonexistent"
+        ],
+        "x-enum-varnames": [
+          "Unaltered",
+          "NewInIndex",
+          "ModifiedInIndex",
+          "DeletedFromIndex",
+          "RenamedInIndex",
+          "TypeChangeInIndex",
+          "NewInWorkdir",
+          "ModifiedInWorkdir",
+          "DeletedFromWorkdir",
+          "TypeChangeInWorkdir",
+          "RenamedInWorkdir",
+          "Unreadable",
+          "Ignored",
+          "Conflicted",
+          "Nonexistent"
+        ],
+        "x-enumNames": [
+          "Unaltered",
+          "NewInIndex",
+          "ModifiedInIndex",
+          "DeletedFromIndex",
+          "RenamedInIndex",
+          "TypeChangeInIndex",
+          "NewInWorkdir",
+          "ModifiedInWorkdir",
+          "DeletedFromWorkdir",
+          "TypeChangeInWorkdir",
+          "RenamedInWorkdir",
+          "Unreadable",
+          "Ignored",
+          "Conflicted",
+          "Nonexistent"
+        ],
+        "x-enum-descriptions": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "x-enumDescriptions": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          4,
+          8,
+          16,
+          128,
+          256,
+          512,
+          1024,
+          2048,
+          4096,
+          16384,
+          32768,
+          -2147483648
+        ]
+      },
+      "GitStatusRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ApplyStagingActionResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "statusElements": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepositoryStatusElement"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ApplyStagingActionRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repoKey": {
+                "type": "string"
+              },
+              "fileName": {
+                "type": "string"
+              },
+              "isStaging": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "UserAccountModel": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "salt": {
+            "type": "string",
+            "format": "byte"
+          }
+        }
+      },
+      "LoginResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "userName": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "LoginRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "userName": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "AddUserResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "userName": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "AddUserRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "password": {
             "type": "string"
           }
         }
