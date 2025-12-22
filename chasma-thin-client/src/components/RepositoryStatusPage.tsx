@@ -3,11 +3,14 @@ import {useParams} from "react-router-dom";
 import "../css/RepositoryStatusPage.css"
 import '../css/InfoTable.css'
 import {
-    ApplyStagingActionRequest, GitStatusRequest,
+    ApplyStagingActionRequest,
+    GitStatusRequest,
     RepositoryStatusClient,
     RepositoryStatusElement
 } from "../API/ChasmaWebApiClient";
 import NotificationModal from "./modals/NotificationModal";
+import CommitModal from "./modals/CommitModal";
+import {getUserEmail, getUserId} from "../managers/LocalStorageManager";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient()
@@ -30,6 +33,9 @@ const RepositoryStatusPage: React.FC = () => {
         isError: boolean | undefined,
         loading?: boolean
     } | null>(null);
+
+    /** Gets or sets a flag indicating whether the user is editing the commit message. **/
+    const [isEditingCommitMessage, setIsEditingCommitMessage] = useState<boolean>(false);
 
     /**
      * Closes the modal once the user confirms the message
@@ -160,12 +166,20 @@ const RepositoryStatusPage: React.FC = () => {
     return (
         <>
             <button className="refresh-btn"
-                    onClick={() => handleGitStatusRequest()}>
-                ⟳ Refresh Repo Status
+                    onClick={() => setIsEditingCommitMessage(true)}>
+                Commit ↑
+            </button>
+            <button className="refresh-btn"
+                    style={{right: "100px"}}>
+                Push ↗
+            </button>
+            <button className="refresh-btn"
+                    onClick={() => handleGitStatusRequest()}
+                    style={{right: "350px"}}>
+                Refresh Repo Status ⟳
             </button>
             <h1 className="repository-title-header">{`${repoName} Status Manager`}</h1>
             {getFileStatusContainers()}
-
             {notification && (
                 <NotificationModal
                     title={notification.title}
@@ -173,6 +187,13 @@ const RepositoryStatusPage: React.FC = () => {
                     isError={notification.isError}
                     loading={notification.loading}
                     onClose={closeModal} />
+            )}
+            {isEditingCommitMessage && (
+                <CommitModal
+                    repositoryId={repoId}
+                    email={getUserEmail()}
+                    userId={getUserId()}
+                    onClose={() => setIsEditingCommitMessage(false)} />
             )}
         </>
     )

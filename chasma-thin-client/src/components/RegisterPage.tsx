@@ -15,6 +15,9 @@ const RegisterPage: React.FC = () => {
     /** Gets or sets the name of the user. **/
     const [name, setName] = useState('');
 
+    /** Gets or sets the email of the user. **/
+    const [email, setEmail] = useState('');
+
     /** Gets or sets the username of the user. **/
     const [userName, setUserName] = useState('');
 
@@ -53,6 +56,7 @@ const RegisterPage: React.FC = () => {
             addUserRequest.name = name;
             addUserRequest.userName = userName;
             addUserRequest.password = password;
+            addUserRequest.email = email;
             const response = await userClient.addUserAccount(addUserRequest);
             if (response.isErrorResponse) {
                 setNotification({
@@ -68,6 +72,9 @@ const RegisterPage: React.FC = () => {
                 message: `Welcome to Chasma Git Manager, ${response.userName}.`,
                 isError: response.isErrorResponse,
             });
+            localStorage.setItem("username", JSON.stringify(response.userName));
+            localStorage.setItem("userId", JSON.stringify(response.userId));
+            localStorage.setItem("email", JSON.stringify(response.email));
             navigate('/home');
         } catch (e) {
             console.error(e);
@@ -76,6 +83,9 @@ const RegisterPage: React.FC = () => {
                 message: "An internal server error has occurred. Review logs.",
                 isError: true,
             });
+            localStorage.removeItem("username");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("email");
         }
     }
 
@@ -96,6 +106,14 @@ const RegisterPage: React.FC = () => {
                             placeholder="Full Name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                        <input
+                            type="email"
+                            className="input-field"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             required
                         />
                         <input

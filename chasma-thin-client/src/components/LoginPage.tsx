@@ -63,6 +63,7 @@ const LoginPage: React.FC = () => {
 
             localStorage.setItem("username", JSON.stringify(response.userName));
             localStorage.setItem("userId", JSON.stringify(response.userId));
+            localStorage.setItem("email", JSON.stringify(response.email));
             navigate('/home');
         } catch (e) {
             console.error(e);
@@ -73,6 +74,7 @@ const LoginPage: React.FC = () => {
             });
             localStorage.removeItem("username");
             localStorage.removeItem("userId");
+            localStorage.removeItem("email");
         }
     }
 

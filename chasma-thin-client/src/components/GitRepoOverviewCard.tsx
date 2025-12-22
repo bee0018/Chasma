@@ -1,6 +1,7 @@
 ﻿import React from "react";
 import {useNavigate} from "react-router-dom";
 import {DeleteRepositoryRequest, RepositoryConfigurationClient} from "../API/ChasmaWebApiClient";
+import {getUserId} from "../managers/LocalStorageManager";
 
 /** The properties of the Card component. */
 interface IProps {
@@ -34,13 +35,6 @@ const repoConfigClient = new RepositoryConfigurationClient();
 const GitRepoOverviewCard: React.FC<IProps> = (props) => {
     /** The navigation function. **/
     const navigate = useNavigate();
-
-    /** Gets the userId from local storage. **/
-    const getUserId = () => {
-        const userIdJson = localStorage.getItem("userId");
-        if (!userIdJson) return undefined;
-        return Number(userIdJson)
-    };
 
     return (
         <div className="card" onClick={() => navigate(`${props.url}`)}>

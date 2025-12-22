@@ -2,8 +2,10 @@
 using ChasmaWebApi.Data.Objects;
 using LibGit2Sharp;
 using Octokit;
+using Commit = LibGit2Sharp.Commit;
 using Credentials = Octokit.Credentials;
 using Repository = LibGit2Sharp.Repository;
+using Signature = LibGit2Sharp.Signature;
 
 namespace ChasmaWebApi.Data.Managers
 {
@@ -115,6 +117,14 @@ namespace ChasmaWebApi.Data.Managers
             ClientLogger.LogInformation("{action} file {file}", stagingAction, fileName);
             statusElements = GetRepositoryStatus(repoKey);
             return statusElements;
+        }
+
+        // <inheritdoc />
+        public void CommitChanges(string filePath, string fullName, string email, string commitMessage)
+        {
+            using Repository repo = new(filePath);
+            Signature author = new(fullName, email, DateTimeOffset.Now);
+            repo.Commit(commitMessage, author, author);
         }
 
         /// <summary>

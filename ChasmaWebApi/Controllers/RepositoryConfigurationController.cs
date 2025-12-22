@@ -6,6 +6,7 @@ using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Requests;
 using ChasmaWebApi.Data.Responses;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChasmaWebApi.Controllers;
 
@@ -165,7 +166,10 @@ public class RepositoryConfigurationController : ControllerBase
         foreach (RepositoryModel repo in reposToDelete)
         {
             applicationDbContext.Repositories.Remove(repo);
+            WorkingDirectoryModel directory = await applicationDbContext.WorkingDirectories.FirstAsync(i => i.RepositoryId == repo.Id);
+            applicationDbContext.WorkingDirectories.Remove(directory);
         }
+
         await applicationDbContext.SaveChangesAsync();
         response.Repositories = localGitRepositories;
         return Ok(response);
@@ -192,6 +196,11 @@ public class RepositoryConfigurationController : ControllerBase
         foreach (WorkingDirectoryModel workingDirectoryModel in applicationDbContext.WorkingDirectories)
         {
             cacheManager.WorkingDirectories.TryAdd(workingDirectoryModel.RepositoryId, workingDirectoryModel.WorkingDirectory);
+        }
+
+        foreach (UserAccountModel user in applicationDbContext.UserAccounts)
+        {
+            cacheManager.Users.TryAdd(user.Id, user);
         }
     }
 }

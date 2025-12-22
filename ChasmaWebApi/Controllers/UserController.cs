@@ -101,6 +101,7 @@ namespace ChasmaWebApi.Controllers
             logger.LogInformation("User {username} logged in successfully", account.UserName);
             response.UserName = account.UserName;
             response.UserId = account.Id;
+            response.Email = account.Email;
             return Ok(response);
         }
 
@@ -159,6 +160,7 @@ namespace ChasmaWebApi.Controllers
             {
                 Name = request.Name,
                 UserName = request.UserName,
+                Email = request.Email,
                 Password = hashedPassword,
                 Salt = salt,
             };
@@ -174,6 +176,8 @@ namespace ChasmaWebApi.Controllers
 
             logger.LogInformation("User {username} has been added to the system successfully", account.UserName);
             response.UserName = account.UserName;
+            response.UserId = account.Id;
+            response.Email = account.Email;
             return Ok(response);
         }
     }

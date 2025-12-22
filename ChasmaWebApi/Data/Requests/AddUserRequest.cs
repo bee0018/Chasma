@@ -11,9 +11,14 @@
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the user name of the user.
+        /// Gets or sets the username of the user.
         /// </summary>
         public string UserName { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the email of the user.
+        /// </summary>
+        public string Email { get; set; }
 
         /// <summary>
         /// Gets or sets the password of the user.

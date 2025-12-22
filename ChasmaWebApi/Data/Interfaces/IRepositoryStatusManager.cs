@@ -35,5 +35,14 @@ namespace ChasmaWebApi.Data.Interfaces
         /// <param name="isStaging">Flag indicating whether the file is being staged.</param>
         /// <returns>A list of the updated file statuses after staging or unstaging.</returns>
         List<RepositoryStatusElement>? ApplyStagingAction(string repoKey, string fileName, bool isStaging);
+
+        /// <summary>
+        /// Commits the staged changes for the specified repository.
+        /// </summary>
+        /// <param name="filePath">The working directory of the repository.</param>
+        /// <param name="fullName">The user's full name.</param>
+        /// <param name="email">The user's email.</param>
+        /// <param name="commitMessage">The message description of the commit.</param>
+        void CommitChanges(string filePath, string fullName, string email, string commitMessage);
     }
 }

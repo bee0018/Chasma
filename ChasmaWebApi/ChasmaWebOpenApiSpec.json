@@ -285,6 +285,38 @@
         }
       }
     },
+    "/api/RepositoryStatus/gitCommit": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_CommitChanges",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitCommitRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitCommitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/User": {
       "get": {
         "tags": [
@@ -1426,6 +1458,43 @@
           }
         ]
       },
+      "GitCommitResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "GitCommitRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "repositoryId": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "commitMessage": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
       "UserAccountModel": {
         "type": "object",
         "additionalProperties": false,
@@ -1435,6 +1504,9 @@
             "format": "int32"
           },
           "name": {
+            "type": "string"
+          },
+          "email": {
             "type": "string"
           },
           "userName": {
@@ -1464,6 +1536,9 @@
               "userId": {
                 "type": "integer",
                 "format": "int32"
+              },
+              "email": {
+                "type": "string"
               }
             }
           }
@@ -1499,6 +1574,13 @@
             "properties": {
               "userName": {
                 "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "email": {
+                "type": "string"
               }
             }
           }
@@ -1512,6 +1594,9 @@
             "type": "string"
           },
           "userName": {
+            "type": "string"
+          },
+          "email": {
             "type": "string"
           },
           "password": {
