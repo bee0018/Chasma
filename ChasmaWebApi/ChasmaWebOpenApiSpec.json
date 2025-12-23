@@ -1264,6 +1264,14 @@
                 "items": {
                   "$ref": "#/components/schemas/RepositoryStatusElement"
                 }
+              },
+              "commitsAhead": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "commitsBehind": {
+                "type": "integer",
+                "format": "int32"
               }
             }
           }
