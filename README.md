@@ -5,7 +5,7 @@
 - Download [Node.js](https://nodejs.org/en/download/).
 - Download [WebStorm](https://www.jetbrains.com/webstorm/promo/?source=google&medium=cpc&campaign=AMER_en_US-CST_WebStorm_Branded&term=webstorm&content=717267885243&gad_source=1&gad_campaignid=9641686287&gbraid=0AAAAADloJzjM8YwGuomM1PAAElS0TYUtX&gclid=Cj0KCQjw2IDFBhDCARIsABDKOJ6ZAX4ejAlVLQhNXvOmGcZ6rUg8tSvULOMdTD4DFZLUPnMA5E5bJkIaAmStEALw_wcB). Suggested that you use the non-commercial version for the time being.
 - Download the [.NET8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) SDK. This will be used for running the backend and other dependencies such as the runtime environment.
-- Download the [PostgresSQL](https://www.postgresql.org/download/) database platform. The tool to interact with the database will be pgAdmin4.
+- Download the [SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads#trysql) database platform. The tool to interact with the database will be [Micorsoft SQL Server Management Studio](https://learn.microsoft.com/en-us/ssms/install/install).
 - Download IDE for C# development. Preferred is [Visual Studio](https://visualstudio.microsoft.com/vs/professional/) or [Rider](https://www.jetbrains.com/rider/download/?section=windows).
 	- If using Visual Studio, make sure to install the workloads for:
  		- ASP.NET and web development
@@ -36,7 +36,7 @@
 - For setting up the endpoints and basis for talking to frontend to backend: https://fast-endpoints.com/docs/get-started
 
 ## Database
-- We will be using Entity Framework Core for database operations. Doing so will require PostgresSQL database installations.
+- We will be using Entity Framework Core for database operations. Doing so will require SQL Server Express database installations.
 
 ### Adding/Updating Tables in the Database via Visual Studio
 - We are able to add/update tables in the database without having to write database scripts. To do so, we must make models that Entity Framework Core will translate and migrate into the database. Note the following example:
