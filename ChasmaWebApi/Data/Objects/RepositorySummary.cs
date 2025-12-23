@@ -1,16 +1,19 @@
-﻿using ChasmaWebApi.Data.Objects;
-
-namespace ChasmaWebApi.Data.Responses
+﻿namespace ChasmaWebApi.Data.Objects
 {
     /// <summary>
-    /// Class representing the components of a Git Status response.
+    /// Class representing a summary of a repository.
     /// </summary>
-    public class GitStatusResponse : ResponseBase
+    public class RepositorySummary
     {
         /// <summary>
-        /// Gets or sets the results of the 'git status' command for the repository.
+        /// Gets or sets the list of status elements for the repository.
         /// </summary>
         public List<RepositoryStatusElement> StatusElements { get; set; } = new();
+
+        /// <summary>
+        /// Gets or sets the current branch name of the repository.
+        /// </summary>
+        public string BranchName { get; set; }
 
         /// <summary>
         /// Gets or sets the number of commits the local repository is ahead of the remote.
@@ -21,11 +24,6 @@ namespace ChasmaWebApi.Data.Responses
         /// Gets or sets the number of commits the local repository is behind the remote.
         /// </summary>
         public int CommitsBehind { get; set; }
-
-        /// <summary>
-        /// Gets or sets the current branch name of the repository.
-        /// </summary>
-        public string BranchName { get; set; }
 
         /// <summary>
         /// Gets or sets the remote branch URL of the repository.

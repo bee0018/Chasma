@@ -349,6 +349,38 @@
         }
       }
     },
+    "/api/RepositoryStatus/gitPull": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_PullChanges",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitPullRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitPullResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/User": {
       "get": {
         "tags": [
@@ -1307,6 +1339,9 @@
               },
               "branchName": {
                 "type": "string"
+              },
+              "remoteUrl": {
+                "type": "string"
               }
             }
           }
@@ -1559,6 +1594,40 @@
             "additionalProperties": false,
             "properties": {
               "repositoryId": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "GitPullResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "GitPullRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "email": {
                 "type": "string"
               }
             }

@@ -135,8 +135,8 @@ namespace ChasmaWebApi.Controllers
 
             string repoId = gitStatusRequest.RepositoryId;
             logger.LogInformation("Received request to run git status for repository ID: {repoId}", repoId);
-            List<RepositoryStatusElement>? statusElements = statusManager.GetRepositoryStatus(repoId);
-            if (statusElements == null)
+            RepositorySummary summary = statusManager.GetRepositoryStatus(repoId);
+            if (summary == null)
             {
                 logger.LogError("Failed to get repository status for repo ID: {repoId}", repoId);
                 gitStatusResponse.IsErrorResponse = true;
@@ -144,7 +144,11 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(gitStatusResponse);
             }
 
-            gitStatusResponse.StatusElements = statusElements;
+            gitStatusResponse.StatusElements = summary.StatusElements;
+            gitStatusResponse.CommitsAhead = summary.CommitsAhead;
+            gitStatusResponse.CommitsBehind = summary.CommitsBehind;
+            gitStatusResponse.BranchName = summary.BranchName;
+            gitStatusResponse.RemoteUrl = summary.RemoteUrl;
             return Ok(gitStatusResponse);
         }
 
@@ -272,6 +276,118 @@ namespace ChasmaWebApi.Controllers
                 logger.LogError(e, "Error committing changes to repo: {repoId}", repoId);
                 return Ok(response);
             }
+        }
+
+        [HttpPost]
+        [Route("gitPush")]
+        public ActionResult<GitPushResponse> PushChanges([FromBody] GitPushRequest request)
+        {
+            logger.LogInformation("Received request to push changes for repo: {repoId}", request.RepositoryId);
+            GitPushResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot push changes.";
+                logger.LogError("GitPushRequest received is null. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot push changes.";
+                logger.LogError("Null or empty repository identifier received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot push changes.";
+                logger.LogError("No working directory was found for repo identifier {repoId}. Sending error response", repoId);
+                return BadRequest(response);
+            }
+
+            if (!statusManager.TryPushChanges(workingDirectory, webApiConfigurations.GitHubApiToken, out string errorMessage))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to push changes to repo: {repoId}. {errorMessage}";
+                logger.LogError("Failed to push changes to repo: {repoId}. {errorMessage}", repoId, errorMessage);
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully pushed changes to repo: {repoId}", repoId);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Pulls the latest changes from the remote repository.
+        /// </summary>
+        /// <param name="request">Request to pull changes for the specified repository.</param>
+        /// <returns>The git pull response.</returns>
+        [HttpPost]
+        [Route("gitPull")]
+        public ActionResult<GitPullResponse> PullChanges([FromBody] GitPullRequest request)
+        {
+            logger.LogInformation("Received request to pull changes for repo: {repoId}", request.RepositoryId);
+            GitPullResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot pull changes.";
+                logger.LogError("GitPullRequest received is null. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot pull changes.";
+                logger.LogError("Null or empty repository identifier received. Sending error response");
+                return BadRequest(response);
+            }
+
+
+            string email = request.Email;
+            if (string.IsNullOrEmpty(email))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "User's email must be populated. Cannot pull changes.";
+                logger.LogError("Null or empty user email received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot pull changes.";
+                logger.LogError("No working directory was found for repo identifier {repoId}. Sending error response", repoId);
+                return BadRequest(response);
+            }
+
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No user found in cache for user ID: {userId}. Cannot pull changes.";
+                logger.LogError("No user was found for user ID: {userId}. Sending error response", userId);
+                return BadRequest(response);
+            }
+
+            string fullName = user.Name;
+            string token = webApiConfigurations.GitHubApiToken;
+            if (!statusManager.TryPullChanges(workingDirectory, fullName, email, token, out string errorMessage))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to pull changes to repo: {repoId}. {errorMessage}";
+                logger.LogError("Failed to pull changes to repo: {repoId}. {errorMessage}", repoId, errorMessage);
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully pulled changes to repo: {repoId}", repoId);
+            return Ok(response);
         }
 
         /// <summary>

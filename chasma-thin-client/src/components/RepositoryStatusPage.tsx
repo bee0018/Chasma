@@ -1,9 +1,9 @@
 ﻿import React, {useEffect, useState} from "react";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import "../css/RepositoryStatusPage.css"
 import '../css/InfoTable.css'
 import {
-    ApplyStagingActionRequest,
+    ApplyStagingActionRequest, GitPullRequest,
     GitStatusRequest,
     RepositoryStatusClient,
     RepositoryStatusElement
@@ -11,6 +11,8 @@ import {
 import NotificationModal from "./modals/NotificationModal";
 import CommitModal from "./modals/CommitModal";
 import {getUserEmail, getUserId} from "../managers/LocalStorageManager";
+import PushModal from "./modals/PushModal";
+import {isBlankOrUndefined} from "../stringHelperUtil";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient()
@@ -36,6 +38,24 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user is editing the commit message. **/
     const [isEditingCommitMessage, setIsEditingCommitMessage] = useState<boolean>(false);
+
+    /** Gets or sets a flag indicating whether the user is pushing changes. **/
+    const [isPushingChanges, setIsPushingChanges] = useState<boolean>(false);
+
+    /** Gets or sets the number of commits the local repo is ahead of the remote. **/
+    const [commitsAhead, setCommitsAhead] = useState<number | undefined>(0);
+
+    /** Gets or sets the number of commits the local repo is behind the remote. **/
+    const [commitsBehind, setCommitsBehind] = useState<number | undefined>(0);
+
+    /** Gets or sets the local branch name. **/
+    const [branchName, setBranchName] = useState<string | undefined>("");
+
+    /** Gets or sets the remote branch URL. **/
+    const [branchUrl, setBranchUrl] = useState<string | undefined>(undefined);
+
+    /** Gets the navigate function. **/
+    const navigate = useNavigate();
 
     /**
      * Closes the modal once the user confirms the message
@@ -70,6 +90,10 @@ const RepositoryStatusPage: React.FC = () => {
             }
 
             setStatusElements(response.statusElements)
+            setCommitsBehind(response.commitsBehind)
+            setCommitsAhead(response.commitsAhead)
+            setBranchName(response.branchName)
+            setBranchUrl(response.remoteUrl)
         }
         catch (e) {
             setNotification({
@@ -114,88 +138,187 @@ const RepositoryStatusPage: React.FC = () => {
         }
     }
 
-    /** Gets the 'Staged Changes' and 'Unstaged Changes' containers. **/
-    function getFileStatusContainers() {
-        return (
-            <div className="page-content">
-                <div className="file-changes-container">
-                    <h1 className="page-description">Staged Changes</h1>
-                    <br/>
-                    <table className="info-table">
-                    {statusElements && statusElements.length > 0 && (
-                        statusElements.filter(element => element.isStaged).map((element, index) => {
-                            return (
-                                <tbody key={index}>
-                                    <tr style={{padding:'0px'}}
-                                        onClick={() => handleApplyStagingActionRequest(element, false)}>
-                                        <td>{element.filePath}</td>
-                                    </tr>
-                                </tbody>
-                            )
-                        })
-                    )}
-                    </table>
-                    <br/>
-                </div>
-                <br/>
-                <div className="file-changes-container">
-                    <h1 className="page-description">Unstaged Changes</h1>
-                    <br/>
-                    <table className="info-table">
-                        {statusElements && statusElements.length > 0 && (
-                            statusElements.filter(element => !element.isStaged).map((element, index) => {
-                                return (
-                                    <tbody key={index}>
-                                    <tr style={{padding:'0px'}}
-                                        onClick={() => handleApplyStagingActionRequest(element, true)}>
-                                        <td>{element.filePath}</td>
-                                    </tr>
-                                    </tbody>
-                                )
-                            })
-                        )}
-                    </table>
-                    <br/>
-                </div>
-                <br/>
-            </div>
-        )
-    }
+    /**
+     * Handles the event when user attempts to go to the branch URL.
+     */
+    const handleNavigateToBranchUrl = () => {
+        if (isBlankOrUndefined(branchUrl)) {
+            return;
+        }
+
+        // We know the branch url to be valid at this point.
+        navigate(branchUrl!);
+    };
+
+    /**
+     * Handles the event when the user wants to pull latest changes.
+     */
+    const handlePullRequest = async () => {
+        setNotification({
+            title: "Pulling changes...",
+            message: "Please wait while your request is being processed.",
+            isError: false,
+            loading: true
+        });
+
+        const request = new GitPullRequest()
+        request.repositoryId = repoId;
+        request.email = getUserEmail();
+        request.userId = getUserId();
+        try {
+            const response = await statusClient.pullChanges(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Could not pull changes!",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+
+            setNotification({
+                title: "Successfully pull changes!",
+                message: "Close to dismiss.",
+                isError: false,
+            });
+        } catch (e) {
+            console.error(e);
+            setNotification({
+                title: "Could not pull changes!",
+                message: "An internal server error has occurred. Review logs.",
+                isError: true,
+            });
+        }
+    };
 
     handleGitStatusRequest().catch(e => console.error(e));
     return (
         <>
-            <button className="refresh-btn"
-                    onClick={() => setIsEditingCommitMessage(true)}>
+            <button
+                className="refresh-btn"
+                style={{ right: "50px" }}
+                onClick={handlePullRequest}
+            >
+                Pull ↓
+            </button>
+            <button
+                className="refresh-btn"
+                style={{ right: "150px" }}
+                onClick={() => setIsEditingCommitMessage(true)}
+            >
                 Commit ↑
             </button>
-            <button className="refresh-btn"
-                    style={{right: "100px"}}>
+            <button
+                className="refresh-btn"
+                style={{ right: "300px" }}
+                onClick={() => setIsPushingChanges(true)}
+            >
                 Push ↗
             </button>
-            <button className="refresh-btn"
-                    onClick={() => handleGitStatusRequest()}
-                    style={{right: "350px"}}>
+            <button
+                className="refresh-btn"
+                style={{ right: "450px" }}
+                onClick={handleGitStatusRequest}
+            >
                 Refresh Repo Status ⟳
             </button>
-            <h1 className="repository-title-header">{`${repoName} Status Manager`}</h1>
-            {getFileStatusContainers()}
+            <h1 className="repository-title-header">
+                {repoName} Status Manager
+            </h1>
+            <div className="page-layout">
+                <div className="left-panel">
+                    <table className="info-table summary-table">
+                        <caption onClick={handleNavigateToBranchUrl}
+                            style={{textAlign: "left"}}>{`${branchName}`}</caption>
+                        <thead>
+                        <tr>
+                            <th colSpan={2}>Repository Summary</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Commits Ahead</td>
+                            <td>{commitsAhead}</td>
+                        </tr>
+                        <tr>
+                            <td>Commits Behind</td>
+                            <td>{commitsBehind}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="page-content">
+                    <div className="file-changes-container">
+                        <h1 className="page-description">Staged Changes</h1>
+                        <table className="info-table">
+                            {statusElements
+                                ?.filter(e => e.isStaged)
+                                .map((element, index) => (
+                                    <tbody key={index}>
+                                    <tr
+                                        onClick={() =>
+                                            handleApplyStagingActionRequest(
+                                                element,
+                                                false
+                                            )
+                                        }
+                                    >
+                                        <td>{element.filePath}</td>
+                                    </tr>
+                                    </tbody>
+                                ))}
+                        </table>
+                        <br/>
+                    </div>
+
+                    <div className="file-changes-container">
+                        <h1 className="page-description">Unstaged Changes</h1>
+                        <table className="info-table">
+                            {statusElements
+                                ?.filter(e => !e.isStaged)
+                                .map((element, index) => (
+                                    <tbody key={index}>
+                                    <tr
+                                        onClick={() =>
+                                            handleApplyStagingActionRequest(
+                                                element,
+                                                true
+                                            )
+                                        }
+                                    >
+                                        <td>{element.filePath}</td>
+                                    </tr>
+                                    </tbody>
+                                ))}
+                        </table>
+                        <br/>
+                    </div>
+                </div>
+            </div>
             {notification && (
                 <NotificationModal
                     title={notification.title}
                     message={notification.message}
                     isError={notification.isError}
                     loading={notification.loading}
-                    onClose={closeModal} />
+                    onClose={closeModal}
+                />
             )}
             {isEditingCommitMessage && (
                 <CommitModal
                     repositoryId={repoId}
                     email={getUserEmail()}
                     userId={getUserId()}
-                    onClose={() => setIsEditingCommitMessage(false)} />
+                    onClose={() => setIsEditingCommitMessage(false)}
+                />
+            )}
+            {isPushingChanges && (
+                <PushModal
+                    repositoryId={repoId}
+                    onClose={() => setIsPushingChanges(false)}
+                />
             )}
         </>
-    )
-}
+    );
+};
 export default RepositoryStatusPage;
