@@ -24,8 +24,8 @@ namespace ChasmaWebApi.Data.Interfaces
         /// Gets the status of the specified repository.
         /// </summary>
         /// <param name="repoKey">The repository identifier.</param>
-        /// <returns>A list of the elements as a result of running the command 'git status'.</returns>
-        List<RepositoryStatusElement>? GetRepositoryStatus(string repoKey);
+        /// <returns>A repository summary of running the command 'git status'.</returns>
+        RepositorySummary? GetRepositoryStatus(string repoKey);
 
         /// <summary>
         /// Stages or unstages the file for the specified repository.
@@ -35,5 +35,34 @@ namespace ChasmaWebApi.Data.Interfaces
         /// <param name="isStaging">Flag indicating whether the file is being staged.</param>
         /// <returns>A list of the updated file statuses after staging or unstaging.</returns>
         List<RepositoryStatusElement>? ApplyStagingAction(string repoKey, string fileName, bool isStaging);
+
+        /// <summary>
+        /// Commits the staged changes for the specified repository.
+        /// </summary>
+        /// <param name="filePath">The working directory of the repository.</param>
+        /// <param name="fullName">The user's full name.</param>
+        /// <param name="email">The user's email.</param>
+        /// <param name="commitMessage">The message description of the commit.</param>
+        void CommitChanges(string filePath, string fullName, string email, string commitMessage);
+
+        /// <summary>
+        /// Tries to push the committed changes to the remote repository.
+        /// </summary>
+        /// <param name="filePath">The filepath to the specified repository.</param>
+        /// <param name="token">The git API token.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the user was able to push changes; false otherwise.</returns>
+        bool TryPushChanges(string filePath, string token, out string errorMessage);
+
+        /// <summary>
+        /// Tries to pull changes from the remote repository.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="fullName">The user's full name.</param>
+        /// <param name="email">The user's email.</param>
+        /// <param name="token">The git API token.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the user was able to pull changes, false otherwise.</returns>
+        bool TryPullChanges(string workingDirectory, string fullName, string email, string token, out string errorMessage);
     }
 }

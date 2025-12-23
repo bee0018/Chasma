@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
 
 namespace ChasmaWebApi.Data.Interfaces;
@@ -17,4 +18,9 @@ public interface ICacheManager
     /// Gets the mapping of repository identifiers to working directories for the repos in the system.
     /// </summary>
     ConcurrentDictionary<string, string> WorkingDirectories { get; }
+
+    /// <summary>
+    /// Gets the mapping of user identifiers to users in the system.
+    /// </summary>
+    ConcurrentDictionary<int, UserAccountModel> Users { get; }
 }

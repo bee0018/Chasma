@@ -1,4 +1,6 @@
-﻿using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Data;
+using ChasmaWebApi.Data.Interfaces;
+using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Requests;
 using ChasmaWebApi.Data.Responses;
@@ -23,9 +25,19 @@ namespace ChasmaWebApi.Controllers
         private readonly IRepositoryStatusManager statusManager;
 
         /// <summary>
+        /// The internal cache manager.
+        /// </summary>
+        private readonly ICacheManager cacheManager;
+
+        /// <summary>
         /// The API configurations options.
         /// </summary>
         private readonly ChasmaWebApiConfigurations webApiConfigurations;
+
+        /// <summary>
+        /// The database context used for interacting with the database.
+        /// </summary>
+        private readonly ApplicationDbContext applicationDbContext;
 
         #region Constructor
 
@@ -35,11 +47,16 @@ namespace ChasmaWebApi.Controllers
         /// <param name="log">The internal API logger.</param>
         /// <param name="config">The API configurations.</param>
         /// <param name="manager">The repository status manager.</param>
-        public RepositoryStatusController(ILogger<RepositoryStatusController> log, ChasmaWebApiConfigurations config, IRepositoryStatusManager manager)
+        /// <param name="apiCacheManager">The internal API cache manager.</param>
+        /// <param name="dbContext">The application database context.</param>
+        public RepositoryStatusController(ILogger<RepositoryStatusController> log, ChasmaWebApiConfigurations config, IRepositoryStatusManager manager, ICacheManager apiCacheManager, ApplicationDbContext dbContext)
         {
             logger = log;
             webApiConfigurations = config;
             statusManager = manager;
+            cacheManager = apiCacheManager;
+            applicationDbContext = dbContext;
+            PopulateCache();
         }
 
         #endregion
@@ -117,9 +134,9 @@ namespace ChasmaWebApi.Controllers
             }
 
             string repoId = gitStatusRequest.RepositoryId;
-            logger.LogInformation("Received request to run git status for repository ID: {repoId}", repoId);    
-            List<RepositoryStatusElement>? statusElements = statusManager.GetRepositoryStatus(repoId);
-            if (statusElements == null)
+            logger.LogInformation("Received request to run git status for repository ID: {repoId}", repoId);
+            RepositorySummary summary = statusManager.GetRepositoryStatus(repoId);
+            if (summary == null)
             {
                 logger.LogError("Failed to get repository status for repo ID: {repoId}", repoId);
                 gitStatusResponse.IsErrorResponse = true;
@@ -127,7 +144,11 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(gitStatusResponse);
             }
 
-            gitStatusResponse.StatusElements = statusElements;
+            gitStatusResponse.StatusElements = summary.StatusElements;
+            gitStatusResponse.CommitsAhead = summary.CommitsAhead;
+            gitStatusResponse.CommitsBehind = summary.CommitsBehind;
+            gitStatusResponse.BranchName = summary.BranchName;
+            gitStatusResponse.RemoteUrl = summary.RemoteUrl;
             return Ok(gitStatusResponse);
         }
 
@@ -156,7 +177,7 @@ namespace ChasmaWebApi.Controllers
                 response.ErrorMessage = "Cannot process request because the repository key is not populated.";
                 return BadRequest(response);
             }
-            
+
             if (string.IsNullOrEmpty(applyStagingActionRequest.FileName))
             {
                 logger.LogError("File name must be populated.");
@@ -179,6 +200,223 @@ namespace ChasmaWebApi.Controllers
 
             response.StatusElements = statusElements;
             return Ok(response);
+        }
+
+        /// <summary>
+        /// Commits the local changes.
+        /// </summary>
+        /// <param name="request">The request to commit local changes.</param>
+        /// <returns>Response to committing the changes.</returns>
+        [HttpPost]
+        [Route("gitCommit")]
+        public ActionResult<GitCommitResponse> CommitChanges([FromBody] GitCommitRequest request)
+        {
+            logger.LogInformation("Received request to commit changes for repo: {repoId}", request.RepositoryId);
+            GitCommitResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot commit changes.";
+                logger.LogError("GitCommitRequest received is null. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot commit changes.";
+                logger.LogError("Null or empty repository identifier received. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.Email))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Email must be populated for commit signature. Cannot commit changes.";
+                logger.LogError("Null or empty email received. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.CommitMessage))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Commit message cannot be empty. Cannot commit changes.";
+                logger.LogError("Null or empty commit message received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot commit changes.";
+                logger.LogError("No working directory was found for repo identifier {repoId}. Sending error response", repoId);
+                return BadRequest(response);
+            }
+
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No user found in cache for user ID: {userId}. Cannot commit changes.";
+                logger.LogError("No user was found for user ID: {userId}. Sending error response", userId);
+                return BadRequest(response);
+            }
+
+            try
+            {
+                statusManager.CommitChanges(workingDirectory, user.Name, request.Email, request.CommitMessage);
+                logger.LogInformation("Successfully committed changes to repo: {repoId}", repoId);
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Error committing changes to repo: {repoId}. Check server logs for more information.";
+                logger.LogError(e, "Error committing changes to repo: {repoId}", repoId);
+                return Ok(response);
+            }
+        }
+
+        [HttpPost]
+        [Route("gitPush")]
+        public ActionResult<GitPushResponse> PushChanges([FromBody] GitPushRequest request)
+        {
+            logger.LogInformation("Received request to push changes for repo: {repoId}", request.RepositoryId);
+            GitPushResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot push changes.";
+                logger.LogError("GitPushRequest received is null. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot push changes.";
+                logger.LogError("Null or empty repository identifier received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot push changes.";
+                logger.LogError("No working directory was found for repo identifier {repoId}. Sending error response", repoId);
+                return BadRequest(response);
+            }
+
+            if (!statusManager.TryPushChanges(workingDirectory, webApiConfigurations.GitHubApiToken, out string errorMessage))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to push changes to repo: {repoId}. {errorMessage}";
+                logger.LogError("Failed to push changes to repo: {repoId}. {errorMessage}", repoId, errorMessage);
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully pushed changes to repo: {repoId}", repoId);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Pulls the latest changes from the remote repository.
+        /// </summary>
+        /// <param name="request">Request to pull changes for the specified repository.</param>
+        /// <returns>The git pull response.</returns>
+        [HttpPost]
+        [Route("gitPull")]
+        public ActionResult<GitPullResponse> PullChanges([FromBody] GitPullRequest request)
+        {
+            logger.LogInformation("Received request to pull changes for repo: {repoId}", request.RepositoryId);
+            GitPullResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot pull changes.";
+                logger.LogError("GitPullRequest received is null. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot pull changes.";
+                logger.LogError("Null or empty repository identifier received. Sending error response");
+                return BadRequest(response);
+            }
+
+
+            string email = request.Email;
+            if (string.IsNullOrEmpty(email))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "User's email must be populated. Cannot pull changes.";
+                logger.LogError("Null or empty user email received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot pull changes.";
+                logger.LogError("No working directory was found for repo identifier {repoId}. Sending error response", repoId);
+                return BadRequest(response);
+            }
+
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No user found in cache for user ID: {userId}. Cannot pull changes.";
+                logger.LogError("No user was found for user ID: {userId}. Sending error response", userId);
+                return BadRequest(response);
+            }
+
+            string fullName = user.Name;
+            string token = webApiConfigurations.GitHubApiToken;
+            if (!statusManager.TryPullChanges(workingDirectory, fullName, email, token, out string errorMessage))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to pull changes to repo: {repoId}. {errorMessage}";
+                logger.LogError("Failed to pull changes to repo: {repoId}. {errorMessage}", repoId, errorMessage);
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully pulled changes to repo: {repoId}", repoId);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Populates the cache from the database on controller instantiation.
+        /// </summary>
+        private void PopulateCache()
+        {
+            foreach (RepositoryModel repo in applicationDbContext.Repositories)
+            {
+                LocalGitRepository localRepo = new()
+                {
+                    Id = repo.Id,
+                    UserId = repo.UserId,
+                    Name = repo.Name,
+                    Owner = repo.Owner,
+                    Url = repo.Url,
+                };
+                cacheManager.Repositories.TryAdd(localRepo.Id, localRepo);
+            }
+
+            foreach (WorkingDirectoryModel workingDirectoryModel in applicationDbContext.WorkingDirectories)
+            {
+                cacheManager.WorkingDirectories.TryAdd(workingDirectoryModel.RepositoryId, workingDirectoryModel.WorkingDirectory);
+            }
+
+            foreach (UserAccountModel user in applicationDbContext.UserAccounts)
+            {
+                cacheManager.Users.TryAdd(user.Id, user);
+            }
         }
     }
 }

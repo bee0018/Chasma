@@ -18,13 +18,19 @@ namespace ChasmaWebApi.Data.Models
         public int Id { get; set; }
 
         /// <summary>
-        /// Gets or sets  the name of the account.
+        /// Gets or sets the name of the account.
         /// </summary>
         [Column("name")]
         public required string Name { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the email of the account.
+        /// </summary>
+        [Column("email")]
+        public required string Email { get; set; }
 
         /// <summary>
-        /// Gets or sets the user name of the account.
+        /// Gets or sets the username of the account.
         /// </summary>
         [Column("user_name")]
         public required string UserName { get; set; }

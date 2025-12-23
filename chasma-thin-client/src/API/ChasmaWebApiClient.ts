@@ -387,6 +387,120 @@ export class RepositoryStatusClient {
         }
         return Promise.resolve<ApplyStagingActionResponse>(null as any);
     }
+
+    commitChanges(request: GitCommitRequest): Promise<GitCommitResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryStatus/gitCommit";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCommitChanges(_response);
+        });
+    }
+
+    protected processCommitChanges(response: Response): Promise<GitCommitResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GitCommitResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GitCommitResponse>(null as any);
+    }
+
+    pushChanges(request: GitPushRequest): Promise<GitPushResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryStatus/gitPush";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processPushChanges(_response);
+        });
+    }
+
+    protected processPushChanges(response: Response): Promise<GitPushResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GitPushResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GitPushResponse>(null as any);
+    }
+
+    pullChanges(request: GitPullRequest): Promise<GitPullResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryStatus/gitPull";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processPullChanges(_response);
+        });
+    }
+
+    protected processPullChanges(response: Response): Promise<GitPullResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GitPullResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GitPullResponse>(null as any);
+    }
 }
 
 export class UserClient {
@@ -2052,6 +2166,10 @@ export interface IGetWorkflowResultsRequest {
 
 export class GitStatusResponse extends ResponseBase implements IGitStatusResponse {
     statusElements?: RepositoryStatusElement[];
+    commitsAhead?: number;
+    commitsBehind?: number;
+    branchName?: string;
+    remoteUrl?: string;
 
     constructor(data?: IGitStatusResponse) {
         super(data);
@@ -2065,6 +2183,10 @@ export class GitStatusResponse extends ResponseBase implements IGitStatusRespons
                 for (let item of _data["statusElements"])
                     this.statusElements!.push(RepositoryStatusElement.fromJS(item));
             }
+            this.commitsAhead = _data["commitsAhead"];
+            this.commitsBehind = _data["commitsBehind"];
+            this.branchName = _data["branchName"];
+            this.remoteUrl = _data["remoteUrl"];
         }
     }
 
@@ -2082,6 +2204,10 @@ export class GitStatusResponse extends ResponseBase implements IGitStatusRespons
             for (let item of this.statusElements)
                 data["statusElements"].push(item ? item.toJSON() : undefined as any);
         }
+        data["commitsAhead"] = this.commitsAhead;
+        data["commitsBehind"] = this.commitsBehind;
+        data["branchName"] = this.branchName;
+        data["remoteUrl"] = this.remoteUrl;
         super.toJSON(data);
         return data;
     }
@@ -2089,6 +2215,10 @@ export class GitStatusResponse extends ResponseBase implements IGitStatusRespons
 
 export interface IGitStatusResponse extends IResponseBase {
     statusElements?: RepositoryStatusElement[];
+    commitsAhead?: number;
+    commitsBehind?: number;
+    branchName?: string;
+    remoteUrl?: string;
 }
 
 export class RepositoryStatusElement extends ChasmaXmlBase implements IRepositoryStatusElement {
@@ -2270,9 +2400,210 @@ export interface IApplyStagingActionRequest extends IChasmaXmlBase {
     isStaging?: boolean;
 }
 
+export class GitCommitResponse extends ResponseBase implements IGitCommitResponse {
+
+    constructor(data?: IGitCommitResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+    }
+
+    static fromJS(data: any): GitCommitResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitCommitResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitCommitResponse extends IResponseBase {
+}
+
+export class GitCommitRequest extends ChasmaXmlBase implements IGitCommitRequest {
+    userId?: number;
+    repositoryId?: string;
+    email?: string;
+    commitMessage?: string;
+
+    constructor(data?: IGitCommitRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.userId = _data["userId"];
+            this.repositoryId = _data["repositoryId"];
+            this.email = _data["email"];
+            this.commitMessage = _data["commitMessage"];
+        }
+    }
+
+    static fromJS(data: any): GitCommitRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitCommitRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        data["repositoryId"] = this.repositoryId;
+        data["email"] = this.email;
+        data["commitMessage"] = this.commitMessage;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitCommitRequest extends IChasmaXmlBase {
+    userId?: number;
+    repositoryId?: string;
+    email?: string;
+    commitMessage?: string;
+}
+
+export class GitPushResponse extends ResponseBase implements IGitPushResponse {
+
+    constructor(data?: IGitPushResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+    }
+
+    static fromJS(data: any): GitPushResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitPushResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitPushResponse extends IResponseBase {
+}
+
+export class GitPushRequest extends ChasmaXmlBase implements IGitPushRequest {
+    repositoryId?: string;
+
+    constructor(data?: IGitPushRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repositoryId = _data["repositoryId"];
+        }
+    }
+
+    static fromJS(data: any): GitPushRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitPushRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryId"] = this.repositoryId;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitPushRequest extends IChasmaXmlBase {
+    repositoryId?: string;
+}
+
+export class GitPullResponse extends ResponseBase implements IGitPullResponse {
+
+    constructor(data?: IGitPullResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+    }
+
+    static fromJS(data: any): GitPullResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitPullResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitPullResponse extends IResponseBase {
+}
+
+export class GitPullRequest extends ChasmaXmlBase implements IGitPullRequest {
+    repositoryId?: string;
+    userId?: number;
+    email?: string;
+
+    constructor(data?: IGitPullRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repositoryId = _data["repositoryId"];
+            this.userId = _data["userId"];
+            this.email = _data["email"];
+        }
+    }
+
+    static fromJS(data: any): GitPullRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitPullRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryId"] = this.repositoryId;
+        data["userId"] = this.userId;
+        data["email"] = this.email;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitPullRequest extends IChasmaXmlBase {
+    repositoryId?: string;
+    userId?: number;
+    email?: string;
+}
+
 export class UserAccountModel implements IUserAccountModel {
     id?: number;
     name?: string;
+    email?: string;
     userName?: string;
     password?: string;
     salt?: string;
@@ -2290,6 +2621,7 @@ export class UserAccountModel implements IUserAccountModel {
         if (_data) {
             this.id = _data["id"];
             this.name = _data["name"];
+            this.email = _data["email"];
             this.userName = _data["userName"];
             this.password = _data["password"];
             this.salt = _data["salt"];
@@ -2307,6 +2639,7 @@ export class UserAccountModel implements IUserAccountModel {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["name"] = this.name;
+        data["email"] = this.email;
         data["userName"] = this.userName;
         data["password"] = this.password;
         data["salt"] = this.salt;
@@ -2317,6 +2650,7 @@ export class UserAccountModel implements IUserAccountModel {
 export interface IUserAccountModel {
     id?: number;
     name?: string;
+    email?: string;
     userName?: string;
     password?: string;
     salt?: string;
@@ -2325,6 +2659,7 @@ export interface IUserAccountModel {
 export class LoginResponse extends ResponseBase implements ILoginResponse {
     userName?: string;
     userId?: number;
+    email?: string;
 
     constructor(data?: ILoginResponse) {
         super(data);
@@ -2335,6 +2670,7 @@ export class LoginResponse extends ResponseBase implements ILoginResponse {
         if (_data) {
             this.userName = _data["userName"];
             this.userId = _data["userId"];
+            this.email = _data["email"];
         }
     }
 
@@ -2349,6 +2685,7 @@ export class LoginResponse extends ResponseBase implements ILoginResponse {
         data = typeof data === 'object' ? data : {};
         data["userName"] = this.userName;
         data["userId"] = this.userId;
+        data["email"] = this.email;
         super.toJSON(data);
         return data;
     }
@@ -2357,6 +2694,7 @@ export class LoginResponse extends ResponseBase implements ILoginResponse {
 export interface ILoginResponse extends IResponseBase {
     userName?: string;
     userId?: number;
+    email?: string;
 }
 
 export class LoginRequest extends ChasmaXmlBase implements ILoginRequest {
@@ -2398,6 +2736,8 @@ export interface ILoginRequest extends IChasmaXmlBase {
 
 export class AddUserResponse extends ResponseBase implements IAddUserResponse {
     userName?: string;
+    userId?: number;
+    email?: string;
 
     constructor(data?: IAddUserResponse) {
         super(data);
@@ -2407,6 +2747,8 @@ export class AddUserResponse extends ResponseBase implements IAddUserResponse {
         super.init(_data);
         if (_data) {
             this.userName = _data["userName"];
+            this.userId = _data["userId"];
+            this.email = _data["email"];
         }
     }
 
@@ -2420,6 +2762,8 @@ export class AddUserResponse extends ResponseBase implements IAddUserResponse {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["userName"] = this.userName;
+        data["userId"] = this.userId;
+        data["email"] = this.email;
         super.toJSON(data);
         return data;
     }
@@ -2427,11 +2771,14 @@ export class AddUserResponse extends ResponseBase implements IAddUserResponse {
 
 export interface IAddUserResponse extends IResponseBase {
     userName?: string;
+    userId?: number;
+    email?: string;
 }
 
 export class AddUserRequest implements IAddUserRequest {
     name?: string;
     userName?: string;
+    email?: string;
     password?: string;
 
     constructor(data?: IAddUserRequest) {
@@ -2447,6 +2794,7 @@ export class AddUserRequest implements IAddUserRequest {
         if (_data) {
             this.name = _data["name"];
             this.userName = _data["userName"];
+            this.email = _data["email"];
             this.password = _data["password"];
         }
     }
@@ -2462,6 +2810,7 @@ export class AddUserRequest implements IAddUserRequest {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
         data["userName"] = this.userName;
+        data["email"] = this.email;
         data["password"] = this.password;
         return data;
     }
@@ -2470,6 +2819,7 @@ export class AddUserRequest implements IAddUserRequest {
 export interface IAddUserRequest {
     name?: string;
     userName?: string;
+    email?: string;
     password?: string;
 }
 

@@ -14,5 +14,10 @@
         /// Gets or sets the user identifier.
         /// </summary>
         public int UserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the email of the logged in user.
+        /// </summary>
+        public string Email { get; set; }
     }
 }

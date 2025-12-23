@@ -9,5 +9,15 @@
         /// Gets or sets the username of the newly added user.
         /// </summary>
         public string UserName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the identifier of the newly added user.
+        /// </summary>
+        public int UserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the email of the newly added user.
+        /// </summary>
+        public string Email { get; set; }
     }
 }

@@ -2,8 +2,10 @@
 using ChasmaWebApi.Data.Objects;
 using LibGit2Sharp;
 using Octokit;
+using Branch = LibGit2Sharp.Branch;
 using Credentials = Octokit.Credentials;
 using Repository = LibGit2Sharp.Repository;
+using Signature = LibGit2Sharp.Signature;
 
 namespace ChasmaWebApi.Data.Managers
 {
@@ -54,7 +56,7 @@ namespace ChasmaWebApi.Data.Managers
         }
 
         // <inheritdoc/>
-        public List<RepositoryStatusElement>? GetRepositoryStatus(string repoKey)
+        public RepositorySummary? GetRepositoryStatus(string repoKey)
         {
             if (!CacheManager.WorkingDirectories.TryGetValue(repoKey, out string workingDirectory))
             {
@@ -86,7 +88,16 @@ namespace ChasmaWebApi.Data.Managers
             }
 
             ClientLogger.LogInformation("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
-            return statusElements;
+            (string branchName, int aheadCount, int behindCount) = GetBranchDiversionCalculation(workingDirectory);
+            RepositorySummary repositorySummary = new()
+            {
+                StatusElements = statusElements,
+                CommitsAhead = aheadCount,
+                CommitsBehind = behindCount,
+                BranchName = branchName,
+                RemoteUrl = GetRemoteUrl(repo) ?? string.Empty,
+            };
+            return repositorySummary;
         }
 
         // <inheritdoc />
@@ -113,8 +124,101 @@ namespace ChasmaWebApi.Data.Managers
             }
             
             ClientLogger.LogInformation("{action} file {file}", stagingAction, fileName);
-            statusElements = GetRepositoryStatus(repoKey);
-            return statusElements;
+            RepositorySummary summary = GetRepositoryStatus(repoKey);
+            return summary?.StatusElements;
+        }
+
+        // <inheritdoc />
+        public void CommitChanges(string filePath, string fullName, string email, string commitMessage)
+        {
+            using Repository repo = new(filePath);
+            Signature author = new(fullName, email, DateTimeOffset.Now);
+            var x = repo.Commit(commitMessage, author, author);
+
+        }
+
+        // <inheritdoc />
+        public bool TryPushChanges(string filePath, string token, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            using Repository repo = new Repository(filePath);
+            Branch branch = repo.Head;
+            if (branch == null)
+            {
+                errorMessage = $"Failed to push changes. Could not get branch information for repository at {filePath}.";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            if (repo.Info.IsHeadDetached)
+            {
+                errorMessage = $"Failed to push changes. The HEAD is in a detached state for repository at {filePath}.";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            if (branch.TrackedBranch == null)
+            {
+                errorMessage = $"Failed to push changes. No upstream set for branch {branch.FriendlyName}.";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            try
+            {
+                string username = repo.Config.Get<string>("user.name")?.Value ?? "chasma-bot";
+                PushOptions options = new()
+                {
+                    CredentialsProvider = (url, usernameFromUrl, types) =>
+                        new UsernamePasswordCredentials
+                        {
+                            Username = username,
+                            Password = token,
+                        }
+                };
+
+                repo.Network.Push(branch, options);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"Failed to push changes to remote for branch {branch.FriendlyName}. Check server logs for more information.";
+                ClientLogger.LogError(e, errorMessage);
+                return false;
+            }
+        }
+
+        // <inheritdoc />
+        public bool TryPullChanges(string workingDirectory, string fullName, string email, string token, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            using Repository repo = new Repository(workingDirectory);
+            string username = repo.Config.Get<string>("user.name")?.Value ?? "chasma-bot";
+            Signature author = new(fullName, email, DateTimeOffset.Now);
+            PullOptions options = new()
+            {
+                FetchOptions = new FetchOptions
+                {
+                    CredentialsProvider = (url, usernameFromUrl, types) =>
+                        new UsernamePasswordCredentials
+                        {
+                            Username = username,
+                            Password = token,
+                        }
+                }
+            };
+
+            try
+            {
+                Commands.Pull(repo, author, options);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"Failed to pull changes from remote for repository at {workingDirectory}. Check server logs for more information.";
+                ClientLogger.LogError(e, errorMessage);
+                return false;
+            }
         }
 
         /// <summary>
@@ -162,6 +266,79 @@ namespace ChasmaWebApi.Data.Managers
                    fileStatus.HasFlag(FileStatus.DeletedFromIndex) ||
                    fileStatus.HasFlag(FileStatus.RenamedInIndex) ||
                    fileStatus.HasFlag(FileStatus.TypeChangeInIndex);
+        }
+
+        /// <summary>
+        /// Gets the branch diversion calculation for the specified repository.
+        /// </summary>
+        /// <param name="repo">The specified repository working directory.</param>
+        /// <returns>The number of local branch name, commits ahead, and behind.</returns>
+        private (string branchName, int aheadCount, int behindCount) GetBranchDiversionCalculation(string workingDirectory)
+        {
+            using Repository repo = new Repository(workingDirectory);
+            Branch branch = repo.Head;
+            if (branch == null)
+            {
+                ClientLogger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", repo.Info.WorkingDirectory);
+                return ("", 0, 0);
+            }
+
+            if (repo.Info.IsHeadDetached)
+            {
+                ClientLogger.LogWarning("Cannot get branch diversion calculation. The HEAD is in a detached state for repository at {path}.", repo.Info.WorkingDirectory);
+                return ("", 0, 0);
+            }
+
+            Commands.Fetch(repo, branch.RemoteName, [], new FetchOptions(), null);
+            string localBranchName = branch.FriendlyName;
+            if (string.IsNullOrEmpty(localBranchName))
+            {
+                ClientLogger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", repo.Info.WorkingDirectory, localBranchName);
+                return ("", 0, 0);
+            }
+
+            if (branch.TrackedBranch == null)
+            {
+                ClientLogger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
+                return (localBranchName, 0, 0);
+            }
+
+            string upstreamBranchName = branch.TrackedBranch.FriendlyName;
+            Branch localBranch = repo.Branches[localBranchName];
+            Branch upstreamBranch = repo.Branches[upstreamBranchName];
+            if (localBranch == null)
+            {
+                ClientLogger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
+                return (localBranchName, 0, 0);
+            }
+
+            if (upstreamBranch == null)
+            {
+                ClientLogger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
+                return (localBranchName, 0, 0);
+            }
+
+            HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
+            return (localBranchName, divergence.AheadBy ?? 0, divergence.BehindBy ?? 0);
+        }
+
+        /// <summary>
+        /// Gets the remote URL for the specified repository.
+        /// </summary>
+        /// <param name="repo">The specified repository.</param>
+        /// <returns>The remote URL of the repository.</returns>
+        private string? GetRemoteUrl(Repository repo)
+        {
+            Branch branch = repo.Head;
+            string remoteName = branch.RemoteName;
+            Remote? remote = repo.Network.Remotes[remoteName];
+            if (remote == null)
+            {
+                ClientLogger.LogWarning("Could not find remote {remoteName} for repository at {path}.", remoteName, repo.Info.WorkingDirectory);
+                return null;
+            }
+
+            return remote.PushUrl ?? remote.Url;
         }
     }
 }

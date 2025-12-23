@@ -4,6 +4,9 @@ using System.Xml.Serialization;
 
 namespace ChasmaWebApi
 {
+    /// <summary>
+    /// Class representing the API configuration options.
+    /// </summary>
     [XmlRoot("configurations")]
     public class ChasmaWebApiConfigurations : ChasmaXmlBase
     {

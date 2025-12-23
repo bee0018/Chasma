@@ -3,23 +3,10 @@ import '../../css/DasboardTab.css';
 import GitRepoOverviewCard from "../GitRepoOverviewCard";
 import {LocalGitRepository, RepositoryConfigurationClient} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
+import {getUserId, getUsername} from "../../managers/LocalStorageManager";
 
 /** The Git API client. **/
 const configClient = new RepositoryConfigurationClient()
-
-/** Gets the userId from local storage. **/
-const getUserId = () => {
-    const userIdJson = localStorage.getItem("userId");
-    if (!userIdJson) return undefined;
-    return Number(userIdJson)
-};
-
-/** Gets the username from local storage. **/
-const getUsername = () => {
-    const userNameJson = localStorage.getItem("username");
-    if (!userNameJson) return undefined;
-    return JSON.parse(userNameJson)
-};
 
 /**
  * The Home tab contents and display components.
@@ -78,6 +65,15 @@ const HomeTab: React.FC = () => {
         try {
             const userId = getUserId();
             const response = await configClient.addLocalGitRepositories(userId);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Git repository retrieval failed!",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                setLocalGitRepositories(undefined);
+                return;
+            }
             setNotification({
                 title: "Git repository retrieval finished!",
                 message: "Close the modal to find the repositories found on your system.",

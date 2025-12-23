@@ -43,7 +43,7 @@ namespace ChasmaWebApi.Tests
         }
 
         /// <summary>
-        /// Gets a sample Chasma database configuration.
+        /// Gets a test Chasma database configuration instance.
         /// </summary>
         /// <returns>The sample database configurations.</returns>
         private DatabaseConfigurations GetTestDatabaseConfigurationData()
