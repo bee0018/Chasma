@@ -1,4 +1,4 @@
-﻿import React, {useState} from "react";
+import React, {useState} from "react";
 import "../../css/CommitModal.css";
 import {GitCommitRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
 

@@ -1,4 +1,4 @@
-﻿import React, {useState} from "react";
+import React, {useState} from "react";
 import NotificationModal from "../modals/NotificationModal";
 import {GetWorkflowResultsRequest, RepositoryStatusClient, WorkflowRunResult} from "../../API/ChasmaWebApiClient";
 import "../../css/Dashboard.css"

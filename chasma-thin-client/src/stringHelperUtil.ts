@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Function that determines if a string is null, undefined, or empty.
  * @param value The string to evaluate.
  */

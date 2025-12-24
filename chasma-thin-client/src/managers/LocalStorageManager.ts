@@ -1,4 +1,4 @@
-﻿/** Gets the userId from local storage. **/
+/** Gets the userId from local storage. **/
 export const getUserId = () => {
     const userIdJson = localStorage.getItem("userId");
     if (!userIdJson) return undefined;

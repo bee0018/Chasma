@@ -1,4 +1,4 @@
-﻿import React, {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import '../../css/DasboardTab.css';
 import GitRepoOverviewCard from "../GitRepoOverviewCard";
 import {LocalGitRepository, RepositoryConfigurationClient} from "../../API/ChasmaWebApiClient";

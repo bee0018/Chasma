@@ -1,4 +1,4 @@
-﻿// ChasmaLogo.jsx
+// ChasmaLogo.jsx
 import React from 'react';
 
 const ChasmaLogo = ({ size = 96, circleFill = "#00bfff", textFill = "#ffffff" }) => (
