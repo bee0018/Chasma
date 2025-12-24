@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import {useNavigate} from "react-router-dom";
 import {DeleteRepositoryRequest, RepositoryConfigurationClient} from "../API/ChasmaWebApiClient";
 import {getUserId} from "../managers/LocalStorageManager";

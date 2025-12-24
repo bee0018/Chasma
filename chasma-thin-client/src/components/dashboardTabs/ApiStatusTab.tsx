@@ -1,4 +1,4 @@
-﻿import React, {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {HealthClient, HeartbeatStatus} from "../../API/ChasmaWebApiClient";
 import "../../css/Dashboard.css"
 
