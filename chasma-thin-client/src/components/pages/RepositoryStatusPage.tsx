@@ -194,34 +194,29 @@ const RepositoryStatusPage: React.FC = () => {
     handleGitStatusRequest().catch(e => console.error(e));
     return (
         <>
-            <button
-                className="refresh-btn"
-                style={{ right: "50px" }}
-                onClick={handlePullRequest}
-            >
-                Pull ↓
-            </button>
-            <button
-                className="refresh-btn"
-                style={{ right: "150px" }}
-                onClick={() => setIsEditingCommitMessage(true)}
-            >
-                Commit ↑
-            </button>
-            <button
-                className="refresh-btn"
-                style={{ right: "300px" }}
-                onClick={() => setIsPushingChanges(true)}
-            >
-                Push ↗
-            </button>
-            <button
-                className="refresh-btn"
-                style={{ right: "450px" }}
-                onClick={handleGitStatusRequest}
-            >
-                Refresh Repo Status ⟳
-            </button>
+            <aside className="sidebar">
+                <div className="tab"
+                    style={{marginTop: "150px"}}
+                    onClick={handleGitStatusRequest}
+                >
+                    Refresh Repo Status ⟳
+                </div>
+                <div className="tab"
+                     onClick={handlePullRequest}
+                >
+                    Pull ↓
+                </div>
+                <div className="tab"
+                     onClick={() => setIsEditingCommitMessage(true)}
+                >
+                    Commit ↑
+                </div>
+                <div className="tab"
+                     onClick={() => setIsPushingChanges(true)}
+                >
+                    Push ↗
+                </div>
+            </aside>
             <h1 className="repository-title-header">
                 {repoName} Status Manager
             </h1>
