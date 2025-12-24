@@ -71,7 +71,7 @@ const RepositoryStatusPage: React.FC = () => {
 
             return () => clearInterval(interval);
         },
-        [handleGitStatusRequest]);
+        [statusElements]);
 
     /** Handles the request to perform a 'git status' on the selected repository. **/
     async function handleGitStatusRequest() {
