@@ -1,18 +1,18 @@
 ﻿import React, {useEffect, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import "../css/RepositoryStatusPage.css"
-import '../css/InfoTable.css'
+import "../../css/RepositoryStatusPage.css"
+import '../../css/InfoTable.css'
 import {
     ApplyStagingActionRequest, GitPullRequest,
     GitStatusRequest,
     RepositoryStatusClient,
     RepositoryStatusElement
-} from "../API/ChasmaWebApiClient";
-import NotificationModal from "./modals/NotificationModal";
-import CommitModal from "./modals/CommitModal";
-import {getUserEmail, getUserId} from "../managers/LocalStorageManager";
-import PushModal from "./modals/PushModal";
-import {isBlankOrUndefined} from "../stringHelperUtil";
+} from "../../API/ChasmaWebApiClient";
+import NotificationModal from "../modals/NotificationModal";
+import CommitModal from "../modals/CommitModal";
+import {getUserEmail, getUserId} from "../../managers/LocalStorageManager";
+import PushModal from "../modals/PushModal";
+import {isBlankOrUndefined} from "../../stringHelperUtil";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient()

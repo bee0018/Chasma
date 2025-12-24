@@ -2,10 +2,10 @@ import React from 'react';
 import './css/App.css';
 import Dashboard from "./components/Dashboard";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
-import RepositoryStatusPage from "./components/RepositoryStatusPage";
-import WorkflowRunsPage from "./components/WorkflowRunsPage";
-import LoginPage from "./components/LoginPage";
-import RegisterPage from "./components/RegisterPage";
+import RepositoryStatusPage from "./components/pages/RepositoryStatusPage";
+import WorkflowRunsPage from "./components/pages/WorkflowRunsPage";
+import LoginPage from "./components/pages/LoginPage";
+import RegisterPage from "./components/pages/RegisterPage";
 
 function App() {
     return <div>

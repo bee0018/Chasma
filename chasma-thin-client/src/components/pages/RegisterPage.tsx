@@ -1,17 +1,23 @@
 ﻿import React, { useState } from 'react';
 import {Link, useNavigate} from 'react-router-dom';
-import ChasmaLogo from "./logos/ChasmaLogo";
-import NotificationModal from "./modals/NotificationModal";
-import {LoginRequest, UserClient} from "../API/ChasmaWebApiClient";
+import ChasmaLogo from "../logos/ChasmaLogo";
+import {AddUserRequest, UserClient} from "../../API/ChasmaWebApiClient";
+import NotificationModal from "../modals/NotificationModal";
 
-/** Gets the database client that interfaces with the web API. **/
+/** The database client that interacts with the web API. **/
 const userClient = new UserClient();
 
 /**
- * Creates a new instance of the Login Page class.
+ * Initializes a new instance of the Register Page class.
  * @constructor
  */
-const LoginPage: React.FC = () => {
+const RegisterPage: React.FC = () => {
+    /** Gets or sets the name of the user. **/
+    const [name, setName] = useState('');
+
+    /** Gets or sets the email of the user. **/
+    const [email, setEmail] = useState('');
+
     /** Gets or sets the username of the user. **/
     const [userName, setUserName] = useState('');
 
@@ -36,31 +42,36 @@ const LoginPage: React.FC = () => {
         setNotification(null);
     }
 
-    /**
-     * Handles the request to log in a user to the system.
-     */
-    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    /** Handles the request to register a new user with the system. **/
+    const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setNotification({
-            title: "Logging into the system...",
+            title: "Adding user to the system...",
             message: "Please wait while your request is being processed.",
             isError: false,
             loading: true
         });
         try {
-            const loginUserRequest = new LoginRequest();
-            loginUserRequest.userName = userName;
-            loginUserRequest.password = password;
-            const response = await userClient.login(loginUserRequest);
+            const addUserRequest = new AddUserRequest();
+            addUserRequest.name = name;
+            addUserRequest.userName = userName;
+            addUserRequest.password = password;
+            addUserRequest.email = email;
+            const response = await userClient.addUserAccount(addUserRequest);
             if (response.isErrorResponse) {
                 setNotification({
-                    title: "Cannot login!",
+                    title: "Could not add user!",
                     message: response.errorMessage,
                     isError: true,
                 });
                 return;
             }
 
+            setNotification({
+                title: `Successfully added to the system!`,
+                message: `Welcome to Chasma Git Manager, ${response.userName}.`,
+                isError: response.isErrorResponse,
+            });
             localStorage.setItem("username", JSON.stringify(response.userName));
             localStorage.setItem("userId", JSON.stringify(response.userId));
             localStorage.setItem("email", JSON.stringify(response.email));
@@ -68,7 +79,7 @@ const LoginPage: React.FC = () => {
         } catch (e) {
             console.error(e);
             setNotification({
-                title: "Could not log in!",
+                title: "Could not add user!",
                 message: "An internal server error has occurred. Review logs.",
                 isError: true,
             });
@@ -86,10 +97,25 @@ const LoginPage: React.FC = () => {
                         <ChasmaLogo />
                     </div>
                     <h1 className="page-title"
-                        style={{textAlign: "center"}}>Sign In</h1>
-                    <br/>
-                    <form onSubmit={handleLogin}
-                        style={{textAlign: "center"}}>
+                        style={{textAlign: "center"}}>Register</h1>
+                    <form onSubmit={handleRegister}
+                          style={{textAlign: "center"}}>
+                        <input
+                            type="text"
+                            className="input-field"
+                            placeholder="Full Name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                        <input
+                            type="email"
+                            className="input-field"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
                         <input
                             type="text"
                             className="input-field"
@@ -108,13 +134,13 @@ const LoginPage: React.FC = () => {
                         />
                         <br/>
                         <button type="submit" className="submit-button">
-                            Login
+                            Register
                         </button>
                     </form>
-                    <p style={{ marginTop: '15px', color: '#aaa', alignSelf: 'center' }}>
-                        Don't have an account?{' '}
-                        <Link to="/register" style={{ color: '#00bfff', textDecoration: 'none' }}>
-                            Register here
+                    <p style={{ marginTop: '15px', color: '#aaa', textAlign: 'center' }}>
+                        Already have an account?{' '}
+                        <Link to="/" style={{ color: '#00bfff', textDecoration: 'none' }}>
+                            Login here
                         </Link>
                     </p>
                 </div>
@@ -131,4 +157,4 @@ const LoginPage: React.FC = () => {
     );
 }
 
-export default LoginPage;
+export default RegisterPage;
