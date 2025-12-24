@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import "../../css/RepositoryStatusPage.css"
 import '../../css/InfoTable.css'
@@ -64,14 +64,14 @@ const RepositoryStatusPage: React.FC = () => {
         setNotification(null);
     }
 
-    useCallback(() => {
+    useEffect(() => {
             const interval = setInterval(async () => {
                 await handleGitStatusRequest();
             }, 5000);
 
             return () => clearInterval(interval);
         },
-        [statusElements]);
+        []);
 
     /** Handles the request to perform a 'git status' on the selected repository. **/
     async function handleGitStatusRequest() {
