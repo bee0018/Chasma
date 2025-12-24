@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import "../../css/RepositoryStatusPage.css"
 import '../../css/InfoTable.css'
@@ -64,7 +64,7 @@ const RepositoryStatusPage: React.FC = () => {
         setNotification(null);
     }
 
-    useEffect(() => {
+    useCallback(() => {
             const interval = setInterval(async () => {
                 await handleGitStatusRequest();
             }, 5000);
