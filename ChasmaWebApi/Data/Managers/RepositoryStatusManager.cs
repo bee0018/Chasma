@@ -289,7 +289,15 @@ namespace ChasmaWebApi.Data.Managers
                 return ("", 0, 0);
             }
 
-            Commands.Fetch(repo, branch.RemoteName, [], new FetchOptions(), null);
+            try
+            {
+                Commands.Fetch(repo, branch.RemoteName, [], new FetchOptions(), null);
+            }
+            catch (Exception e)
+            {
+                ClientLogger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}.", branch.RemoteName, repo.Info.WorkingDirectory);
+            }
+            
             string localBranchName = branch.FriendlyName;
             if (string.IsNullOrEmpty(localBranchName))
             {
