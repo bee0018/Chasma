@@ -89,13 +89,16 @@ namespace ChasmaWebApi.Data.Managers
 
             ClientLogger.LogInformation("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
             (string branchName, int aheadCount, int behindCount) = GetBranchDiversionCalculation(workingDirectory);
+            string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
+            string commitHash = GetCommitHash(repo.Head);
             RepositorySummary repositorySummary = new()
             {
                 StatusElements = statusElements,
                 CommitsAhead = aheadCount,
                 CommitsBehind = behindCount,
                 BranchName = branchName,
-                RemoteUrl = GetRemoteUrl(repo) ?? string.Empty,
+                RemoteUrl = remoteUrl,
+                CommitHash = commitHash,
             };
             return repositorySummary;
         }
@@ -333,20 +336,37 @@ namespace ChasmaWebApi.Data.Managers
         /// <summary>
         /// Gets the remote URL for the specified repository.
         /// </summary>
-        /// <param name="repo">The specified repository.</param>
+        /// <param name="branch">The current checked out branch.</param>
+        /// <param name="remoteBranches">The collection of remote branches.</param>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
         /// <returns>The remote URL of the repository.</returns>
-        private string? GetRemoteUrl(Repository repo)
+        private string? GetRemoteUrl(Branch branch, RemoteCollection remoteBranches, string workingDirectory)
         {
-            Branch branch = repo.Head;
             string remoteName = branch.RemoteName;
-            Remote? remote = repo.Network.Remotes[remoteName];
+            Remote? remote = remoteBranches[remoteName];
             if (remote == null)
             {
-                ClientLogger.LogWarning("Could not find remote {remoteName} for repository at {path}.", remoteName, repo.Info.WorkingDirectory);
+                ClientLogger.LogWarning("Could not find remote {remoteName} for repository at {path}.", remoteName, workingDirectory);
                 return null;
             }
 
             return remote.PushUrl ?? remote.Url;
+        }
+
+        /// <summary>
+        /// Gets the commit hash for the specified branch.
+        /// </summary>
+        /// <param name="branch">The current branch.</param>
+        /// <returns>The latest commit hash.</returns>
+        private string GetCommitHash(Branch branch)
+        {
+            if (branch?.Tip == null)
+            {
+                ClientLogger.LogError("Cannot get commit hash. Failed to get branch information.");
+                return string.Empty;
+            }
+
+            return branch.Tip.Sha.Length > 7 ? branch.Tip.Sha[..7] : branch.Tip.Sha;
         }
     }
 }

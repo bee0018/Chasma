@@ -683,6 +683,9 @@
               },
               "remoteUrl": {
                 "type": "string"
+              },
+              "commitHash": {
+                "type": "string"
               }
             }
           }

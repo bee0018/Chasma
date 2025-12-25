@@ -1036,6 +1036,7 @@ export class GitStatusResponse extends ResponseBase implements IGitStatusRespons
     commitsBehind?: number;
     branchName?: string;
     remoteUrl?: string;
+    commitHash?: string;
 
     constructor(data?: IGitStatusResponse) {
         super(data);
@@ -1053,6 +1054,7 @@ export class GitStatusResponse extends ResponseBase implements IGitStatusRespons
             this.commitsBehind = _data["commitsBehind"];
             this.branchName = _data["branchName"];
             this.remoteUrl = _data["remoteUrl"];
+            this.commitHash = _data["commitHash"];
         }
     }
 
@@ -1074,6 +1076,7 @@ export class GitStatusResponse extends ResponseBase implements IGitStatusRespons
         data["commitsBehind"] = this.commitsBehind;
         data["branchName"] = this.branchName;
         data["remoteUrl"] = this.remoteUrl;
+        data["commitHash"] = this.commitHash;
         super.toJSON(data);
         return data;
     }
@@ -1085,6 +1088,7 @@ export interface IGitStatusResponse extends IResponseBase {
     commitsBehind?: number;
     branchName?: string;
     remoteUrl?: string;
+    commitHash?: string;
 }
 
 export class RepositoryStatusElement extends ChasmaXmlBase implements IRepositoryStatusElement {

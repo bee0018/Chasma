@@ -51,6 +51,9 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets the local branch name. **/
     const [branchName, setBranchName] = useState<string | undefined>("");
 
+    /** Gets or sets the latest commit hash. **/
+    const [commitHash, setCommitHash] = useState<string | undefined>("");
+
     /** Gets or sets the remote branch URL. **/
     const [branchUrl, setBranchUrl] = useState<string | undefined>(undefined);
 
@@ -94,6 +97,7 @@ const RepositoryStatusPage: React.FC = () => {
             setCommitsAhead(response.commitsAhead)
             setBranchName(response.branchName)
             setBranchUrl(response.remoteUrl)
+            setCommitHash(response.commitHash)
         }
         catch (e) {
             setNotification({
@@ -224,7 +228,7 @@ const RepositoryStatusPage: React.FC = () => {
                 <div className="left-panel">
                     <table className="info-table summary-table">
                         <caption onClick={handleNavigateToBranchUrl}
-                            style={{textAlign: "left"}}>{`${branchName}`}</caption>
+                            style={{textAlign: "left"}}>{`${branchName} - ${!isBlankOrUndefined(commitHash) ? commitHash : ""}`}</caption>
                         <thead>
                         <tr>
                             <th colSpan={2}>Repository Summary</th>

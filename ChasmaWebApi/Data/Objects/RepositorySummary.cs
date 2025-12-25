@@ -29,5 +29,10 @@
         /// Gets or sets the remote branch URL of the repository.
         /// </summary>
         public string RemoteUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the latest commit hash of the repository.
+        /// </summary>
+        public string CommitHash { get; set; }
     }
 }
