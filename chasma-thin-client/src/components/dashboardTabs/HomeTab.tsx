@@ -136,7 +136,7 @@ const HomeTab: React.FC = () => {
                                                  repoId={repo.id}
                                                  repoName={repo.name}
                                                  repoOwner={repo.owner}
-                                                 url={repo.url}
+                                                 url={`/status/${repo.name}/${repo.id}`}
                                                  onDelete={handleRepoDelete}
                                                  onError={handleRepoDeletionError} />
                         ))

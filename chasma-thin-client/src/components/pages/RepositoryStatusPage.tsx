@@ -15,7 +15,7 @@ import PushModal from "../modals/PushModal";
 import {isBlankOrUndefined} from "../../stringHelperUtil";
 
 /** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient()
+const statusClient = new RepositoryStatusClient();
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -200,7 +200,13 @@ const RepositoryStatusPage: React.FC = () => {
         <>
             <aside className="sidebar">
                 <div className="tab"
-                    style={{marginTop: "150px"}}
+                     style={{marginTop: "150px"}}
+                     onClick={() => navigate('/home')}
+                >
+                    Home
+                </div>
+                <br/>
+                <div className="tab"
                     onClick={handleGitStatusRequest}
                 >
                     Refresh Repo Status ⟳
@@ -219,6 +225,11 @@ const RepositoryStatusPage: React.FC = () => {
                      onClick={() => setIsPushingChanges(true)}
                 >
                     Push ↗
+                </div>
+                <br/>
+                <div className="tab"
+                >
+                    Checkout Branch
                 </div>
             </aside>
             <h1 className="repository-title-header">

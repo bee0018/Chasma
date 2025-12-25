@@ -65,16 +65,11 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
             <table className="repo-overview-table">
                 <thead>
                 <tr>
-                    <th>◐</th>
                     <th>⚒</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr>
-                    <td onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/status/${props.repoName}/${props.repoId}`);
-                    }}>Status</td>
                     <td onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/workflowruns/${props.repoName}/${props.repoOwner}`);
