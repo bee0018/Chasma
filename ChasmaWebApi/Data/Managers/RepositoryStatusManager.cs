@@ -136,7 +136,7 @@ namespace ChasmaWebApi.Data.Managers
         {
             using Repository repo = new(filePath);
             Signature author = new(fullName, email, DateTimeOffset.Now);
-            var x = repo.Commit(commitMessage, author, author);
+            repo.Commit(commitMessage, author, author);
 
         }
 
