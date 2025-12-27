@@ -3,6 +3,7 @@ using ChasmaWebApi.Controllers;
 using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Managers;
+using ChasmaWebApi.HostedServices;
 using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 
@@ -50,7 +51,8 @@ builder.Services.AddCors(options =>
         config.Title = "Chasma Git Manager API";
         config.Version = "v1";
     })
-    .AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(webApiConfigurations.DatabaseConfigurations.GetConnectionString()));
+    .AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(webApiConfigurations.DatabaseConfigurations.GetConnectionString()))
+    .AddHostedService<CacheInitializerService>();
 
 WebApplication app = builder.Build();
 app.UseCors(thinClientCorPolicy)

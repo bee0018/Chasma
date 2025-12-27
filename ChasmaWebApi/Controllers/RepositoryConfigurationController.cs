@@ -51,7 +51,6 @@ public class RepositoryConfigurationController : ControllerBase
         configurationManager = configManager;
         cacheManager = internalCacheManager;
         applicationDbContext = dbContext;
-        PopulateCache();
     }
 
     #endregion
@@ -173,34 +172,5 @@ public class RepositoryConfigurationController : ControllerBase
         await applicationDbContext.SaveChangesAsync();
         response.Repositories = localGitRepositories;
         return Ok(response);
-    }
-
-    /// <summary>
-    /// Populates the cache from the database on controller instantiation.
-    /// </summary>
-    private void PopulateCache()
-    {
-        foreach (RepositoryModel repo in applicationDbContext.Repositories)
-        {
-            LocalGitRepository localRepo = new()
-            {
-                Id = repo.Id,
-                UserId = repo.UserId,
-                Name = repo.Name,
-                Owner = repo.Owner,
-                Url = repo.Url,
-            };
-            cacheManager.Repositories.TryAdd(localRepo.Id, localRepo);
-        }
-
-        foreach (WorkingDirectoryModel workingDirectoryModel in applicationDbContext.WorkingDirectories)
-        {
-            cacheManager.WorkingDirectories.TryAdd(workingDirectoryModel.RepositoryId, workingDirectoryModel.WorkingDirectory);
-        }
-
-        foreach (UserAccountModel user in applicationDbContext.UserAccounts)
-        {
-            cacheManager.Users.TryAdd(user.Id, user);
-        }
     }
 }
