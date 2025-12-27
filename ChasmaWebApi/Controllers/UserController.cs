@@ -37,16 +37,6 @@ namespace ChasmaWebApi.Controllers
         }
 
         /// <summary>
-        /// Gets all the user accounts from the database.
-        /// </summary>
-        /// <returns>All the user accounts from the database.</returns>
-        [HttpGet]
-        public async Task<ActionResult<List<UserAccountModel>>> GetUserAcccounts()
-        {
-            return await applicationDbContext.UserAccounts.ToListAsync();
-        }
-
-        /// <summary>
         /// Logs in the specified user to the system.
         /// </summary>
         /// <param name="request">The request to log the user in.</param>
