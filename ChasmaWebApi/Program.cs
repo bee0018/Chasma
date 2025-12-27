@@ -47,7 +47,7 @@ builder.Services.AddCors(options =>
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>
     {
-        config.Title = "Developer Toolbox API";
+        config.Title = "Chasma Git Manager API";
         config.Version = "v1";
     })
     .AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(webApiConfigurations.DatabaseConfigurations.GetConnectionString()));

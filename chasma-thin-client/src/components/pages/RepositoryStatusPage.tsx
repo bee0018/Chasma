@@ -13,6 +13,7 @@ import CommitModal from "../modals/CommitModal";
 import {getUserEmail, getUserId} from "../../managers/LocalStorageManager";
 import PushModal from "../modals/PushModal";
 import {isBlankOrUndefined} from "../../stringHelperUtil";
+import CheckoutModal from "../modals/CheckoutModal";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient();
@@ -41,6 +42,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user is pushing changes. **/
     const [isPushingChanges, setIsPushingChanges] = useState<boolean>(false);
+
+    /** Gets or sets a flag indicating whether the user is checking out changes. **/
+    const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
 
     /** Gets or sets the number of commits the local repo is ahead of the remote. **/
     const [commitsAhead, setCommitsAhead] = useState<number | undefined>(0);
@@ -228,6 +232,7 @@ const RepositoryStatusPage: React.FC = () => {
                 </div>
                 <br/>
                 <div className="tab"
+                     onClick={() => setIsCheckingOut(true)}
                 >
                     Checkout Branch
                 </div>
@@ -326,6 +331,12 @@ const RepositoryStatusPage: React.FC = () => {
                 <PushModal
                     repositoryId={repoId}
                     onClose={() => setIsPushingChanges(false)}
+                />
+            )}
+            {isCheckingOut && (
+                <CheckoutModal
+                    repositoryId={repoId}
+                    onClose={() => setIsCheckingOut(false)}
                 />
             )}
         </>
