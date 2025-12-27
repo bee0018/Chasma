@@ -64,5 +64,21 @@ namespace ChasmaWebApi.Data.Interfaces
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the user was able to pull changes, false otherwise.</returns>
         bool TryPullChanges(string workingDirectory, string fullName, string email, string token, out string errorMessage);
+
+        /// <summary>
+        /// Tries to checkout the specified branch in the repository.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="branchName">The branch to checkout.</param>
+        /// <param name="errorMessage">The error message if there an issue checking out the branch.</param>
+        /// <returns>True if the branch is checked out; false otherwise.</returns>
+        bool TryCheckoutBranch(string workingDirectory, string branchName, out string errorMessage);
+
+        /// <summary>
+        /// Gets the list of all branches in the specified repository.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <returns>List of all local and remote branches in the repository.</returns>
+        List<string> GetAllBranches(string workingDirectory);
     }
 }

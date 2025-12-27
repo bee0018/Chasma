@@ -414,6 +414,82 @@ export class RepositoryStatusClient {
         }
         return Promise.resolve<GitPullResponse>(null as any);
     }
+
+    checkoutBranch(request: GitCheckoutRequest): Promise<GitCheckoutResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryStatus/gitCheckout";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCheckoutBranch(_response);
+        });
+    }
+
+    protected processCheckoutBranch(response: Response): Promise<GitCheckoutResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GitCheckoutResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GitCheckoutResponse>(null as any);
+    }
+
+    getBranches(request: GitBranchRequest): Promise<GitBranchResponse> {
+        let url_ = this.baseUrl + "/api/RepositoryStatus/gitBranch";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetBranches(_response);
+        });
+    }
+
+    protected processGetBranches(response: Response): Promise<GitBranchResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GitBranchResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GitBranchResponse>(null as any);
+    }
 }
 
 export class UserClient {
@@ -1468,6 +1544,144 @@ export interface IGitPullRequest extends IChasmaXmlBase {
     repositoryId?: string;
     userId?: number;
     email?: string;
+}
+
+export class GitCheckoutResponse extends ResponseBase implements IGitCheckoutResponse {
+
+    constructor(data?: IGitCheckoutResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+    }
+
+    static fromJS(data: any): GitCheckoutResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitCheckoutResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitCheckoutResponse extends IResponseBase {
+}
+
+export class GitCheckoutRequest extends ChasmaXmlBase implements IGitCheckoutRequest {
+    repositoryId?: string;
+    branchName?: string;
+
+    constructor(data?: IGitCheckoutRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repositoryId = _data["repositoryId"];
+            this.branchName = _data["branchName"];
+        }
+    }
+
+    static fromJS(data: any): GitCheckoutRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitCheckoutRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryId"] = this.repositoryId;
+        data["branchName"] = this.branchName;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitCheckoutRequest extends IChasmaXmlBase {
+    repositoryId?: string;
+    branchName?: string;
+}
+
+export class GitBranchResponse extends ResponseBase implements IGitBranchResponse {
+    branchNames?: string[];
+
+    constructor(data?: IGitBranchResponse) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            if (Array.isArray(_data["branchNames"])) {
+                this.branchNames = [] as any;
+                for (let item of _data["branchNames"])
+                    this.branchNames!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): GitBranchResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitBranchResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.branchNames)) {
+            data["branchNames"] = [];
+            for (let item of this.branchNames)
+                data["branchNames"].push(item);
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitBranchResponse extends IResponseBase {
+    branchNames?: string[];
+}
+
+export class GitBranchRequest extends ChasmaXmlBase implements IGitBranchRequest {
+    repositoryId?: string;
+
+    constructor(data?: IGitBranchRequest) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.repositoryId = _data["repositoryId"];
+        }
+    }
+
+    static fromJS(data: any): GitBranchRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GitBranchRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["repositoryId"] = this.repositoryId;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IGitBranchRequest extends IChasmaXmlBase {
+    repositoryId?: string;
 }
 
 export class UserAccountModel implements IUserAccountModel {

@@ -136,7 +136,7 @@ namespace ChasmaWebApi.Data.Managers
         {
             using Repository repo = new(filePath);
             Signature author = new(fullName, email, DateTimeOffset.Now);
-            var x = repo.Commit(commitMessage, author, author);
+            repo.Commit(commitMessage, author, author);
 
         }
 
@@ -219,6 +219,24 @@ namespace ChasmaWebApi.Data.Managers
             catch (Exception e)
             {
                 errorMessage = $"Failed to pull changes from remote for repository at {workingDirectory}. Check server logs for more information.";
+                ClientLogger.LogError(e, errorMessage);
+                return false;
+            }
+        }
+
+        // <inheritdoc />
+        public bool TryCheckoutBranch(string workingDirectory, string branchName, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            using Repository repo = new Repository(workingDirectory);
+            try
+            {
+                Commands.Checkout(repo, branchName);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"Failed to checkout branch {branchName} for repository at {workingDirectory}. Check server logs for more information.";
                 ClientLogger.LogError(e, errorMessage);
                 return false;
             }
@@ -331,6 +349,28 @@ namespace ChasmaWebApi.Data.Managers
 
             HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
             return (localBranchName, divergence.AheadBy ?? 0, divergence.BehindBy ?? 0);
+        }
+
+        // <inheritdoc />
+        public List<string> GetAllBranches(string workingDirectory)
+        {
+            HashSet<string> branchNames = new();
+            using Repository repo = new Repository(workingDirectory);
+            try
+            {
+                Commands.Fetch(repo, repo.Head.RemoteName, [], new FetchOptions(), null);
+            }
+            catch (Exception e)
+            {
+                ClientLogger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}.", repo.Head.RemoteName, repo.Info.WorkingDirectory);
+            }
+
+            foreach (Branch branch in repo.Branches)
+            {
+                branchNames.Add(branch.FriendlyName);
+            }
+
+            return branchNames.OrderBy(i => i).ToList();
         }
 
         /// <summary>

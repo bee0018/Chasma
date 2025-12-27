@@ -279,6 +279,11 @@ namespace ChasmaWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Pushes the committed changes to the remote repository.
+        /// </summary>
+        /// <param name="request">The request to push changes to a remote repository.</param>
+        /// <returns>Git push response.</returns>
         [HttpPost]
         [Route("gitPush")]
         public ActionResult<GitPushResponse> PushChanges([FromBody] GitPushRequest request)
@@ -389,6 +394,115 @@ namespace ChasmaWebApi.Controllers
 
             logger.LogInformation("Successfully pulled changes to repo: {repoId}", repoId);
             return Ok(response);
+        }
+
+        /// <summary>
+        /// Checks out the specified branch for the repository.
+        /// </summary>
+        /// <param name="request">The request containing the details to checkout the branch.</param>
+        /// <returns>The response to checking out a branch.</returns>
+        [HttpPost]
+        [Route("gitCheckout")]
+        public ActionResult<GitCheckoutResponse> CheckoutBranch([FromBody] GitCheckoutRequest request)
+        {
+            logger.LogInformation("Received request to checkout branch for repo: {repoId}", request.RepositoryId);
+            GitCheckoutResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot checkout branch.";
+                logger.LogError("GitCheckoutBranchRequest received is null. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot checkout branch.";
+                logger.LogError("Null or empty repository identifier received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot checkout branch.";
+                logger.LogError("No working directory was found for repo identifier {repoId}. Sending error response", repoId);
+                return BadRequest(response);
+            }
+
+            try
+            {
+                if (!statusManager.TryCheckoutBranch(workingDirectory, request.BranchName, out string errorMessage))
+                {
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = $"Failed to checkout branch to repo: {repoId}. {errorMessage}";
+                    logger.LogError("Failed to checkout branch to repo: {repoId}. {errorMessage}", repoId, errorMessage);
+                    return Ok(response);
+                }
+
+                logger.LogInformation("Successfully checked out branch to repo: {repoId}", repoId);
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Error checking out branch to repo: {repoId}. Check server logs for more information.";
+                logger.LogError(e, "Error checking out branch to repo: {repoId}", repoId);
+                return Ok(response);
+            }
+        }
+
+        /// <summary>
+        /// Gets the branches for the specified repository.
+        /// </summary>
+        /// <param name="request">The request containing the repository details.</param>
+        /// <returns>Response containing all the branches.</returns>
+        [HttpPost]
+        [Route("gitBranch")]
+        public ActionResult<GitBranchResponse> GetBranches([FromBody] GitBranchRequest request)
+        {
+            GitBranchResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot get branches.";
+                logger.LogError("GitBranchRequest received is null. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot get branches.";
+                logger.LogError("Null or empty repository identifier received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot get branches.";
+                logger.LogError("No working directory was found for repo identifier {repoId}. Sending error response", repoId);
+                return BadRequest(response);
+            }
+
+            try
+            {
+                List<string> branchNames = statusManager.GetAllBranches(workingDirectory);
+                response.BranchNames.AddRange(branchNames);
+                logger.LogInformation("Successfully retrieved branches for repo: {repoId}", repoId);
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Error getting branches for repo: {repoId}. Check server logs for more information.";
+                logger.LogError(e, "Error getting branches for repo: {repoId}", repoId);
+                return Ok(response);
+            }
         }
 
         /// <summary>
