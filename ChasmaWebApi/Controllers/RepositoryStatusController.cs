@@ -50,7 +50,6 @@ namespace ChasmaWebApi.Controllers
             webApiConfigurations = config;
             statusManager = manager;
             cacheManager = apiCacheManager;
-            applicationDbContext = dbContext;
         }
 
         #endregion
@@ -495,6 +494,121 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"Error getting branches for repo: {repoId}. Check server logs for more information.";
                 logger.LogError(e, "Error getting branches for repo: {repoId}", repoId);
+                return Ok(response);
+            }
+        }
+
+        /// <summary>
+        /// Creates a pull request in the specified repository.
+        /// </summary>
+        /// <param name="request">Request containing the details to create a PR.</param>
+        /// <returns>Pull request response if successful.</returns>
+        [HttpPost]
+        [Route("createPullRequest")]
+        public ActionResult<CreatePRResponse> CreatePullRequest([FromBody] CreatePRRequest request)
+        {
+            CreatePRResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot create pull request.";
+                logger.LogError("CreatePRRequest received is null. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot get branches.";
+                logger.LogError("Null or empty repository identifier received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot get branches.";
+                logger.LogError("No working directory was found for repo identifier {repoId}. Sending error response", repoId);
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.PullRequestTitle))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Pull request title must be populated. Cannot create pull request.";
+                logger.LogError("Null or empty pull request title received. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.WorkingBranchName))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Working branch name must be populated. Cannot create pull request.";
+                logger.LogError("Null or empty working branch name received. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.DestinationBranchName))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Destination branch name must be populated. Cannot create pull request.";
+                logger.LogError("Null or empty destination branch name received. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.PullRequestBody))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Pull request body message must be populated. Cannot create pull request.";
+                logger.LogError("Null or empty pull request body message received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string owner = cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repo) ? repo.Owner : string.Empty;
+            if (string.IsNullOrEmpty(owner))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Owner of repository not found. Cannot create pull request.";
+                logger.LogError("Owner could be found when creating pull request. Sending error response");
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryName))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository name must be populated. Cannot create pull request.";
+                logger.LogError("Null or empty repository name received. Sending error response");
+                return BadRequest(response);
+            }
+
+            try
+            {
+                string token = webApiConfigurations.GitHubApiToken;
+                string title = request.PullRequestTitle;
+                string headBranch = request.WorkingBranchName;
+                string baseBranch = request.DestinationBranchName;
+                string body = request.PullRequestBody;
+                string repoName = request.RepositoryName;
+                if (!statusManager.TryCreatePullRequest(workingDirectory, owner, repoName, title, headBranch, baseBranch, body, token, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage))
+                {
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = $"Failed to create pull request for repo: {request.RepositoryName}. {errorMessage}";
+                    logger.LogError("Failed to create pull request for repo: {repoName}. {errorMessage}", request.RepositoryName, errorMessage);
+                    return Ok(response);
+                }
+
+                response.PullRequestId = pullRequestId;
+                response.PullRequestUrl = prUrl;
+                response.TimeStamp = timestamp;
+                logger.LogInformation("Successfully created pull request for repo: {repoName}", request.RepositoryName);
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Error creating pull request for repo: {request.RepositoryName}. Check server logs for more information.";
+                logger.LogError(e, "Error creating pull request for repo: {repoName}", request.RepositoryName);
                 return Ok(response);
             }
         }
