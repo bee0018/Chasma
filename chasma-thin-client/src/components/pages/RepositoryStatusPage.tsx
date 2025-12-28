@@ -14,6 +14,7 @@ import {getUserEmail, getUserId} from "../../managers/LocalStorageManager";
 import PushModal from "../modals/PushModal";
 import {isBlankOrUndefined} from "../../stringHelperUtil";
 import CheckoutModal from "../modals/CheckoutModal";
+import PullRequestModal from "../modals/PullRequestModal";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient();
@@ -45,6 +46,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user is checking out changes. **/
     const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
+
+    /** Gets or sets a flag indicating whether the user is creating a pull request. **/
+    const [isCreatingPullRequest, setIsCreatingPullRequest] = useState<boolean>(false);
 
     /** Gets or sets the number of commits the local repo is ahead of the remote. **/
     const [commitsAhead, setCommitsAhead] = useState<number | undefined>(0);
@@ -338,6 +342,12 @@ const RepositoryStatusPage: React.FC = () => {
                     repositoryId={repoId}
                     onClose={() => setIsCheckingOut(false)}
                 />
+            )}
+            {isCreatingPullRequest && (
+                <PullRequestModal
+                    onClose={() => setIsCreatingPullRequest(false)}
+                    repositoryId={repoId}
+                    repoName={repoName} />
             )}
         </>
     );

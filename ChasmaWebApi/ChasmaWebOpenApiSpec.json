@@ -381,22 +381,31 @@
         }
       }
     },
-    "/api/User": {
-      "get": {
+    "/api/RepositoryStatus/createPullRequest": {
+      "post": {
         "tags": [
-          "User"
+          "RepositoryStatus"
         ],
-        "operationId": "User_GetUserAcccounts",
+        "operationId": "RepositoryStatus_CreatePullRequest",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePRRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAccountModel"
-                  }
+                  "$ref": "#/components/schemas/CreatePRResponse"
                 }
               }
             }
@@ -1107,31 +1116,59 @@
           }
         ]
       },
-      "UserAccountModel": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
+      "CreatePRResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
           },
-          "name": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "userName": {
-            "type": "string"
-          },
-          "password": {
-            "type": "string"
-          },
-          "salt": {
-            "type": "string",
-            "format": "byte"
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "pullRequestId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "pullRequestUrl": {
+                "type": "string"
+              },
+              "timeStamp": {
+                "type": "string"
+              }
+            }
           }
-        }
+        ]
+      },
+      "CreatePRRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "pullRequestTitle": {
+                "type": "string"
+              },
+              "workingBranchName": {
+                "type": "string"
+              },
+              "destinationBranchName": {
+                "type": "string"
+              },
+              "pullRequestBody": {
+                "type": "string"
+              },
+              "repositoryName": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       },
       "LoginResponse": {
         "allOf": [

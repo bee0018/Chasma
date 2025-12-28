@@ -242,6 +242,131 @@ namespace ChasmaWebApi.Data.Managers
             }
         }
 
+        // <inheritdoc />
+        public List<string> GetAllBranches(string workingDirectory)
+        {
+            HashSet<string> branchNames = new();
+            using Repository repo = new Repository(workingDirectory);
+            try
+            {
+                Commands.Fetch(repo, repo.Head.RemoteName, [], new FetchOptions(), null);
+            }
+            catch (Exception e)
+            {
+                ClientLogger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}.", repo.Head.RemoteName, repo.Info.WorkingDirectory);
+            }
+
+            foreach (Branch branch in repo.Branches)
+            {
+                branchNames.Add(branch.FriendlyName);
+            }
+
+            return branchNames.OrderBy(i => i).ToList();
+        }
+
+        // <inheritdoc />
+        public bool TryCreatePullRequest(string workingDirectory, string owner, string repoName, string title, string headBranch, string baseBranch, string body, string token, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            prUrl = string.Empty;
+            timestamp = string.Empty;
+            pullRequestId = -1;
+
+            if (!PullRequestCanBeCreated(workingDirectory, headBranch, baseBranch, out string reason))
+            {
+                errorMessage = reason;
+                ClientLogger.LogError("Cannot create pull request in {repoName}: {reason}", repoName, reason);
+                return false;
+            }
+
+            Client = new GitHubClient(new ProductHeaderValue(repoName))
+            {
+                Credentials = new Credentials(token)
+            };
+
+            NewPullRequest newPullRequest = new(title, headBranch, baseBranch)
+            {
+                Body = body
+            };
+
+            Task<PullRequest?> createPrTask = SendPrRequest(Client, owner, repoName, newPullRequest);
+            PullRequest? createdPullRequest = createPrTask.Result;
+            if (createdPullRequest == null)
+            {
+                errorMessage = $"Failed to create pull request in {repoName}. Check server logs for more information.";
+                return false;
+            }
+
+            pullRequestId = createdPullRequest.Number;
+            prUrl = createdPullRequest.HtmlUrl;
+            timestamp = createdPullRequest.CreatedAt.ToString("g");
+            ClientLogger.LogInformation("Created pull request {prId} in {repoName}.", pullRequestId, repoName);
+            return true;
+        }
+
+        /// <summary>
+        /// Sends a pull request creation request to the GitHub API.
+        /// </summary>
+        /// <param name="client">The Ocktokit GitHub API client.</param>
+        /// <param name="owner">The repository owner.</param>
+        /// <param name="repoName">The repository owner.</param>
+        /// <param name="newPullRequest">The new pull request components.</param>
+        /// <returns>Task containing the result of the API operation.</returns>
+        private async Task<PullRequest?> SendPrRequest(GitHubClient client, string owner, string repoName, NewPullRequest newPullRequest)
+        {
+            try
+            {
+                return await client.PullRequest.Create(owner, repoName, newPullRequest);
+            }
+            catch (Exception e)
+            {
+                ClientLogger.LogError("Error when trying to create pull request in {repoName}: {error}", repoName, e);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Determines if a pull request can be created based on the branch status.
+        /// </summary>
+        /// <param name="workingDirectory">The current working directory of the repository.</param>
+        /// <param name="headBranchName">The branch that is to be merged.</param>
+        /// <param name="baseBranchName">The branch that will have changes merged into it.</param>
+        /// <param name="reason">The reason the branch cannot have a pull request created.</param>
+        /// <returns>True if the pull request can be created; false otherwise.</returns>
+        private static bool PullRequestCanBeCreated(string workingDirectory, string headBranchName, string baseBranchName, out string reason)
+        {
+            reason = string.Empty;
+            using Repository repo = new Repository(workingDirectory);
+            Branch headBranch = repo.Branches[headBranchName];
+            if (headBranch == null)
+            {
+                reason = $"Head branch {headBranchName} does not exist.";
+                return false;
+            }
+
+            Branch baseBranch = repo.Branches[baseBranchName];
+            if (baseBranch == null)
+            {
+                reason = $"Base branch {baseBranchName} does not exist.";
+                return false;
+            }
+
+            if (headBranch.FriendlyName == baseBranch.FriendlyName)
+            {
+                reason = "Cannot create a pull request to merge a branch into itself.";
+                return false;
+            }
+
+            HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(headBranch.Tip, baseBranch.Tip);
+            if (divergence.AheadBy == 0)
+            {
+                reason = $"Head branch {headBranchName} has no new commits to merge into {baseBranchName}.";
+                return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// Gets the workflow run for the specified repository.
         /// </summary>
@@ -349,28 +474,6 @@ namespace ChasmaWebApi.Data.Managers
 
             HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
             return (localBranchName, divergence.AheadBy ?? 0, divergence.BehindBy ?? 0);
-        }
-
-        // <inheritdoc />
-        public List<string> GetAllBranches(string workingDirectory)
-        {
-            HashSet<string> branchNames = new();
-            using Repository repo = new Repository(workingDirectory);
-            try
-            {
-                Commands.Fetch(repo, repo.Head.RemoteName, [], new FetchOptions(), null);
-            }
-            catch (Exception e)
-            {
-                ClientLogger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}.", repo.Head.RemoteName, repo.Info.WorkingDirectory);
-            }
-
-            foreach (Branch branch in repo.Branches)
-            {
-                branchNames.Add(branch.FriendlyName);
-            }
-
-            return branchNames.OrderBy(i => i).ToList();
         }
 
         /// <summary>

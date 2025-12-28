@@ -80,5 +80,23 @@ namespace ChasmaWebApi.Data.Interfaces
         /// <param name="workingDirectory">The working directory of the repository.</param>
         /// <returns>List of all local and remote branches in the repository.</returns>
         List<string> GetAllBranches(string workingDirectory);
+
+        /// <summary>
+        /// Tries to create a pull request in the specified repository.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="owner">The repository owner.</param>
+        /// <param name="repoName">The repository name.</param>
+        /// <param name="title">The name of the pull request.</param>
+        /// <param name="headBranch">The working branch to be merged into another.</param>
+        /// <param name="baseBranch">The branch that will be getting a branch merged into.</param>
+        /// <param name="body">The message of the pull request.</param>
+        /// <param name="token">The GitHub API token.</param>
+        /// <param name="pullRequestId">The identtifier of the pull request.</param>
+        /// <param name="prUrl">The pull request url.</param>
+        /// <param name="timestamp">The timestamp of when the pull request was created.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the pull request is created; false otherwise.</returns>
+        bool TryCreatePullRequest(string workingDirectory, string owner, string repoName, string title, string headBranch, string baseBranch, string body, string token, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage);
     }
 }
