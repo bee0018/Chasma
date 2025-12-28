@@ -53,7 +53,7 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
      * Handles the event when a user intends to create a pull request on GitHub.
      */
     const handleCreatePrRequest = async () => {
-        setTitle("Creating pull request. May take a few moments. Will navigate to pull request in a new page...");
+        setTitle("Creating pull request. May take a few moments...");
         const request = new CreatePRRequest();
         request.repositoryId = props.repositoryId;
         request.pullRequestBody = pullRequestDescription;
