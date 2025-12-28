@@ -46,6 +46,9 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
     /** Gets or sets the remote branches to checkout. **/
     const [branchesList, setBranchesList] = React.useState<string[] | undefined>([]);
 
+    /** Gets or sets the pull request URL. **/
+    const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(undefined);
+
     /**
      * Handles the event when a user intends to create a pull request on GitHub.
      */
@@ -70,7 +73,7 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
             setTitle(`Pull Request ${response.pullRequestId} successfully created at ${response.timeStamp}`);
             setErrorMessage(undefined);
             setSuccessfullyCreated(true);
-            window.open(`${response.pullRequestUrl}`, "_blank");
+            setPullRequestUrl(response.pullRequestUrl);
         }
         catch (e) {
             console.error(e);
@@ -193,6 +196,13 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                               placeholder="Enter Pull Request Description:"
                               value={pullRequestDescription}
                               onChange={(e) => setPullRequestDescription(e.target.value)} />
+                    <br/>
+                    {successfullyCreated && pullRequestUrl && (
+                        <div className="input-field"
+                             onClick={() => window.open(`${pullRequestUrl}`, "_blank")}>
+                            GitHub Pull Request Url: {pullRequestUrl}
+                        </div>
+                    )}
                     <br/>
                     <div>
                         <button className="commit-modal-button"
