@@ -240,6 +240,11 @@ const RepositoryStatusPage: React.FC = () => {
                 >
                     Checkout Branch
                 </div>
+                <div className="tab"
+                     onClick={() => setIsCreatingPullRequest(true)}
+                >
+                    Create Pull Request
+                </div>
             </aside>
             <h1 className="repository-title-header">
                 {repoName} Status Manager

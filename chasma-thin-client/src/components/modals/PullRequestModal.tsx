@@ -1,6 +1,5 @@
 ﻿import React, {useState} from "react";
 import {CreatePRRequest, GitBranchRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
-import {useNavigate} from "react-router-dom";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient();
@@ -47,9 +46,6 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
     /** Gets or sets the remote branches to checkout. **/
     const [branchesList, setBranchesList] = React.useState<string[] | undefined>([]);
 
-    /** Gets the navigate function. **/
-    const navigate = useNavigate();
-
     /**
      * Handles the event when a user intends to create a pull request on GitHub.
      */
@@ -73,7 +69,7 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
             setTitle(`Pull Request ${response.pullRequestId} successfully created at ${response.timeStamp}`);
             setErrorMessage(undefined);
             setSuccessfullyCreated(true);
-            navigate(`${response.pullRequestUrl}`)
+            window.open(`${response.pullRequestUrl}`, "_blank")
         }
         catch (e) {
             console.error(e);
@@ -157,15 +153,6 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                     <h2 className="commit-modal-title"
                         style={{marginTop: "-30px"}}>{title}</h2>
                     {errorMessage && <h3 className="commit-modal-message">{errorMessage}</h3>}
-                    <input
-                        type="text"
-                        className="input-field"
-                        placeholder="Pull Request Title"
-                        value={pullRequestTitle}
-                        onChange={(e) => setPullRequestTitle(e.target.value)}
-                        style={{width: "100%"}}
-                        required
-                    />
                     {branchesList && branchesList.length > 0 && (
                         <div>
                             <label style={{float: "left"}}>Choose working branch:</label>
@@ -191,6 +178,16 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                             </select>
                         </div>
                 )}
+                    <br/>
+                    <input
+                        type="text"
+                        className="input-field"
+                        placeholder="Pull Request Title"
+                        value={pullRequestTitle}
+                        onChange={(e) => setPullRequestTitle(e.target.value)}
+                        style={{width: "100%"}}
+                        required
+                    />
                     <textarea className="input-area"
                               placeholder="Enter Pull Request Description:"
                               value={pullRequestDescription}
