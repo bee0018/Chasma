@@ -64,11 +64,27 @@ namespace ChasmaWebApi.Controllers
         public ActionResult<GitHubWorkflowRunResponse> GetChasmaWorkflowResults([FromBody] GetWorkflowResultsRequest request)
         {
             GitHubWorkflowRunResponse gitHubWorkflowRunResponse = new();
-            if (request == null || string.IsNullOrEmpty(request.RepositoryName) || string.IsNullOrEmpty(request.RepositoryOwner))
+            if (request == null)
             {
-                logger.LogError("Invalid request received to get workflow run results.");
+                logger.LogError("Null request received to get workflow run results. Sending error response.");
                 gitHubWorkflowRunResponse.IsErrorResponse = true;
-                gitHubWorkflowRunResponse.ErrorMessage = "Invalid request. Repository name and owner are required.";
+                gitHubWorkflowRunResponse.ErrorMessage = "Null request received. Cannot get workflow runs.";
+                return BadRequest(gitHubWorkflowRunResponse);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryName))
+            {
+                logger.LogError("Empty repository name received when attempting to get workflow run results. Sending error response.");
+                gitHubWorkflowRunResponse.IsErrorResponse = true;
+                gitHubWorkflowRunResponse.ErrorMessage = "Invalid request. Repository name is required.";
+                return BadRequest(gitHubWorkflowRunResponse);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryOwner))
+            {
+                logger.LogError("Empty repository owner received when attempting to get workflow run results. Sending error response.");
+                gitHubWorkflowRunResponse.IsErrorResponse = true;
+                gitHubWorkflowRunResponse.ErrorMessage = "Invalid request. Repository owner is required.";
                 return BadRequest(gitHubWorkflowRunResponse);
             }
 
@@ -205,7 +221,7 @@ namespace ChasmaWebApi.Controllers
         [Route("gitCommit")]
         public ActionResult<GitCommitResponse> CommitChanges([FromBody] GitCommitRequest request)
         {
-            logger.LogInformation("Received request to commit changes for repo: {repoId}", request.RepositoryId);
+            logger.LogInformation("Received request to commit changes");
             GitCommitResponse response = new();
             if (request == null)
             {
@@ -281,7 +297,7 @@ namespace ChasmaWebApi.Controllers
         [Route("gitPush")]
         public ActionResult<GitPushResponse> PushChanges([FromBody] GitPushRequest request)
         {
-            logger.LogInformation("Received request to push changes for repo: {repoId}", request.RepositoryId);
+            logger.LogInformation("Received request to push changes");
             GitPushResponse response = new();
             if (request == null)
             {
@@ -329,7 +345,7 @@ namespace ChasmaWebApi.Controllers
         [Route("gitPull")]
         public ActionResult<GitPullResponse> PullChanges([FromBody] GitPullRequest request)
         {
-            logger.LogInformation("Received request to pull changes for repo: {repoId}", request.RepositoryId);
+            logger.LogInformation("Received request to pull changes");
             GitPullResponse response = new();
             if (request == null)
             {
@@ -346,7 +362,6 @@ namespace ChasmaWebApi.Controllers
                 logger.LogError("Null or empty repository identifier received. Sending error response");
                 return BadRequest(response);
             }
-
 
             string email = request.Email;
             if (string.IsNullOrEmpty(email))
@@ -398,7 +413,7 @@ namespace ChasmaWebApi.Controllers
         [Route("gitCheckout")]
         public ActionResult<GitCheckoutResponse> CheckoutBranch([FromBody] GitCheckoutRequest request)
         {
-            logger.LogInformation("Received request to checkout branch for repo: {repoId}", request.RepositoryId);
+            logger.LogInformation("Received request to checkout branch");
             GitCheckoutResponse response = new();
             if (request == null)
             {

@@ -42,6 +42,7 @@ builder.Services.AddCors(options =>
         });
     })
     .AddSingleton(webApiConfigurations)
+    .AddSingleton<IPasswordUtility, PasswordUtility>()
     .AddSingleton<ICacheManager, CacheManager>()
     .AddSingleton<IRepositoryConfigurationManager, RepositoryConfigurationManager>()
     .AddSingleton<IRepositoryStatusManager, RepositoryStatusManager>()

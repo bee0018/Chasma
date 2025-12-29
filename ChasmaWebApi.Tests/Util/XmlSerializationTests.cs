@@ -1,7 +1,7 @@
 ﻿using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Util;
 
-namespace ChasmaWebApi.Tests
+namespace ChasmaWebApi.Tests.Util
 {
     /// <summary>
     /// Class testing the functionality of the <see cref="ChasmaXmlBase"/> class.
