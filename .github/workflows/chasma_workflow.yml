@@ -1,0 +1,48 @@
+name: Chasma Build And Test Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # .NET setup
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore ./ChasmaWebApi/ChasmaWebApi.sln
+
+    - name: Build Web API
+      run: dotnet build ./ChasmaWebApi/ChasmaWebApi.sln --no-restore
+
+    - name: Test Web API
+      run: dotnet test ./ChasmaWebApi/ChasmaWebApi.sln --no-build --verbosity normal
+
+   # NPM setup
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install npm dependencies
+      run: npm install
+      working-directory: chasma-thin-client
+
+    # Intentionally do not want to report warnings as errors at this stage in development.
+    - name: Build Chasma Frontend
+      run: CI=false npm run build
+      working-directory: chasma-thin-client
