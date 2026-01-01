@@ -24,6 +24,5 @@ jobs:
 
     - name: Build
       run: |
-    # commenting out for now until I make this work :(
-        # npm install --prefix \chasma-thin-client
-        # npm --prefix \chasma-thin-client run build
+         npm install --prefix \chasma-thin-client
+         npm --prefix \chasma-thin-client run build
