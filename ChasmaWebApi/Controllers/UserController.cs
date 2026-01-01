@@ -1,8 +1,8 @@
 ﻿using ChasmaWebApi.Data;
+using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Requests;
 using ChasmaWebApi.Data.Responses;
-using ChasmaWebApi.Util;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,14 +26,21 @@ namespace ChasmaWebApi.Controllers
         private readonly ILogger<UserController> logger;
 
         /// <summary>
+        /// The internal password utility for hashing and verifying passwords.
+        /// </summary>
+        private readonly IPasswordUtility passwordUtility;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="UserController"/> class.
         /// </summary>
         /// <param name="dbContext">The application database context.</param>
         /// <param name="log">The injected internal logger.</param>
-        public UserController(ApplicationDbContext dbContext, ILogger<UserController> log)
+        /// <param name="passwordUtil">The injected password utility.</param>
+        public UserController(ApplicationDbContext dbContext, ILogger<UserController> log, IPasswordUtility passwordUtil)
         {
             applicationDbContext = dbContext;
             logger = log;
+            passwordUtility = passwordUtil;
         }
 
         /// <summary>
@@ -50,7 +57,7 @@ namespace ChasmaWebApi.Controllers
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Request was null. Cannot login user.";
-                logger.LogError("AddUserRequest received is null. Sending error response");
+                logger.LogError("LoginRequest received is null. Sending error response");
                 return BadRequest(response);
             }
 
@@ -79,7 +86,7 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            bool isPasswordValid = PasswordUtility.VerifyPassword(request.Password, account.Salt, account.Password);
+            bool isPasswordValid = passwordUtility.VerifyPassword(request.Password, account.Salt, account.Password);
             if (!isPasswordValid)
             {
                 response.IsErrorResponse = true;
@@ -145,7 +152,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            (string hashedPassword, byte[] salt) = PasswordUtility.HashPassword(request.Password);
+            (string hashedPassword, byte[] salt) = passwordUtility.HashPassword(request.Password);
             UserAccountModel account = new()
             {
                 Name = request.Name,
@@ -154,21 +161,23 @@ namespace ChasmaWebApi.Controllers
                 Password = hashedPassword,
                 Salt = salt,
             };
-            await applicationDbContext.UserAccounts.AddAsync(account);
-            int rowsAffected = await applicationDbContext.SaveChangesAsync();
-            if (rowsAffected <= 0)
+            try
+            {
+                await applicationDbContext.UserAccounts.AddAsync(account);
+                int rowsAffected = await applicationDbContext.SaveChangesAsync();
+                logger.LogInformation("User {username} has been added to the system successfully", account.UserName);
+                response.UserName = account.UserName;
+                response.UserId = account.Id;
+                response.Email = account.Email;
+                return Ok(response);
+            }
+            catch (Exception ex)
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "User could not be added to the system. Check server logs for more information.";
-                logger.LogError("User {username} could not be added to the system. Sending error response", account.UserName);
+                logger.LogError(ex, "User {username} could not be added to the system. Sending error response", account.UserName);
                 return Ok(response);
             }
-
-            logger.LogInformation("User {username} has been added to the system successfully", account.UserName);
-            response.UserName = account.UserName;
-            response.UserId = account.Id;
-            response.Email = account.Email;
-            return Ok(response);
         }
     }
 }
