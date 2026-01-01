@@ -29,8 +29,26 @@ jobs:
     - name: Build Web API
       run: dotnet build ./ChasmaWebApi/ChasmaWebApi.sln --no-restore
 
-    - name: Test Web API
-      run: dotnet test ./ChasmaWebApi/ChasmaWebApi.sln --no-build --verbosity normal
+    - name: Test Web API with coverage
+      run: >
+        dotnet test ./ChasmaWebApi/ChasmaWebApi.sln
+        --no-build
+        --results-directory ./TestResults
+        /p:CollectCoverage=true
+        /p:CoverletOutput=coverage
+        /p:CoverletOutputFormat=cobertura
+
+    - name: Install ReportGenerator
+      run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+    - name: Generate coverage report
+      run: reportgenerator
+          -reports:TestResults/coverage.cobertura.xml
+          -targetdir:coveragereport
+          -reporttypes:MarkdownSummary
+
+    - name: Publish coverage summary
+      run: cat coveragereport/Summary.md >> $GITHUB_STEP_SUMMARY
 
    # NPM setup
     - name: Setup Node.js ${{ matrix.node-version }}
