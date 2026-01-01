@@ -1353,20 +1353,20 @@ namespace ChasmaWebApi.Tests.Controllers
             string timestamp = string.Empty;
             string errorMessage = string.Empty;
 
-            statusManagerMock.Setup(i => i.TryCreatePullRequest(
+            statusManagerMock.Setup(i => i.TryCreatePullRequest( 
                 It.IsAny<string>(),
-                        It.IsAny<string>(),
-                     It.IsAny<string>(),
-                          It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                         It.IsAny<string>(),
-                         It.IsAny<string>(),
-                              out pullRequestId,
-                              out prUrl,
-                              out timestamp,
-                              out errorMessage)
-                ).Throws(new Exception("Exception generating pull request."));
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                out pullRequestId,
+                out prUrl,
+                out timestamp,
+                out errorMessage))
+                .Throws(new Exception("Exception generating pull request."));
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
             CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
@@ -1415,18 +1415,18 @@ namespace ChasmaWebApi.Tests.Controllers
 
             statusManagerMock.Setup(i => i.TryCreatePullRequest(
                 It.IsAny<string>(),
-                        It.IsAny<string>(),
-                     It.IsAny<string>(),
-                          It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                         It.IsAny<string>(),
-                         It.IsAny<string>(),
-                              out pullRequestId,
-                              out prUrl,
-                              out timestamp,
-                              out errorMessage)
-                ).Returns(true);
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                out pullRequestId,
+                out prUrl,
+                out timestamp,
+                out errorMessage))
+                .Returns(true);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
             CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));

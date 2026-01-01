@@ -42,31 +42,31 @@ namespace ChasmaWebApi.Tests.Controllers
         /// <summary>
         /// Extracts the inner response from the action result task.
         /// </summary>
-        /// <typeparam name="T">The type of response to retrieve.</typeparam>
+        /// <typeparam name="TResponseType">The type of response to retrieve.</typeparam>
         /// <param name="task">The task containing the response.</param>
-        /// <param name="objectType">The type of action of result.</param>
+        /// <param name="actionResultType">The type of action of result.</param>
         /// <returns>The inner response.</returns>
-        protected static T ExtractActionResultInnerResponseFromTask<T>(Task<ActionResult<T>> task, Type objectType)
+        protected static TResponseType ExtractActionResultInnerResponseFromTask<TResponseType>(Task<ActionResult<TResponseType>> task, Type actionResultType)
         {
-            ActionResult<T> actionResult = task.Result;
+            ActionResult<TResponseType> actionResult = task.Result;
             if (actionResult?.Result == null)
             {
                 throw new NullReferenceException("Cannot extract inner result because the action result is null.");
             }
 
-            return ExtractActionResultInnerResponseFromActionResult(actionResult, objectType);
+            return ExtractActionResultInnerResponseFromActionResult(actionResult, actionResultType);
         }
-
+        
         /// <summary>
         /// Extracts the inner response from the action result.
         /// </summary>
-        /// <typeparam name="T">The type of response to retrieve.</typeparam>
-        /// <param name="task">The task containing the response.</param>
-        /// <param name="objectType">The type of action of result.</param>
+        /// <param name="actionResult">The action result containing the response.</param>
+        /// <param name="actionResultType">The type of action result.</param>
+        /// <typeparam name="TResponseType">The type of response to be extracted</typeparam>
         /// <returns>The inner response.</returns>
-        protected static T ExtractActionResultInnerResponseFromActionResult<T>(ActionResult<T> actionResult, Type objectType)
+        protected static TResponseType ExtractActionResultInnerResponseFromActionResult<TResponseType>(ActionResult<TResponseType> actionResult, Type actionResultType)
         {
-            if (objectType == null)
+            if (actionResultType == null)
             {
                 throw new NullReferenceException("Cannot extract inner result because object result type is null.");
             }
@@ -77,11 +77,11 @@ namespace ChasmaWebApi.Tests.Controllers
             }
 
             ObjectResult innerObjectResult;
-            if (objectType == typeof(OkObjectResult))
+            if (actionResultType == typeof(OkObjectResult))
             {
                 innerObjectResult = actionResult.Result as OkObjectResult;
             }
-            else if (objectType == typeof(BadRequestObjectResult))
+            else if (actionResultType == typeof(BadRequestObjectResult))
             {
                 innerObjectResult = actionResult.Result as BadRequestObjectResult;
             }
@@ -90,7 +90,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 throw new ArgumentException("The object type specified is not implemented.");
             }
 
-            return (T)innerObjectResult.Value;
+            return (TResponseType)innerObjectResult.Value;
         }
     }
 }

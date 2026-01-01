@@ -21,17 +21,20 @@ namespace ChasmaWebApi.Tests.Factories
             LocalGitRepository repo1 = CreateLocalGitRepository(1, repoName, username);
             LocalGitRepository repo2 = CreateLocalGitRepository(1, "Chasma", "batman");
             LocalGitRepository repo3 = CreateLocalGitRepository(123, "KirbyGray", "batman");
-            ConcurrentDictionary<string, LocalGitRepository> repositories = new();
-            repositories[repo1.Id] = repo1;
-            repositories[repo2.Id] = repo2;
-            repositories[repo3.Id] = repo3;
-
-            ConcurrentDictionary<string, string> workingDirectories = new();
-            workingDirectories[repo1.Id] = "path1";
-            workingDirectories[repo2.Id] = "path2";
-            workingDirectories[repo3.Id] = "path2";
-
+            ConcurrentDictionary<string, LocalGitRepository> repositories = new()
+            {
+                [repo1.Id] = repo1,
+                [repo2.Id] = repo2,
+                [repo3.Id] = repo3
+            };
             cacheManagerMock.SetupGet(mock => mock.Repositories).Returns(repositories);
+
+            ConcurrentDictionary<string, string> workingDirectories = new()
+            {
+                [repo1.Id] = "path1",
+                [repo2.Id] = "path2",
+                [repo3.Id] = "path2"
+            };
             cacheManagerMock.SetupGet(mock => mock.WorkingDirectories).Returns(workingDirectories);
         }
 
