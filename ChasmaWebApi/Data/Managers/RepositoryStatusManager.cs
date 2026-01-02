@@ -245,7 +245,6 @@ namespace ChasmaWebApi.Data.Managers
         // <inheritdoc />
         public List<string> GetAllBranches(string workingDirectory)
         {
-            HashSet<string> branchNames = new();
             using Repository repo = new Repository(workingDirectory);
             try
             {
@@ -256,12 +255,11 @@ namespace ChasmaWebApi.Data.Managers
                 ClientLogger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}.", repo.Head.RemoteName, repo.Info.WorkingDirectory);
             }
 
-            foreach (Branch branch in repo.Branches)
-            {
-                branchNames.Add(branch.FriendlyName);
-            }
-
-            return branchNames.OrderBy(i => i).ToList();
+            return repo.Branches
+                .Where(i => i.IsTracking)
+                .Select(i => i.FriendlyName)
+                .OrderBy(i => i)
+                .ToList();
         }
 
         // <inheritdoc />
