@@ -80,13 +80,15 @@ const RepositoryStatusPage: React.FC = () => {
     }
 
     useEffect(() => {
-            const interval = setInterval(async () => {
-                await handleGitStatusRequest();
-            }, 5000);
+        if (!repoId) return;
 
-            return () => clearInterval(interval);
-        },
-        []);
+        handleGitStatusRequest();
+        const interval = setInterval(() => {
+            handleGitStatusRequest();
+        }, 2500);
+
+        return () => clearInterval(interval);
+    }, [repoId]);
 
     /** Handles the request to perform a 'git status' on the selected repository. **/
     async function handleGitStatusRequest() {
@@ -206,8 +208,6 @@ const RepositoryStatusPage: React.FC = () => {
             });
         }
     };
-
-    handleGitStatusRequest().catch(e => console.error(e));
     return (
         <>
             <aside className="sidebar">
