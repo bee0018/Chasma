@@ -4,7 +4,7 @@ import {GetWorkflowResultsRequest, RepositoryStatusClient, WorkflowRunResult} fr
 import "../../css/Dashboard.css"
 import "../../css/App.css"
 import { JSX } from "react/jsx-runtime";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 
 /**
  * The repository status client that interfaces with the web API.
@@ -29,6 +29,9 @@ const WorkflowRunsPage: React.FC = () => {
 
     /** Gets or sets the GitHub workflow results. **/
     const [workflows, setWorkflows] = useState<WorkflowRunResult[] | undefined>(undefined);
+
+    /** The navigation function. **/
+    const navigate = useNavigate();
 
     /**
      * Closes the modal once the user confirms the message
@@ -112,6 +115,12 @@ const WorkflowRunsPage: React.FC = () => {
     return (
         <div className="page">
             <div className="page-header">
+                <button
+                    className="submit-button"
+                    onClick={() => navigate('/home')}
+                >
+                    ← Home
+                </button>
                 <h1 className="page-title">GitHub Builds Board 📊</h1>
                 <div style={{ textAlign: "center" }}>
                     <p className="page-description">Click the button below to retrieve build queue results.</p>
