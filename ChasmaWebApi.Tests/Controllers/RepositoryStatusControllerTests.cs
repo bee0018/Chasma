@@ -1289,18 +1289,18 @@ namespace ChasmaWebApi.Tests.Controllers
 
             statusManagerMock.Setup(i => i.TryCreatePullRequest(
                 It.IsAny<string>(),
-                        It.IsAny<string>(),
-                     It.IsAny<string>(),
-                          It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                         It.IsAny<string>(),
-                         It.IsAny<string>(),
-                              out pullRequestId,
-                              out prUrl,
-                              out timestamp,
-                              out errorMessage)
-                ).Returns(false);
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                out pullRequestId,
+                out prUrl,
+                out timestamp,
+                out errorMessage))
+                .Returns(false);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
             CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
