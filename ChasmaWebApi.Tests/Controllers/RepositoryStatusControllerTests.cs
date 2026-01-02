@@ -1,5 +1,4 @@
 ﻿using ChasmaWebApi.Controllers;
-using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
@@ -23,11 +22,6 @@ namespace ChasmaWebApi.Tests.Controllers
         /// The API configurations options.
         /// </summary>
         private readonly ChasmaWebApiConfigurations webApiConfigurations;
-
-        /// <summary>
-        /// The database context used for interacting with the database.
-        /// </summary>
-        private readonly ApplicationDbContext applicationDbContext;
 
         /// <summary>
         /// The mocked internal API logger.
@@ -70,7 +64,7 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestInitialize]
         public void Setup()
         {
-            Controller = new RepositoryStatusController(loggerMock.Object, webApiConfigurations, statusManagerMock.Object, cacheManagerMock.Object, applicationDbContext);
+            Controller = new RepositoryStatusController(loggerMock.Object, webApiConfigurations, statusManagerMock.Object, cacheManagerMock.Object);
         }
 
         /// <summary>
@@ -145,7 +139,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryOwner = TestUserName
             };
             string errorMessage = "Failed to get build results";
-            List<WorkflowRunResult> workflowRuns = new();
+            List<WorkflowRunResult> workflowRuns = [];
             statusManagerMock.Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), out workflowRuns, out errorMessage)).Returns(false);
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetChasmaWorkflowResults(request);
             GitHubWorkflowRunResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
@@ -166,7 +160,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryOwner = TestUserName
             };
             string errorMessage = $"Error fetching workflow runs from {TestRepositoryName}. Check server logs for more information.";
-            List<WorkflowRunResult> workflowRuns = new();
+            List<WorkflowRunResult> workflowRuns = [];
             statusManagerMock
                 .Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), out workflowRuns, out errorMessage))
                 .Throws(new Exception("Exception getting run results."));
@@ -1435,6 +1429,189 @@ namespace ChasmaWebApi.Tests.Controllers
             Assert.AreEqual(pullRequestId, response.PullRequestId);
             Assert.AreEqual(prUrl, response.PullRequestUrl);
             Assert.AreEqual(timestamp, response.TimeStamp);
+        }
+
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.CreateGitHubIssue(CreateGitHubIssueRequest)"/> sends error response when the request is null.
+        /// </summary>
+        [TestMethod]
+        public void TestCreateGitHubIssueWithNullRequest()
+        {
+            ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(null);
+            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Request is null. Cannot create issue.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.CreateGitHubIssue(CreateGitHubIssueRequest)"/> sends error response when the repository name is empty.
+        /// </summary>
+        [TestMethod]
+        public void TestCreateGitHubIssueWithEmptyRepositoryName()
+        {
+            CreateGitHubIssueRequest request = new()
+            {
+                RepositoryName = string.Empty,
+            };
+            ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
+            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Repository name must be populated. Cannot create issue.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.CreateGitHubIssue(CreateGitHubIssueRequest)"/> sends error response when the repository owner is empty.
+        /// </summary>
+        [TestMethod]
+        public void TestCreateGitHubIssueWithEmptyRepositoryOwner()
+        {
+            CreateGitHubIssueRequest request = new()
+            {
+                RepositoryName = Guid.NewGuid().ToString(),
+                RepositoryOwner = string.Empty,
+            };
+            ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
+            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Repository owner must be populated. Cannot create issue.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.CreateGitHubIssue(CreateGitHubIssueRequest)"/> sends error response when the issue title is empty.
+        /// </summary>
+        [TestMethod]
+        public void TestCreateGitHubIssueWithEmptyIssueTitle()
+        {
+            CreateGitHubIssueRequest request = new()
+            {
+                RepositoryName = Guid.NewGuid().ToString(),
+                RepositoryOwner = TestRepositoryName,
+                Title = string.Empty,
+            };
+            ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
+            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Issue title must be populated. Cannot create issue.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.CreateGitHubIssue(CreateGitHubIssueRequest)"/> sends error response when the issue body is empty.
+        /// </summary>
+        [TestMethod]
+        public void TestCreateGitHubIssueWithEmptyIssueBody()
+        {
+            CreateGitHubIssueRequest request = new()
+            {
+                RepositoryName = Guid.NewGuid().ToString(),
+                RepositoryOwner = TestRepositoryName,
+                Title = "title",
+                Body = string.Empty,
+            };
+            ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
+            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Issue body description must be populated. Cannot create issue.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.CreateGitHubIssue(CreateGitHubIssueRequest)"/> sends error response when the API fails to create issue.
+        /// </summary>
+        [TestMethod]
+        public void TestCreateGitHubIssueFailureToCreateIssueViaGitHubApi()
+        {
+            CreateGitHubIssueRequest request = new()
+            {
+                RepositoryName = Guid.NewGuid().ToString(),
+                RepositoryOwner = TestRepositoryName,
+                Title = "title",
+                Body = "body_message",
+            };
+
+            int issueId = -1;
+            string url = string.Empty;
+            string errorMessage = "GitHub API failed to create issue";
+            statusManagerMock.Setup(i => i.TryCreateIssue(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                out issueId,
+                out url,
+                out errorMessage))
+                .Returns(false);
+            ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
+            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual(errorMessage, response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.CreateGitHubIssue(CreateGitHubIssueRequest)"/> sends error response exception occurs during creation.
+        /// </summary>
+        [TestMethod]
+        public void TestCreateGitHubIssueHandlesExceptionProperly()
+        {
+            CreateGitHubIssueRequest request = new()
+            {
+                RepositoryName = Guid.NewGuid().ToString(),
+                RepositoryOwner = TestRepositoryName,
+                Title = "title",
+                Body = "body_message",
+            };
+
+            int issueId = -1;
+            string url = string.Empty;
+            string errorMessage = string.Empty;
+            statusManagerMock.Setup(i => i.TryCreateIssue(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    out issueId,
+                    out url,
+                    out errorMessage))
+                .Throws(new Exception("Could not create issue"));
+            ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
+            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Exception occurred when creating GitHub issue. Check server logs for more information.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.CreateGitHubIssue(CreateGitHubIssueRequest)"/> sends successful response in the nominal case.
+        /// </summary>
+        [TestMethod]
+        public void TestCreateGitHubIssueNominalCase()
+        {
+            CreateGitHubIssueRequest request = new()
+            {
+                RepositoryName = Guid.NewGuid().ToString(),
+                RepositoryOwner = TestRepositoryName,
+                Title = "title",
+                Body = "body_message",
+            };
+
+            int issueId = 1;
+            string url = "url.com";
+            string errorMessage = null;
+            statusManagerMock.Setup(i => i.TryCreateIssue(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    out issueId,
+                    out url,
+                    out errorMessage))
+                .Returns(true);
+            ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
+            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            Assert.IsFalse(response.IsErrorResponse);
+            Assert.AreEqual(errorMessage, response.ErrorMessage);
+            Assert.AreEqual(url, response.IssueUrl);
+            Assert.AreEqual(issueId, response.IssueId);
         }
     }
 }

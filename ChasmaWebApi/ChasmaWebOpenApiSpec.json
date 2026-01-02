@@ -413,6 +413,38 @@
         }
       }
     },
+    "/api/RepositoryStatus/createGitHubIssue": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_CreateGitHubIssue",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGitHubIssueRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGitHubIssueResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/User/login": {
       "post": {
         "tags": [
@@ -1164,6 +1196,51 @@
                 "type": "string"
               },
               "repositoryName": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "CreateGitHubIssueResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issueId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "issueUrl": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "CreateGitHubIssueRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryName": {
+                "type": "string"
+              },
+              "repositoryOwner": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "body": {
                 "type": "string"
               }
             }
