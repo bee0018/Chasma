@@ -22,7 +22,7 @@ builder.Services.AddControllers()
         // Exclude the debug controllers in a production setting.
         List<ExcludeControllerFeatureProvider> controllersToExclude =
         [
-            new(typeof(DebugController))
+            // Example of excluded controller: new(typeof(DebugController))
         ];
 
         foreach (ExcludeControllerFeatureProvider debugController in controllersToExclude)
