@@ -1,3 +1,5 @@
+import {LocalGitRepository} from "../API/ChasmaWebApiClient";
+
 /** Gets the userId from local storage. **/
 export const getUserId = () => {
     const userIdJson = localStorage.getItem("userId");
@@ -18,3 +20,14 @@ export const getUserEmail = () => {
     if (!emailJson) return undefined;
     return JSON.parse(emailJson)
 };
+
+/**
+ * Gets the repository with the specified repository identifier.
+ * @param repositoryId The repository identifier.
+ */
+export const getLocalGitRepository = (repositoryId : string | undefined) => {
+    const repositoriesJson = localStorage.getItem("gitRepositories");
+    if (!repositoriesJson) return undefined;
+    const repositories : LocalGitRepository[] = JSON.parse(repositoriesJson) || [];
+    return repositories.find((repository) => repository.id === repositoryId) ?? null;
+}

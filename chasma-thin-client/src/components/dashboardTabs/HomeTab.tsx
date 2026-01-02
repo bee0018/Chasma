@@ -20,6 +20,7 @@ const HomeTab: React.FC = () => {
                 const userId = getUserId();
                 const message = await configClient.getLocalGitRepositories(userId);
                 setLocalGitRepositories(message.repositories);
+                localStorage.setItem("gitRepositories", JSON.stringify(message.repositories));
             }
             catch (e) {
                 setNotification({
@@ -29,6 +30,7 @@ const HomeTab: React.FC = () => {
                 });
                 setLocalGitRepositories(undefined);
                 console.error(`Could not get git repositories from filesystem: ${e}`);
+                localStorage.removeItem("gitRepositories");
             }
         };
 

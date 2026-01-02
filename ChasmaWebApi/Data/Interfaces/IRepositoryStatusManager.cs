@@ -98,5 +98,19 @@ namespace ChasmaWebApi.Data.Interfaces
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the pull request is created; false otherwise.</returns>
         bool TryCreatePullRequest(string workingDirectory, string owner, string repoName, string title, string headBranch, string baseBranch, string body, string token, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage);
+        
+        /// <summary>
+        /// Tries to create a GitHub issue in the specified repository.
+        /// </summary>
+        /// <param name="repoName">The repository name.</param>
+        /// <param name="repoOwner">The repository owner.</param>
+        /// <param name="title">The issue title.</param>
+        /// <param name="body">The issue body description.</param>
+        /// <param name="token">The GitHub API token.</param>
+        /// <param name="issueId">The issue identifier.</param>
+        /// <param name="issueUrl">The issue URL.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the issue is created; false otherwise.</returns>
+        bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage);
     }
 }

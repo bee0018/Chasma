@@ -304,6 +304,38 @@ namespace ChasmaWebApi.Data.Managers
             return true;
         }
 
+        // <inheritdoc />
+        public bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            issueUrl = string.Empty;
+            issueId = -1;
+            try
+            {
+                NewIssue newIssue = new(title) { Body = body };
+                Client = new GitHubClient(new ProductHeaderValue(repoName)) { Credentials = new Credentials(token) };
+                Task<Issue?> createIssueTask = SendCreateIssueRequest(Client, repoOwner, repoName, newIssue);
+                Issue? issue = createIssueTask.Result;
+                if (issue == null)
+                {
+                    errorMessage = $"Failed to create issue in {repoName}. Check server logs for more information.";
+                    return false;
+                }
+
+                issueId = issue.Number;
+                issueUrl = issue.HtmlUrl;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to create issue for {repoName} with title {title} due to an exception. Review server logs.";
+                ClientLogger.LogError(ex, errorMessage);
+                return false;
+            }
+        }
+
+        #region Private Methods
+
         /// <summary>
         /// Sends a pull request creation request to the GitHub API.
         /// </summary>
@@ -321,6 +353,27 @@ namespace ChasmaWebApi.Data.Managers
             catch (Exception e)
             {
                 ClientLogger.LogError("Error when trying to create pull request in {repoName}: {error}", repoName, e);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Sends a request to create the issue to the GitHub API.
+        /// </summary>
+        /// <param name="client">The Ocktokit GitHub API client.</param>
+        /// <param name="owner">The repository owner.</param>
+        /// <param name="repoName">The repository owner.</param>
+        /// <param name="issue">The new issue components.</param>
+        /// <returns>Task containing the result of the API operation.</returns>
+        private async Task<Issue?> SendCreateIssueRequest(GitHubClient client, string owner, string repoName, NewIssue issue)
+        {
+            try
+            {
+                return await client.Issue.Create(owner, repoName, issue);
+            }
+            catch (Exception e)
+            {
+                ClientLogger.LogError("Error when trying to create issue in {repoName}: {error}", repoName, e);
                 return null;
             }
         }
@@ -443,7 +496,7 @@ namespace ChasmaWebApi.Data.Managers
             {
                 ClientLogger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}.", branch.RemoteName, repo.Info.WorkingDirectory);
             }
-            
+
             string localBranchName = branch.FriendlyName;
             if (string.IsNullOrEmpty(localBranchName))
             {
@@ -511,5 +564,7 @@ namespace ChasmaWebApi.Data.Managers
 
             return branch.Tip.Sha.Length > 7 ? branch.Tip.Sha[..7] : branch.Tip.Sha;
         }
+
+        #endregion
     }
 }

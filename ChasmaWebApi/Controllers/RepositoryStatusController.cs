@@ -43,8 +43,7 @@ namespace ChasmaWebApi.Controllers
         /// <param name="config">The API configurations.</param>
         /// <param name="manager">The repository status manager.</param>
         /// <param name="apiCacheManager">The internal API cache manager.</param>
-        /// <param name="dbContext">The application database context.</param>
-        public RepositoryStatusController(ILogger<RepositoryStatusController> log, ChasmaWebApiConfigurations config, IRepositoryStatusManager manager, ICacheManager apiCacheManager, ApplicationDbContext dbContext)
+        public RepositoryStatusController(ILogger<RepositoryStatusController> log, ChasmaWebApiConfigurations config, IRepositoryStatusManager manager, ICacheManager apiCacheManager)
         {
             logger = log;
             webApiConfigurations = config;
@@ -625,6 +624,87 @@ namespace ChasmaWebApi.Controllers
                 response.ErrorMessage = $"Error creating pull request for repo: {request.RepositoryName}. Check server logs for more information.";
                 logger.LogError(e, "Error creating pull request for repo: {repoName}", request.RepositoryName);
                 return Ok(response);
+            }
+        }
+
+        /// <summary>
+        /// Creates an issue on GitHub in the specified repository.
+        /// </summary>
+        /// <param name="request">Request containing the details to create a GitHub issue.</param>
+        /// <returns>GitHub issue response if successful.</returns>
+        [HttpPost]
+        [Route("createGitHubIssue")]
+        public ActionResult<CreateGitHubIssueResponse> CreateGitHubIssue([FromBody] CreateGitHubIssueRequest request)
+        {
+            logger.LogInformation("Received request to create a GitHub issue.");
+            CreateGitHubIssueResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Failed to create because of null request. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request is null. Cannot create issue.";
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryName))
+            {
+                logger.LogError("Repository name must be populated. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository name must be populated. Cannot create issue.";
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.RepositoryOwner))
+            {
+                logger.LogError("Repository owner must be populated. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository owner must be populated. Cannot create issue.";
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.Title))
+            {
+                logger.LogError("Issue title must be populated. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Issue title must be populated. Cannot create issue.";
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.Body))
+            {
+                logger.LogError("Issue description must be populated. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Issue body description must be populated. Cannot create issue.";
+                return BadRequest(response);
+            }
+
+            try
+            {
+                string repoName = request.RepositoryName;
+                string repoOwner = request.RepositoryOwner;
+                string title = request.Title;
+                string body = request.Body;
+                string token = webApiConfigurations.GitHubApiToken;
+                bool issueIsCreated = statusManager.TryCreateIssue(repoName, repoOwner, title, body, token, out int issueId, out string issueUrl, out string errorMessage);
+                if (!issueIsCreated)
+                {
+                    logger.LogError("Failed to create issue for {repoName}. Sending error response.", repoName);
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = errorMessage;
+                    return Ok(response);
+                }
+
+                logger.LogInformation("Successfully created issue {issueId} at {issueUrl}.", issueId, issueUrl);
+                response.IssueUrl = issueUrl;
+                response.IssueId = issueId;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Cannot create issue because of the following exception: {message}", ex.Message);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Exception occurred when creating GitHub issue. Check server logs for more information.";
+                return BadRequest(response);
             }
         }
     }

@@ -15,6 +15,7 @@ import PushModal from "../modals/PushModal";
 import {isBlankOrUndefined} from "../../stringHelperUtil";
 import CheckoutModal from "../modals/CheckoutModal";
 import PullRequestModal from "../modals/PullRequestModal";
+import CreateIssueModal from "../modals/CreateIssueModal";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient();
@@ -49,6 +50,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user is creating a pull request. **/
     const [isCreatingPullRequest, setIsCreatingPullRequest] = useState<boolean>(false);
+
+    /** Gets or sets a flag indicating whether the user is creating an issue. **/
+    const [isCreatingIssue, setIsCreatingIssue] = useState<boolean>(false);
 
     /** Gets or sets the number of commits the local repo is ahead of the remote. **/
     const [commitsAhead, setCommitsAhead] = useState<number | undefined>(0);
@@ -159,7 +163,7 @@ const RepositoryStatusPage: React.FC = () => {
         }
 
         // We know the branch url to be valid at this point.
-        navigate(branchUrl!);
+        window.open(branchUrl!, "_blank");
     };
 
     /**
@@ -244,6 +248,11 @@ const RepositoryStatusPage: React.FC = () => {
                      onClick={() => setIsCreatingPullRequest(true)}
                 >
                     Create Pull Request
+                </div>
+                <div className="tab"
+                     onClick={() => setIsCreatingIssue(true)}
+                >
+                    Create Issue
                 </div>
             </aside>
             <h1 className="repository-title-header">
@@ -351,6 +360,12 @@ const RepositoryStatusPage: React.FC = () => {
             {isCreatingPullRequest && (
                 <PullRequestModal
                     onClose={() => setIsCreatingPullRequest(false)}
+                    repositoryId={repoId}
+                    repoName={repoName} />
+            )}
+            {isCreatingIssue && (
+                <CreateIssueModal
+                    onClose={() => setIsCreatingIssue(false)}
                     repositoryId={repoId}
                     repoName={repoName} />
             )}
