@@ -1,5 +1,4 @@
-﻿using ChasmaWebApi.Data;
-using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Requests;
