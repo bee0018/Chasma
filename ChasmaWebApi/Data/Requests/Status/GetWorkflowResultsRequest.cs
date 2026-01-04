@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Requests;
+﻿namespace ChasmaWebApi.Data.Requests.Status;
 
 /// <summary>
 /// Class representing the request to receive workflow runs with the specified details.

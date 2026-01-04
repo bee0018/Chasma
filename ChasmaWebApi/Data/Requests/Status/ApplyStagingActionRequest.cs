@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Util;
 
-namespace ChasmaWebApi.Data.Requests;
+namespace ChasmaWebApi.Data.Requests.Status;
 
 /// <summary>
 /// Class representing components for staging/unstaging a file.

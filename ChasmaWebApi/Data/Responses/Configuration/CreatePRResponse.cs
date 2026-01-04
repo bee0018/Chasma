@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Responses
+﻿namespace ChasmaWebApi.Data.Responses.Configuration
 {
     /// <summary>
     /// Class representing a response to a create pull request operation.
