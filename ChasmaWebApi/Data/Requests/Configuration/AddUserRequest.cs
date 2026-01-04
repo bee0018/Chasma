@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Requests
+﻿namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing the components of a request to add a user.

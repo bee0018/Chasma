@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Data.Objects;
 
-namespace ChasmaWebApi.Data.Responses;
+namespace ChasmaWebApi.Data.Responses.Status;
 
 /// <summary>
 /// Class representing the components of response to staging/unstaging a file.

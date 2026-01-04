@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Util;
 
-namespace ChasmaWebApi.Data.Requests
+namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class representing a login request from the client.
