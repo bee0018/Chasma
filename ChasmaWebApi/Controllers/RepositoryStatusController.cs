@@ -1,8 +1,10 @@
 ﻿using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
-using ChasmaWebApi.Data.Requests;
-using ChasmaWebApi.Data.Responses;
+using ChasmaWebApi.Data.Requests.Configuration;
+using ChasmaWebApi.Data.Requests.Status;
+using ChasmaWebApi.Data.Responses.Configuration;
+using ChasmaWebApi.Data.Responses.Status;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -87,12 +89,13 @@ namespace ChasmaWebApi.Controllers
             }
 
             logger.LogInformation("Attempting to get workflow data for the last {threshold} builds for {repoName}.", webApiConfigurations.WorkflowRunReportThreshold, request.RepositoryName);
+            string token = webApiConfigurations.GitHubApiToken;
             string repoOwner = request.RepositoryOwner;
             string repoName = request.RepositoryName;
             int buildCount = webApiConfigurations.WorkflowRunReportThreshold;
             try
             {
-                bool runsRetrieved = statusManager.TryGetWorkflowRunResults(repoName, repoOwner, buildCount, out List<WorkflowRunResult> runResults, out string errorMessage);
+                bool runsRetrieved = statusManager.TryGetWorkflowRunResults(repoName, repoOwner, token, buildCount, out List<WorkflowRunResult> runResults, out string errorMessage);
                 if (!runsRetrieved && !string.IsNullOrEmpty(errorMessage))
                 {
                     gitHubWorkflowRunResponse.IsErrorResponse = true;
@@ -321,7 +324,7 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (!statusManager.TryPushChanges(workingDirectory, out string errorMessage))
+            if (!statusManager.TryPushChanges(workingDirectory, webApiConfigurations.GitHubApiToken, out string errorMessage))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"Failed to push changes to repo: {repoId}. {errorMessage}";
@@ -388,7 +391,8 @@ namespace ChasmaWebApi.Controllers
             }
 
             string fullName = user.Name;
-            if (!statusManager.TryPullChanges(workingDirectory, fullName, email, out string errorMessage))
+            string token = webApiConfigurations.GitHubApiToken;
+            if (!statusManager.TryPullChanges(workingDirectory, fullName, email, token, out string errorMessage))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"Failed to pull changes to repo: {repoId}. {errorMessage}";
@@ -595,12 +599,13 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
+                string token = webApiConfigurations.GitHubApiToken;
                 string title = request.PullRequestTitle;
                 string headBranch = request.WorkingBranchName;
                 string baseBranch = request.DestinationBranchName;
                 string body = request.PullRequestBody;
                 string repoName = request.RepositoryName;
-                if (!statusManager.TryCreatePullRequest(workingDirectory, owner, repoName, title, headBranch, baseBranch, body, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage))
+                if (!statusManager.TryCreatePullRequest(workingDirectory, owner, repoName, title, headBranch, baseBranch, body, token, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage))
                 {
                     response.IsErrorResponse = true;
                     response.ErrorMessage = $"Failed to create pull request for repo: {request.RepositoryName}. {errorMessage}";
@@ -680,7 +685,8 @@ namespace ChasmaWebApi.Controllers
                 string repoOwner = request.RepositoryOwner;
                 string title = request.Title;
                 string body = request.Body;
-                bool issueIsCreated = statusManager.TryCreateIssue(repoName, repoOwner, title, body, out int issueId, out string issueUrl, out string errorMessage);
+                string token = webApiConfigurations.GitHubApiToken;
+                bool issueIsCreated = statusManager.TryCreateIssue(repoName, repoOwner, title, body, token, out int issueId, out string issueUrl, out string errorMessage);
                 if (!issueIsCreated)
                 {
                     logger.LogError("Failed to create issue for {repoName}. Sending error response.", repoName);

@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Data.Objects;
 
-namespace ChasmaWebApi.Data.Responses
+namespace ChasmaWebApi.Data.Responses.Configuration
 {
     /// <summary>
     /// Class representing the response to a delete repository request.
