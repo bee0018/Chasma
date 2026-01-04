@@ -3,7 +3,6 @@ using ChasmaWebApi.Data.Objects;
 using LibGit2Sharp;
 using Octokit;
 using Branch = LibGit2Sharp.Branch;
-using Credentials = Octokit.Credentials;
 using Repository = LibGit2Sharp.Repository;
 using Signature = LibGit2Sharp.Signature;
 
@@ -14,16 +13,15 @@ namespace ChasmaWebApi.Data.Managers
     /// </summary>
     /// <param name="logger">The internal server logger.</param>
     /// <param name="cacheManager">The internal API cache manager.</param>
-    public class RepositoryStatusManager(ILogger<RepositoryStatusManager> logger, ICacheManager cacheManager)
-        : ClientManagerBase<RepositoryStatusManager>(logger, cacheManager), IRepositoryStatusManager
+    public class RepositoryStatusManager(ILogger<RepositoryStatusManager> logger, ICacheManager cacheManager, ChasmaWebApiConfigurations apiConfigurations)
+        : ClientManagerBase<RepositoryStatusManager>(logger, cacheManager, apiConfigurations), IRepositoryStatusManager
     {
         // <inheritdoc/>
-        public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, int buildCount, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
+        public bool TryGetWorkflowRunResults(string repoName, string repoOwner, int buildCount, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
         {
             errorMessage = string.Empty;
             workflowRunResults = new();
-            ProductHeaderValue productHeader = new ProductHeaderValue(repoName);
-            Client = new(productHeader) { Credentials = new Credentials(token) };
+            Client = CreateGitHubClient(repoName);
             Task<WorkflowRunsResponse?> workflowRunsResponseTask = GetWorkFlowRuns(Client, repoOwner, repoName);
             WorkflowRunsResponse workFlowRunsResponse = workflowRunsResponseTask.Result;
             if (workFlowRunsResponse == null)
@@ -141,7 +139,7 @@ namespace ChasmaWebApi.Data.Managers
         }
 
         // <inheritdoc />
-        public bool TryPushChanges(string filePath, string token, out string errorMessage)
+        public bool TryPushChanges(string filePath, out string errorMessage)
         {
             errorMessage = string.Empty;
             using Repository repo = new Repository(filePath);
@@ -176,7 +174,7 @@ namespace ChasmaWebApi.Data.Managers
                         new UsernamePasswordCredentials
                         {
                             Username = username,
-                            Password = token,
+                            Password = ApiConfigurations.GitHubApiToken,
                         }
                 };
 
@@ -192,7 +190,7 @@ namespace ChasmaWebApi.Data.Managers
         }
 
         // <inheritdoc />
-        public bool TryPullChanges(string workingDirectory, string fullName, string email, string token, out string errorMessage)
+        public bool TryPullChanges(string workingDirectory, string fullName, string email, out string errorMessage)
         {
             errorMessage = string.Empty;
             using Repository repo = new Repository(workingDirectory);
@@ -206,7 +204,7 @@ namespace ChasmaWebApi.Data.Managers
                         new UsernamePasswordCredentials
                         {
                             Username = username,
-                            Password = token,
+                            Password = ApiConfigurations.GitHubApiToken,
                         }
                 }
             };
@@ -263,7 +261,7 @@ namespace ChasmaWebApi.Data.Managers
         }
 
         // <inheritdoc />
-        public bool TryCreatePullRequest(string workingDirectory, string owner, string repoName, string title, string headBranch, string baseBranch, string body, string token, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage)
+        public bool TryCreatePullRequest(string workingDirectory, string owner, string repoName, string title, string headBranch, string baseBranch, string body, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage)
         {
             errorMessage = string.Empty;
             prUrl = string.Empty;
@@ -277,16 +275,12 @@ namespace ChasmaWebApi.Data.Managers
                 return false;
             }
 
-            Client = new GitHubClient(new ProductHeaderValue(repoName))
-            {
-                Credentials = new Credentials(token)
-            };
-
             NewPullRequest newPullRequest = new(title, headBranch, baseBranch)
             {
                 Body = body
             };
 
+            Client = CreateGitHubClient(repoName);
             Task<PullRequest?> createPrTask = SendPrRequest(Client, owner, repoName, newPullRequest);
             PullRequest? createdPullRequest = createPrTask.Result;
             if (createdPullRequest == null)
@@ -303,7 +297,7 @@ namespace ChasmaWebApi.Data.Managers
         }
 
         // <inheritdoc />
-        public bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage)
+        public bool TryCreateIssue(string repoName, string repoOwner, string title, string body, out int issueId, out string issueUrl, out string errorMessage)
         {
             errorMessage = string.Empty;
             issueUrl = string.Empty;
@@ -311,7 +305,7 @@ namespace ChasmaWebApi.Data.Managers
             try
             {
                 NewIssue newIssue = new(title) { Body = body };
-                Client = new GitHubClient(new ProductHeaderValue(repoName)) { Credentials = new Credentials(token) };
+                Client = CreateGitHubClient(repoName);
                 Task<Issue?> createIssueTask = SendCreateIssueRequest(Client, repoOwner, repoName, newIssue);
                 Issue? issue = createIssueTask.Result;
                 if (issue == null)

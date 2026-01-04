@@ -10,8 +10,9 @@ namespace ChasmaWebApi.Data.Managers;
 /// </summary>
 /// <param name="logger">The internal server logger.</param>
 /// <param name="cacheManager">The internal API cache manager.</param>
-public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManager> logger, ICacheManager cacheManager)
-    : ClientManagerBase<RepositoryConfigurationManager>(logger, cacheManager), IRepositoryConfigurationManager
+/// <param name="apiConfigurations">The web API configurations.</param>
+public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManager> logger, ICacheManager cacheManager, ChasmaWebApiConfigurations apiConfigurations)
+    : ClientManagerBase<RepositoryConfigurationManager>(logger, cacheManager, apiConfigurations), IRepositoryConfigurationManager
 {
     /// <summary>
     /// The lock object used for concurrency.
