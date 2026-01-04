@@ -125,38 +125,6 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/deleteBranch": {
-      "delete": {
-        "tags": [
-          "RepositoryConfiguration"
-        ],
-        "operationId": "RepositoryConfiguration_DeleteBranch",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteBranchRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeleteBranchResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/RepositoryStatus/workflowRuns": {
       "post": {
         "tags": [
@@ -712,36 +680,6 @@
               "userId": {
                 "type": "integer",
                 "format": "int32"
-              }
-            }
-          }
-        ]
-      },
-      "DeleteBranchResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "DeleteBranchRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "branchName": {
-                "type": "string"
               }
             }
           }

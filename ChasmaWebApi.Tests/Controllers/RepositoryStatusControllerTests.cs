@@ -2,10 +2,8 @@
 using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
-using ChasmaWebApi.Data.Requests.Configuration;
-using ChasmaWebApi.Data.Requests.Status;
-using ChasmaWebApi.Data.Responses.Configuration;
-using ChasmaWebApi.Data.Responses.Status;
+using ChasmaWebApi.Data.Requests;
+using ChasmaWebApi.Data.Responses;
 using ChasmaWebApi.Util;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;

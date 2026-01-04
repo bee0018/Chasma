@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Responses.Status
+﻿namespace ChasmaWebApi.Data.Responses
 {
     /// <summary>
     /// Class representing the response of committing changes to a specified repo.

@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Util;
 
-namespace ChasmaWebApi.Data.Requests.Status
+namespace ChasmaWebApi.Data.Requests
 {
     /// <summary>
     /// Class representing the components of a Git Branch Request.

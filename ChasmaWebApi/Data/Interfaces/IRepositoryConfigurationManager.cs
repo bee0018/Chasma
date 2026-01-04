@@ -24,13 +24,4 @@ public interface IRepositoryConfigurationManager
     /// <param name="errorMessage">The error message.</param>
     /// <returns>True if the repository and its resources have been deleted; false otherwise.</returns>
     bool TryDeleteRepository(string repositoryId, int userId, out List<LocalGitRepository> localGitRepositories, out string errorMessage);
-
-    /// <summary>
-    /// Trieds to delete a branch from the specified repository.
-    /// </summary>
-    /// <param name="repositoryId">The repository identifier.</param>
-    /// <param name="branchName">The friendly branch name.</param>
-    /// <param name="errorMessage">The error message.</param>
-    /// <returns>True if the branch is successfully deleted; false otherwise.</returns>
-    bool TryDeleteBranch(string repositoryId, string branchName, out string errorMessage);
 }

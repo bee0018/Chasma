@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Data.Objects;
 
-namespace ChasmaWebApi.Data.Responses.Configuration
+namespace ChasmaWebApi.Data.Responses
 {
     /// <summary>
     /// Class representing the response to an add local repositories request.

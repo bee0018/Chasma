@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Util;
 
-namespace ChasmaWebApi.Data.Requests.Status
+namespace ChasmaWebApi.Data.Requests
 {
     /// <summary>
     /// Class representing the git function to 'git push'.

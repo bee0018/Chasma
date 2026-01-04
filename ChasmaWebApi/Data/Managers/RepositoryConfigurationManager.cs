@@ -143,35 +143,6 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
         return true;
     }
 
-    // <inheritdoc/>
-    public bool TryDeleteBranch(string repositoryId, string branchName, out string errorMessage)
-    {
-        errorMessage = string.Empty;
-        string workingDirectory = string.Empty;
-        lock (lockObject)
-        {
-            if (!CacheManager.WorkingDirectories.TryGetValue(repositoryId, out workingDirectory))
-            {
-                errorMessage = $"No working directory could be found with repository identifier: {repositoryId}.";
-                ClientLogger.LogError("Repository identifier {id} cannot be found and no working directory could be retrieved. Sending error response.", repositoryId);
-                return false;
-            }
-        }
-
-        using Repository repository = new(workingDirectory);
-        Branch branchToDelete = repository.Branches.FirstOrDefault(i => i.FriendlyName == branchName);
-        if (branchToDelete == null)
-        {
-            errorMessage = $"{branchName} does not exist in the repository.";
-            ClientLogger.LogError("Repository identifier {id} cannot find branch with name {branchName}. Sending error response.", repositoryId, branchName);
-            return false;
-        }
-
-        repository.Branches.Remove(branchToDelete);
-        ClientLogger.LogInformation("Successfully deleted branch {branchName} from repository with id: {id}", branchName, repository);
-        return true;
-    }
-
     /// <summary>
     /// Searches for git repositories on the logical drives on the machine running this application.
     /// </summary>

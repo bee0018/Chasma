@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Util;
 
-namespace ChasmaWebApi.Data.Requests.Configuration
+namespace ChasmaWebApi.Data.Requests
 {
     /// <summary>
     /// Class representing the components needed to create a GitHub issue.

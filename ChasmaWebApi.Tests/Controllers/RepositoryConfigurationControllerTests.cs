@@ -4,8 +4,8 @@ using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Messages;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
-using ChasmaWebApi.Data.Requests.Configuration;
-using ChasmaWebApi.Data.Responses.Configuration;
+using ChasmaWebApi.Data.Requests;
+using ChasmaWebApi.Data.Responses;
 using ChasmaWebApi.Tests.Factories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -242,98 +242,6 @@ namespace ChasmaWebApi.Tests.Controllers
             CollectionAssert.DoesNotContain(repoIds, testRepo.Id);
             CollectionAssert.DoesNotContain(workingDirectoryKeys, testRepo.Id);
             TestDbContextFactory.DestroyDatabase(applicationDbContext);
-        }
-
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends error response when the request is null.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchWithNullRequest()
-        {
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(null);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
-            Assert.IsTrue(response.IsErrorResponse);
-            Assert.AreEqual("Null request received. Request must be populated.", response.ErrorMessage);
-        }
-        
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends error response when the repository
-        /// identifier is empty.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchWithEmptyRepositoryId()
-        {
-            DeleteBranchRequest request = new()
-            {
-                RepositoryId = string.Empty,
-            };
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
-            Assert.IsTrue(response.IsErrorResponse);
-            Assert.AreEqual("Empty repository identifier received. Field must be populated.", response.ErrorMessage);
-        }
-        
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends error response when the
-        /// branch name is empty.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchWithEmptyBranchName()
-        {
-            DeleteBranchRequest request = new()
-            {
-                RepositoryId = Guid.NewGuid().ToString(),
-                BranchName = string.Empty,
-            };
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
-            Assert.IsTrue(response.IsErrorResponse);
-            Assert.AreEqual("Empty branch name received. Field must be populated.", response.ErrorMessage);
-        }
-        
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends error response when repository
-        /// fails to delete the branch.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchWithFailureToDeleteBranch()
-        {
-            DeleteBranchRequest request = new()
-            {
-                RepositoryId = Guid.NewGuid().ToString(),
-                BranchName = "branch_name",
-            };
-
-            string errorMessage = "Failed to delete branch.";
-            configurationManagerMock
-                .Setup(i => i.TryDeleteBranch(It.IsAny<string>(), It.IsAny<string>(), out errorMessage))
-                .Returns(false);
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
-            Assert.IsTrue(response.IsErrorResponse);
-            Assert.AreEqual(errorMessage, response.ErrorMessage);
-        }
-        
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends successful response
-        /// in the nominal case of deleting a branch.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchNominalCase()
-        {
-            DeleteBranchRequest request = new()
-            {
-                RepositoryId = Guid.NewGuid().ToString(),
-                BranchName = "branch_name",
-            };
-            string errorMessage = null;
-            configurationManagerMock
-                .Setup(i => i.TryDeleteBranch(It.IsAny<string>(), It.IsAny<string>(), out errorMessage))
-                .Returns(true);
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
-            Assert.IsFalse(response.IsErrorResponse);
-            Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
     }
 }

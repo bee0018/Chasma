@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Responses.Status
+﻿namespace ChasmaWebApi.Data.Responses
 {
     /// <summary>
     /// Class representing the components of a Git Pull response.
