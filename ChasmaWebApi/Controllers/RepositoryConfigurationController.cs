@@ -3,8 +3,8 @@ using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Messages;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
-using ChasmaWebApi.Data.Requests;
-using ChasmaWebApi.Data.Responses;
+using ChasmaWebApi.Data.Requests.Configuration;
+using ChasmaWebApi.Data.Responses.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -171,6 +171,54 @@ public class RepositoryConfigurationController : ControllerBase
 
         await applicationDbContext.SaveChangesAsync();
         response.Repositories = localGitRepositories;
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Deletes the branch from the specified repository.
+    /// </summary>
+    /// <param name="request">The request to delete a branch.</param>
+    /// <returns>Response to deleting a branch.</returns>
+    [HttpDelete]
+    [Route("deleteBranch")]
+    public ActionResult<DeleteBranchResponse> DeleteBranch([FromBody] DeleteBranchRequest request)
+    {
+        DeleteBranchResponse response = new();
+        if (request == null)
+        {
+            logger.LogError("Received a null {request}. Sending error response.", nameof(DeleteBranchRequest));
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Null request received. Request must be populated.";
+            return BadRequest(response);
+        }
+
+        string repoId = request.RepositoryId;
+        if (string.IsNullOrEmpty(repoId))
+        {
+            logger.LogError("Invalid request. Repository identifier is required. Sending error response.");
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Empty repository identifier received. Field must be populated.";
+            return BadRequest(response);
+        }
+
+        string branchName = request.BranchName;
+        if (string.IsNullOrEmpty(branchName))
+        {
+            logger.LogError("Invalid request. Branch name is required. Sending error response.");
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Empty branch name received. Field must be populated.";
+            return BadRequest(response);
+        }
+
+        if (!configurationManager.TryDeleteBranch(repoId, branchName, out string errorMessage))
+        {
+            logger.LogError("Failure to delete branch: {reason}", errorMessage);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = errorMessage;
+            return Ok(response);
+        }
+
+        logger.LogInformation("Successfully deleted the branch {branchName}.", branchName);
         return Ok(response);
     }
 }

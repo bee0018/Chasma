@@ -16,6 +16,7 @@ import {isBlankOrUndefined} from "../../stringHelperUtil";
 import CheckoutModal from "../modals/CheckoutModal";
 import PullRequestModal from "../modals/PullRequestModal";
 import CreateIssueModal from "../modals/CreateIssueModal";
+import DeleteBranchModal from "../modals/DeleteBranchModal";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient();
@@ -53,6 +54,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user is creating an issue. **/
     const [isCreatingIssue, setIsCreatingIssue] = useState<boolean>(false);
+
+    /** Gets or sets a flag indicating whether the user is deleting a branch. **/
+    const [isDeletingBranch, setIsDeletingBranch] = useState<boolean>(false);
 
     /** Gets or sets the number of commits the local repo is ahead of the remote. **/
     const [commitsAhead, setCommitsAhead] = useState<number | undefined>(0);
@@ -245,6 +249,11 @@ const RepositoryStatusPage: React.FC = () => {
                     Checkout Branch
                 </div>
                 <div className="tab"
+                     onClick={() => setIsDeletingBranch(true)}
+                >
+                    Delete Branch
+                </div>
+                <div className="tab"
                      onClick={() => setIsCreatingPullRequest(true)}
                 >
                     Create Pull Request
@@ -368,6 +377,11 @@ const RepositoryStatusPage: React.FC = () => {
                     onClose={() => setIsCreatingIssue(false)}
                     repositoryId={repoId}
                     repoName={repoName} />
+            )}
+            {isDeletingBranch && (
+                <DeleteBranchModal
+                    onClose={() => setIsDeletingBranch(false)}
+                    repositoryId={repoId} />
             )}
         </>
     );

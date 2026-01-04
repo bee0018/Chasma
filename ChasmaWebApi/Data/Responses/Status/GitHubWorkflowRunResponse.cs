@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Data.Objects;
 
-namespace ChasmaWebApi.Data.Responses;
+namespace ChasmaWebApi.Data.Responses.Status;
 
 /// <summary>
 /// Class representing the details of the GitHub Workflow runs.

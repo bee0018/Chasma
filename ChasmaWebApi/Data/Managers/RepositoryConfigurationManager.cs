@@ -10,9 +10,8 @@ namespace ChasmaWebApi.Data.Managers;
 /// </summary>
 /// <param name="logger">The internal server logger.</param>
 /// <param name="cacheManager">The internal API cache manager.</param>
-/// <param name="apiConfigurations">The web API configurations.</param>
-public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManager> logger, ICacheManager cacheManager, ChasmaWebApiConfigurations apiConfigurations)
-    : ClientManagerBase<RepositoryConfigurationManager>(logger, cacheManager, apiConfigurations), IRepositoryConfigurationManager
+public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManager> logger, ICacheManager cacheManager)
+    : ClientManagerBase<RepositoryConfigurationManager>(logger, cacheManager), IRepositoryConfigurationManager
 {
     /// <summary>
     /// The lock object used for concurrency.
@@ -140,6 +139,35 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
         }
 
         ClientLogger.LogInformation("Successfully deleted repository {repoName} from cache.", repoName);
+        return true;
+    }
+
+    // <inheritdoc/>
+    public bool TryDeleteBranch(string repositoryId, string branchName, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        string workingDirectory = string.Empty;
+        lock (lockObject)
+        {
+            if (!CacheManager.WorkingDirectories.TryGetValue(repositoryId, out workingDirectory))
+            {
+                errorMessage = $"No working directory could be found with repository identifier: {repositoryId}.";
+                ClientLogger.LogError("Repository identifier {id} cannot be found and no working directory could be retrieved. Sending error response.", repositoryId);
+                return false;
+            }
+        }
+
+        using Repository repository = new(workingDirectory);
+        Branch branchToDelete = repository.Branches.FirstOrDefault(i => i.FriendlyName == branchName);
+        if (branchToDelete == null)
+        {
+            errorMessage = $"{branchName} does not exist in the repository.";
+            ClientLogger.LogError("Repository identifier {id} cannot find branch with name {branchName}. Sending error response.", repositoryId, branchName);
+            return false;
+        }
+
+        repository.Branches.Remove(branchToDelete);
+        ClientLogger.LogInformation("Successfully deleted branch {branchName} from repository with id: {id}", branchName, repository);
         return true;
     }
 
