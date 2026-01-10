@@ -31,10 +31,6 @@
   - To do so, we will use NSwag Swagger Generation to build our objects (requests, responses, etc.) in our ChasmaWebAPI and output them to our `API/ChasmaWebApi.ts` file so we can use them in our web application.
   - To make updates to objects, all we need to do is update them in our backend web API and build the web API. Once the web api finishes building, all we need to do is refresh our chasma-web app to pickup changes.
 
-## Extra Documentation
-- For the video I used to help start this project: https://www.youtube.com/watch?v=dFIfZBEyZ90&t=1209s
-- For setting up the endpoints and basis for talking to frontend to backend: https://fast-endpoints.com/docs/get-started
-
 ## Database
 - We will be using Entity Framework Core for database operations. Doing so will require SQL Server Express database installations.
 
@@ -91,5 +87,5 @@ namespace ChasmaWebApi.Data.Models
 <img width="2372" height="685" alt="image" src="https://github.com/user-attachments/assets/f72c301a-cfd3-43bb-9b37-e309b6bb3c58" />
 
 5. In the Package Manager Console, input the following to update/add the tables: `Update-Database`
-6. In pgAdmin4, you will see the reflected changes. Refer to the screenshot:
+6. In SSMS, you will see the reflected changes. Refer to the screenshot:
 <img width="528" height="984" alt="image" src="https://github.com/user-attachments/assets/303f9246-254a-41e3-983c-36a47af888b1" />
