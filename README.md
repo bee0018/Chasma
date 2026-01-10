@@ -88,4 +88,5 @@ namespace ChasmaWebApi.Data.Models
 
 5. In the Package Manager Console, input the following to update/add the tables: `Update-Database`
 6. In SSMS, you will see the reflected changes. Refer to the screenshot:
-<img width="528" height="984" alt="image" src="https://github.com/user-attachments/assets/303f9246-254a-41e3-983c-36a47af888b1" />
+<img width="632" height="707" alt="image" src="https://github.com/user-attachments/assets/d201128b-bdfa-4bcb-ab15-3de7c0988fac" />
+
