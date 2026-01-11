@@ -33,12 +33,12 @@ namespace ChasmaWebApi.Data.Objects
         public required bool TrustedCertificate{ get; set; }
 
         /// <summary>
-        /// Gets the connection string in the format that is expected of PostgresSQL database connections.
+        /// Gets the connection string in the format that is expected of SQLite3 database connections.
         /// </summary>
         /// <returns>The formatted database connection string.</returns>
         public string GetConnectionString()
         {
-            return $"Server={Server};Database={DatabaseName};Trusted_Connection={TrustedConnection};TrustServerCertificate=True;";
+            return $"Data Source=Chasma.db";
         }
     }
 }
