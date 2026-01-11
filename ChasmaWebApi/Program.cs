@@ -13,6 +13,11 @@ builder.Logging
     .ClearProviders()
     .AddConsole()
     .AddDebug();
+if (OperatingSystem.IsWindows())
+{
+    builder.Logging.AddEventLog();
+}
+
 builder.Services.AddControllers()
     .ConfigureApplicationPartManager(manager =>
     {
