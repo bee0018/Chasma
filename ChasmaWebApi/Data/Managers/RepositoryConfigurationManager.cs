@@ -175,7 +175,7 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
     /// Searches for git repositories on the logical drives on the machine running this application.
     /// </summary>
     /// <returns>The list of valid git repositories.</returns>
-    private static List<Repository> SearchLogicalDrivesForGitRepos()
+    private List<Repository> SearchLogicalDrivesForGitRepos()
     {
         Stack<string> stack = new();
         List<string> roots = Directory.GetLogicalDrives().ToList();
@@ -201,11 +201,9 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
                 // Ignore access errors
             }
         }
-        
-        return unvalidatedGitPaths
-            .Where(Repository.IsValid)
-            .Select(i => new Repository(i))
-            .ToList();
+
+        List<Repository> validRepositories = GetValidatedRepositories(unvalidatedGitPaths);
+        return validRepositories;
     }
 
     /// <summary>
@@ -220,5 +218,34 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
                incomingRepo.UserId == existingRepo.UserId &&
                incomingRepo.Owner == existingRepo.Owner &&
                incomingRepo.Url == existingRepo.Url;
+    }
+
+    /// <summary>
+    /// Gets the validated git repositories.
+    /// </summary>
+    /// <param name="unvalidatedGitPaths">The list of unvalidated repository paths.</param>
+    /// <returns>The list of validated repositories.</returns>
+    private List<Repository> GetValidatedRepositories(IEnumerable<string> unvalidatedGitPaths)
+    {
+        List<Repository> validatedRepositories = new();
+        foreach (string gitPath in unvalidatedGitPaths)
+        {
+            try
+            {
+                if (!Repository.IsValid(gitPath))
+                {
+                    continue;
+                }
+
+                Repository repository = new(gitPath);
+                validatedRepositories.Add(repository);
+            }
+            catch (Exception e)
+            {
+                ClientLogger.LogWarning("The git path {path} could not be added due to an error, so it will be skipped: {error}. ", gitPath, e);
+            }
+        }
+
+        return validatedRepositories;
     }
 }
