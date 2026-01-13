@@ -88,7 +88,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestGetChasmaWorkflowResultSendsErrorResponseWhenNullRequestIsReceived()
         {
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetChasmaWorkflowResults(null);
-            GitHubWorkflowRunResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Null request received. Cannot get workflow runs.", response.ErrorMessage);
         }
@@ -105,7 +105,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryName = string.Empty
             };
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetChasmaWorkflowResults(request);
-            GitHubWorkflowRunResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Invalid request. Repository name is required.", response.ErrorMessage);
         }
@@ -123,7 +123,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryOwner = string.Empty
             };
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetChasmaWorkflowResults(request);
-            GitHubWorkflowRunResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Invalid request. Repository owner is required.", response.ErrorMessage);
         }
@@ -144,7 +144,7 @@ namespace ChasmaWebApi.Tests.Controllers
             List<WorkflowRunResult> workflowRuns = [];
             statusManagerMock.Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), out workflowRuns, out errorMessage)).Returns(false);
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetChasmaWorkflowResults(request);
-            GitHubWorkflowRunResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
@@ -167,7 +167,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), out workflowRuns, out errorMessage))
                 .Throws(new Exception("Exception getting run results."));
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetChasmaWorkflowResults(request);
-            GitHubWorkflowRunResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
@@ -195,7 +195,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), out workflowRuns, out errorMessage))
                 .Returns(true);
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetChasmaWorkflowResults(request);
-            GitHubWorkflowRunResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
             Assert.AreEqual(TestRepositoryName, response.RepositoryName);
@@ -209,7 +209,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestGetRepoStatusSendsErrorResponseWithNullRequest()
         {
             ActionResult<GitStatusResponse> actionResult = Controller.GetRepoStatus(null);
-            GitStatusResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitStatusResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Request must be populated.", response.ErrorMessage);
         }
@@ -225,7 +225,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty,
             };
             ActionResult<GitStatusResponse> actionResult = Controller.GetRepoStatus(request);
-            GitStatusResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitStatusResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("The repository identifier is null or empty.", response.ErrorMessage);
         }
@@ -244,7 +244,7 @@ namespace ChasmaWebApi.Tests.Controllers
             RepositorySummary summary = null;
             statusManagerMock.Setup(i => i.GetRepositoryStatus(It.IsAny<string>())).Returns(summary);
             ActionResult<GitStatusResponse> actionResult = Controller.GetRepoStatus(request);
-            GitStatusResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitStatusResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Failed to get repository status for repo ID: {request.RepositoryId}", response.ErrorMessage);
         }
@@ -268,7 +268,7 @@ namespace ChasmaWebApi.Tests.Controllers
             };
             statusManagerMock.Setup(i => i.GetRepositoryStatus(It.IsAny<string>())).Returns(summary);
             ActionResult<GitStatusResponse> actionResult = Controller.GetRepoStatus(request);
-            GitStatusResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitStatusResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(null, response.ErrorMessage);
             Assert.IsTrue(response.CommitsBehind > 0);
@@ -283,7 +283,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestGetApplyStagingActionSendsErrorResponseWithNullRequest()
         {
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(null);
-            ApplyStagingActionResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Request must be populated.", response.ErrorMessage);
         }
@@ -299,7 +299,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepoKey = string.Empty,
             };
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
-            ApplyStagingActionResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Cannot process request because the repository key is not populated.", response.ErrorMessage);
         }
@@ -316,7 +316,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 FileName = string.Empty
             };
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
-            ApplyStagingActionResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Cannot process request because the file name is not populated.", response.ErrorMessage);
         }
@@ -335,7 +335,7 @@ namespace ChasmaWebApi.Tests.Controllers
             List<RepositoryStatusElement>? statusElements = null;
             statusManagerMock.Setup(i => i.ApplyStagingAction(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>())).Returns(statusElements);
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
-            ApplyStagingActionResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Failed to apply staging action for repo ID: {request.RepoKey}. Check server logs for more information.", response.ErrorMessage);
         }
@@ -354,7 +354,7 @@ namespace ChasmaWebApi.Tests.Controllers
             List<RepositoryStatusElement>? statusElements = [new(), new()];
             statusManagerMock.Setup(i => i.ApplyStagingAction(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>())).Returns(statusElements);
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
-            ApplyStagingActionResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(null, response.ErrorMessage);
             Assert.IsTrue(response.StatusElements.Count > 0);
@@ -367,7 +367,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestCommitChangesWithNullRequest()
         {
             ActionResult<GitCommitResponse> actionResult = Controller.CommitChanges(null);
-            GitCommitResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitCommitResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Null request received. Cannot commit changes.", response.ErrorMessage);
         }
@@ -383,7 +383,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty
             };
             ActionResult<GitCommitResponse> actionResult = Controller.CommitChanges(request);
-            GitCommitResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitCommitResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository identifier must be populated. Cannot commit changes.", response.ErrorMessage);
         }
@@ -400,7 +400,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Email = string.Empty,
             };
             ActionResult<GitCommitResponse> actionResult = Controller.CommitChanges(request);
-            GitCommitResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitCommitResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Email must be populated for commit signature. Cannot commit changes.", response.ErrorMessage);
         }
@@ -418,7 +418,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 CommitMessage = string.Empty
             };
             ActionResult<GitCommitResponse> actionResult = Controller.CommitChanges(request);
-            GitCommitResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitCommitResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Commit message cannot be empty. Cannot commit changes.", response.ErrorMessage);
         }
@@ -438,7 +438,7 @@ namespace ChasmaWebApi.Tests.Controllers
             ConcurrentDictionary<string, string> workingDirectories = new();
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             ActionResult<GitCommitResponse> actionResult = Controller.CommitChanges(request);
-            GitCommitResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitCommitResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"No working directory found in cache for {request.RepositoryId}. Cannot commit changes.", response.ErrorMessage);
         }
@@ -464,7 +464,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
 
             ActionResult<GitCommitResponse> actionResult = Controller.CommitChanges(request);
-            GitCommitResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitCommitResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"No user found in cache for user ID: {request.UserId}. Cannot commit changes.", response.ErrorMessage);
         }
@@ -505,7 +505,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Throws(new Exception("Error occurred when committing changes."));
 
             ActionResult<GitCommitResponse> actionResult = Controller.CommitChanges(request);
-            GitCommitResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitCommitResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Error committing changes to repo: {request.RepositoryId}. Check server logs for more information.", response.ErrorMessage);
         }
@@ -543,7 +543,7 @@ namespace ChasmaWebApi.Tests.Controllers
             statusManagerMock.Setup(i => i.CommitChanges(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()));
 
             ActionResult<GitCommitResponse> actionResult = Controller.CommitChanges(request);
-            GitCommitResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitCommitResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(null, response.ErrorMessage);
         }
@@ -555,7 +555,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestPushChangesWithNullRequest()
         {
             ActionResult<GitPushResponse> actionResult = Controller.PushChanges(null);
-            GitPushResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitPushResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Null request received. Cannot push changes.", response.ErrorMessage);
         }
@@ -571,7 +571,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty
             };
             ActionResult<GitPushResponse> actionResult = Controller.PushChanges(request);
-            GitPushResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitPushResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository identifier must be populated. Cannot push changes.", response.ErrorMessage);
         }
@@ -589,7 +589,7 @@ namespace ChasmaWebApi.Tests.Controllers
             ConcurrentDictionary<string, string> workingDirectories = new();
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             ActionResult<GitPushResponse> actionResult = Controller.PushChanges(request);
-            GitPushResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitPushResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"No working directory found in cache for {request.RepositoryId}. Cannot push changes.", response.ErrorMessage);
         }
@@ -612,7 +612,7 @@ namespace ChasmaWebApi.Tests.Controllers
             statusManagerMock.Setup(i => i.TryPushChanges(It.IsAny<string>(), It.IsAny<string>(), out errorMessage)).Returns(false);
 
             ActionResult<GitPushResponse> actionResult = Controller.PushChanges(request);
-            GitPushResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitPushResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Failed to push changes to repo: {request.RepositoryId}. {errorMessage}", response.ErrorMessage);
         }
@@ -635,7 +635,7 @@ namespace ChasmaWebApi.Tests.Controllers
             statusManagerMock.Setup(i => i.TryPushChanges(It.IsAny<string>(), It.IsAny<string>(), out errorMessage)).Returns(true);
 
             ActionResult<GitPushResponse> actionResult = Controller.PushChanges(request);
-            GitPushResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitPushResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(null, response.ErrorMessage);
         }
@@ -647,7 +647,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestPullChangesWithNullRequest()
         {
             ActionResult<GitPullResponse> actionResult = Controller.PullChanges(null);
-            GitPullResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitPullResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Null request received. Cannot pull changes.", response.ErrorMessage);
         }
@@ -664,7 +664,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty
             };
             ActionResult<GitPullResponse> actionResult  = Controller.PullChanges(request);
-            GitPullResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitPullResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository identifier must be populated. Cannot pull changes.", response.ErrorMessage);
         }
@@ -682,7 +682,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Email = string.Empty
             };
             ActionResult<GitPullResponse> actionResult  = Controller.PullChanges(request);
-            GitPullResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitPullResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("User's email must be populated. Cannot pull changes.", response.ErrorMessage);
         }
@@ -702,7 +702,7 @@ namespace ChasmaWebApi.Tests.Controllers
             ConcurrentDictionary<string, string> workingDirectories = new();
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             ActionResult<GitPullResponse> actionResult = Controller.PullChanges(request);
-            GitPullResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitPullResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"No working directory found in cache for {request.RepositoryId}. Cannot pull changes.",  response.ErrorMessage);
         }
@@ -729,7 +729,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.Users).Returns(userAccounts);
             
             ActionResult<GitPullResponse> actionResult = Controller.PullChanges(request);
-            GitPullResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitPullResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"No user found in cache for user ID: {request.UserId}. Cannot pull changes.",  response.ErrorMessage);
         }
@@ -771,7 +771,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Returns(false);
             
             ActionResult<GitPullResponse> actionResult = Controller.PullChanges(request);
-            GitPullResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitPullResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Failed to pull changes to repo: {request.RepositoryId}. {errorMessage}",  response.ErrorMessage);
         }
@@ -816,7 +816,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Returns(true);
             
             ActionResult<GitPullResponse> actionResult = Controller.PullChanges(request);
-            GitPullResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitPullResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(null, response.ErrorMessage);
         }
@@ -828,7 +828,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestCheckoutBranchWithNullRequest()
         {
             ActionResult<GitCheckoutResponse> actionResult = Controller.CheckoutBranch(null);
-            GitCheckoutResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitCheckoutResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Null request received. Cannot checkout branch.", response.ErrorMessage);
         }
@@ -844,7 +844,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty,
             };
             ActionResult<GitCheckoutResponse> actionResult = Controller.CheckoutBranch(request);
-            GitCheckoutResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitCheckoutResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository identifier must be populated. Cannot checkout branch.", response.ErrorMessage);
         }
@@ -861,7 +861,7 @@ namespace ChasmaWebApi.Tests.Controllers
             };
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(new ConcurrentDictionary<string, string>());
             ActionResult<GitCheckoutResponse> actionResult = Controller.CheckoutBranch(request);
-            GitCheckoutResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitCheckoutResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"No working directory found in cache for {request.RepositoryId}. Cannot checkout branch.", response.ErrorMessage);
         }
@@ -886,7 +886,7 @@ namespace ChasmaWebApi.Tests.Controllers
             string errorMessage = "Failed to pull checkout branch";
             statusManagerMock.Setup(i => i.TryCheckoutBranch(It.IsAny<string>(), It.IsAny<string>(), out errorMessage)).Returns(false);
             ActionResult<GitCheckoutResponse> actionResult = Controller.CheckoutBranch(request);
-            GitCheckoutResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitCheckoutResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Failed to checkout branch to repo: {request.RepositoryId}. {errorMessage}", response.ErrorMessage);
         }
@@ -911,7 +911,7 @@ namespace ChasmaWebApi.Tests.Controllers
             string errorMessage = "Failed to pull checkout branch";
             statusManagerMock.Setup(i => i.TryCheckoutBranch(It.IsAny<string>(), It.IsAny<string>(), out errorMessage)).Throws(new Exception("Exception checking out branch."));
             ActionResult<GitCheckoutResponse> actionResult = Controller.CheckoutBranch(request);
-            GitCheckoutResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitCheckoutResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Error checking out branch to repo: {request.RepositoryId}. Check server logs for more information.", response.ErrorMessage);
         }
@@ -936,7 +936,7 @@ namespace ChasmaWebApi.Tests.Controllers
             string errorMessage = null;
             statusManagerMock.Setup(i => i.TryCheckoutBranch(It.IsAny<string>(), It.IsAny<string>(), out errorMessage)).Returns(true);
             ActionResult<GitCheckoutResponse> actionResult = Controller.CheckoutBranch(request);
-            GitCheckoutResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitCheckoutResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
@@ -948,7 +948,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestGetBranchesWithNullRequest()
         {
             ActionResult<GitBranchResponse> actionResult = Controller.GetBranches(null);
-            GitBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Null request received. Cannot get branches.", response.ErrorMessage);
         }
@@ -964,7 +964,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty,
             };
             ActionResult<GitBranchResponse> actionResult = Controller.GetBranches(request);
-            GitBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository identifier must be populated. Cannot get branches.", response.ErrorMessage);
         }
@@ -981,7 +981,7 @@ namespace ChasmaWebApi.Tests.Controllers
             };
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(new ConcurrentDictionary<string, string>());
             ActionResult<GitBranchResponse> actionResult = Controller.GetBranches(request);
-            GitBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            GitBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"No working directory found in cache for {request.RepositoryId}. Cannot get branches.", response.ErrorMessage);
         }
@@ -1004,7 +1004,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             statusManagerMock.Setup(i => i.GetAllBranches(It.IsAny<string>())).Throws(new Exception("Exception getting branches."));
             ActionResult<GitBranchResponse> actionResult = Controller.GetBranches(request);
-            GitBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Error getting branches for repo: {request.RepositoryId}. Check server logs for more information.", response.ErrorMessage);
         }
@@ -1029,7 +1029,7 @@ namespace ChasmaWebApi.Tests.Controllers
             List<string> branchNames = ["chasma", "unit", "test"];
             statusManagerMock.Setup(i => i.GetAllBranches(It.IsAny<string>())).Returns(branchNames);
             ActionResult<GitBranchResponse> actionResult = Controller.GetBranches(request);
-            GitBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            GitBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(null, response.ErrorMessage);
             Assert.IsTrue(response.BranchNames.Count == branchNames.Count);
@@ -1042,7 +1042,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestCreatePullRequestWithNullRequest()
         {
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(null);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Null request received. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1058,7 +1058,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty,
             };
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository identifier must be populated. Cannot get branches.", response.ErrorMessage);
         }
@@ -1075,7 +1075,7 @@ namespace ChasmaWebApi.Tests.Controllers
             };
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(new ConcurrentDictionary<string, string>());
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"No working directory found in cache for {request.RepositoryId}. Cannot get branches.", response.ErrorMessage);
         }
@@ -1099,7 +1099,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Pull request title must be populated. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1124,7 +1124,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Working branch name must be populated. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1150,7 +1150,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Destination branch name must be populated. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1177,7 +1177,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Pull request body message must be populated. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1205,7 +1205,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.Repositories).Returns(new ConcurrentDictionary<string, LocalGitRepository>());
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Owner of repository not found. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1245,7 +1245,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.Repositories).Returns(repositories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository name must be populated. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1305,7 +1305,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Returns(false);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Failed to create pull request for repo: {request.RepositoryName}. {errorMessage}", response.ErrorMessage);
         }
@@ -1365,7 +1365,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Throws(new Exception("Exception generating pull request."));
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Error creating pull request for repo: {request.RepositoryName}. Check server logs for more information.", response.ErrorMessage);
         }
@@ -1425,7 +1425,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Returns(true);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
             Assert.AreEqual(pullRequestId, response.PullRequestId);
@@ -1440,7 +1440,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestCreateGitHubIssueWithNullRequest()
         {
             ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(null);
-            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreateGitHubIssueResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Request is null. Cannot create issue.", response.ErrorMessage);
         }
@@ -1456,7 +1456,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryName = string.Empty,
             };
             ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
-            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreateGitHubIssueResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository name must be populated. Cannot create issue.", response.ErrorMessage);
         }
@@ -1473,7 +1473,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryOwner = string.Empty,
             };
             ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
-            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreateGitHubIssueResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository owner must be populated. Cannot create issue.", response.ErrorMessage);
         }
@@ -1491,7 +1491,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Title = string.Empty,
             };
             ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
-            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreateGitHubIssueResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Issue title must be populated. Cannot create issue.", response.ErrorMessage);
         }
@@ -1510,7 +1510,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Body = string.Empty,
             };
             ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
-            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreateGitHubIssueResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Issue body description must be populated. Cannot create issue.", response.ErrorMessage);
         }
@@ -1543,7 +1543,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 out errorMessage))
                 .Returns(false);
             ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
-            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            CreateGitHubIssueResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
@@ -1576,7 +1576,7 @@ namespace ChasmaWebApi.Tests.Controllers
                     out errorMessage))
                 .Throws(new Exception("Could not create issue"));
             ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
-            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            CreateGitHubIssueResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Exception occurred when creating GitHub issue. Check server logs for more information.", response.ErrorMessage);
         }
@@ -1609,7 +1609,7 @@ namespace ChasmaWebApi.Tests.Controllers
                     out errorMessage))
                 .Returns(true);
             ActionResult<CreateGitHubIssueResponse> actionResult = Controller.CreateGitHubIssue(request);
-            CreateGitHubIssueResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            CreateGitHubIssueResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
             Assert.AreEqual(url, response.IssueUrl);

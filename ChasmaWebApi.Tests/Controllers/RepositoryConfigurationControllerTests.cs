@@ -83,7 +83,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestGetLocalGitRepositories()
         {
             ActionResult<LocalRepositoriesInfoMessage> repoInfoMessageActionResult = Controller.GetLocalGitRepositories(1);
-            LocalRepositoriesInfoMessage message = ExtractActionResultInnerResponseFromActionResult(repoInfoMessageActionResult, typeof(OkObjectResult));
+            LocalRepositoriesInfoMessage message = GetResponseFromHttpAction(repoInfoMessageActionResult, typeof(OkObjectResult));
             Assert.AreEqual(2, message.Repositories.Count);
             List<string> repoNames = message.Repositories.Select(i => i.Name).ToList();
             CollectionAssert.Contains(repoNames, TestRepositoryName);
@@ -101,7 +101,7 @@ namespace ChasmaWebApi.Tests.Controllers
             List<LocalGitRepository> newRepositories = new();
             configurationManagerMock.Setup(x => x.TryAddLocalGitRepositories(It.IsAny<int>(), out newRepositories)).Returns(false);
             Task<ActionResult<AddLocalRepositoriesResponse>> addLocalGitRepositoriesTask = Controller.AddLocalGitRepositories(1);
-            AddLocalRepositoriesResponse response = ExtractActionResultInnerResponseFromTask(addLocalGitRepositoriesTask, typeof(OkObjectResult));
+            AddLocalRepositoriesResponse response = GetResponseFromHttpAction(addLocalGitRepositoriesTask, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("No new local git repositories found on this machine.", response.ErrorMessage);
         }
@@ -128,7 +128,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.Setup(cacheManager => cacheManager.WorkingDirectories).Returns(workingDirectories);
             configurationManagerMock.Setup(x => x.TryAddLocalGitRepositories(It.IsAny<int>(), out newRepositories)).Returns(true);
             Task<ActionResult<AddLocalRepositoriesResponse>> addLocalGitRepositoriesTask = Controller.AddLocalGitRepositories(1);
-            AddLocalRepositoriesResponse response = ExtractActionResultInnerResponseFromTask(addLocalGitRepositoriesTask, typeof(OkObjectResult));
+            AddLocalRepositoriesResponse response = GetResponseFromHttpAction(addLocalGitRepositoriesTask, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(null, response.ErrorMessage);
             Assert.AreEqual(2, response.CurrentRepositories.Count);
@@ -145,7 +145,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestDeleteRepositoryFailedWithNullRequest()
         {
             Task<ActionResult<DeleteRepositoryResponse>> responseTask = Controller.DeleteRepository(null);
-            DeleteRepositoryResponse response = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            DeleteRepositoryResponse response = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Null request was received. Cannot delete repo.", response.ErrorMessage);
         }
@@ -161,7 +161,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty,
             };
             Task<ActionResult<DeleteRepositoryResponse>> responseTask = Controller.DeleteRepository(request);
-            DeleteRepositoryResponse response = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            DeleteRepositoryResponse response = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Invalid request. Repository identifier is required.", response.ErrorMessage);
         }
@@ -181,7 +181,7 @@ namespace ChasmaWebApi.Tests.Controllers
             string errorMessage = "Error deleting repository.";
             configurationManagerMock.Setup(manager => manager.TryDeleteRepository(It.IsAny<string>(), It.IsAny<int>(), out repositories, out errorMessage)).Returns(false);
             Task<ActionResult<DeleteRepositoryResponse>> responseTask = Controller.DeleteRepository(request);
-            DeleteRepositoryResponse response = ExtractActionResultInnerResponseFromTask(responseTask, typeof(OkObjectResult));
+            DeleteRepositoryResponse response = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
@@ -233,7 +233,7 @@ namespace ChasmaWebApi.Tests.Controllers
             
             Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext);
             Task<ActionResult<DeleteRepositoryResponse>> responseTask = Controller.DeleteRepository(request);
-            DeleteRepositoryResponse response = ExtractActionResultInnerResponseFromTask(responseTask, typeof(OkObjectResult));
+            DeleteRepositoryResponse response = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(null, response.ErrorMessage);
 
@@ -251,7 +251,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestDeleteBranchWithNullRequest()
         {
             ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(null);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Null request received. Request must be populated.", response.ErrorMessage);
         }
@@ -268,7 +268,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty,
             };
             ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Empty repository identifier received. Field must be populated.", response.ErrorMessage);
         }
@@ -286,7 +286,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 BranchName = string.Empty,
             };
             ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(BadRequestObjectResult));
+            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Empty branch name received. Field must be populated.", response.ErrorMessage);
         }
@@ -309,7 +309,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Setup(i => i.TryDeleteBranch(It.IsAny<string>(), It.IsAny<string>(), out errorMessage))
                 .Returns(false);
             ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
@@ -331,7 +331,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 .Setup(i => i.TryDeleteBranch(It.IsAny<string>(), It.IsAny<string>(), out errorMessage))
                 .Returns(true);
             ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = ExtractActionResultInnerResponseFromActionResult(actionResult, typeof(OkObjectResult));
+            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
         }

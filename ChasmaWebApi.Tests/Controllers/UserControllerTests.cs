@@ -73,7 +73,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestLoginFailsWithNullLoginRequest()
         {
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(null);
-            LoginResponse loginResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
             Assert.AreEqual("Request was null. Cannot login user.", loginResponse.ErrorMessage);
         }
@@ -90,7 +90,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 UserName = string.Empty,
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
             Assert.AreEqual("Username is empty. Cannot login user.", loginResponse.ErrorMessage);
         }
@@ -108,7 +108,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = string.Empty
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
             Assert.AreEqual("Password is empty. Cannot login user.", loginResponse.ErrorMessage);
         }
@@ -129,7 +129,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = "password1"
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
             Assert.AreEqual("User not found.", loginResponse.ErrorMessage);
             TestDbContextFactory.DestroyDatabase(dbContext);
@@ -151,7 +151,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = "password1"
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(OkObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
             Assert.AreEqual("Invalid password.", loginResponse.ErrorMessage);
             TestDbContextFactory.DestroyDatabase(dbContext);
@@ -174,7 +174,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = TestUserPassword,
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(OkObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsFalse(loginResponse.IsErrorResponse);
             Assert.AreEqual(null, loginResponse.ErrorMessage);
             Assert.AreEqual(TestUserName, loginResponse.UserName);
@@ -190,7 +190,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestAddUserFailsWithNullAddUserRequest()
         {
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(null);
-            AddUserResponse addUserResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
             Assert.AreEqual("Request was null. Cannot add user.", addUserResponse.ErrorMessage);
         }
@@ -206,7 +206,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Name = string.Empty,
             };
             Task <ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
-            AddUserResponse addUserResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
             Assert.AreEqual("Name is empty. Cannot add user.", addUserResponse.ErrorMessage);
         }
@@ -223,7 +223,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 UserName = string.Empty,
             };
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
-            AddUserResponse addUserResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
             Assert.AreEqual("Username is empty. Cannot add user.", addUserResponse.ErrorMessage);
         }
@@ -241,7 +241,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = string.Empty
             };
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
-            AddUserResponse addUserResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(BadRequestObjectResult));
+            AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
             Assert.AreEqual("Password is empty. Cannot add user.", addUserResponse.ErrorMessage);
         }
@@ -262,7 +262,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = TestUserPassword,
             };
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
-            AddUserResponse addUserResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(OkObjectResult));
+            AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
             Assert.AreEqual("Username already exists. Cannot add user.", addUserResponse.ErrorMessage);
             TestDbContextFactory.DestroyDatabase(dbContext);
@@ -285,7 +285,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = "password"
             };
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
-            AddUserResponse addUserResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(OkObjectResult));
+            AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
             Assert.AreEqual("User could not be added to the system. Check server logs for more information.", addUserResponse.ErrorMessage);
             TestDbContextFactory.DestroyDatabase(dbContext);
@@ -309,7 +309,7 @@ namespace ChasmaWebApi.Tests.Controllers
             };
             passwordUtilityMock.Setup(utility => utility.HashPassword(It.IsAny<string>())).Returns((request.Password, [1, 2, 3]));
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
-            AddUserResponse addUserResponse = ExtractActionResultInnerResponseFromTask(responseTask, typeof(OkObjectResult));
+            AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsFalse(addUserResponse.IsErrorResponse);
             Assert.AreEqual(null, addUserResponse.ErrorMessage);
             Assert.AreEqual(request.UserName, addUserResponse.UserName);
