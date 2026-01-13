@@ -56,7 +56,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestGetHearbeat()
         {
             ActionResult<HeartbeatMessage> heartbeatMessageActionResult = Controller.GetHeartbeat();
-            HeartbeatMessage heartbeatMessage = ExtractActionResultInnerResponseFromActionResult(heartbeatMessageActionResult, typeof(OkObjectResult));
+            HeartbeatMessage heartbeatMessage = GetResponseFromHttpAction(heartbeatMessageActionResult, typeof(OkObjectResult));
             Assert.IsNotNull(heartbeatMessage);
             Assert.IsNotNull(heartbeatMessage.Message);
             Assert.AreEqual(HeartbeatStatus.Ok, heartbeatMessage.Status);

@@ -40,13 +40,13 @@ namespace ChasmaWebApi.Tests.Controllers
         protected T Controller;
 
         /// <summary>
-        /// Extracts the inner response from the action result task.
+        /// Extracts the response from the HTTP action request.
         /// </summary>
         /// <typeparam name="TResponseType">The type of response to retrieve.</typeparam>
         /// <param name="task">The task containing the response.</param>
         /// <param name="actionResultType">The type of action of result.</param>
         /// <returns>The inner response.</returns>
-        protected static TResponseType ExtractActionResultInnerResponseFromTask<TResponseType>(Task<ActionResult<TResponseType>> task, Type actionResultType)
+        protected static TResponseType GetResponseFromHttpAction<TResponseType>(Task<ActionResult<TResponseType>> task, Type actionResultType)
         {
             ActionResult<TResponseType> actionResult = task.Result;
             if (actionResult?.Result == null)
@@ -54,17 +54,17 @@ namespace ChasmaWebApi.Tests.Controllers
                 throw new NullReferenceException("Cannot extract inner result because the action result is null.");
             }
 
-            return ExtractActionResultInnerResponseFromActionResult(actionResult, actionResultType);
+            return GetResponseFromHttpAction(actionResult, actionResultType);
         }
         
         /// <summary>
-        /// Extracts the inner response from the action result.
+        /// Extracts the response from the HTTP action result.
         /// </summary>
         /// <param name="actionResult">The action result containing the response.</param>
         /// <param name="actionResultType">The type of action result.</param>
         /// <typeparam name="TResponseType">The type of response to be extracted</typeparam>
         /// <returns>The inner response.</returns>
-        protected static TResponseType ExtractActionResultInnerResponseFromActionResult<TResponseType>(ActionResult<TResponseType> actionResult, Type actionResultType)
+        protected static TResponseType GetResponseFromHttpAction<TResponseType>(ActionResult<TResponseType> actionResult, Type actionResultType)
         {
             if (actionResultType == null)
             {
