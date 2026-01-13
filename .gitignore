@@ -4,8 +4,10 @@ ChasmaWebApi/obj/
 chasma-thin-client/.idea/
 chasma-thin-client/build/
 chasma-thin-client/node_modules/
-ChasmaWebApi/Migrations/
 ChasmaWebApi.Tests/bin/
 ChasmaWebApi.Tests/obj/
 ChasmaWebApi/.idea/
 chasma-thin-client/src/API/
+ChasmaWebApi/*.db
+ChasmaWebApi/*.db-shm
+ChasmaWebApi/*.db-wal
