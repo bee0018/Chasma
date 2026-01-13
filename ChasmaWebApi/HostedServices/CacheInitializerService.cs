@@ -2,6 +2,7 @@
 using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChasmaWebApi.HostedServices
 {
@@ -34,6 +35,7 @@ namespace ChasmaWebApi.HostedServices
             logger.LogInformation("Initializing the cache with the database information.");
             using IServiceScope scope = serviceScopeFactory.CreateScope();
             ApplicationDbContext applicationDbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            applicationDbContext.Database.Migrate();
             foreach (RepositoryModel repo in applicationDbContext.Repositories)
             {
                 LocalGitRepository localRepo = new()
