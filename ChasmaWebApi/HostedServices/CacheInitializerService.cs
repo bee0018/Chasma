@@ -32,34 +32,7 @@ namespace ChasmaWebApi.HostedServices
         // <inheritdoc/>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            logger.LogInformation("Initializing the cache with the database information.");
-            using IServiceScope scope = serviceScopeFactory.CreateScope();
-            ApplicationDbContext applicationDbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            applicationDbContext.Database.Migrate();
-            foreach (RepositoryModel repo in applicationDbContext.Repositories)
-            {
-                LocalGitRepository localRepo = new()
-                {
-                    Id = repo.Id,
-                    UserId = repo.UserId,
-                    Name = repo.Name,
-                    Owner = repo.Owner,
-                    Url = repo.Url,
-                };
-                cacheManager.Repositories.TryAdd(localRepo.Id, localRepo);
-            }
-
-            foreach (WorkingDirectoryModel workingDirectoryModel in applicationDbContext.WorkingDirectories)
-            {
-                cacheManager.WorkingDirectories.TryAdd(workingDirectoryModel.RepositoryId, workingDirectoryModel.WorkingDirectory);
-            }
-
-            foreach (UserAccountModel user in applicationDbContext.UserAccounts)
-            {
-                cacheManager.Users.TryAdd(user.Id, user);
-            }
-
-            logger.LogInformation("Finished updating the cache with the database data.");
+            _ = Task.Run(() => InitializeCacheAsync(cancellationToken), cancellationToken);
             return Task.CompletedTask;
         }
 
@@ -72,6 +45,45 @@ namespace ChasmaWebApi.HostedServices
             cacheManager.Users.Clear();
             logger.LogInformation("Cache cleared successfully.");
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Initializes the cache with data stored in the database.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token</param>
+        private async Task InitializeCacheAsync(CancellationToken cancellationToken)
+        {
+            logger.LogInformation("Initializing the cache with the database information.");
+            using IServiceScope scope = serviceScopeFactory.CreateScope();
+            ApplicationDbContext applicationDbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await applicationDbContext.Database.MigrateAsync(cancellationToken);
+            List<RepositoryModel> repositories = await applicationDbContext.Repositories.ToListAsync(cancellationToken);
+            foreach (RepositoryModel repoModel in repositories)
+            {
+                LocalGitRepository repository = new LocalGitRepository()
+                {
+                    Id = repoModel.Id,
+                    UserId = repoModel.UserId,
+                    Name = repoModel.Name,
+                    Owner = repoModel.Owner,
+                    Url = repoModel.Url,
+                };
+                cacheManager.Repositories.TryAdd(repository.Id, repository);
+            }
+
+            List<WorkingDirectoryModel> workingDirectories = await applicationDbContext.WorkingDirectories.ToListAsync(cancellationToken);
+            foreach (WorkingDirectoryModel workingDirectoryModel in workingDirectories)
+            {
+                cacheManager.WorkingDirectories.TryAdd(workingDirectoryModel.RepositoryId, workingDirectoryModel.WorkingDirectory);
+            }
+
+            List<UserAccountModel> users = await applicationDbContext.UserAccounts.ToListAsync(cancellationToken);
+            foreach (UserAccountModel user in users)
+            {
+                cacheManager.Users.TryAdd(user.Id, user);
+            }
+
+            logger.LogInformation("Finished updating the cache with the database data.");
         }
     }
 }

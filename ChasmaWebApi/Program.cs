@@ -6,9 +6,12 @@ using ChasmaWebApi.HostedServices;
 using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 
-string configFilePath = "config.xml";
+string configFilePath = Path.Combine(AppContext.BaseDirectory, "config.xml");
 ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
+builder.Host.UseWindowsService();
+builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(5000));
+
 builder.Logging
     .ClearProviders()
     .AddConsole()
@@ -67,12 +70,12 @@ app.UseCors(thinClientCorPolicy)
     .UseStaticFiles()
     .UseDefaultFiles()
     .UseHsts()
-    .UseHttpsRedirection();
-app.MapControllers();
+    .UseHttpsRedirection()
+    .UseSwaggerUi();
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage()
-        .UseSwaggerUi();
+    app.UseDeveloperExceptionPage();
 }
 
+app.MapControllers();
 app.Run();

@@ -1,9 +1,10 @@
 ﻿import {CreateGitHubIssueRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
 import React, {useState} from "react";
 import {getLocalGitRepository} from "../../managers/LocalStorageManager";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient();
+const statusClient = new RepositoryStatusClient(apiBaseUrl);
 
 /** The members of the modal to create issues. **/
 interface CreateIssueModalProps {

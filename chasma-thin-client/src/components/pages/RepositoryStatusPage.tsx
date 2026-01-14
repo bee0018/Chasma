@@ -17,9 +17,10 @@ import CheckoutModal from "../modals/CheckoutModal";
 import PullRequestModal from "../modals/PullRequestModal";
 import CreateIssueModal from "../modals/CreateIssueModal";
 import DeleteBranchModal from "../modals/DeleteBranchModal";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient();
+const statusClient = new RepositoryStatusClient(apiBaseUrl);
 
 /**
  * Initializes a new instance of the Repository Status Page class.

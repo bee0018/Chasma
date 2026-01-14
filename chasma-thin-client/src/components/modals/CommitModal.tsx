@@ -1,6 +1,7 @@
 import React, {useState} from "react";
 import "../../css/CommitModal.css";
 import {GitCommitRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /** The properties to handle commit messages. **/
 interface ICommitModalProps {
@@ -18,7 +19,7 @@ interface ICommitModalProps {
 }
 
 /** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient()
+const statusClient = new RepositoryStatusClient(apiBaseUrl)
 
 /**
  * Initializes a new CommitModal class.
