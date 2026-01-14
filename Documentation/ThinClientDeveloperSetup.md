@@ -1,10 +1,10 @@
-# Getting Started with Create React App
+# Getting Started with GitCtrl Web Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+`GitCtrl` was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
 
-In the project directory, you can run:
+In the `chasma-thin-client` directory, you can run:
 
 ### `npm start`
 
