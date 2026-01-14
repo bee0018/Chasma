@@ -17,13 +17,12 @@ namespace ChasmaWebApi.Tests.Util
         {
             string configFilePath = "config.xml";
             ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
-            DatabaseConfigurations databaseConfig = GetTestDatabaseConfigurationData();
             Assert.IsNotNull(webApiConfigurations);
             Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.WebApiUrl));
-            Assert.AreEqual(databaseConfig.DatabaseName, webApiConfigurations.DatabaseConfigurations.DatabaseName);
-            Assert.AreEqual(databaseConfig.Server, webApiConfigurations.DatabaseConfigurations.Server);
-            Assert.AreEqual(databaseConfig.TrustedConnection, webApiConfigurations.DatabaseConfigurations.TrustedConnection);
-            Assert.AreEqual(databaseConfig.TrustedCertificate, webApiConfigurations.DatabaseConfigurations.TrustedCertificate);
+            Assert.IsFalse(webApiConfigurations.ShowDebugControllers);
+            Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.ThinClientUrl));
+            Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.GitHubApiToken));
+            Assert.IsFalse(webApiConfigurations.WorkflowRunReportThreshold <= 0);
         }
 
         /// <summary>
@@ -32,28 +31,30 @@ namespace ChasmaWebApi.Tests.Util
         [TestMethod]
         public void TestDeserializationToObject()
         {
-            DatabaseConfigurations databaseConfig = GetTestDatabaseConfigurationData();
-            string xmlText = ChasmaXmlBase.GenerateXml(databaseConfig);
-            DatabaseConfigurations? generatedConfig = ChasmaXmlBase.DeserializeToObject<DatabaseConfigurations>(xmlText);
+            ChasmaWebApiConfigurations config = GetTestConfigurationData();
+            string xmlText = ChasmaXmlBase.GenerateXml(config);
+            ChasmaWebApiConfigurations? generatedConfig = ChasmaXmlBase.DeserializeToObject<ChasmaWebApiConfigurations>(xmlText);
             Assert.IsNotNull(generatedConfig);
-            Assert.AreEqual(databaseConfig.DatabaseName, generatedConfig.DatabaseName);
-            Assert.AreEqual(databaseConfig.Server, generatedConfig.Server);
-            Assert.AreEqual(databaseConfig.TrustedConnection, generatedConfig.TrustedConnection);
-            Assert.AreEqual(databaseConfig.TrustedCertificate, generatedConfig.TrustedCertificate);
+            Assert.AreEqual(config.WebApiUrl, generatedConfig.WebApiUrl);
+            Assert.AreEqual(config.GitHubApiToken, generatedConfig.GitHubApiToken);
+            Assert.AreEqual(config.ShowDebugControllers, generatedConfig.ShowDebugControllers);
+            Assert.AreEqual(config.ThinClientUrl, generatedConfig.ThinClientUrl);
+            Assert.AreEqual(config.WorkflowRunReportThreshold, generatedConfig.WorkflowRunReportThreshold);
         }
 
         /// <summary>
-        /// Gets a test Chasma database configuration instance.
+        /// Gets a sample web API configuration object.
         /// </summary>
-        /// <returns>The sample database configurations.</returns>
-        private DatabaseConfigurations GetTestDatabaseConfigurationData()
+        /// <returns>A simple web API configuration object.</returns>
+        private static ChasmaWebApiConfigurations GetTestConfigurationData()
         {
-            return new DatabaseConfigurations
+            return new ChasmaWebApiConfigurations()
             {
-                DatabaseName = "Chasma",
-                Server = "localhost\\SQLEXPRESS",
-                TrustedConnection = true,
-                TrustedCertificate = true,
+                WebApiUrl = "webApiUrl",
+                GitHubApiToken = "token",
+                ShowDebugControllers = true,
+                ThinClientUrl = "thinClientUrl",
+                WorkflowRunReportThreshold = 20,
             };
         }
     }

@@ -15,12 +15,6 @@ namespace ChasmaWebApi
         /// </summary>
         [XmlElement("webApiUrl")]
         public required string WebApiUrl { get; set; }
-
-        /// <summary>
-        /// Gets or sets the database configuration options.
-        /// </summary>
-        [XmlElement("databaseConfiguration")]
-        public required DatabaseConfigurations DatabaseConfigurations { get; set; }
         
         /// <summary>
         /// Gets or sets a value indicating whether to show the debug API controllers.
@@ -45,5 +39,14 @@ namespace ChasmaWebApi
         /// </summary>
         [XmlElement("workflowRunReportThreshold")]
         public required int WorkflowRunReportThreshold { get; set; }
+
+        /// <summary>
+        /// Gets the connection string in the format that is expected of SQLite3 database connections.
+        /// </summary>
+        /// <returns>The formatted database connection string.</returns>
+        public string GetDatabaseConnectionString()
+        {
+            return $"Data Source=Chasma.db";
+        }
     }
 }
