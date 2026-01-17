@@ -274,7 +274,7 @@ public class RepositoryConfigurationController : ControllerBase
 
         if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out _))
         {
-            logger.LogError("No working directory was found for repository {repoId}", repoId);
+            logger.LogError("No working directory was found for repository {repoId}, so it cannot be ignored. Sending error response.", repoId);
             response.IsErrorResponse = true;
             response.ErrorMessage = "No working directory was found for the specified repository.";
             return BadRequest(response);
@@ -282,7 +282,7 @@ public class RepositoryConfigurationController : ControllerBase
 
         if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository localGitRepository))
         {
-            logger.LogError("No repository was found with an identifier: {repoId}", repoId);
+            logger.LogError("No repository was found with an identifier: {repoId}, so it cannot be ignored. Sending error response.", repoId);
             response.IsErrorResponse = true;
             response.ErrorMessage = "No repository was found in cache.";
             return BadRequest(response);
