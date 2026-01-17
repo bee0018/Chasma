@@ -4,12 +4,13 @@
     RepositoryConfigurationClient, RepositoryStatusClient,
 } from "../../API/ChasmaWebApiClient";
 import React, {useEffect} from "react";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /** The repository configuration client for the web API. **/
-const configClient = new RepositoryConfigurationClient()
+const configClient = new RepositoryConfigurationClient(apiBaseUrl)
 
 /** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient()
+const statusClient = new RepositoryStatusClient(apiBaseUrl)
 
 /**
  * The members of the delete branch modal.

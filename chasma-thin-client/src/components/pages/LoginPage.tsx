@@ -3,9 +3,10 @@ import {Link, useNavigate} from 'react-router-dom';
 import ChasmaLogo from "../logos/ChasmaLogo";
 import NotificationModal from "../modals/NotificationModal";
 import {LoginRequest, UserClient} from "../../API/ChasmaWebApiClient";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /** Gets the database client that interfaces with the web API. **/
-const userClient = new UserClient();
+const userClient = new UserClient(apiBaseUrl);
 
 /**
  * Creates a new instance of the Login Page class.

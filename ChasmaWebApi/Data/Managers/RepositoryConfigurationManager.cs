@@ -125,7 +125,7 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
             }
 
             repoName = repository.Name;
-            if (!CacheManager.WorkingDirectories.TryRemove(repositoryId, out string _))
+            if (!CacheManager.WorkingDirectories.TryRemove(repositoryId, out string workingDirectory))
             {
                 errorMessage = $"Failed to find working directory for repository {repoName} in cache.";
                 ClientLogger.LogError(errorMessage);

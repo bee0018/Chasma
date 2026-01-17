@@ -2,6 +2,7 @@ import React from "react";
 import {useNavigate} from "react-router-dom";
 import {DeleteRepositoryRequest, RepositoryConfigurationClient} from "../API/ChasmaWebApiClient";
 import {getUserId} from "../managers/LocalStorageManager";
+import {apiBaseUrl} from "../environmentConstants";
 
 /** The properties of the Card component. */
 interface IProps {
@@ -25,7 +26,7 @@ interface IProps {
 }
 
 /** The repository configuration client to interact with the web API. **/
-const repoConfigClient = new RepositoryConfigurationClient();
+const repoConfigClient = new RepositoryConfigurationClient(apiBaseUrl);
 
 /**
  * The card details and display components.

@@ -1,8 +1,9 @@
 ﻿import React, {useState} from "react";
 import {CreatePRRequest, GitBranchRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient();
+const statusClient = new RepositoryStatusClient(apiBaseUrl);
 
 /** Defines the properties of the pull request modal. **/
 interface IPullRequestProps {

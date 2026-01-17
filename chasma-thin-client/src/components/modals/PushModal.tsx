@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import {GitPushRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /**
  * Defines the properties/members of the push modal props.
@@ -13,7 +14,7 @@ interface IPushModalProps {
 }
 
 /** The repository status client. **/
-const statusClient = new RepositoryStatusClient();
+const statusClient = new RepositoryStatusClient(apiBaseUrl);
 
 /**
  * Initializes a new instance of the PushModal class.

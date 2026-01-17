@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from "react";
 import {HealthClient, HeartbeatStatus} from "../../API/ChasmaWebApiClient";
 import "../../css/Dashboard.css"
+import {apiBaseUrl} from "../../environmentConstants";
 
 /** The health client interacting with the web API. **/
-const healthClient = new HealthClient();
+const healthClient = new HealthClient(apiBaseUrl);
 
 /**
  * Initializes a new ApiStatusTab.

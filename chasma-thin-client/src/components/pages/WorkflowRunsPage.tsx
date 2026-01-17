@@ -5,11 +5,12 @@ import "../../css/Dashboard.css"
 import "../../css/App.css"
 import { JSX } from "react/jsx-runtime";
 import {useNavigate, useParams} from "react-router-dom";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /**
  * The repository status client that interfaces with the web API.
  */
-const statusClient = new RepositoryStatusClient();
+const statusClient = new RepositoryStatusClient(apiBaseUrl);
 
 /**
  * Initializes a new instance of the WorkflowRunsPage.

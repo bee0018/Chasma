@@ -4,9 +4,10 @@ import GitRepoOverviewCard from "../GitRepoOverviewCard";
 import {LocalGitRepository, RepositoryConfigurationClient} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
 import {getUserId, getUsername} from "../../managers/LocalStorageManager";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /** The Git API client. **/
-const configClient = new RepositoryConfigurationClient()
+const configClient = new RepositoryConfigurationClient(apiBaseUrl)
 
 /**
  * The Home tab contents and display components.

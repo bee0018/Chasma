@@ -1,8 +1,9 @@
 ﻿import {GitBranchRequest, GitCheckoutRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
 import React, {useState} from "react";
+import {apiBaseUrl} from "../../environmentConstants";
 
 /** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient()
+const statusClient = new RepositoryStatusClient(apiBaseUrl)
 
 /**
  * The members of the checkout modal.
