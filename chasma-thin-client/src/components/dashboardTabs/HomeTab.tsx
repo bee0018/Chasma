@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import '../../css/DasboardTab.css';
 import GitRepoOverviewCard from "../GitRepoOverviewCard";
-import {LocalGitRepository, RepositoryConfigurationClient} from "../../API/ChasmaWebApiClient";
+import {IgnoreRepositoryRequest, LocalGitRepository, RepositoryConfigurationClient} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
 import {getUserId, getUsername} from "../../managers/LocalStorageManager";
 import {apiBaseUrl} from "../../environmentConstants";
@@ -10,10 +10,37 @@ import {apiBaseUrl} from "../../environmentConstants";
 const configClient = new RepositoryConfigurationClient(apiBaseUrl)
 
 /**
+ * The properties of the Home Tab.
+ */
+interface IHomeTabProps {
+    /** The repository version trigger. **/
+    reposVersion: number;
+}
+
+/**
  * The Home tab contents and display components.
  * @constructor Initializes a new instance of the HomeTab.
  */
-const HomeTab: React.FC = () => {
+const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
+
+    useEffect(() => {
+        updateUserRepositoryConfiguration();
+    }, [props.reposVersion]);
+
+    /**
+     * Updates the repository configuration when the repositories are updated in the background.
+     */
+    const updateUserRepositoryConfiguration = async () => {
+        try {
+            const userId = getUserId();
+            const message = await configClient.getLocalGitRepositories(userId);
+            setLocalGitRepositories(message.repositories);
+            localStorage.setItem("gitRepositories", JSON.stringify(message.repositories));
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     useEffect(() => {
         /** Retrieves the repository data from the web API. **/
         const retrieveUserRepositoryConfiguration = async () => {
@@ -31,7 +58,6 @@ const HomeTab: React.FC = () => {
                 });
                 setLocalGitRepositories(undefined);
                 console.error(`Could not get git repositories from filesystem: ${e}`);
-                localStorage.removeItem("gitRepositories");
             }
         };
 
@@ -40,6 +66,13 @@ const HomeTab: React.FC = () => {
             console.error(e.message);
         });
     }, []);
+
+    useEffect(() => {
+        const closeMenu = () => setContextMenu(null);
+        window.addEventListener("click", closeMenu);
+        return () => window.removeEventListener("click", closeMenu);
+    }, []);
+
 
     /** Gets or sets the notification **/
     const [notification, setNotification] = useState<{
@@ -55,6 +88,13 @@ const HomeTab: React.FC = () => {
         if (!repos || repos.length === 0) return [];
         return JSON.parse(repos);
     });
+
+    /** Gets or sets the context menu. **/
+    const [contextMenu, setContextMenu] = useState<{
+        mouseX: number;
+        mouseY: number;
+        repo: LocalGitRepository;
+    } | null>(null);
 
     /** Sends a request to the add the local git repositories on the filesystem. **/
     async function handleAddLocalGitRepositories() {
@@ -74,7 +114,6 @@ const HomeTab: React.FC = () => {
                     message: response.errorMessage,
                     isError: true,
                 });
-                setLocalGitRepositories(undefined);
                 return;
             }
             setNotification({
@@ -90,7 +129,6 @@ const HomeTab: React.FC = () => {
                 message: "Review server logs for more information.",
                 isError: true,
             });
-            setLocalGitRepositories(undefined);
             console.error(`Could not get git repositories from filesystem: ${e}`);
         }
     }
@@ -118,6 +156,49 @@ const HomeTab: React.FC = () => {
         });
     }
 
+    /**
+     * Handles the action when the user wants to include/ignore the repository.
+     * @param repoId The repository identifier.
+     */
+    const handleIgnoreAction = async (repoId: string | undefined) => {
+        try {
+            const request = new IgnoreRepositoryRequest();
+            request.userId = getUserId();
+            request.repositoryId = repoId;
+            request.isIgnored = true;
+            const response = await configClient.ignoreRepository(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: `Repository ignore action failed!`,
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+
+            setLocalGitRepositories(response.includedRepositories);
+            localStorage.setItem("gitRepositories", JSON.stringify(response.includedRepositories));
+        }
+        catch (e) {
+            setNotification({
+                title: `Repository ignore action failed!`,
+                message: "Review server logs for more information.",
+                isError: true,
+            });
+            console.error(`Could not ignore repositories on the filesystem: ${e}`);
+        }
+    };
+
+    /** Handles the event when the user right-clicks a card to open the context menu. **/
+    const handleContextMenu = (event: React.MouseEvent, repo: LocalGitRepository) => {
+        event.preventDefault();
+        setContextMenu({
+            mouseX: event.clientX,
+            mouseY: event.clientY,
+            repo,
+        });
+    };
+
     return (
         <>
             <div className="page">
@@ -141,8 +222,31 @@ const HomeTab: React.FC = () => {
                                                  repoOwner={repo.owner}
                                                  url={`/status/${repo.name}/${repo.id}`}
                                                  onDelete={handleRepoDelete}
-                                                 onError={handleRepoDeletionError} />
+                                                 onError={handleRepoDeletionError}
+                                                 onContextMenu={(e) => handleContextMenu(e, repo)} />
                         ))
+                    )}
+                    {contextMenu && (
+                        <div
+                            className="context-menu"
+                            style={{
+                                top: contextMenu.mouseY,
+                                left: contextMenu.mouseX,
+                            }}
+                            onClick={() => setContextMenu(null)}
+                        >
+                            <ul>
+                                <li onClick={() => window.location.href = `/status/${contextMenu.repo.name}/${contextMenu.repo.id}`}>
+                                    Open Status Page
+                                </li>
+                                <li onClick={() => handleRepoDelete(contextMenu.repo.id)}>
+                                    Delete
+                                </li>
+                                <li onClick={() => handleIgnoreAction(contextMenu.repo.id)}>
+                                    Ignore
+                                </li>
+                            </ul>
+                        </div>
                     )}
                 </div>
                     <br/>

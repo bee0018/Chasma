@@ -32,7 +32,7 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
                 ClientLogger.LogWarning("Failed to find remote repository in {repoPath}, so it will not be added to cache.", workingDirectory);
                 continue;
             }
-           
+
             string repositoryName = new DirectoryInfo(workingDirectory).Name?.Replace(".git", "");
             if (string.IsNullOrWhiteSpace(repositoryName))
             {
@@ -45,7 +45,7 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
             {
                 if (CacheManager.WorkingDirectories.Values.Contains(workingDirectory))
                 {
-                    // Allowed to have the same repos duplicated in cache, but it MUST be in different working directories.
+                    ClientLogger.LogWarning("Working directory {directory} already exists in cache, so it will be ignored.", workingDirectory);
                     continue;
                 }
             }
@@ -56,29 +56,14 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
                 ClientLogger.LogWarning("Failed to find push url for {repoName}, so it will be ignored.", repositoryName);
                 continue;
             }
-            
-            string repositoryOwner;
-            if (pushUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            {
-                // HTTPS: https://github.com/OWNER/REPO.git
-                Uri pushUri = new(pushUrl);
-                string[] httpParts = pushUri.AbsolutePath.Trim('/').Split('/');
-                repositoryOwner = httpParts[0];
-            }
-            else
-            {
-                // SSH: git@github.com:OWNER/REPO.git
-                string path = pushUrl.Split(':')[1];
-                string[] sshParts = path.Split('/');
-                repositoryOwner = sshParts[0];
-            }
-            
+
+            string repositoryOwner = GetRepositoryOwner(pushUrl);
             if (string.IsNullOrEmpty(repositoryOwner))
             {
                 ClientLogger.LogWarning("Failed to find repository owner for {repoName}, so it will be ignored.", repositoryName);
                 continue;
             }
-            
+
             LocalGitRepository localRepo = new LocalGitRepository
             {
                 Id = repoCacheKey,
@@ -88,8 +73,8 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
                 Url = pushUrl,
             };
 
-            // Do not add duplicate repositories to cache.
-            if (CacheManager.Repositories.Values.Any(i => RepositoriesMatch(localRepo, i))) 
+            // Multiple instances of the same repository are allowed, but they must have different identifiers and working directories.
+            if (CacheManager.Repositories.Values.Any(i => IsDuplicateRepository(localRepo, i, workingDirectory)))
             {
                 ClientLogger.LogWarning("Repository {repoName} already exists in cache, so it will be ignored.", localRepo.Name);
                 continue;
@@ -101,8 +86,14 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
 
         foreach (LocalGitRepository repository in newRepositories)
         {
-            CacheManager.Repositories.TryAdd(repository.Id, repository);
-            ClientLogger.LogInformation("Added repository {repoName} to cache for user {userId}.", repository.Name, userId);
+            if (CacheManager.Repositories.TryAdd(repository.Id, repository))
+            {
+                ClientLogger.LogInformation("Added repository {repoName} to cache for user {userId}.", repository.Name, userId);
+            }
+            else
+            {
+                ClientLogger.LogWarning("Cannot add duplicate repository with name {name} and id {id}", repository.Name, repository.Id);
+            }
         }
 
         newRepositories = newRepositories.OrderBy(i => i.Name).ToList();
@@ -207,17 +198,26 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
     }
 
     /// <summary>
-    /// Determines if two repositories match based on their properties.
+    /// Determines if two repositories are duplicates of each other.
     /// </summary>
     /// <param name="incomingRepo">The newly created repository.</param>
     /// <param name="existingRepo">The existing cached repository.</param>
+    /// <param name="incomingWorkingDirectory">The incoming working directory.</param>
     /// <returns>True if the repositories match; false otherwise.</returns>
-    private static bool RepositoriesMatch(LocalGitRepository incomingRepo, LocalGitRepository existingRepo)
+    private bool IsDuplicateRepository(LocalGitRepository incomingRepo, LocalGitRepository existingRepo, string incomingWorkingDirectory)
     {
-        return incomingRepo.Name == existingRepo.Name &&
-               incomingRepo.UserId == existingRepo.UserId &&
-               incomingRepo.Owner == existingRepo.Owner &&
-               incomingRepo.Url == existingRepo.Url;
+        if (incomingRepo.Id == existingRepo.Id)
+        {
+            return true;
+        }
+
+        string existingWorkingDirectory = CacheManager.WorkingDirectories[existingRepo.Id];
+        if (incomingWorkingDirectory == existingWorkingDirectory)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -247,5 +247,31 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
         }
 
         return validatedRepositories;
+    }
+
+    /// <summary>
+    /// Gets the repository owner from the repository push URL.
+    /// </summary>
+    /// <param name="pushUrl">The push URL.</param>
+    /// <returns>The repository owner.</returns>
+    private static string GetRepositoryOwner(string pushUrl)
+    {
+        string repositoryOwner;
+        if (pushUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        {
+            // HTTPS: https://github.com/OWNER/REPO.git
+            Uri pushUri = new(pushUrl);
+            string[] httpParts = pushUri.AbsolutePath.Trim('/').Split('/');
+            repositoryOwner = httpParts[0];
+        }
+        else
+        {
+            // SSH: git@github.com:OWNER/REPO.git
+            string path = pushUrl.Split(':')[1];
+            string[] sshParts = path.Split('/');
+            repositoryOwner = sshParts[0];
+        }
+
+        return repositoryOwner;
     }
 }

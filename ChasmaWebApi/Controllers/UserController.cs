@@ -85,7 +85,7 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "User not found.";
                 logger.LogError("User {username} not found. Sending error response", request.UserName);
-                return BadRequest(response);
+                return Ok(response);
             }
 
             bool isPasswordValid = passwordUtility.VerifyPassword(request.Password, account.Salt, account.Password);

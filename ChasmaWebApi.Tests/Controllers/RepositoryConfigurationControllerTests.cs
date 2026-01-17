@@ -335,5 +335,251 @@ namespace ChasmaWebApi.Tests.Controllers
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
+
+        /// <summary>
+        /// Tests the nominal case of the <see cref="RepositoryConfigurationController.GetIgnoredRepositories(int)"/> getting the
+        /// ignored repository details associated with the specified user.
+        /// </summary>
+        [TestMethod]
+        public void TestGetIgnoredRepositoriesNominalCase()
+        {
+            LocalGitRepository testRepo = new()
+            {
+                Id = "testId1",
+                Name = "testName1",
+                IsIgnored = true,
+                Owner = "chasma",
+                Url = "url1.com",
+                UserId = 1,
+            };
+            LocalGitRepository testRepo2 = new()
+            {
+                Id = "testId2",
+                Name = "testName2",
+                IsIgnored = true,
+                Owner = "chasma",
+                Url = "url2.com",
+                UserId = 1,
+            };
+            LocalGitRepository testRepo3 = new()
+            {
+                Id = "testId3",
+                Name = "testName3",
+                IsIgnored = false,
+                Owner = "chasma",
+                Url = "url3.com",
+                UserId = 1,
+            };
+            ConcurrentDictionary<string, LocalGitRepository> repositories = new()
+            {
+                [testRepo.Id] = testRepo,
+                [testRepo2.Id] = testRepo2,
+                [testRepo3.Id] = testRepo3
+            };
+            
+            cacheManagerMock.SetupGet(i => i.Repositories).Returns(repositories);
+            ActionResult<GetIgnoredRepositoriesMessage> actionResult = Controller.GetIgnoredRepositories(1);
+            GetIgnoredRepositoriesMessage message = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
+            Assert.AreEqual(2, message.IgnoredRepositories.Count);
+            CollectionAssert.Contains(message.IgnoredRepositories, $"{testRepo.Name}:{testRepo.Id}");
+            CollectionAssert.Contains(message.IgnoredRepositories, $"{testRepo2.Name}:{testRepo2.Id}");
+            CollectionAssert.DoesNotContain(message.IgnoredRepositories, $"{testRepo3.Name}:{testRepo3.Id}");
+        }
+
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.IgnoreRepository(IgnoreRepositoryRequest)"/> sends
+        /// error response when a null request is received.
+        /// </summary>
+        [TestMethod]
+        public void TestIgnoreRepositoryWithNullRequest()
+        {
+            Task<ActionResult<IgnoreRepositoryResponse>> ignoredRepoTask = Controller.IgnoreRepository(null);
+            IgnoreRepositoryResponse response = GetResponseFromHttpAction(ignoredRepoTask, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Request must not be empty.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.IgnoreRepository(IgnoreRepositoryRequest)"/> sends
+        /// error response when an empty repository identifier is received.
+        /// </summary>
+        [TestMethod]
+        public void TestIgnoreRepositoryWithEmptyRepositoryId()
+        {
+            IgnoreRepositoryRequest request = new();
+            Task<ActionResult<IgnoreRepositoryResponse>> ignoredRepoTask = Controller.IgnoreRepository(request);
+            IgnoreRepositoryResponse response = GetResponseFromHttpAction(ignoredRepoTask, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Invalid request. Repository identifier is required.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.IgnoreRepository(IgnoreRepositoryRequest)"/> sends
+        /// error response the working directory cannot be found for the repository.
+        /// </summary>
+        [TestMethod]
+        public void TestIgnoreRepositoryWithWorkingDirectoryCannotBeFound()
+        {
+            ConcurrentDictionary<string, string> workingDirectories = new();
+            cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
+            IgnoreRepositoryRequest request = new() {RepositoryId = "repoId"};
+            Task<ActionResult<IgnoreRepositoryResponse>> ignoredRepoTask = Controller.IgnoreRepository(request);
+            IgnoreRepositoryResponse response = GetResponseFromHttpAction(ignoredRepoTask, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("No working directory was found for the specified repository.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.IgnoreRepository(IgnoreRepositoryRequest)"/> sends
+        /// error response the local git repository cannot be found.
+        /// </summary>
+        [TestMethod]
+        public void TestIgnoreRepositoryWithRepositoryCannotBeFound()
+        {
+            string repoId = Guid.NewGuid().ToString();
+            ConcurrentDictionary<string, string> workingDirectories = new()
+            {
+                [repoId] = "workingDirectory",
+            };
+            cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
+
+            ConcurrentDictionary<string, LocalGitRepository> repositories = new();
+            cacheManagerMock.SetupGet(i => i.Repositories).Returns(repositories);
+            
+            IgnoreRepositoryRequest request = new() {RepositoryId = repoId};
+            Task<ActionResult<IgnoreRepositoryResponse>> ignoredRepoTask = Controller.IgnoreRepository(request);
+            IgnoreRepositoryResponse response = GetResponseFromHttpAction(ignoredRepoTask, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("No repository was found in cache.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.IgnoreRepository(IgnoreRepositoryRequest)"/> sends
+        /// error response when the database cannot find the repository model.
+        /// </summary>
+        [TestMethod]
+        public void TestIgnoreRepositoryWithDatabaseFailureToIgnoreUnknownRepository()
+        {
+            ApplicationDbContext dbContext = TestDbContextFactory.CreateApplicationDbContext();
+            TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext);
+            string repoId = Guid.NewGuid().ToString();
+            ConcurrentDictionary<string, string> workingDirectories = new()
+            {
+                [repoId] = "workingDirectory",
+            };
+            cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
+
+            LocalGitRepository testRepo = new()
+            {
+                Id = repoId,
+                Name = "testRepo",
+                IsIgnored = false,
+                Owner = "chasma",
+                Url = "url1.com",
+                UserId = 1,
+            };
+            ConcurrentDictionary<string, LocalGitRepository> repositories = new()
+            {
+                [testRepo.Id] = testRepo,
+            };
+            cacheManagerMock.SetupGet(i => i.Repositories).Returns(repositories);
+            
+            IgnoreRepositoryRequest request = new() {RepositoryId = repoId};
+            Task<ActionResult<IgnoreRepositoryResponse>> ignoredRepoTask = Controller.IgnoreRepository(request);
+            IgnoreRepositoryResponse response = GetResponseFromHttpAction(ignoredRepoTask, typeof(OkObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Cannot ignore repository because it does not exist in the database.", response.ErrorMessage);
+            TestDbContextFactory.DestroyDatabase(dbContext);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.IgnoreRepository(IgnoreRepositoryRequest)"/> sends
+        /// error response when the database does not update any repository models.
+        /// </summary>
+        [TestMethod]
+        public void TestIgnoreRepositoryWithDatabaseFailureToIgnoreRepository()
+        {
+            ApplicationDbContext dbContext = TestDbContextFactory.CreateApplicationDbContext();
+            TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext);
+            string repoId = "testRepo1234";
+            ConcurrentDictionary<string, string> workingDirectories = new()
+            {
+                [repoId] = "workingDirectory",
+            };
+            cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
+
+            LocalGitRepository testRepo = new()
+            {
+                Id = repoId,
+                Name = "testRepo",
+                IsIgnored = true,
+                Owner = "chasma",
+                Url = "url1.com",
+                UserId = 1,
+            };
+            ConcurrentDictionary<string, LocalGitRepository> repositories = new()
+            {
+                [testRepo.Id] = testRepo,
+            };
+            cacheManagerMock.SetupGet(i => i.Repositories).Returns(repositories);
+            
+            IgnoreRepositoryRequest request = new()
+            {
+                RepositoryId = repoId,
+                UserId = 100,
+                IsIgnored = true,
+            };
+            Task<ActionResult<IgnoreRepositoryResponse>> ignoredRepoTask = Controller.IgnoreRepository(request);
+            IgnoreRepositoryResponse response = GetResponseFromHttpAction(ignoredRepoTask, typeof(OkObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Failed to save changes to database. Check server logs for more information.", response.ErrorMessage);
+            TestDbContextFactory.DestroyDatabase(dbContext);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.IgnoreRepository(IgnoreRepositoryRequest)"/> sends
+        /// successful response when the database updates the repository models.
+        /// </summary>
+        [TestMethod]
+        public void TestIgnoreRepositoryNominalCase()
+        {
+            ApplicationDbContext dbContext = TestDbContextFactory.CreateApplicationDbContext();
+            TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext);
+            string repoId = "testRepo1234";
+            ConcurrentDictionary<string, string> workingDirectories = new()
+            {
+                [repoId] = "workingDirectory",
+            };
+            cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
+
+            LocalGitRepository testRepo = new()
+            {
+                Id = repoId,
+                Name = "testRepo",
+                IsIgnored = false,
+                Owner = "chasma",
+                Url = "url1.com",
+                UserId = 1,
+            };
+            ConcurrentDictionary<string, LocalGitRepository> repositories = new()
+            {
+                [testRepo.Id] = testRepo,
+            };
+            cacheManagerMock.SetupGet(i => i.Repositories).Returns(repositories);
+            
+            IgnoreRepositoryRequest request = new()
+            {
+                RepositoryId = repoId,
+                UserId = 100,
+                IsIgnored = false,
+            };
+            Task<ActionResult<IgnoreRepositoryResponse>> ignoredRepoTask = Controller.IgnoreRepository(request);
+            IgnoreRepositoryResponse response = GetResponseFromHttpAction(ignoredRepoTask, typeof(OkObjectResult));
+            Assert.IsFalse(response.IsErrorResponse);
+            TestDbContextFactory.DestroyDatabase(dbContext);
+        }
     }
 }

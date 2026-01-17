@@ -39,5 +39,11 @@ namespace ChasmaWebApi.Data.Models
         /// </summary>
         [Column("url")]
         public string Url { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the repository is ignored.
+        /// </summary>
+        [Column("is_ignored")]
+        public bool IsIgnored { get; set; }
     }
 }

@@ -62,6 +62,37 @@
         }
       }
     },
+    "/api/RepositoryConfiguration/retrieveIgnoredRepositories": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_GetIgnoredRepositories",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetIgnoredRepositoriesMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryConfiguration/addLocalGitRepositories": {
       "post": {
         "tags": [
@@ -150,6 +181,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DeleteBranchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryConfiguration/ignoreRepository": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_IgnoreRepository",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IgnoreRepositoryRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IgnoreRepositoryResponse"
                 }
               }
             }
@@ -636,8 +699,30 @@
           },
           "url": {
             "type": "string"
+          },
+          "isIgnored": {
+            "type": "boolean"
           }
         }
+      },
+      "GetIgnoredRepositoriesMessage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ignoredRepositories": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
       },
       "AddLocalRepositoriesResponse": {
         "allOf": [
@@ -742,6 +827,48 @@
               },
               "branchName": {
                 "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "IgnoreRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "includedRepositories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LocalGitRepository"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "IgnoreRepositoryRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "isIgnored": {
+                "type": "boolean"
               }
             }
           }
