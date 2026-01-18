@@ -18,6 +18,7 @@ import PullRequestModal from "../modals/PullRequestModal";
 import CreateIssueModal from "../modals/CreateIssueModal";
 import DeleteBranchModal from "../modals/DeleteBranchModal";
 import {apiBaseUrl} from "../../environmentConstants";
+import ExecuteShellCommandsModal from "../modals/ExecuteShellCommandsModal";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
@@ -58,6 +59,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user is deleting a branch. **/
     const [isDeletingBranch, setIsDeletingBranch] = useState<boolean>(false);
+
+    /** Gets or sets a flag indicating whether the user executing shell commands. **/
+    const [isExecutingShellCommands, setIsExecutingShellCommands] = useState<boolean>(false);
 
     /** Gets or sets the number of commits the local repo is ahead of the remote. **/
     const [commitsAhead, setCommitsAhead] = useState<number | undefined>(0);
@@ -264,6 +268,12 @@ const RepositoryStatusPage: React.FC = () => {
                 >
                     Create Issue
                 </div>
+                <br/>
+                <div className="tab"
+                     onClick={() => setIsExecutingShellCommands(true)}
+                >
+                    Custom Shell Commands
+                </div>
             </aside>
             <h1 className="repository-title-header">
                 {repoName} Status Manager
@@ -382,6 +392,11 @@ const RepositoryStatusPage: React.FC = () => {
             {isDeletingBranch && (
                 <DeleteBranchModal
                     onClose={() => setIsDeletingBranch(false)}
+                    repositoryId={repoId} />
+            )}
+            {isExecutingShellCommands && (
+                <ExecuteShellCommandsModal
+                    onClose={() => setIsExecutingShellCommands(false)}
                     repositoryId={repoId} />
             )}
         </>

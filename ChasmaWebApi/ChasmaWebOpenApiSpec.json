@@ -540,6 +540,38 @@
         }
       }
     },
+    "/api/Shell/executeShellCommands": {
+      "post": {
+        "tags": [
+          "Shell"
+        ],
+        "operationId": "Shell_ExecuteShellCommands",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteShellCommandRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecuteShellCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/User/login": {
       "post": {
         "tags": [
@@ -1431,6 +1463,47 @@
               },
               "body": {
                 "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ExecuteShellCommandResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "outputMessages": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ExecuteShellCommandRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "commands": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }
