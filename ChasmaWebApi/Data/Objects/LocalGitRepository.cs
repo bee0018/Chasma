@@ -31,4 +31,9 @@ public class LocalGitRepository
     /// Gets or sets the url of the git repository.
     /// </summary>
     public string Url { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the repository is being ignored.
+    /// </summary>
+    public bool IsIgnored { get; set; }
 }

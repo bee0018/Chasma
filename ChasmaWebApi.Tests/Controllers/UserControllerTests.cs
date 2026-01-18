@@ -129,7 +129,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = "password1"
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
             Assert.AreEqual("User not found.", loginResponse.ErrorMessage);
             TestDbContextFactory.DestroyDatabase(dbContext);

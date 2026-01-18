@@ -40,6 +40,27 @@ namespace ChasmaWebApi.Tests.Factories
                 Salt = [],
             };
             context.UserAccounts.Add(testUser);
+
+            RepositoryModel ignoredRepo = new()
+            {
+                Id = "testRepo1234",
+                Owner = "chasma",
+                UserId = 100,
+                IsIgnored = true,
+                Name = "chasma1234",
+                Url = "url.com"
+            };
+            RepositoryModel nominalRepo = new()
+            {
+                Id = "testRepo12345",
+                Owner = "chasma",
+                UserId = 100,
+                IsIgnored = false,
+                Name = "chasma12345",
+                Url = "url.com"
+            };
+            context.Repositories.Add(ignoredRepo);
+            context.Repositories.Add(nominalRepo);
             context.SaveChanges();
         }
 

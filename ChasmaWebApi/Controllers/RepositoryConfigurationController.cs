@@ -66,12 +66,33 @@ public class RepositoryConfigurationController : ControllerBase
     {
         logger.LogInformation("Getting repositories for user with id: {userId}.", userId);
         List<LocalGitRepository> repositories = cacheManager.Repositories.Values
-            .Where(i => i.UserId == userId)
+            .Where(i => i.UserId == userId && !i.IsIgnored)
             .ToList();
         LocalRepositoriesInfoMessage message = new()
         {
             Timestamp = DateTimeOffset.Now.ToString("g"),
             Repositories = repositories,
+        };
+        return Ok(message);
+    }
+
+    /// <summary>
+    /// Gets the list of ignored repositories for the specified user.
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <returns>The message containing the list of ignored repository data.</returns>
+    [HttpPost]
+    [Route("retrieveIgnoredRepositories")]
+    public ActionResult<GetIgnoredRepositoriesMessage> GetIgnoredRepositories(int userId)
+    {
+        logger.LogInformation("Getting ignored repositories for user with id: {userId}.", userId);
+        List<string> repositories = cacheManager.Repositories.Values
+            .Where(i => i.UserId == userId && i.IsIgnored)
+            .Select(i => $"{i.Name}:{i.Id}")
+            .ToList();
+        GetIgnoredRepositoriesMessage message = new()
+        {
+            IgnoredRepositories = repositories,
         };
         return Ok(message);
     }
@@ -94,7 +115,7 @@ public class RepositoryConfigurationController : ControllerBase
             response.ErrorMessage = "No new local git repositories found on this machine.";
             return Ok(response);
         }
-        
+
         logger.LogInformation("Found {count} new repo(s) on this machine.", newRepositories.Count);
         foreach (LocalGitRepository repo in newRepositories)
         {
@@ -219,6 +240,82 @@ public class RepositoryConfigurationController : ControllerBase
         }
 
         logger.LogInformation("Successfully deleted the branch {branchName}.", branchName);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Applies the ignoring action on the specified repository.
+    /// Note: this route will handle both cases of ignoring/including a repo based on the .
+    /// </summary>
+    /// <param name="request">The ignore repository request.</param>
+    /// <returns>The ignore repository response.</returns>
+    [HttpPost]
+    [Route("ignoreRepository")]
+    public async Task<ActionResult<IgnoreRepositoryResponse>> IgnoreRepository([FromBody] IgnoreRepositoryRequest request)
+    {
+        logger.LogInformation("Received a {request}", nameof(IgnoreRepositoryRequest));
+        IgnoreRepositoryResponse response = new();
+        if (request == null)
+        {
+            logger.LogError("Unable to ignore repository because {request} was null. Sending error response.", nameof(IgnoreRepositoryRequest));
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Request must not be empty.";
+            return BadRequest(response);
+        }
+
+        string repoId = request.RepositoryId;
+        if (string.IsNullOrEmpty(repoId))
+        {
+            logger.LogError("Unable to ignore repository because {request} was had an empty repository identifier. Sending error response.", nameof(IgnoreRepositoryRequest));
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Repository identifier is required.";
+            return BadRequest(response);
+        }
+
+        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out _))
+        {
+            logger.LogError("No working directory was found for repository {repoId}, so it cannot be ignored. Sending error response.", repoId);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "No working directory was found for the specified repository.";
+            return BadRequest(response);
+        }
+
+        if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository localGitRepository))
+        {
+            logger.LogError("No repository was found with an identifier: {repoId}, so it cannot be ignored. Sending error response.", repoId);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "No repository was found in cache.";
+            return BadRequest(response);
+        }
+
+        int userId = request.UserId;
+        RepositoryModel repositoryModel = await applicationDbContext.Repositories.FirstOrDefaultAsync(i => i.Id == repoId && i.UserId == userId);
+        if (repositoryModel == null)
+        {
+            logger.LogError("Cannot ignore repository {repoId} because it does not exist in the database for user {userId}. Sending error response.", repoId, userId);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Cannot ignore repository because it does not exist in the database.";
+            return Ok(response);
+        }
+
+        string repoName = localGitRepository.Name;
+        bool isIgnored = request.IsIgnored;
+        repositoryModel.IsIgnored = isIgnored;
+        int rowsAffected = await applicationDbContext.SaveChangesAsync();
+        if (rowsAffected <= 0)
+        {
+            logger.LogError("Database failed to update repository {repoName}. Sending error response", repoName);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Failed to save changes to database. Check server logs for more information.";
+            return Ok(response);
+        }
+
+        localGitRepository.IsIgnored = isIgnored;
+        string action = isIgnored ? "ignored" : "included";
+        logger.LogInformation("Successfully {action} repository {repoName} in cache and the database.", action, repoName);
+        response.IncludedRepositories = cacheManager.Repositories.Values
+            .Where(i => i.UserId == request.UserId && !i.IsIgnored)
+            .ToList();
         return Ok(response);
     }
 }
