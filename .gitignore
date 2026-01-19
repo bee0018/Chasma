@@ -12,3 +12,4 @@ ChasmaWebApi/*.db
 ChasmaWebApi/*.db-shm
 ChasmaWebApi/*.db-wal
 ChasmaWebApi/ChasmaWebApi.csproj.user
+Installer/Artifacts/
