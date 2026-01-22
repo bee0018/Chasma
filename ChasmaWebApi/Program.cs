@@ -53,6 +53,7 @@ builder.Services.AddCors(options =>
     .AddSingleton<ICacheManager, CacheManager>()
     .AddSingleton<IRepositoryConfigurationManager, RepositoryConfigurationManager>()
     .AddSingleton<IRepositoryStatusManager, RepositoryStatusManager>()
+    .AddSingleton<IShellManager, ShellManager>()
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>
     {
