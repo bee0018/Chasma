@@ -112,5 +112,15 @@ namespace ChasmaWebApi.Data.Interfaces
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the issue is created; false otherwise.</returns>
         bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage);
+
+        /// <summary>
+        /// Tries to get the Git diff for the specified file in the repository.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of file to get the diff of.</param>
+        /// <param name="filePath">The path to the file to be diffed.</param>
+        /// <param name="diffContent">The content as a result of the git diff operation.</param>
+        /// <param name="errorMessage">The error message if an error occurs.</param>
+        /// <returns>True if the file was successfully diffed; false otherwise.</returns>
+        bool TryGetGitDiff(string workingDirectory, string filePath, out string diffContent, out string errorMessage);
     }
 }

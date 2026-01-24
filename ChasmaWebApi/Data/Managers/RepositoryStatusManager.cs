@@ -2,6 +2,7 @@
 using ChasmaWebApi.Data.Objects;
 using LibGit2Sharp;
 using Octokit;
+using System.Diagnostics;
 using Branch = LibGit2Sharp.Branch;
 using Credentials = Octokit.Credentials;
 using Repository = LibGit2Sharp.Repository;
@@ -330,6 +331,40 @@ namespace ChasmaWebApi.Data.Managers
                 ClientLogger.LogError(ex, errorMessage);
                 return false;
             }
+        }
+
+        // <inheritdoc />
+        public bool TryGetGitDiff(string workingDirectory, string filePath, out string diffContent, out string errorMessage)
+        {
+            diffContent = string.Empty;
+            if (!Directory.Exists(workingDirectory))
+            {
+                errorMessage = $"The working directory {workingDirectory} does not exist on filesystem. Cannot diff {filePath}.";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            ProcessStartInfo processInfo = new("cmd.exe", $"/c git diff {filePath}")
+            {
+                WorkingDirectory = workingDirectory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using Process process = new() { StartInfo = processInfo };
+            process.Start();
+            diffContent = process.StandardOutput.ReadToEnd();
+            errorMessage = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+            {
+                errorMessage = $"Git diff command failed with exit code {process.ExitCode}. Error: {errorMessage}";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            return true;
         }
 
         #region Private Methods

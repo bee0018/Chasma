@@ -708,5 +708,62 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
         }
+
+        /// <summary>
+        /// Gets the git diff for the specified repository and file path.
+        /// </summary>
+        /// <param name="gitDiffRequest">The request to run 'git diff' on the specified file.</param>
+        /// <returns>The response to a 'git diff' request.</returns>
+        [HttpPost]
+        [Route("gitDiff")]
+        public ActionResult<GitDiffResponse> GetGitDiff([FromBody] GitDiffRequest gitDiffRequest)
+        {
+            GitDiffResponse response = new();
+            if (gitDiffRequest == null)
+            {
+                logger.LogError("Null {request} received. Sending error response", nameof(GitDiffRequest));
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            string repoId = gitDiffRequest.RepositoryId;
+            if (string.IsNullOrEmpty(gitDiffRequest.RepositoryId))
+            {
+                logger.LogError("Cannot process git diff request because the repository identifier is null or empty. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The repository identifier is null or empty.";
+                return BadRequest(response);
+            }
+
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                logger.LogError("There is no working directory found when trying to git diff for repository {id}. Sending error response.", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}";
+                return BadRequest(response);
+            }
+
+            string filePath = gitDiffRequest.FilePath;
+            if (string.IsNullOrEmpty(gitDiffRequest.FilePath))
+            {
+                logger.LogError("Cannot process git diff request because the file path is null or empty.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The file path is null or empty.";
+                return BadRequest(response);
+            }
+
+            logger.LogInformation("Received request to get git diff for repository ID: {repoId}, file path: {filePath}", repoId, filePath);
+            if (!statusManager.TryGetGitDiff(workingDirectory, filePath, out string diffContent, out string errorMessage))
+            {
+                logger.LogError(errorMessage);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to get git diff for repo ID: {repoId}, file path: {filePath}. Check server logs for more information.";
+                return Ok(response);
+            }
+
+            response.DiffContent = diffContent;
+            return Ok(response);
+        }
     }
 }
