@@ -32,6 +32,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="ChasmaWebOpenApiSpec.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Update="nswag.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="config.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
