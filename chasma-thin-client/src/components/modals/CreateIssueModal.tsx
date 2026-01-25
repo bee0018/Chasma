@@ -1,7 +1,7 @@
 ﻿import {CreateGitHubIssueRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
 import React, {useState} from "react";
-import {getLocalGitRepository} from "../../managers/LocalStorageManager";
 import {apiBaseUrl} from "../../environmentConstants";
+import {useCacheStore} from "../../managers/CacheManager";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
@@ -42,10 +42,13 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = (props: CreateIssueMod
     /** Gets or sets a value indicating whether the create issue response was successful. **/
     const [successfullyCreatedIssue, setSuccessfullyCreatedIssue] = useState<boolean | undefined>(undefined);
 
+    /** Gets the local git repositories. **/
+    const localGitRepositories = useCacheStore((state) => state.repositories);
+
     /** Handles the event when user attempts to create a GitHub issue. **/
     const handleCreateIssueRequest = async () => {
         setTitle("Creating issue. May take a few moments...");
-        const repository = getLocalGitRepository(props.repositoryId);
+        const repository = localGitRepositories.find(i => i.id == props.repositoryId);
         if (!repository) {
             setTitle("Cannot Create Issue");
             setSuccessfullyCreatedIssue(false);

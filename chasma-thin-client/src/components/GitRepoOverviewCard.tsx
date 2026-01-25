@@ -1,8 +1,8 @@
 import React from "react";
 import {useNavigate} from "react-router-dom";
 import {DeleteRepositoryRequest, RepositoryConfigurationClient} from "../API/ChasmaWebApiClient";
-import {getUserId} from "../managers/LocalStorageManager";
 import {apiBaseUrl} from "../environmentConstants";
+import { useCacheStore } from "../managers/CacheManager";
 
 /** The properties of the Card component. */
 interface IProps {
@@ -40,6 +40,9 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
+    /** The logged-in user. **/
+    const user = useCacheStore((state) => state.user);
+
     return (
         <div className="card"
              onClick={() => navigate(`${props.url}`)}
@@ -52,7 +55,7 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
                     try {
                         const request = new DeleteRepositoryRequest();
                         request.repositoryId = props.repoId;
-                        request.userId = getUserId();
+                        request.userId = user?.userId;
                         const response = await repoConfigClient.deleteRepository(request);
                         if (response.isErrorResponse) {
                             props.onError(response.errorMessage)

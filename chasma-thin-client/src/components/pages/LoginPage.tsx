@@ -4,6 +4,8 @@ import ChasmaLogo from "../logos/ChasmaLogo";
 import NotificationModal from "../modals/NotificationModal";
 import {LoginRequest, UserClient} from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
+import {useCacheStore} from "../../managers/CacheManager";
+import {User} from "../types/CustomTypes";
 
 /** Gets the database client that interfaces with the web API. **/
 const userClient = new UserClient(apiBaseUrl);
@@ -62,9 +64,12 @@ const LoginPage: React.FC = () => {
                 return;
             }
 
-            localStorage.setItem("username", JSON.stringify(response.userName));
-            localStorage.setItem("userId", JSON.stringify(response.userId));
-            localStorage.setItem("email", JSON.stringify(response.email));
+            const loggedInUser: User = {
+                userId: response.userId,
+                username: response.userName,
+                email: response.email,
+            }
+            useCacheStore.getState().setUser(loggedInUser);
             navigate('/home');
         } catch (e) {
             console.error(e);
@@ -73,9 +78,6 @@ const LoginPage: React.FC = () => {
                 message: "An internal server error has occurred. Review logs.",
                 isError: true,
             });
-            localStorage.removeItem("username");
-            localStorage.removeItem("userId");
-            localStorage.removeItem("email");
         }
     }
 
