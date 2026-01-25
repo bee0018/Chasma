@@ -463,12 +463,12 @@ const RepositoryStatusPage: React.FC = () => {
             {isCreatingPullRequest &&
                 <PullRequestModal
                     onClose={() => setIsCreatingPullRequest(false)}
-                    repositoryId={repoId} repoName={repoName!} />
+                    repositoryId={repoId} repoName={repoName} />
             }
             {isCreatingIssue &&
                 <CreateIssueModal
                     onClose={() => setIsCreatingIssue(false)}
-                    repositoryId={repoId} repoName={repoName!} />
+                    repositoryId={repoId} repoName={repoName} />
             }
             {isDeletingBranch &&
                 <DeleteBranchModal
