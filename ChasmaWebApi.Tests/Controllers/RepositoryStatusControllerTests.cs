@@ -1698,6 +1698,7 @@ namespace ChasmaWebApi.Tests.Controllers
             statusManagerMock.Setup(i =>i.TryGetGitDiff(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<bool>(),
                 out diffContent,
                 out errorMessage)
                 ).Returns(false);
@@ -1731,6 +1732,7 @@ namespace ChasmaWebApi.Tests.Controllers
             statusManagerMock.Setup(i =>i.TryGetGitDiff(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<bool>(),
                 out diffContent,
                 out errorMessage)
             ).Returns(true);

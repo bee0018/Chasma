@@ -77,7 +77,7 @@ namespace ChasmaWebApi.Data.Managers
                     continue;
                 }
 
-                bool isStaged = IsFileStaged(state);
+                bool isStaged = IsFileStaged(state, out bool hasUnstagedChanges);
                 RepositoryStatusElement statusElement = new()
                 {
                     RepositoryId = repoKey,
@@ -86,6 +86,18 @@ namespace ChasmaWebApi.Data.Managers
                     IsStaged = isStaged,
                 };
                 statusElements.Add(statusElement);
+                if (hasUnstagedChanges)
+                {
+                    // Add another entry for the unstaged changes.
+                    RepositoryStatusElement unstagedElement = new()
+                    {
+                        RepositoryId = repoKey,
+                        FilePath = item.FilePath,
+                        State = FileStatus.ModifiedInWorkdir,
+                        IsStaged = false,
+                    };
+                    statusElements.Add(unstagedElement);
+                }
             }
 
             ClientLogger.LogInformation("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
@@ -334,7 +346,7 @@ namespace ChasmaWebApi.Data.Managers
         }
 
         // <inheritdoc />
-        public bool TryGetGitDiff(string workingDirectory, string filePath, out string diffContent, out string errorMessage)
+        public bool TryGetGitDiff(string workingDirectory, string filePath, bool isStaged, out string diffContent, out string errorMessage)
         {
             diffContent = string.Empty;
             if (!Directory.Exists(workingDirectory))
@@ -354,7 +366,7 @@ namespace ChasmaWebApi.Data.Managers
                 return false;
             }
 
-            string command = !IsFileStaged(matchedFile.State) ? "git diff" : "git diff --cached";
+            string command = !isStaged ? "git diff" : "git diff --cached";
             ProcessStartInfo processInfo = new("cmd.exe", $"/c {command} {filePath}")
             {
                 WorkingDirectory = workingDirectory,
@@ -489,12 +501,20 @@ namespace ChasmaWebApi.Data.Managers
         /// </summary>
         /// <param name="fileStatus">The current file status.</param>
         /// <returns>True if the file is staged; false otherwise.</returns>
-        private static bool IsFileStaged(FileStatus fileStatus)
+        private static bool IsFileStaged(FileStatus fileStatus, out bool hasUnstagedChanges)
         {
+            hasUnstagedChanges = false;
             string[] statusStrings = fileStatus.ToString().Split(",");
             string[] trimmedStatusStrings = statusStrings.Select(i => i.Trim()).ToArray();
             FileStatus[] fileStatuses = trimmedStatusStrings.Select(Enum.Parse<FileStatus>).ToArray();
-            return fileStatuses.Any(IsStateStaged);
+            bool isStaged = fileStatuses.Any(IsStateStaged);
+            if (isStaged && fileStatuses.Any(state => state == FileStatus.ModifiedInWorkdir))
+            {
+                // The file is both staged and has unstaged changes.
+                hasUnstagedChanges = true;
+            }
+
+            return isStaged;
         }
 
         /// <summary>

@@ -16,5 +16,10 @@ namespace ChasmaWebApi.Data.Requests.Status
         /// Gets or sets the file path to get the diff for.
         /// </summary>
         public string FilePath { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to get the staged changes or unstaged changes.
+        /// </summary>
+        public bool IsStaged { get; set; }
     }
 }

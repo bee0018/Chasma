@@ -754,7 +754,8 @@ namespace ChasmaWebApi.Controllers
             }
 
             logger.LogInformation("Received request to get git diff for repository ID: {repoId}, file path: {filePath}", repoId, filePath);
-            if (!statusManager.TryGetGitDiff(workingDirectory, filePath, out string diffContent, out string errorMessage))
+            bool isStaged = gitDiffRequest.IsStaged;
+            if (!statusManager.TryGetGitDiff(workingDirectory, filePath, isStaged, out string diffContent, out string errorMessage))
             {
                 logger.LogError(errorMessage);
                 response.IsErrorResponse = true;

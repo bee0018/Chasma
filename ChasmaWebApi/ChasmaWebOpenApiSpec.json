@@ -1530,6 +1530,9 @@
               },
               "filePath": {
                 "type": "string"
+              },
+              "isStaged": {
+                "type": "boolean"
               }
             }
           }

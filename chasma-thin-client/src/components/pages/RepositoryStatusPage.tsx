@@ -147,7 +147,7 @@ const RepositoryStatusPage: React.FC = () => {
         const interval = setInterval(() => {
             handleGitStatusRequest();
             if (selectedFile !== null) {
-                handleGetGitDiffRequest(selectedFile)
+                handleGetGitDiffRequest(selectedFile, selectedFile.isStaged)
             }
         }, 2500);
         return () => clearInterval(interval);
@@ -211,6 +211,7 @@ const RepositoryStatusPage: React.FC = () => {
             } else {
                 file.isStaged = stagingAction;
                 setSelectedFile(file);
+                await handleGetGitDiffRequest(file, stagingAction);
             }
         } catch {
             setNotification({
@@ -272,12 +273,14 @@ const RepositoryStatusPage: React.FC = () => {
     /**
      * Handles the event when the user wants to get the diff of a file.
      * @param file The file to be diffed.
+     * @param isStaged Flag indicating whether the file is in the staging area.
      */
-    async function handleGetGitDiffRequest(file: RepositoryStatusElement) {
+    async function handleGetGitDiffRequest(file: RepositoryStatusElement, isStaged: boolean | undefined) {
         if (!repoId) return;
         const request = new GitDiffRequest();
         request.repositoryId = repoId;
         request.filePath = file.filePath;
+        request.isStaged = isStaged;
         try {
             const response = await statusClient.getGitDiff(request);
             if (response.isErrorResponse) {
@@ -294,10 +297,11 @@ const RepositoryStatusPage: React.FC = () => {
     /**
      * Handles the event when the user clicks a file from the unstaged/staged changes.
      * @param file The file to be selected.
+     * @param isStaged Flag indicating whether the file is in the staging area.
      */
-    const handleSelectFile = (file: RepositoryStatusElement) => {
+    const handleSelectFile = (file: RepositoryStatusElement, isStaged: boolean) => {
         setSelectedFile(file);
-        handleGetGitDiffRequest(file);
+        handleGetGitDiffRequest(file, isStaged);
     };
 
     /** The parsed unified diff. */
@@ -339,7 +343,7 @@ const RepositoryStatusPage: React.FC = () => {
                             {statusElements?.filter(e => e.isStaged).map((element, index) => (
                                 <tbody key={index}>
                                 <tr>
-                                    <td onClick={() => handleSelectFile(element)}>{element.filePath}</td>
+                                    <td onClick={() => handleSelectFile(element, true)}>{element.filePath}</td>
                                 </tr>
                                 </tbody>
                             ))}
@@ -351,7 +355,7 @@ const RepositoryStatusPage: React.FC = () => {
                             {statusElements?.filter(e => !e.isStaged).map((element, index) => (
                                 <tbody key={index}>
                                 <tr>
-                                    <td onClick={() => handleSelectFile(element)}>{element.filePath}</td>
+                                    <td onClick={() => handleSelectFile(element, false)}>{element.filePath}</td>
                                 </tr>
                                 </tbody>
                             ))}
