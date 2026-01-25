@@ -202,6 +202,13 @@ const RepositoryStatusPage: React.FC = () => {
                 return;
             }
             setStatusElements(response.statusElements);
+            const file = statusElements?.find(i => i.filePath === selectedFile?.filePath);
+            if (!file) {
+                setSelectedFile(null);
+            } else {
+                file.isStaged = stagingAction;
+                setSelectedFile(file);
+            }
         } catch {
             setNotification({
                 title: `Failed to perform '${stagingAction ? "stage" : "unstage"}' operation!`,
