@@ -354,7 +354,6 @@ namespace ChasmaWebApi.Data.Managers
                 return false;
             }
 
-
             string command = !IsFileStaged(matchedFile.State) ? "git diff" : "git diff --cached";
             ProcessStartInfo processInfo = new("cmd.exe", $"/c {command} {filePath}")
             {
@@ -515,7 +514,7 @@ namespace ChasmaWebApi.Data.Managers
         /// <summary>
         /// Gets the branch diversion calculation for the specified repository.
         /// </summary>
-        /// <param name="repo">The specified repository working directory.</param>
+        /// <param name="workingDirectory">The specified repository working directory.</param>
         /// <returns>The number of local branch name, commits ahead, and behind.</returns>
         private (string branchName, int aheadCount, int behindCount) GetBranchDiversionCalculation(string workingDirectory)
         {

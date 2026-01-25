@@ -1615,5 +1615,135 @@ namespace ChasmaWebApi.Tests.Controllers
             Assert.AreEqual(url, response.IssueUrl);
             Assert.AreEqual(issueId, response.IssueId);
         }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.GetGitDiff(GitDiffRequest)"/> sends error response if
+        /// the request is null.
+        /// </summary>
+        [TestMethod]
+        public void TestGetGitDiffWithNullRequest()
+        {
+            ActionResult<GitDiffResponse> actionResult = Controller.GetGitDiff(null);
+            GitDiffResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Request must be populated.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.GetGitDiff(GitDiffRequest)"/> sends error response if
+        /// the repository identifier isn't populated.
+        /// </summary>
+        [TestMethod]
+        public void TestGetGitDiffWithEmptyRepositoryId()
+        {
+            GitDiffRequest request = new();
+            ActionResult<GitDiffResponse> actionResult = Controller.GetGitDiff(request);
+            GitDiffResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("The repository identifier is null or empty.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.GetGitDiff(GitDiffRequest)"/> sends error response if
+        /// the working directory cannot be found.
+        /// </summary>
+        [TestMethod]
+        public void TestGetGitDiffWithUnknownWorkingDirectory()
+        {
+            ConcurrentDictionary<string, string> workingDirectories = new();
+            cacheManagerMock.Setup(i => i.WorkingDirectories).Returns(workingDirectories);
+            string repositoryId = Guid.NewGuid().ToString();
+            GitDiffRequest request = new() {RepositoryId = repositoryId};
+            ActionResult<GitDiffResponse> actionResult = Controller.GetGitDiff(request);
+            GitDiffResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual($"No working directory found in cache for {repositoryId}", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.GetGitDiff(GitDiffRequest)"/> sends error response if
+        /// the file path is empty.
+        /// </summary>
+        [TestMethod]
+        public void TestGetGitDiffWithEmptyFilePath()
+        {
+            string repositoryId = Guid.NewGuid().ToString();
+            ConcurrentDictionary<string, string> workingDirectories = new()
+            {
+                [repositoryId] = "working_directory",
+            };
+            cacheManagerMock.Setup(i => i.WorkingDirectories).Returns(workingDirectories);
+            GitDiffRequest request = new() {RepositoryId = repositoryId};
+            ActionResult<GitDiffResponse> actionResult = Controller.GetGitDiff(request);
+            GitDiffResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual($"The file path is null or empty.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.GetGitDiff(GitDiffRequest)"/> sends error response if
+        /// diff cannot be generated.
+        /// </summary>
+        [TestMethod]
+        public void TestGetGitDiffFailure()
+        {
+            string repositoryId = Guid.NewGuid().ToString();
+            ConcurrentDictionary<string, string> workingDirectories = new()
+            {
+                [repositoryId] = "working_directory",
+            };
+            cacheManagerMock.Setup(i => i.WorkingDirectories).Returns(workingDirectories);
+            string diffContent = string.Empty;
+            string errorMessage = "Error generating diff.";
+            statusManagerMock.Setup(i =>i.TryGetGitDiff(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                out diffContent,
+                out errorMessage)
+                ).Returns(false);
+            string filePath = "path";
+            GitDiffRequest request = new()
+            {
+                RepositoryId = repositoryId,
+                FilePath = filePath,
+            };
+            ActionResult<GitDiffResponse> actionResult = Controller.GetGitDiff(request);
+            GitDiffResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual($"Failed to get git diff for repo ID: {repositoryId}, file path: {filePath}. Check server logs for more information.",  response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.GetGitDiff(GitDiffRequest)"/> sends success response in
+        /// the nominal case.
+        /// </summary>
+        [TestMethod]
+        public void TestGetGitDiffNominalCase()
+        {
+            string repositoryId = Guid.NewGuid().ToString();
+            ConcurrentDictionary<string, string> workingDirectories = new()
+            {
+                [repositoryId] = "working_directory",
+            };
+            cacheManagerMock.Setup(i => i.WorkingDirectories).Returns(workingDirectories);
+            string diffContent = "diff_content";
+            string errorMessage = string.Empty;
+            statusManagerMock.Setup(i =>i.TryGetGitDiff(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                out diffContent,
+                out errorMessage)
+            ).Returns(true);
+            string filePath = "path";
+            GitDiffRequest request = new()
+            {
+                RepositoryId = repositoryId,
+                FilePath = filePath,
+            };
+            ActionResult<GitDiffResponse> actionResult = Controller.GetGitDiff(request);
+            GitDiffResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
+            Assert.IsFalse(response.IsErrorResponse);
+            Assert.AreEqual(diffContent, response.DiffContent);
+        }
     }
 }
