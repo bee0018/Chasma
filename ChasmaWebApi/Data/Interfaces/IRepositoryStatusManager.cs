@@ -118,9 +118,10 @@ namespace ChasmaWebApi.Data.Interfaces
         /// </summary>
         /// <param name="workingDirectory">The working directory of file to get the diff of.</param>
         /// <param name="filePath">The path to the file to be diffed.</param>
+        /// <param name="isStaged">Flag indicating whether to get the diff for the staged version of the file.</param>
         /// <param name="diffContent">The content as a result of the git diff operation.</param>
         /// <param name="errorMessage">The error message if an error occurs.</param>
         /// <returns>True if the file was successfully diffed; false otherwise.</returns>
-        bool TryGetGitDiff(string workingDirectory, string filePath, out string diffContent, out string errorMessage);
+        bool TryGetGitDiff(string workingDirectory, string filePath, bool isStaged, out string diffContent, out string errorMessage);
     }
 }
