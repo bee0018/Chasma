@@ -2,6 +2,7 @@
 using ChasmaWebApi.Data.Objects;
 using LibGit2Sharp;
 using Octokit;
+using System.Diagnostics;
 using Branch = LibGit2Sharp.Branch;
 using Credentials = Octokit.Credentials;
 using Repository = LibGit2Sharp.Repository;
@@ -332,6 +333,51 @@ namespace ChasmaWebApi.Data.Managers
             }
         }
 
+        // <inheritdoc />
+        public bool TryGetGitDiff(string workingDirectory, string filePath, out string diffContent, out string errorMessage)
+        {
+            diffContent = string.Empty;
+            if (!Directory.Exists(workingDirectory))
+            {
+                errorMessage = $"The working directory {workingDirectory} does not exist on filesystem. Cannot diff {filePath}.";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            using Repository repo = new(workingDirectory);
+            RepositoryStatus updatedFilesInRepo = repo.RetrieveStatus();
+            StatusEntry matchedFile = updatedFilesInRepo.FirstOrDefault(i => i.FilePath == filePath);
+            if (matchedFile == null)
+            {
+                errorMessage = $"The file {filePath} does not exist in the changeset of this repository status";
+                ClientLogger.LogError("{error}. Sending error response.", errorMessage);
+                return false;
+            }
+
+            string command = !IsFileStaged(matchedFile.State) ? "git diff" : "git diff --cached";
+            ProcessStartInfo processInfo = new("cmd.exe", $"/c {command} {filePath}")
+            {
+                WorkingDirectory = workingDirectory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using Process process = new() { StartInfo = processInfo };
+            process.Start();
+            diffContent = process.StandardOutput.ReadToEnd();
+            errorMessage = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+            {
+                errorMessage = $"Git diff command failed with exit code {process.ExitCode}. Error: {errorMessage}";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            return true;
+        }
+
         #region Private Methods
 
         /// <summary>
@@ -468,7 +514,7 @@ namespace ChasmaWebApi.Data.Managers
         /// <summary>
         /// Gets the branch diversion calculation for the specified repository.
         /// </summary>
-        /// <param name="repo">The specified repository working directory.</param>
+        /// <param name="workingDirectory">The specified repository working directory.</param>
         /// <returns>The number of local branch name, commits ahead, and behind.</returns>
         private (string branchName, int aheadCount, int behindCount) GetBranchDiversionCalculation(string workingDirectory)
         {

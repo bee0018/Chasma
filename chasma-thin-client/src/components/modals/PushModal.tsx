@@ -9,6 +9,9 @@ interface IPushModalProps {
     /** The confirmation action of the close function. **/
     onClose: () => void;
 
+    /** Function to call when the response is successful. **/
+    onSuccess: () => void,
+
     /** The repository identifier. **/
     repositoryId: string | undefined;
 }
@@ -53,6 +56,7 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
             setTitle("Successfully Pushed!");
             setErrorMessage(undefined);
             setSuccessfullyPushed(true);
+            props.onSuccess();
         }
         catch (e) {
             setTitle("Could not push changes!");
