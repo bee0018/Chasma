@@ -344,7 +344,19 @@ namespace ChasmaWebApi.Data.Managers
                 return false;
             }
 
-            ProcessStartInfo processInfo = new("cmd.exe", $"/c git diff {filePath}")
+            using Repository repo = new(workingDirectory);
+            RepositoryStatus updatedFilesInRepo = repo.RetrieveStatus();
+            StatusEntry matchedFile = updatedFilesInRepo.FirstOrDefault(i => i.FilePath == filePath);
+            if (matchedFile == null)
+            {
+                errorMessage = $"The file {filePath} does not exist in the changeset of this repository status";
+                ClientLogger.LogError("{error}. Sending error response.", errorMessage);
+                return false;
+            }
+
+
+            string command = !IsFileStaged(matchedFile.State) ? "git diff" : "git diff --cached";
+            ProcessStartInfo processInfo = new("cmd.exe", $"/c {command} {filePath}")
             {
                 WorkingDirectory = workingDirectory,
                 RedirectStandardOutput = true,
