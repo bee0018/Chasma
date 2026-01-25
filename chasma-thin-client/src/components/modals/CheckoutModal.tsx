@@ -11,8 +11,12 @@ const statusClient = new RepositoryStatusClient(apiBaseUrl)
 interface ICheckoutModalProps {
     /** The repository identifier. **/
     repositoryId: string | undefined;
+
     /** Function to call when the modal is being closed. **/
     onClose: () => void;
+
+    /** Function to call when the response is successful. **/
+    onSuccess: () => void,
 }
 
 /**
@@ -55,6 +59,7 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
             setTitle("Check out successful!");
             setErrorMessage(undefined);
             setSuccessfullyCheckedOut(true);
+            props.onSuccess();
         }
         catch (e) {
             console.error(e);

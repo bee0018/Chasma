@@ -448,17 +448,20 @@ const RepositoryStatusPage: React.FC = () => {
                     repositoryId={repoId}
                     email={getUserEmail()}
                     userId={getUserId()}
-                    onClose={() => setIsEditingCommitMessage(false)} />
+                    onClose={() => setIsEditingCommitMessage(false)}
+                    onSuccess={() => setSelectedFile(null)} />
             }
             {isPushingChanges &&
                 <PushModal
                     repositoryId={repoId}
-                    onClose={() => setIsPushingChanges(false)} />
+                    onClose={() => setIsPushingChanges(false)}
+                    onSuccess={() => setSelectedFile(null)} />
             }
             {isCheckingOut &&
                 <CheckoutModal
                     repositoryId={repoId}
-                    onClose={() => setIsCheckingOut(false)} />
+                    onClose={() => setIsCheckingOut(false)}
+                    onSuccess={() => setSelectedFile(null)} />
             }
             {isCreatingPullRequest &&
                 <PullRequestModal
@@ -478,7 +481,8 @@ const RepositoryStatusPage: React.FC = () => {
             {isExecutingShellCommands &&
                 <ExecuteShellCommandsModal
                     repositoryId={repoId}
-                    onClose={() => setIsExecutingShellCommands(false)} />
+                    onClose={() => setIsExecutingShellCommands(false)}
+                    onSuccess={() => setSelectedFile(null)} />
             }
         </>
     );

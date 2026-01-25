@@ -16,6 +16,9 @@ interface ICommitModalProps {
 
     /** The logged-in user's identifier. **/
     userId: number | undefined;
+
+    /** Function to call when the response is successful. **/
+    onSuccess: () => void,
 }
 
 /** The status client for the web API. **/
@@ -61,6 +64,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
             setErrorMessage(undefined);
             setTitle("Successfully committed changes!");
             setSuccessfullyCommitted(true);
+            props.onSuccess();
         }
         catch (e) {
             setTitle("Error committing changes!")

@@ -12,7 +12,10 @@ interface IExecuteShellCommandsProps {
     onClose: () => void,
 
     /** The repository identifier to execute shell commands in. **/
-    repositoryId: string | undefined
+    repositoryId: string | undefined,
+
+    /** Function to call when the response is successful. **/
+    onSuccess: () => void,
 }
 
 /** The shell client used to interact with the API. **/
@@ -83,6 +86,7 @@ const ExecuteShellCommandsModal: React.FC<IExecuteShellCommandsProps> = (props: 
                ? response.outputMessages.map(i => i).join("\n")
                : "";
            setOutput(commandOutput);
+           props.onSuccess();
        } catch (e) {
            console.error(e);
            setOutput("")
