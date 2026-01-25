@@ -12,3 +12,10 @@ export type DiffLine = {
     oldLineNumber?: number;
     newLineNumber?: number;
 };
+
+/** The object representing the logged-in user. **/
+export type User = {
+    userId: number | undefined;
+    username: string | undefined;
+    email: string | undefined;
+}

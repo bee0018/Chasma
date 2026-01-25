@@ -4,6 +4,8 @@ import ChasmaLogo from "../logos/ChasmaLogo";
 import {AddUserRequest, UserClient} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
 import {apiBaseUrl} from "../../environmentConstants";
+import {User} from "../types/CustomTypes";
+import {useCacheStore} from "../../managers/CacheManager";
 
 /** The database client that interacts with the web API. **/
 const userClient = new UserClient(apiBaseUrl);
@@ -73,9 +75,12 @@ const RegisterPage: React.FC = () => {
                 message: `Welcome to Chasma Git Manager, ${response.userName}.`,
                 isError: response.isErrorResponse,
             });
-            localStorage.setItem("username", JSON.stringify(response.userName));
-            localStorage.setItem("userId", JSON.stringify(response.userId));
-            localStorage.setItem("email", JSON.stringify(response.email));
+            const loggedInUser: User = {
+                userId: response.userId,
+                username: response.userName,
+                email: response.email,
+            }
+            useCacheStore.getState().setUser(loggedInUser);
             navigate('/home');
         } catch (e) {
             console.error(e);
@@ -84,9 +89,6 @@ const RegisterPage: React.FC = () => {
                 message: "An internal server error has occurred. Review logs.",
                 isError: true,
             });
-            localStorage.removeItem("username");
-            localStorage.removeItem("userId");
-            localStorage.removeItem("email");
         }
     }
 

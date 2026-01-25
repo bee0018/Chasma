@@ -3,8 +3,8 @@ import '../../css/DasboardTab.css';
 import GitRepoOverviewCard from "../GitRepoOverviewCard";
 import {IgnoreRepositoryRequest, LocalGitRepository, RepositoryConfigurationClient} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
-import {getUserId, getUsername} from "../../managers/LocalStorageManager";
 import {apiBaseUrl} from "../../environmentConstants";
+import {useCacheStore} from "../../managers/CacheManager";
 
 /** The Git API client. **/
 const configClient = new RepositoryConfigurationClient(apiBaseUrl)
@@ -22,6 +22,11 @@ interface IHomeTabProps {
  * @constructor Initializes a new instance of the HomeTab.
  */
 const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
+    /** The logged-in user. **/
+    const user = useCacheStore((state) => state.user);
+
+    /** Gets the local git repositories. **/
+    const localGitRepositories = useCacheStore((state) => state.repositories);
 
     useEffect(() => {
         updateUserRepositoryConfiguration();
@@ -32,10 +37,9 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
      */
     const updateUserRepositoryConfiguration = async () => {
         try {
-            const userId = getUserId();
+            const userId = user?.userId;
             const message = await configClient.getLocalGitRepositories(userId);
-            setLocalGitRepositories(message.repositories);
-            localStorage.setItem("gitRepositories", JSON.stringify(message.repositories));
+            useCacheStore.getState().setRepositories(message.repositories);
         } catch (e) {
             console.error(e);
         }
@@ -45,10 +49,9 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         /** Retrieves the repository data from the web API. **/
         const retrieveUserRepositoryConfiguration = async () => {
             try {
-                const userId = getUserId();
+                const userId = user?.userId;
                 const message = await configClient.getLocalGitRepositories(userId);
-                setLocalGitRepositories(message.repositories);
-                localStorage.setItem("gitRepositories", JSON.stringify(message.repositories));
+                useCacheStore.getState().setRepositories(message.repositories);
             }
             catch (e) {
                 setNotification({
@@ -56,7 +59,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                     message: "Review server logs for more information.",
                     isError: true,
                 });
-                setLocalGitRepositories(undefined);
+                useCacheStore.getState().setRepositories(undefined);
                 console.error(`Could not get git repositories from filesystem: ${e}`);
             }
         };
@@ -82,13 +85,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         loading?: boolean
     } | null>(null);
 
-    /** Gets or sets the local git repositories. **/
-    const [localGitRepositories, setLocalGitRepositories] = useState<LocalGitRepository[] | undefined>(() => {
-        const repos = localStorage.getItem("gitRepositories")
-        if (!repos || repos.length === 0) return [];
-        return JSON.parse(repos);
-    });
-
     /** Gets or sets the context menu. **/
     const [contextMenu, setContextMenu] = useState<{
         mouseX: number;
@@ -106,7 +102,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         });
 
         try {
-            const userId = getUserId();
+            const userId = user?.userId;
             const response = await configClient.addLocalGitRepositories(userId);
             if (response.isErrorResponse) {
                 setNotification({
@@ -121,7 +117,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                 message: "Close the modal to find the repositories found on your system.",
                 isError: false,
             });
-            setLocalGitRepositories(response.currentRepositories);
+            useCacheStore.getState().setRepositories(response.currentRepositories);
         }
         catch (e) {
             setNotification({
@@ -142,9 +138,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
 
     /** Cleanup function to remove repository from cache after successful deletion. **/
     const handleRepoDelete = (repoId: string | undefined) => {
-        setLocalGitRepositories(prev =>
-            prev?.filter(repo => repo.id !== repoId)
-        );
+        useCacheStore.getState().deleteRepository(repoId);
     };
 
     /** Handles the event when there is an error deleting a repository. **/
@@ -163,7 +157,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
     const handleIgnoreAction = async (repoId: string | undefined) => {
         try {
             const request = new IgnoreRepositoryRequest();
-            request.userId = getUserId();
+            request.userId = user?.userId;
             request.repositoryId = repoId;
             request.isIgnored = true;
             const response = await configClient.ignoreRepository(request);
@@ -176,8 +170,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                 return;
             }
 
-            setLocalGitRepositories(response.includedRepositories);
-            localStorage.setItem("gitRepositories", JSON.stringify(response.includedRepositories));
+            useCacheStore.getState().setRepositories(response.includedRepositories);
         }
         catch (e) {
             setNotification({
@@ -204,7 +197,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             <div className="page">
                 <h1 className="page-title">Multi-Repository Manager Home🏠</h1>
                 <p className="page-description"
-                   style={{ textAlign: "center" }}>{`${getUsername()}, manage any of the registered repositories found on your filesystem.`}</p>
+                   style={{ textAlign: "center" }}>{`${user?.username}, manage any of the registered repositories found on your filesystem.`}</p>
                 {notification && (
                     <NotificationModal
                         title={notification.title}

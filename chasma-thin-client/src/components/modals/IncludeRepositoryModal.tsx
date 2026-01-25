@@ -3,8 +3,8 @@
     RepositoryConfigurationClient,
 } from "../../API/ChasmaWebApiClient";
 import React, {useEffect} from "react";
-import {getUserId} from "../../managers/LocalStorageManager";
 import {apiBaseUrl} from "../../environmentConstants";
+import {useCacheStore} from "../../managers/CacheManager";
 
 /** The repository configuration client for the web API. **/
 const configClient = new RepositoryConfigurationClient(apiBaseUrl)
@@ -37,10 +37,13 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
      **/
     const [repositoryFullId, setRepositoryFullId] = React.useState<string>();
 
+    /** The logged-in user. **/
+    const user = useCacheStore((state) => state.user);
+
     /** Fetches the ignored repositories associated with this repository. **/
     async function fetchIgnoredRepositories() {
         try {
-            const userId = getUserId();
+            const userId = user?.userId;
             const message = await configClient.getIgnoredRepositories(userId);
             setIgnoredRepositoryList(message.ignoredRepositories);
             if (message.ignoredRepositories && message.ignoredRepositories.length > 0) {
@@ -64,7 +67,7 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
 
         const repoId = repoParts[1];
         try {
-            const userId = getUserId();
+            const userId = user?.userId;
             const request = new IgnoreRepositoryRequest();
             request.userId = userId;
             request.repositoryId = repoId;

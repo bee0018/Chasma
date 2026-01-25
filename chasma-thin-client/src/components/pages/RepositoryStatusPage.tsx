@@ -12,7 +12,6 @@ import {
 } from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
 import CommitModal from "../modals/CommitModal";
-import { getUserEmail, getUserId } from "../../managers/LocalStorageManager";
 import PushModal from "../modals/PushModal";
 import { isBlankOrUndefined } from "../../stringHelperUtil";
 import CheckoutModal from "../modals/CheckoutModal";
@@ -22,6 +21,7 @@ import DeleteBranchModal from "../modals/DeleteBranchModal";
 import { apiBaseUrl } from "../../environmentConstants";
 import ExecuteShellCommandsModal from "../modals/ExecuteShellCommandsModal";
 import {DiffLine} from "../types/CustomTypes";
+import {useCacheStore} from "../../managers/CacheManager";
 
 /** Status client for the API **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
@@ -129,6 +129,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a value indicating whether the diff viewer is in split mode. **/
     const [isSplitView, setIsSplitView] = useState(false);
+
+    /** The logged-in user. **/
+    const user = useCacheStore((state) => state.user);
 
     /**
      * Closes the modal once the user confirms the message
@@ -239,8 +242,8 @@ const RepositoryStatusPage: React.FC = () => {
 
         const request = new GitPullRequest();
         request.repositoryId = repoId!;
-        request.email = getUserEmail();
-        request.userId = getUserId();
+        request.email = user?.email;
+        request.userId = user?.userId;
         try {
             const response = await statusClient.pullChanges(request);
             if (response.isErrorResponse) {
@@ -446,8 +449,8 @@ const RepositoryStatusPage: React.FC = () => {
             {isEditingCommitMessage &&
                 <CommitModal
                     repositoryId={repoId}
-                    email={getUserEmail()}
-                    userId={getUserId()}
+                    email={user?.email}
+                    userId={user?.userId}
                     onClose={() => setIsEditingCommitMessage(false)}
                     onSuccess={() => setSelectedFile(null)} />
             }
