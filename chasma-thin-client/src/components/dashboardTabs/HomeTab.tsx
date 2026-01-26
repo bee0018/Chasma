@@ -1,7 +1,12 @@
 import React, {useEffect, useState} from "react";
 import '../../css/DasboardTab.css';
 import GitRepoOverviewCard from "../GitRepoOverviewCard";
-import {IgnoreRepositoryRequest, LocalGitRepository, RepositoryConfigurationClient} from "../../API/ChasmaWebApiClient";
+import {
+    DeleteRepositoryRequest,
+    IgnoreRepositoryRequest,
+    LocalGitRepository,
+    RepositoryConfigurationClient
+} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
 import {apiBaseUrl} from "../../environmentConstants";
 import {useCacheStore} from "../../managers/CacheManager";
@@ -29,7 +34,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
     const localGitRepositories = useCacheStore((state) => state.repositories);
 
     useEffect(() => {
-        updateUserRepositoryConfiguration();
+        updateUserRepositoryConfiguration().catch(console.error);
     }, [props.reposVersion]);
 
     /**
@@ -136,9 +141,28 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         setNotification(null);
     }
 
-    /** Cleanup function to remove repository from cache after successful deletion. **/
-    const handleRepoDelete = (repoId: string | undefined) => {
-        useCacheStore.getState().deleteRepository(repoId);
+    /**
+     * Handles the event when the user wants to delete a repository.
+     * @param repoId The repository identifier.
+     */
+    const handleRepoDelete = async (repoId: string | undefined) => {
+        if (!repoId) return;
+
+        try {
+            const request = new DeleteRepositoryRequest();
+            request.repositoryId = repoId;
+            request.userId = user?.userId;
+            const response = await configClient.deleteRepository(request);
+            if (response.isErrorResponse) {
+                handleRepoDeletionError(response.errorMessage);
+                return;
+            }
+
+            useCacheStore.getState().deleteRepository(repoId);
+        } catch (e) {
+            handleRepoDeletionError("Review server logs for more information.");
+            console.error(e);
+        }
     };
 
     /** Handles the event when there is an error deleting a repository. **/
@@ -215,7 +239,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                                                  repoOwner={repo.owner}
                                                  url={`/status/${repo.name}/${repo.id}`}
                                                  onDelete={handleRepoDelete}
-                                                 onError={handleRepoDeletionError}
                                                  onContextMenu={(e) => handleContextMenu(e, repo)} />
                         ))
                     )}
