@@ -604,6 +604,38 @@
         }
       }
     },
+    "/api/Shell/executeBatchShellCommands": {
+      "post": {
+        "tags": [
+          "Shell"
+        ],
+        "operationId": "Shell_ExecuteBatchShellCommands",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteBatchShellCommandsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecuteBatchShellCommandsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/User/login": {
       "post": {
         "tags": [
@@ -1578,6 +1610,81 @@
             }
           }
         ]
+      },
+      "ExecuteBatchShellCommandsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BatchCommandEntryResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "BatchCommandEntryResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryName": {
+                "type": "string"
+              },
+              "isSuccess": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ExecuteBatchShellCommandsRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "batchCommands": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BatchCommandEntry"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "BatchCommandEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       },
       "LoginResponse": {
         "allOf": [

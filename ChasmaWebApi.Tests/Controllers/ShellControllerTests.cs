@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using ChasmaWebApi.Controllers;
 using ChasmaWebApi.Data.Interfaces;
+using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Requests.Shell;
 using ChasmaWebApi.Data.Responses.Shell;
 using Microsoft.AspNetCore.Mvc;
@@ -182,5 +183,98 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
         Assert.IsFalse(response.IsErrorResponse);
         CollectionAssert.Contains(response.OutputMessages, outputMessages[0]);
         CollectionAssert.Contains(response.OutputMessages, outputMessages[1]);
+    }
+
+    /// <summary>
+    /// Tests that the <see cref="ShellController.ExecuteBatchShellCommands(ExecuteBatchShellCommandsRequest)"/> sends an error
+    /// response when the incoming request is null.
+    /// </summary>
+    [TestMethod]
+    public void TestExecuteBatchShellCommandsWithNullRequest()
+    {
+        ActionResult<ExecuteBatchShellCommandsResponse>  actionResult = Controller.ExecuteBatchShellCommands(null);
+        ExecuteBatchShellCommandsResponse response =  GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+        Assert.IsTrue(response.IsErrorResponse);
+        Assert.AreEqual("Request is null. Cannot execute batch commands.", response.ErrorMessage);
+    }
+
+    /// <summary>
+    /// Tests that the <see cref="ShellController.ExecuteBatchShellCommands(ExecuteBatchShellCommandsRequest)"/> sends an error
+    /// response when the incoming request has no entries with commands to execute.
+    /// </summary>
+    [TestMethod]
+    public void TestExecuteBatchShellCommandsWithNoCommandsToExecute()
+    {
+        ExecuteBatchShellCommandsRequest request = new();
+        ActionResult<ExecuteBatchShellCommandsResponse> actionResult = Controller.ExecuteBatchShellCommands(request);
+        ExecuteBatchShellCommandsResponse response =  GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+        Assert.IsTrue(response.IsErrorResponse);
+        Assert.AreEqual("No batch shell commands were provided to execute.", response.ErrorMessage);
+    }
+    
+    /// <summary>
+    /// Tests that the <see cref="ShellController.ExecuteBatchShellCommands(ExecuteBatchShellCommandsRequest)"/> sends an error
+    /// response when there is an exception executing shell commands.
+    /// </summary>
+    [TestMethod]
+    public void TestExecuteBatchShellCommandsWithCommandsThrowingException()
+    {
+        List<BatchCommandEntry> entries = [new()];
+        ExecuteBatchShellCommandsRequest request = new(){ BatchCommands = entries };
+        shellManagerMock.Setup(i => i.ExecuteShellCommandsInBatch(It.IsAny<List<BatchCommandEntry>>()))
+            .Throws(new Exception("error executing batch commands."));
+        ActionResult<ExecuteBatchShellCommandsResponse> actionResult = Controller.ExecuteBatchShellCommands(request);
+        ExecuteBatchShellCommandsResponse response =  GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
+        Assert.IsTrue(response.IsErrorResponse);
+        Assert.AreEqual("Error executing shell commands. Check internal server logs for more information.", response.ErrorMessage);
+    }
+    
+    /// <summary>
+    /// Tests that the <see cref="ShellController.ExecuteBatchShellCommands(ExecuteBatchShellCommandsRequest)"/> sends
+    /// a successful response when all commands are executed successfully.
+    /// </summary>
+    [TestMethod]
+    public void TestExecuteBatchShellCommandsNominalCase()
+    {
+        BatchCommandEntry batchCommand1 = new()
+        {
+            Commands = ["git status", "git push"],
+            RepositoryId = Guid.NewGuid().ToString(),
+        };
+        BatchCommandEntry batchCommand2 = new()
+        {
+            Commands = ["git log --oneline", "git rev-parse HEAD"],
+            RepositoryId = Guid.NewGuid().ToString(),
+        };
+        List<BatchCommandEntry> entries = [batchCommand1, batchCommand2];
+        BatchCommandEntryResult result1 = new()
+        {
+            IsSuccess = true,
+            Message = "commands successful",
+            RepositoryName = TestRepositoryName
+        };
+        BatchCommandEntryResult result2 = new()
+        {
+            IsSuccess = true,
+            Message = "commands successful",
+            RepositoryName = "test-name"
+        };
+        List<BatchCommandEntryResult> results = [result1, result2];
+        ExecuteBatchShellCommandsRequest request = new(){ BatchCommands = entries };
+        shellManagerMock.Setup(i => i.ExecuteShellCommandsInBatch(It.IsAny<List<BatchCommandEntry>>()))
+            .Returns(results);
+        ActionResult<ExecuteBatchShellCommandsResponse> actionResult = Controller.ExecuteBatchShellCommands(request);
+        ExecuteBatchShellCommandsResponse response =  GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
+
+        Assert.IsFalse(response.IsErrorResponse);
+        Assert.AreEqual(results.Count, 2);
+
+        List<string> repoNames = results.Select(i => i.RepositoryName).ToList();
+        CollectionAssert.Contains(repoNames, TestRepositoryName);
+        CollectionAssert.Contains(repoNames, result2.RepositoryName);
+        
+        List<string> outputMessages = results.Select(i => i.Message).ToList();
+        CollectionAssert.Contains(outputMessages, result1.Message);
+        CollectionAssert.Contains(outputMessages, result2.Message);
     }
 }

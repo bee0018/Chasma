@@ -69,6 +69,12 @@ html, body {
     flex-direction: column;
 }
 
+.batch-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
 .page-header {
     position: sticky;
     top: 0;
@@ -407,3 +413,136 @@ html, body {
     margin-bottom: 12px;
     text-align: left;
 }
+.output-window {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #1e1e1e;
+    border-radius: 6px;
+    color: #ffffff;
+    overflow-y: auto;
+    text-align: left;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    flex-grow: 1;
+}
+
+.output-success {
+    color: #28a745;
+    margin-bottom: 8px;
+}
+
+.output-failure {
+    color: #f44336;
+    margin-bottom: 8px;
+}
+
+.output-message {
+    margin-left: 10px;
+    font-size: 0.9em;
+    opacity: 0.85;
+}
+
+.output-entry {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border-left: 4px solid transparent;
+    background-color: #2a2a2a;
+    border-radius: 6px;
+    word-break: break-word;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.output-entry.success {
+    border-left-color: #28a745;
+    background-color: #223322;
+}
+
+.output-entry.failure {
+    border-left-color: #f44336;
+    background-color: #331a1a;
+}
+
+.output-entry strong {
+    font-weight: bold;
+    color: #00bfff;
+    margin-bottom: 4px;
+}
+
+.output-entry .status-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    border-radius: 50%;
+}
+
+.output-entry.success .status-icon {
+    background-color: #28a745;
+}
+
+.output-entry.failure .status-icon {
+    background-color: #f44336;
+}
+
+.output-entry .output-message {
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-left: 10px;
+    margin-top: 4px;
+    white-space: pre-wrap;
+}
+
+.command-mode-toggle {
+    display: flex;
+    justify-content: center;
+    margin: 12px 0 24px 0;
+}
+
+.command-mode-toggle-inner {
+    display: flex;
+    background-color: #1e1e1e;
+    border: 1px solid #2c2c2c;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.command-mode-button {
+    padding: 8px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    background-color: transparent;
+    color: #ccc;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.command-mode-button:hover {
+    background-color: #2c2c2c;
+    color: #ffffff;
+}
+
+.command-mode-button.active {
+    background-color: #00bfff;
+    color: #121212;
+}
+
+.clear-output-button {
+    padding: 6px 12px;
+    font-size: 14px;
+    background-color: #444;
+    color: #ccc;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.clear-output-button:hover {
+    background-color: #555;
+    color: #fff;
+}
+
