@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import ChasmaLogo from "../logos/ChasmaLogo";
 import {AddUserRequest, UserClient} from "../../API/ChasmaWebApiClient";
@@ -27,6 +27,12 @@ const RegisterPage: React.FC = () => {
     /** Gets or sets the password of the user. **/
     const [password, setPassword] = useState('');
 
+    /** Gets or sets the confirmation password of the user. **/
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    /** Gets or sets a value indicating whether the password is visible. **/
+    const [showPassword, setShowPassword] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -37,6 +43,9 @@ const RegisterPage: React.FC = () => {
         isError: boolean | undefined,
         loading?: boolean
     } | null>(null);
+
+    /** Flag indicating whether the passwords match. **/
+    const passwordsMatch = password === confirmPassword;
 
     /**
      * Closes the modal once the user confirms the message
@@ -127,16 +136,53 @@ const RegisterPage: React.FC = () => {
                             onChange={(e) => setUserName(e.target.value)}
                             required
                         />
-                        <input
-                            type="password"
-                            className="input-field"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                        <br/>
-                        <button type="submit" className="submit-button">
+                        <div className="password-wrapper">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="input-field"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? "Hide" : "Show"}
+                            </button>
+                        </div>
+                        <div className="password-wrapper">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="input-field"
+                                placeholder="Confirm Password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? "Hide" : "Show"}
+                            </button>
+                        </div>
+
+                        {!passwordsMatch && confirmPassword && (
+                            <div className="password-error">
+                                Passwords do not match.
+                            </div>
+                        )}
+
+                        <br />
+                        <button
+                            type="submit"
+                            className="submit-button"
+                            disabled={!passwordsMatch}
+                        >
                             Register
                         </button>
                     </form>
