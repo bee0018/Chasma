@@ -1,16 +1,11 @@
 import React from "react";
 import {useNavigate} from "react-router-dom";
+import {LocalGitRepository} from "../API/ChasmaWebApiClient";
 
 /** The properties of the Card component. */
 interface IProps {
-    /** The repository identifier. **/
-    repoId: string | undefined;
-
-    /** The name of the repository. **/
-    repoName: string | undefined;
-
-    /** The owner of the repository. **/
-    repoOwner: string | undefined;
+    /** The repository. **/
+    repository: LocalGitRepository
 
     /** The URL of the repository. **/
     url: string | undefined;
@@ -40,13 +35,16 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
                 className="card-x"
                 onClick={async (e) => {
                     e.stopPropagation();
-                    props.onDelete(props.repoId);
+                    props.onDelete(props.repository.id);
                 }}
             >
                 X
             </span>
-            <div className="card-title">{props.repoName}</div>
-            <div className="card-description">{props.repoOwner}</div>
+            <div className="card-title">{props.repository.name}</div>
+            <div style={{textAlign: "left"}}>
+                <div className="card-description"><strong>ID: </strong>{props.repository.id}</div>
+                <div className="card-description"><strong>Owner: </strong>{props.repository.owner}</div>
+            </div>
             <table className="repo-overview-table">
                 <thead>
                 <tr>
@@ -57,7 +55,7 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
                 <tr>
                     <td onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/workflowruns/${props.repoName}/${props.repoOwner}`);
+                        navigate(`/workflowruns/${props.repository.name}/${props.repository.owner}`);
                     }}>Builds</td>
                 </tr>
                 </tbody>

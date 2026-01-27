@@ -234,9 +234,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                     {localGitRepositories && localGitRepositories.length > 0 && (
                         localGitRepositories.map((repo) => (
                             <GitRepoOverviewCard key={repo.id}
-                                                 repoId={repo.id}
-                                                 repoName={repo.name}
-                                                 repoOwner={repo.owner}
+                                                 repository={repo}
                                                  url={`/status/${repo.name}/${repo.id}`}
                                                  onDelete={handleRepoDelete}
                                                  onContextMenu={(e) => handleContextMenu(e, repo)} />
