@@ -1,8 +1,5 @@
 import React from "react";
 import {useNavigate} from "react-router-dom";
-import {DeleteRepositoryRequest, RepositoryConfigurationClient} from "../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../environmentConstants";
-import { useCacheStore } from "../managers/CacheManager";
 
 /** The properties of the Card component. */
 interface IProps {
@@ -21,15 +18,9 @@ interface IProps {
     /** The action to execute once a repo is successfully deleted. **/
     onDelete: (repoId: string | undefined) => void;
 
-    /** The action to execute once a repo is successfully deleted. **/
-    onError: (errorMessage: string | undefined) => void;
-
     /** The action to execute on a user right-clicks on the card. **/
     onContextMenu?: (e: React.MouseEvent) => void;
 }
-
-/** The repository configuration client to interact with the web API. **/
-const repoConfigClient = new RepositoryConfigurationClient(apiBaseUrl);
 
 /**
  * The card details and display components.
@@ -40,9 +31,6 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-    /** The logged-in user. **/
-    const user = useCacheStore((state) => state.user);
-
     return (
         <div className="card"
              onClick={() => navigate(`${props.url}`)}
@@ -52,21 +40,8 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
                 className="card-x"
                 onClick={async (e) => {
                     e.stopPropagation();
-                    try {
-                        const request = new DeleteRepositoryRequest();
-                        request.repositoryId = props.repoId;
-                        request.userId = user?.userId;
-                        const response = await repoConfigClient.deleteRepository(request);
-                        if (response.isErrorResponse) {
-                            props.onError(response.errorMessage)
-                            return;
-                        }
-
-                        props.onDelete(props.repoId);
-                    } catch (e) {
-                        console.error(e);
-                        props.onError("Error occurred while deleting repository. Check console logs.");
-                }}}
+                    props.onDelete(props.repoId);
+                }}
             >
                 X
             </span>
