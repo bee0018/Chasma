@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Util;
 using System.Diagnostics;
 
 namespace ChasmaWebApi.Data.Managers
@@ -26,15 +27,7 @@ namespace ChasmaWebApi.Data.Managers
             {
                 foreach (string command in shellCommands)
                 {
-                    ProcessStartInfo processInfo = new("cmd.exe", $"/c {command}")
-                    {
-                        WorkingDirectory = workingDirectory,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                    };
-                    using Process process = new() { StartInfo = processInfo };
+                    using Process process = ShellUtility.GetStandardShell(command, workingDirectory);
                     process.Start();
                     string output = process.StandardOutput.ReadToEnd();
                     string error = process.StandardError.ReadToEnd();
