@@ -366,7 +366,7 @@ namespace ChasmaWebApi.Data.Managers
                 return false;
             }
 
-            string command = !isStaged ? "git diff" : "git diff --cached";
+            string command = GetDiffCommand(isStaged, matchedFile.State, out bool isNewInWorkingDirectory);
             ProcessStartInfo processInfo = new("cmd.exe", $"/c {command} {filePath}")
             {
                 WorkingDirectory = workingDirectory,
@@ -380,8 +380,12 @@ namespace ChasmaWebApi.Data.Managers
             diffContent = process.StandardOutput.ReadToEnd();
             errorMessage = process.StandardError.ReadToEnd();
             process.WaitForExit();
-            if (process.ExitCode != 0)
+            if (process.ExitCode != 0 && !isNewInWorkingDirectory)
             {
+                /**
+                 * git diff --no-index NUL return an error code of 1 so we added this check to make sure
+                 * that we treat this as an error only when the file is not new in the working directory.
+                 */
                 errorMessage = $"Git diff command failed with exit code {process.ExitCode}. Error: {errorMessage}";
                 ClientLogger.LogError(errorMessage);
                 return false;
@@ -627,6 +631,31 @@ namespace ChasmaWebApi.Data.Managers
             }
 
             return branch.Tip.Sha.Length > 7 ? branch.Tip.Sha[..7] : branch.Tip.Sha;
+        }
+
+        /// <summary>
+        /// Gets the diff command based on the file status and whether it is staged.
+        /// </summary>
+        /// <param name="isStaged">Flag indicating whether the file is staged.</param>
+        /// <param name="fileStatus">The file status state.</param>
+        /// <param name="isNewInWorkingDirectory">Flag indicating whether the file is new in the working directory.</param>
+        /// <returns>The appropriate git diff command.</returns>
+        private static string GetDiffCommand(bool isStaged, FileStatus fileStatus, out bool isNewInWorkingDirectory)
+        {
+            isNewInWorkingDirectory = false;
+            if (fileStatus == FileStatus.NewInWorkdir)
+            {
+                isNewInWorkingDirectory = true;
+                return "git diff --no-index NUL";
+            }
+            else if (!isStaged)
+            {
+                return "git diff";
+            }
+            else
+            {
+                return "git diff --cached";
+            }
         }
 
         #endregion
