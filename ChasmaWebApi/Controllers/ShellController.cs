@@ -1,6 +1,8 @@
 ﻿using ChasmaWebApi.Data.Interfaces;
+using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Requests.Shell;
 using ChasmaWebApi.Data.Responses.Shell;
+using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -82,6 +84,51 @@ namespace ChasmaWebApi.Controllers
                 List<string> outputMessages = shellManager.ExecuteShellCommands(workingDirectory, commands);
                 response.OutputMessages = outputMessages;
                 logger.LogInformation("Successfully executed shell commands without any exceptions. Sending response.");
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Error executing shell commands. Check internal server logs for more information.";
+                logger.LogError("An exception occurred while executing commands: {errorMessage}", ex.Message);
+                return Ok(response);
+            }
+        }
+
+        /// <summary>
+        /// Executes batch shell commands on the current system's shell.
+        /// </summary>
+        /// <param name="request">The request to execute shell commands.</param>
+        /// <returns>The output result as a result of the batch commands.</returns>
+        [HttpPost]
+        [Route("executeBatchShellCommands")]
+        public ActionResult<ExecuteBatchShellCommandsResponse> ExecuteBatchShellCommands([FromBody] ExecuteBatchShellCommandsRequest request)
+        {
+            string requestName = nameof(ExecuteBatchShellCommandsRequest);
+            logger.LogInformation("Received {request} to execute batch shell commands.", requestName);
+            ExecuteBatchShellCommandsResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Received null {request} when attempting to execute batch shell commands. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request is null. Cannot execute batch commands.";
+                return BadRequest(response);
+            }
+
+            if (request.BatchCommands.Count == 0)
+            {
+                logger.LogError("No batch shell commands provided in the {request}. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "No batch shell commands were provided to execute.";
+                return BadRequest(response);
+            }
+
+            try
+            {
+                List<BatchCommandEntry> batchCommands = request.BatchCommands;
+                List<BatchCommandEntryResult> results = shellManager.ExecuteShellCommandsInBatch(batchCommands);
+                response.Results = results;
+                logger.LogInformation("Successfully executed shell commands without any exceptions. Sending successful response.");
                 return Ok(response);
             }
             catch (Exception ex)

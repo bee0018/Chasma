@@ -3,6 +3,7 @@ import '../css/Dashboard.css';
 import HomeTab from "./dashboardTabs/HomeTab";
 import ApiStatusTab from "./dashboardTabs/ApiStatusTab";
 import IncludeRepositoryModal from "./modals/IncludeRepositoryModal";
+import BatchOperationsTab from "./dashboardTabs/BatchOperationsTab";
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -44,6 +45,12 @@ const Dashboard: React.FC = () => {
                     &#x23FB; API Status
                 </div>
                 <div
+                    className={`tab ${activeTab === "batchOperations" ? "active" : ""}`}
+                    onClick={() => handleTabClick("batchOperations")}
+                >
+                    Batch Operations
+                </div>
+                <div
                     className="tab"
                     onClick={() => setIsIncludingRepos(true)}
                     >
@@ -52,6 +59,7 @@ const Dashboard: React.FC = () => {
             </aside>
             <main className="content">
                 {activeTab === "home" && <HomeTab reposVersion={reposVersion} />}
+                {activeTab === "batchOperations" && <BatchOperationsTab/>}
                 {activeTab === "apiStatus" && <ApiStatusTab/>}
             </main>
             {isIncludingRepos && (

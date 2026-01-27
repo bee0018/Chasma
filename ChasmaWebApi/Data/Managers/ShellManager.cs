@@ -1,4 +1,5 @@
 ﻿using ChasmaWebApi.Data.Interfaces;
+using ChasmaWebApi.Data.Objects;
 using System.Diagnostics;
 
 namespace ChasmaWebApi.Data.Managers
@@ -12,6 +13,11 @@ namespace ChasmaWebApi.Data.Managers
     public class ShellManager(ILogger<ShellManager> logger, ICacheManager cacheManager)
         : ClientManagerBase<ShellManager>(logger, cacheManager), IShellManager
     {
+        /// <summary>
+        /// The console separator to delimit commands.
+        /// </summary>
+        private const string ConsoleSeparator = "\n-------------------------------------------------------------------------------------------------------\n\n";
+
         // <inheritdoc/>
         public List<string> ExecuteShellCommands(string workingDirectory, IEnumerable<string> shellCommands)
         {
@@ -55,6 +61,42 @@ namespace ChasmaWebApi.Data.Managers
             }
 
             return outputMessages;
+        }
+
+        // <inheritdoc/>
+        public List<BatchCommandEntryResult> ExecuteShellCommandsInBatch(IEnumerable<BatchCommandEntry> entries)
+        {
+            List<BatchCommandEntryResult> results = [];
+            foreach (BatchCommandEntry entry in entries)
+            {
+                string repoId = entry.RepositoryId;
+                if (!CacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+                {
+                    ClientLogger.LogWarning("Repository ID {repoId} not found in working directories cache.", repoId);
+                    BatchCommandEntryResult result = new()
+                    {
+                        RepositoryName = repoId,
+                        IsSuccess = false,
+                        Message = $"Repository ID {repoId} not found in working directories cache."
+                    };
+                    results.Add(result);
+                    continue;
+                }
+
+                List<string> commandOutputs = ExecuteShellCommands(workingDirectory, entry.Commands);
+                string repoName = CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository)
+                    ? repository.Name
+                    : repoId;
+                BatchCommandEntryResult entryResult = new()
+                {
+                    RepositoryName = repoName,
+                    IsSuccess = true,
+                    Message = string.Join(ConsoleSeparator, commandOutputs)
+                };
+                results.Add(entryResult);
+            }
+
+            return results;
         }
     }
 }

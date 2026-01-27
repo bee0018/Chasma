@@ -19,3 +19,6 @@ export type User = {
     username: string | undefined;
     email: string | undefined;
 }
+
+/** The toggle options for selecting commands to execute uniformly or custom. **/
+export type CommandMode = "uniform" | "custom";
