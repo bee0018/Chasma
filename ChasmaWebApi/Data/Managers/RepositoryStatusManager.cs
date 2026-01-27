@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Util;
 using LibGit2Sharp;
 using Octokit;
 using System.Diagnostics;
@@ -367,15 +368,7 @@ namespace ChasmaWebApi.Data.Managers
             }
 
             string command = GetDiffCommand(isStaged, matchedFile.State, out bool isNewInWorkingDirectory);
-            ProcessStartInfo processInfo = new("cmd.exe", $"/c {command} {filePath}")
-            {
-                WorkingDirectory = workingDirectory,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-            using Process process = new() { StartInfo = processInfo };
+            using Process process = ShellUtility.GetFileProcessingShell(command, filePath, workingDirectory);
             process.Start();
             diffContent = process.StandardOutput.ReadToEnd();
             errorMessage = process.StandardError.ReadToEnd();

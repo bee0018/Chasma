@@ -2,7 +2,6 @@
 using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Requests.Shell;
 using ChasmaWebApi.Data.Responses.Shell;
-using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
