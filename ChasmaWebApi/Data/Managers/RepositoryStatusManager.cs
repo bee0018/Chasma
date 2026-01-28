@@ -641,6 +641,10 @@ namespace ChasmaWebApi.Data.Managers
                 isNewInWorkingDirectory = true;
                 return "git diff --no-index NUL";
             }
+            else if (fileStatus == FileStatus.DeletedFromWorkdir || fileStatus == FileStatus.DeletedFromIndex)
+            {
+                return "git diff HEAD --";
+            }
             else if (!isStaged)
             {
                 return "git diff";
