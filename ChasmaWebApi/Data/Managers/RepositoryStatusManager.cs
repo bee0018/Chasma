@@ -311,7 +311,7 @@ namespace ChasmaWebApi.Data.Managers
 
             pullRequestId = createdPullRequest.Number;
             prUrl = createdPullRequest.HtmlUrl;
-            timestamp = createdPullRequest.CreatedAt.ToString("g");
+            timestamp = createdPullRequest.CreatedAt.ToLocalTime().ToString("g");
             ClientLogger.LogInformation("Created pull request {prId} in {repoName}.", pullRequestId, repoName);
             return true;
         }
