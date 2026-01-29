@@ -639,7 +639,8 @@ namespace ChasmaWebApi.Data.Managers
             if (fileStatus == FileStatus.NewInWorkdir)
             {
                 isNewInWorkingDirectory = true;
-                return "git diff --no-index NUL";
+                string emptyFilePlaceholderPath = OperatingSystem.IsWindows() ? "NUL" : "/dev/null";
+                return $"git diff --no-index {emptyFilePlaceholderPath}";
             }
             else if (fileStatus == FileStatus.DeletedFromWorkdir || fileStatus == FileStatus.DeletedFromIndex)
             {
