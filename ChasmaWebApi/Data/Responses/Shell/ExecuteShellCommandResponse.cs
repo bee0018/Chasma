@@ -1,4 +1,6 @@
-﻿namespace ChasmaWebApi.Data.Responses.Shell
+﻿using ChasmaWebApi.Data.Objects;
+
+namespace ChasmaWebApi.Data.Responses.Shell
 {
     /// <summary>
     /// Class representing a response after executing a shell command.
@@ -6,8 +8,8 @@
     public class ExecuteShellCommandResponse : ResponseBase
     {
         /// <summary>
-        /// Gets or sets the output message from the command execution.
+        /// Gets or sets the results from the command execution.
         /// </summary>
-        public List<string> OutputMessages { get; set; } = new();
+        public List<ShellCommandResult> Results { get; set; } = new();
     }
 }

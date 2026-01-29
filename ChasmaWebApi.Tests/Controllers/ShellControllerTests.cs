@@ -175,14 +175,31 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
             Commands = commands
         };
 
-        List<string> outputMessages = ["git status was successfully executed.", "git push failed to execute."];
-        shellManagerMock.Setup(i => i.ExecuteShellCommands(It.IsAny<string>(), commands)).Returns(outputMessages);
+        List<ShellCommandResult> commandResults = [
+            new ShellCommandResult
+            {
+                ExecutedCommand = "git status",
+                IsSuccess = true,
+                OutputMessage = "git status was successfully executed."
+            },
+            new ShellCommandResult
+            {
+                ExecutedCommand = "git push",
+                IsSuccess = false,
+                OutputMessage = "git push failed to execute."
+            }
+        ];
+        shellManagerMock.Setup(i => i.ExecuteShellCommands(It.IsAny<string>(), commands)).Returns(commandResults);
 
         ActionResult<ExecuteShellCommandResponse> actionResult = Controller.ExecuteShellCommands(request);
         ExecuteShellCommandResponse response =  GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
         Assert.IsFalse(response.IsErrorResponse);
-        CollectionAssert.Contains(response.OutputMessages, outputMessages[0]);
-        CollectionAssert.Contains(response.OutputMessages, outputMessages[1]);
+
+        Assert.AreEqual(response.Results.Count, 2);
+        List<string> outputMessages = ["git status was successfully executed.", "git push failed to execute."];
+        List<string> shellMessages = response.Results.Select(i => i.OutputMessage).ToList();
+        CollectionAssert.Contains(shellMessages, outputMessages.First());
+        CollectionAssert.Contains(shellMessages, outputMessages.Last());
     }
 
     /// <summary>

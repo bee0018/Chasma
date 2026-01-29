@@ -80,8 +80,7 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
-                List<string> outputMessages = shellManager.ExecuteShellCommands(workingDirectory, commands);
-                response.OutputMessages = outputMessages;
+                response.Results = shellManager.ExecuteShellCommands(workingDirectory, commands);
                 logger.LogInformation("Successfully executed shell commands without any exceptions. Sending response.");
                 return Ok(response);
             }
@@ -125,8 +124,7 @@ namespace ChasmaWebApi.Controllers
             try
             {
                 List<BatchCommandEntry> batchCommands = request.BatchCommands;
-                List<BatchCommandEntryResult> results = shellManager.ExecuteShellCommandsInBatch(batchCommands);
-                response.Results = results;
+                response.Results = shellManager.ExecuteShellCommandsInBatch(batchCommands);
                 logger.LogInformation("Successfully executed shell commands without any exceptions. Sending successful response.");
                 return Ok(response);
             }

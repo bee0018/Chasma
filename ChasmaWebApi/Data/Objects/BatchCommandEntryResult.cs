@@ -13,6 +13,11 @@ namespace ChasmaWebApi.Data.Objects
         public string RepositoryName { get; set; }
 
         /// <summary>
+        /// Gets or sets the shell command that was executed.
+        /// </summary>
+        public string ExecutedCommand { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the command execution was successful.
         /// </summary>
         public bool IsSuccess { get; set; }

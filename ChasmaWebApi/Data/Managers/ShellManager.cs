@@ -14,15 +14,10 @@ namespace ChasmaWebApi.Data.Managers
     public class ShellManager(ILogger<ShellManager> logger, ICacheManager cacheManager)
         : ClientManagerBase<ShellManager>(logger, cacheManager), IShellManager
     {
-        /// <summary>
-        /// The console separator to delimit commands.
-        /// </summary>
-        private const string ConsoleSeparator = "\n-------------------------------------------------------------------------------------------------------\n\n";
-
         // <inheritdoc/>
-        public List<string> ExecuteShellCommands(string workingDirectory, IEnumerable<string> shellCommands)
+        public List<ShellCommandResult> ExecuteShellCommands(string workingDirectory, IEnumerable<string> shellCommands)
         {
-            List<string> outputMessages = [];
+            List<ShellCommandResult> commandResults = [];
             try
             {
                 foreach (string command in shellCommands)
@@ -32,28 +27,38 @@ namespace ChasmaWebApi.Data.Managers
                     string output = process.StandardOutput.ReadToEnd();
                     string error = process.StandardError.ReadToEnd();
                     process.WaitForExit();
+                    ShellCommandResult commandResult = new() { ExecutedCommand = command };
                     if (process.ExitCode != 0)
                     {
+                        commandResult.IsSuccess = false;
+                        commandResult.OutputMessage = error;
                         string errorMessage = $"Command '{command}' failed with error: {error}\n";
                         logger.LogError(errorMessage);
-                        outputMessages.Add(errorMessage);
                     }
                     else
                     {
+                        commandResult.IsSuccess = true;
+                        commandResult.OutputMessage = output;
                         string successMessage = $"Command '{command}' executed successfully: {output}\n";
                         logger.LogInformation(successMessage);
-                        outputMessages.Add(successMessage);
                     }
+
+                    commandResults.Add(commandResult);
                 }
             }
             catch (Exception ex)
             {
                 string errorMessage = $"An exception occurred while executing commands: {ex.Message}";
                 logger.LogError(ex, errorMessage);
-                outputMessages.Add(errorMessage);
+                ShellCommandResult errorResult = new()
+                {
+                    IsSuccess = false,
+                    OutputMessage = errorMessage
+                };
+                commandResults.Add(errorResult);
             }
 
-            return outputMessages;
+            return commandResults;
         }
 
         // <inheritdoc/>
@@ -76,17 +81,21 @@ namespace ChasmaWebApi.Data.Managers
                     continue;
                 }
 
-                List<string> commandOutputs = ExecuteShellCommands(workingDirectory, entry.Commands);
+                List<ShellCommandResult> commandResults = ExecuteShellCommands(workingDirectory, entry.Commands);
                 string repoName = CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository)
                     ? repository.Name
                     : repoId;
-                BatchCommandEntryResult entryResult = new()
+                foreach (ShellCommandResult commandResult in commandResults)
                 {
-                    RepositoryName = repoName,
-                    IsSuccess = true,
-                    Message = string.Join(ConsoleSeparator, commandOutputs)
-                };
-                results.Add(entryResult);
+                    BatchCommandEntryResult entryResult = new()
+                    {
+                        RepositoryName = repoName,
+                        IsSuccess = commandResult.IsSuccess,
+                        ExecutedCommand = commandResult.ExecutedCommand,
+                        Message = commandResult.OutputMessage
+                    };
+                    results.Add(entryResult);
+                }
             }
 
             return results;

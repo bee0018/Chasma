@@ -28,6 +28,7 @@ const BatchOperationsTab: React.FC = () => {
     /** Command execution output per repository. **/
     const [output, setOutput] = useState<{
         repoName: string | undefined;
+        executedCommand: string | undefined;
         success: boolean | undefined;
         message?: string | undefined;
     }[] | undefined>([]);
@@ -189,6 +190,7 @@ const BatchOperationsTab: React.FC = () => {
             setOutput(
                 response.results?.map((result: BatchCommandEntryResult) => ({
                     repoName: result.repositoryName,
+                    executedCommand: result.executedCommand,
                     success: result.isSuccess,
                     message: result.message,
                 }))
@@ -349,7 +351,7 @@ const BatchOperationsTab: React.FC = () => {
                     type="submit"
                     onClick={executeBatchOperation}
                 >
-                    Run Batch Git Command
+                    Run Batch Git Commands
                 </button>
 
                 <div className="batch-page">
@@ -374,7 +376,6 @@ const BatchOperationsTab: React.FC = () => {
                             </button>
                         )}
                     </div>
-
                     <div className="output-window">
                         {output && output.length === 0 && <p>No operations executed yet.</p>}
 
@@ -384,7 +385,7 @@ const BatchOperationsTab: React.FC = () => {
                                 className={`output-entry ${result.success ? "success" : "failure"}`}
                             >
                                 <div>
-                                    <strong>{result.repoName}</strong>
+                                    <strong>{result.repoName}: {result.executedCommand}</strong>
                                     <span className="status-icon"></span>
                                 </div>
                                 {result.message && (
@@ -393,7 +394,6 @@ const BatchOperationsTab: React.FC = () => {
                             </div>
                         ))}
                     </div>
-
                 </div>
 
             </div>

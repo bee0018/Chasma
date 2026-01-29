@@ -1647,15 +1647,30 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "outputMessages": {
+              "results": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ShellCommandResult"
                 }
               }
             }
           }
         ]
+      },
+      "ShellCommandResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "executedCommand": {
+            "type": "string"
+          },
+          "outputMessage": {
+            "type": "string"
+          },
+          "isSuccess": {
+            "type": "boolean"
+          }
+        }
       },
       "ExecuteShellCommandRequest": {
         "allOf": [
@@ -1708,6 +1723,9 @@
             "additionalProperties": false,
             "properties": {
               "repositoryName": {
+                "type": "string"
+              },
+              "executedCommand": {
                 "type": "string"
               },
               "isSuccess": {
