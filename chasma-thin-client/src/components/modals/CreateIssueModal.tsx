@@ -2,6 +2,7 @@
 import React, {useState} from "react";
 import {apiBaseUrl} from "../../environmentConstants";
 import {useCacheStore} from "../../managers/CacheManager";
+import MarkdownEditor from "../editors/MarkdownEditor";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
@@ -144,11 +145,12 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = (props: CreateIssueMod
                         style={{width: "100%"}}
                         required
                     />
-                    <textarea className="input-area"
-                              placeholder="Enter Issue Description:"
-                              value={issueMessage}
-                              onChange={(e) => setIssueMessage(e.target.value)} />
-                    <br/>
+                    <MarkdownEditor
+                        value={issueMessage}
+                        onChange={setIssueMessage}
+                        placeholder="Enter Issue Description (Markdown supported)"
+                        disabled={successfullyCreatedIssue}
+                    />
                     {successfullyCreatedIssue && issueHtmlUrl && (
                         <div className="input-field"
                              onClick={() => window.open(`${issueHtmlUrl}`, "_blank")}>
