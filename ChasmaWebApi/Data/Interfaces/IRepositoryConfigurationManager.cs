@@ -33,4 +33,14 @@ public interface IRepositoryConfigurationManager
     /// <param name="errorMessage">The error message.</param>
     /// <returns>True if the branch is successfully deleted; false otherwise.</returns>
     bool TryDeleteBranch(string repositoryId, string branchName, out string errorMessage);
+
+    /// <summary>
+    /// Tries to add a git repository to the cache with the specified filepath.
+    /// </summary>
+    /// <param name="repoPath">The filepath to the repository.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="localGitRepository">The add git repository.</param>
+    /// <param name="errorMessage">The error message.</param>
+    /// <returns>True if the repository was added to the system; false otherwise.</returns>
+    bool TryAddGitRepository(string repoPath, int userId, out LocalGitRepository localGitRepository, out string errorMessage);
 }

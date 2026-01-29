@@ -146,6 +146,72 @@ public class RepositoryConfigurationController : ControllerBase
     }
 
     /// <summary>
+    /// Adds a git repository from the specified path to cache.
+    /// </summary>
+    /// <param name="request">The request to add a local git repository.</param>
+    /// <returns>The response to adding a git repository to the system.</returns>
+    [HttpPost]
+    [Route("addGitRepository")]
+    public async Task<ActionResult<AddGitRepositoryResponse>> AddGitRepository([FromBody] AddGitRepositoryRequest request)
+    {
+        logger.LogInformation("Received an {request}.", nameof(AddGitRepositoryRequest));
+        AddGitRepositoryResponse response = new();
+        if (request == null)
+        {
+            logger.LogError("Received a null {request}. Sending error response.", nameof(AddGitRepositoryRequest));
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Request must be populated.";
+            return BadRequest(response);
+        }
+
+        string repoPath = request.RepositoryPath;
+        if (string.IsNullOrEmpty(repoPath))
+        {
+            logger.LogError("Invalid {request}. Repository path is required. Sending error response.", nameof(AddGitRepositoryRequest));
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Repository path is required.";
+            return BadRequest(response);
+        }
+
+        int userId = request.UserId;
+        if (!cacheManager.Users.TryGetValue(userId, out _))
+        {
+            logger.LogError("Invalid {request}. User with identifier {id} does not exist. Sending error response.", nameof(AddGitRepositoryRequest), userId);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Could not find user.";
+            return BadRequest(response);
+        }
+
+        if (!configurationManager.TryAddGitRepository(repoPath, userId, out LocalGitRepository localGitRepository, out string errorMessage))
+        {
+            logger.LogError("Failed to add git repository from path {repoPath}. Reason: {reason}", repoPath, errorMessage);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = errorMessage;
+            return Ok(response);
+        }
+
+        RepositoryModel repositoryModel = new()
+        {
+            Id = localGitRepository.Id,
+            UserId = localGitRepository.UserId,
+            Name = localGitRepository.Name,
+            Owner = localGitRepository.Owner,
+            Url = localGitRepository.Url,
+            IsIgnored = false,
+        };
+        await applicationDbContext.Repositories.AddAsync(repositoryModel);
+        WorkingDirectoryModel workingDirectoryModel = new()
+        {
+            RepositoryId = localGitRepository.Id,
+            WorkingDirectory = repoPath,
+        };
+        await applicationDbContext.WorkingDirectories.AddAsync(workingDirectoryModel);
+        await applicationDbContext.SaveChangesAsync();
+        response.Repository = localGitRepository;
+        return Ok(response);
+    }
+
+    /// <summary>
     /// Deletes the git repositories from with the specified repository key from cache.
     /// </summary>
     /// <param name="request">The delete repository request.</param>

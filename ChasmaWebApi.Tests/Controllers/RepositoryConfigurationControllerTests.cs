@@ -581,5 +581,152 @@ namespace ChasmaWebApi.Tests.Controllers
             Assert.IsFalse(response.IsErrorResponse);
             TestDbContextFactory.DestroyDatabase(dbContext);
         }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.AddGitRepository(AddGitRepositoryRequest)"/> sends
+        /// an error response when the request is null.
+        /// </summary>
+        [TestMethod]
+        public void TestAddGitRepositoryWithNullRequest()
+        {
+            Task<ActionResult<AddGitRepositoryResponse>> task = Controller.AddGitRepository(null);
+            AddGitRepositoryResponse response = GetResponseFromHttpAction(task, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Request must be populated.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.AddGitRepository(AddGitRepositoryRequest)"/> sends
+        /// an error response when the repository path is empty.
+        /// </summary>
+        [TestMethod]
+        public void TestAddGitRepositoryWithEmptyRepositoryPath()
+        {
+            AddGitRepositoryRequest request = new();
+            Task<ActionResult<AddGitRepositoryResponse>> task = Controller.AddGitRepository(request);
+            AddGitRepositoryResponse response = GetResponseFromHttpAction(task, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Invalid request. Repository path is required.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.AddGitRepository(AddGitRepositoryRequest)"/> sends
+        /// an error response when the user requesting is unknown.
+        /// </summary>
+        [TestMethod]
+        public void TestAddGitRepositoryWithUnknownUser()
+        {
+            ConcurrentDictionary<int, UserAccountModel> users = new();
+            cacheManagerMock.Setup(i => i.Users).Returns(users);
+            
+            AddGitRepositoryRequest request = new()
+            {
+                RepositoryPath = "test_path",
+                UserId = 10000,
+            };
+            Task<ActionResult<AddGitRepositoryResponse>> task = Controller.AddGitRepository(request);
+            AddGitRepositoryResponse response = GetResponseFromHttpAction(task, typeof(BadRequestObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual("Invalid request. Could not find user.", response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.AddGitRepository(AddGitRepositoryRequest)"/> sends
+        /// an error response when the system fails to add the repository.
+        /// </summary>
+        [TestMethod]
+        public void TestAddGitRepositoryWithFailureToAddRepository()
+        {
+            UserAccountModel user = new()
+            {
+                Id = 1,
+                Email = TestUserEmail,
+                Name = TestUserFullName,
+                Password = TestUserPassword,
+                UserName = TestUserName,
+                Salt = [1, 2, 3]
+            };
+            ConcurrentDictionary<int, UserAccountModel> users = new()
+            {
+                [user.Id] = user,
+            };
+            cacheManagerMock.Setup(i => i.Users).Returns(users);
+
+            LocalGitRepository testRepo = null;
+            string errorMessage = "Could not add repository";
+            configurationManagerMock.Setup(i => i.TryAddGitRepository(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                out testRepo,
+                out errorMessage)
+            ).Returns(false);
+            
+            AddGitRepositoryRequest request = new()
+            {
+                RepositoryPath = "test_path",
+                UserId = user.Id,
+            };
+            Task<ActionResult<AddGitRepositoryResponse>> task = Controller.AddGitRepository(request);
+            AddGitRepositoryResponse response = GetResponseFromHttpAction(task, typeof(OkObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual(errorMessage, response.ErrorMessage);
+        }
+        
+        /// <summary>
+        /// Tests that the <see cref="RepositoryConfigurationController.AddGitRepository(AddGitRepositoryRequest)"/> sends
+        /// a success response when the system adds the repository.
+        /// </summary>
+        [TestMethod]
+        public void TestAddGitRepositoryNominalCase()
+        {
+            UserAccountModel user = new()
+            {
+                Id = 1,
+                Email = TestUserEmail,
+                Name = TestUserFullName,
+                Password = TestUserPassword,
+                UserName = TestUserName,
+                Salt = [1, 2, 3]
+            };
+            ConcurrentDictionary<int, UserAccountModel> users = new()
+            {
+                [user.Id] = user,
+            };
+            cacheManagerMock.Setup(i => i.Users).Returns(users);
+
+            LocalGitRepository testRepo = new LocalGitRepository
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = TestRepositoryName,
+                UserId = user.Id,
+                Owner = TestUserFullName,
+                Url = "test_url",
+            };
+            string errorMessage = null;
+            configurationManagerMock.Setup(i => i.TryAddGitRepository(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                out testRepo,
+                out errorMessage)
+            ).Returns(true);
+            
+            AddGitRepositoryRequest request = new()
+            {
+                RepositoryPath = "test_path",
+                UserId = user.Id,
+            };
+            applicationDbContext = TestDbContextFactory.CreateApplicationDbContext();
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext);
+            Task<ActionResult<AddGitRepositoryResponse>> task = Controller.AddGitRepository(request);
+            AddGitRepositoryResponse response = GetResponseFromHttpAction(task, typeof(OkObjectResult));
+            Assert.IsFalse(response.IsErrorResponse);
+            Assert.AreEqual(testRepo.Id, response.Repository.Id);
+            Assert.AreEqual(testRepo.Name, response.Repository.Name);
+            Assert.AreEqual(testRepo.Url, response.Repository.Url);
+            Assert.AreEqual(testRepo.UserId, response.Repository.UserId);
+            Assert.AreEqual(testRepo.Owner, response.Repository.Owner);
+            Assert.AreEqual(testRepo.IsIgnored, response.Repository.IsIgnored);
+            TestDbContextFactory.DestroyDatabase(applicationDbContext);
+        }
     }
 }

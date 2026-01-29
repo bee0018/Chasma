@@ -124,6 +124,38 @@
         }
       }
     },
+    "/api/RepositoryConfiguration/addGitRepository": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_AddGitRepository",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddGitRepositoryRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddGitRepositoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryConfiguration/deleteRepository": {
       "delete": {
         "tags": [
@@ -854,6 +886,42 @@
               "errorMessage": {
                 "type": "string",
                 "nullable": true
+              }
+            }
+          }
+        ]
+      },
+      "AddGitRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repository": {
+                "$ref": "#/components/schemas/LocalGitRepository"
+              }
+            }
+          }
+        ]
+      },
+      "AddGitRepositoryRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "repositoryPath": {
+                "type": "string"
               }
             }
           }
