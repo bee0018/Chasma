@@ -33,7 +33,7 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
                 continue;
             }
 
-            string repositoryName = new DirectoryInfo(workingDirectory).Name?.Replace(".git", "");
+            string? repositoryName = GetRepositoryName(workingDirectory);
             if (string.IsNullOrWhiteSpace(repositoryName))
             {
                 ClientLogger.LogWarning("Could get repository name for the file directory {path} so it will be ignored.", workingDirectory);
@@ -162,6 +162,97 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
         return true;
     }
 
+    // <inheritdoc/>
+    public bool TryAddGitRepository(string repoPath, int userId, out LocalGitRepository localGitRepository, out string errorMessage)
+    {
+        localGitRepository = null;
+        errorMessage = string.Empty;
+        if (!Directory.Exists(repoPath))
+        {
+            errorMessage = $"The provided path: {repoPath} does not exist.";
+            ClientLogger.LogError(errorMessage);
+            return false;
+        }
+
+        HashSet<string> workingDirectories;
+        lock (lockObject)
+        {
+            workingDirectories = CacheManager.WorkingDirectories.Values.ToHashSet();
+        }
+
+        if (workingDirectories.Contains(repoPath))
+        {
+            errorMessage = $"The provided path {repoPath} already exists in the cache.";
+            ClientLogger.LogWarning("Working directory {directory} already exists in cache, so it will be ignored.", repoPath);
+            return false;
+        }
+
+        if (!Repository.IsValid(repoPath))
+        {
+            errorMessage = $"The provided path: {repoPath} is not a valid git repository.";
+            ClientLogger.LogError(errorMessage);
+            return false;
+        }
+
+        string? repositoryName = GetRepositoryName(repoPath);
+        if (string.IsNullOrWhiteSpace(repositoryName))
+        {
+            errorMessage = $"Could not get repository name for the file directory {repoPath}.";
+            ClientLogger.LogError("Could get repository name for the file directory {path} so it cannot be added to cache. Sending error response.", repoPath);
+            return false;
+        }
+
+        string pushUrl;
+        try
+        {
+            using Repository repository = new(repoPath);
+            Remote? remoteRepository = repository.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
+            if (remoteRepository == null)
+            {
+                errorMessage = $"Failed to find remote repository in {repoPath}.";
+                ClientLogger.LogError("Failed to find remote repository in {repoPath}, so it cannot be added to cache.", repoPath);
+                return false;
+            }
+
+            pushUrl = remoteRepository.PushUrl;
+            if (string.IsNullOrEmpty(pushUrl))
+            {
+                errorMessage = $"Failed to find push url for {repositoryName}.";
+                ClientLogger.LogError("Failed to find push url for {repoName}, so it cannot be added to cache.", repositoryName);
+                return false;
+            }
+        }
+        catch (Exception e)
+        {
+            errorMessage = $"An error occurred while accessing the git repository at {repoPath}: {e.Message}";
+            ClientLogger.LogError("An error occurred while accessing the git repository at {repoPath}: {error}. Sending error response.", repoPath, e);
+            return false;
+        }
+
+        string? repositoryOwner = GetRepositoryOwner(pushUrl);
+        if (string.IsNullOrEmpty(repositoryOwner))
+        {
+            errorMessage = $"Failed to find repository owner for {repositoryName}.";
+            ClientLogger.LogError("Failed to find repository owner for {repoName}, so it cannot be added to cache.", repositoryName);
+            return false;
+        }
+
+        string repoCacheKey = Guid.NewGuid().ToString();
+        localGitRepository = new()
+        {
+            Id = repoCacheKey,
+            UserId = userId,
+            Name = repositoryName,
+            Owner = repositoryOwner,
+            Url = pushUrl,
+        };
+        CacheManager.WorkingDirectories.TryAdd(localGitRepository.Id, repoPath);
+        CacheManager.Repositories.TryAdd(localGitRepository.Id, localGitRepository);
+        return true;
+    }
+
+    #region Private Methods
+
     /// <summary>
     /// Searches for git repositories on the logical drives on the machine running this application.
     /// </summary>
@@ -274,4 +365,14 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
 
         return repositoryOwner;
     }
+
+    /// <summary>
+    /// Gets the name of the repository directory from the specified repository path, excluding the ".git" suffix if
+    /// present.
+    /// </summary>
+    /// <param name="repoPath">The full file system path to the repository directory.</param>
+    /// <returns>The name of the repository directory with the ".git" suffix removed if present.</returns>
+    private static string? GetRepositoryName(string repoPath) => new DirectoryInfo(repoPath).Name?.Replace(".git", "");
+
+    #endregion
 }
