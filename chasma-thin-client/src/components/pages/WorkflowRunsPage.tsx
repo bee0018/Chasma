@@ -1,9 +1,7 @@
 import React, {useState} from "react";
 import NotificationModal from "../modals/NotificationModal";
 import {GetWorkflowResultsRequest, RepositoryStatusClient, WorkflowRunResult} from "../../API/ChasmaWebApiClient";
-import "../../css/Dashboard.css"
-import "../../css/App.css"
-import { JSX } from "react/jsx-runtime";
+import "../../styles/App.css"
 import {useNavigate, useParams} from "react-router-dom";
 import {apiBaseUrl} from "../../environmentConstants";
 
@@ -31,6 +29,9 @@ const WorkflowRunsPage: React.FC = () => {
     /** Gets or sets the GitHub workflow results. **/
     const [workflows, setWorkflows] = useState<WorkflowRunResult[] | undefined>(undefined);
 
+    /** View mode: "card" or "table" **/
+    const [viewMode, setViewMode] = useState<"card" | "table">("card");
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -41,9 +42,8 @@ const WorkflowRunsPage: React.FC = () => {
         setNotification(null);
     }
 
-    /** Handles the event when the user request to get the workflow statuses. **/
+    /** Handles the event when the user requests to get the workflow statuses. **/
     async function handleGetWorkFlowStatuses() {
-        console.log("GetWorkFlowStatuses");
         setNotification({
             title: "Retrieving workflow runs...",
             message: "Please wait while your request is being processed.",
@@ -56,7 +56,6 @@ const WorkflowRunsPage: React.FC = () => {
             request.repositoryName = repoName;
             request.repositoryOwner = repoOwner;
 
-            console.log(request);
             const response = await statusClient.getChasmaWorkflowResults(request);
             if (response.isErrorResponse) {
                 setNotification({
@@ -70,7 +69,7 @@ const WorkflowRunsPage: React.FC = () => {
             setWorkflows(response.workflowRunResults)
             setNotification({
                 title: `Successfully retrieved ${response.repositoryName} workflows!`,
-                message: `Close this modal and view the previous ${response.repositoryName} workflow build contents.`,
+                message: `Close this modal and view the workflow build contents.`,
                 isError: response.isErrorResponse,
             });
         } catch (e) {
@@ -83,50 +82,109 @@ const WorkflowRunsPage: React.FC = () => {
         }
     }
 
-    /**
-     * Gets the display elements of the workflow elements.
-     * @return the workflow run statuses
-     */
-    function getWorkFlowRows() {
-        let rows: JSX.Element[] = [];
-        if (!workflows) {
-            return <>No workflows retrieved.</>;
+    /** Renders the table view for workflows **/
+    const renderTableView = () => {
+        if (!workflows || workflows.length === 0) {
+            return <p className="no-workflows">No workflows retrieved yet.</p>;
         }
 
-        workflows.forEach(build => {
-            rows.push(
-                <tr onClick={() => window.open(build.workflowUrl, '_blank')}>
-                    <td>{build.buildConclusion === "success" ? <i className="checkmark"/> : <i className="red-x"/>}</td>
-                    <td>{build.branchName}</td>
-                    <td>{build.runNumber}</td>
-                    <td>{build.buildTrigger}</td>
-                    <td>{build.commitMessage}</td>
-                    <td>{build.buildStatus}</td>
-                    <td>{build.buildConclusion}</td>
-                    <td>{build.createdDate}</td>
-                    <td>{build.updatedDate}</td>
-                    <td>{build.authorName}</td>
-                </tr>
-            );
-        });
-
-        return rows;
+        return (
+            <div className="workflow-table-container">
+                <table className="workflow-table">
+                    <thead>
+                    <tr>
+                        <th>Result</th>
+                        <th>Branch</th>
+                        <th>Run #</th>
+                        <th>Trigger</th>
+                        <th>Commit</th>
+                        <th>Status</th>
+                        <th>Conclusion</th>
+                        <th>Created</th>
+                        <th>Updated</th>
+                        <th>Author</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {workflows.map((build, index) => (
+                        <tr key={index} className={build.buildConclusion === "success" ? "success" : "failure"} onClick={() => window.open(build.workflowUrl, "_blank")}>
+                            <td>{build.buildConclusion === "success" ? "✔" : "✖"}</td>
+                            <td>{build.branchName}</td>
+                            <td>{build.runNumber}</td>
+                            <td>{build.buildTrigger}</td>
+                            <td>{build.commitMessage}</td>
+                            <td>{build.buildStatus}</td>
+                            <td>{build.buildConclusion}</td>
+                            <td>{build.createdDate}</td>
+                            <td>{build.updatedDate}</td>
+                            <td>{build.authorName}</td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
+        );
     }
 
     return (
-        <div className="page">
-            <div className="page-header">
+        <div className="workflow-page-container">
+            <div className="workflow-actions-container">
                 <button
-                    className="submit-button"
+                    className="home-button"
                     onClick={() => navigate('/home')}
                 >
                     ← Home
                 </button>
-                <h1 className="page-title">GitHub Builds Board 📊</h1>
-                <div style={{ textAlign: "center" }}>
-                    <p className="page-description">Click the button below to retrieve build queue results.</p>
-                </div>
+                <button
+                    className="retrieve-button"
+                    type="submit"
+                    onClick={handleGetWorkFlowStatuses}
+                >
+                    Retrieve Workflows
+                </button>
             </div>
+            <div className="workflow-page-header">
+                <h1>GitHub Builds Dashboard 📊</h1>
+                <p>Retrieve the most recent workflow run results below.</p>
+            </div>
+
+            <div className="command-mode-toggle">
+                <button
+                    className={`command-mode-button ${viewMode === "card" ? "active" : ""}`}
+                    onClick={() => setViewMode("card")}
+                >
+                    Card
+                </button>
+                <button
+                    className={`command-mode-button ${viewMode === "table" ? "active" : ""}`}
+                    onClick={() => setViewMode("table")}
+                >
+                    Table
+                </button>
+            </div>
+            <br/>
+            {viewMode === "card" ? (
+                <div className="workflow-cards-container">
+                    {workflows && workflows.length > 0 ? workflows.map((build, index) => (
+                        <div key={index} className={`workflow-card ${build.buildConclusion === "success" ? "success" : "failure"}`} onClick={() => window.open(build.workflowUrl, '_blank')}>
+                            <div className="workflow-card-header">
+                                <span className="workflow-result">{build.buildConclusion === "success" ? "✔" : "✖"}</span>
+                                <span className="workflow-branch">{build.branchName}</span>
+                                <span className="workflow-run-number">#{build.runNumber}</span>
+                            </div>
+                            <div className="workflow-card-body">
+                                <p><strong>Trigger:</strong> {build.buildTrigger}</p>
+                                <p><strong>Commit:</strong> {build.commitMessage}</p>
+                                <p><strong>Status:</strong> {build.buildStatus}</p>
+                                <p><strong>Conclusion:</strong> {build.buildConclusion}</p>
+                                <p><strong>Created:</strong> {build.createdDate}</p>
+                                <p><strong>Updated:</strong> {build.updatedDate}</p>
+                                <p><strong>Author:</strong> {build.authorName}</p>
+                            </div>
+                        </div>
+                    )) : <p className="no-workflows">No workflows retrieved yet.</p>}
+                </div>
+            ) : renderTableView()}
             {notification && (
                 <NotificationModal
                     title={notification.title}
@@ -135,42 +193,6 @@ const WorkflowRunsPage: React.FC = () => {
                     loading={notification.loading}
                     onClose={closeModal} />
             )}
-            {repoName && workflows && workflows.length > 0 && (
-                <div>
-                    <table className="info-table"
-                           style={{display: "contents"}}>
-                        <caption style={{textAlign: "left"}}>{`${repoName} Most Recent ${workflows.length} Builds:`}</caption>
-                        <thead>
-                        <tr>
-                            <th>Result</th>
-                            <th>Branch Name</th>
-                            <th>Run Number</th>
-                            <th>Trigger</th>
-                            <th>Commit Message</th>
-                            <th>Status</th>
-                            <th>Conclusion</th>
-                            <th>Created</th>
-                            <th>Updated</th>
-                            <th>Author</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {getWorkFlowRows()}
-                        </tbody>
-                    </table>
-                </div>
-
-            )
-            }
-            <br/>
-            <button
-                className="submit-button"
-                type="submit"
-                onClick={handleGetWorkFlowStatuses}
-            >
-                Retrieve
-            </button>
-            <br/>
         </div>
     );
 }

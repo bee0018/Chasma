@@ -22,8 +22,8 @@ const AddRepositoryModal: React.FC<IAddRepositoryModalProps> = (props: IAddRepos
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
-                <div className="commit-modal" onClick={(e) => e.stopPropagation()}>
-                    <div className="commit-modal-icon">
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-icon-container">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
@@ -36,20 +36,18 @@ const AddRepositoryModal: React.FC<IAddRepositoryModalProps> = (props: IAddRepos
                             <rect x="11" y="7" width="2" height="2" fill="#ffffff"/>
                        </svg>
                     </div>
-                    <h2 className="commit-modal-title"
-                        style={{marginTop: "-30px"}}>Enter a repository to add:</h2>
+                    <h2 className="modal-title">Enter a repository to add:</h2>
                     <input
                         type="text"
-                        className="input-field"
+                        className="modal-input-field"
                         placeholder="Enter repository path"
                         value={repoPath}
                         onChange={(e) => setRepoPath(e.target.value)}
                         style={{width: "100%"}}
                         required
                     />
-                    <div>
-                        <button className="commit-modal-button"
-                                style={{marginRight: "50px"}}
+                    <div className="modal-actions">
+                        <button className="modal-button primary"
                                 onClick={() => {
                                     props.onRepositorySelected(repoPath);
                                     props.onClose();
@@ -57,7 +55,7 @@ const AddRepositoryModal: React.FC<IAddRepositoryModalProps> = (props: IAddRepos
                         >
                             Add
                         </button>
-                        <button className="commit-modal-button"
+                        <button className="modal-button secondary"
                                 onClick={props.onClose}
                         >
                             Close

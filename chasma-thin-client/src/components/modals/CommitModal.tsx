@@ -1,5 +1,4 @@
 import React, {useState} from "react";
-import "../../css/CommitModal.css";
 import {GitCommitRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
 
@@ -81,8 +80,8 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
-                <div className="commit-modal" onClick={(e) => e.stopPropagation()}>
-                    <div className="commit-modal-icon">
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-icon-container">
                         {!errorMessage && !successfullyCommitted && (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -129,16 +128,31 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
                             </svg>
                         )}
                     </div>
-                    <h2 className="commit-modal-title"
-                        style={{marginTop: "-30px"}}>{title}</h2>
-                    {errorMessage && <h3 className="commit-modal-message">{errorMessage}</h3>}
-                    <textarea className="input-area"
+                    <h2 className="modal-title">{title}</h2>
+                    {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
+                    <textarea className="modal-input-field"
                               placeholder="Enter commit message:"
                               value={commitMessage}
                               onChange={(e) => setCommitMessage(e.target.value)} />
                     <br/>
-                    {!commitRequestSent && <button className="commit-modal-button" onClick={handleCommitChangesRequest}>Commit</button>}
-                    {commitRequestSent && <button className="commit-modal-button" onClick={props.onClose}>Close</button>}
+                    <div className="modal-actions">
+                        {!commitRequestSent &&
+                            <button
+                                className="modal-button primary"
+                                onClick={handleCommitChangesRequest}
+                            >
+                                Commit
+                            </button>
+                        }
+                        {commitRequestSent &&
+                            <button
+                                className="modal-button secondary"
+                                onClick={props.onClose}
+                            >
+                                Close
+                            </button>
+                        }
+                    </div>
                 </div>
             </div>
         </>

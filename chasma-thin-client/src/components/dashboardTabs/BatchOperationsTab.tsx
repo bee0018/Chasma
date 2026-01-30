@@ -1,5 +1,4 @@
 ﻿import React, {useEffect, useState} from "react";
-import "../../css/DasboardTab.css";
 import {
     BatchCommandEntry,
     BatchCommandEntryResult,
@@ -236,15 +235,16 @@ const BatchOperationsTab: React.FC = () => {
 
     return (
         <>
-            <div className="page">
-                <h1 className="page-title" style={{ textAlign: "center" }}>
-                    Batch Repository Operations
-                </h1>
-                <p className="page-description" style={{ textAlign: "center" }}>
-                    Execute shell commands across all registered repositories at once.
-                </p>
-                <div className="command-mode-toggle">
-                    <div className="command-mode-toggle-inner">
+            <div className="batch-page-container">
+                <header className="batch-page-header">
+                    <h1 className="page-title">Batch Repository Operations</h1>
+                    <p className="page-description">
+                        Execute shell commands across all registered repositories at once.
+                    </p>
+                </header>
+
+                <section className="command-mode-section">
+                    <div className="command-mode-toggle">
                         <button
                             className={`command-mode-button ${commandMode === "uniform" ? "active" : ""}`}
                             onClick={() => setCommandMode("uniform")}
@@ -258,84 +258,66 @@ const BatchOperationsTab: React.FC = () => {
                             Custom
                         </button>
                     </div>
-                </div>
-                <div style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "8px",
-                }}>
-                    <Checkbox
-                        label={"Select all repositories"}
-                        onBoxChecked={setIsSelectingAllRepositories}
-                    />
-                    <button
-                        className="submit-button"
-                        hidden={isSelectingAllRepositories}
-                        onClick={addCustomBatchRow}
-                    >
-                        Add Repo
-                    </button>
-                </div>
+
+                    <div className="repository-actions">
+                        <Checkbox
+                            label={"Select all repositories"}
+                            onBoxChecked={setIsSelectingAllRepositories}
+                        />
+                        {!isSelectingAllRepositories && (
+                            <button className="add-repo-button" onClick={addCustomBatchRow}>
+                                + Add Repository
+                            </button>
+                        )}
+                    </div>
+                </section>
+
                 {commandMode === "uniform" && (
-                    <div className="batch-command-row">
-                        <h3 style={{ color: "#00bfff", marginBottom: "8px" }}>
-                            Uniform Shell Commands
-                        </h3>
-                        <div
-                            style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                marginBottom: "10px",
-                            }}
-                        >
+                    <section className="uniform-command-section">
+                        <h3>Uniform Shell Commands</h3>
+                        <div className="uniform-commands-list">
                             {uniformBatchRows[0].commands.map(cmd => (
-                                <div
-                                    key={cmd.id}
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "8px",
-                                        marginBottom: "8px",
-                                    }}
-                                >
+                                <div key={cmd.id} className="command-input-row">
                                     <input
                                         type="text"
-                                        style={{marginTop: "16px"}}
                                         className="command-input"
                                         value={cmd.first}
-                                        placeholder="Enter git command (e.g. git pull)"
+                                        placeholder="Enter git command (e.g., git pull)"
                                         onChange={e => updateUniformShellCommand(cmd.id, e.target.value)}
                                     />
                                     <button
-                                        className="remove-button"
+                                        className="remove-command-button"
                                         onClick={() => deleteUniformShellCommand(cmd.id)}
                                     >
                                         −
                                     </button>
                                 </div>
                             ))}
+                            <button
+                                className="add-command-button"
+                                type="button"
+                                onClick={addUniformShellCommandRow}
+                            >
+                                + Add Command
+                            </button>
                         </div>
-                        <button
-                            className="add-button"
-                            type="button"
-                            onClick={addUniformShellCommandRow}
-                        >
-                            +
-                        </button>
-                    </div>
+                    </section>
                 )}
-                {customBatchRows.map(row => (
-                    <CustomBatchCommandRow
-                        key={row.id}
-                        id={row.id}
-                        repositoryId={row.repositoryId}
-                        commands={row.commands}
-                        onDelete={deleteCustomBatchRow}
-                        onUpdate={updateCustomBatchRow}
-                        commandMode={commandMode}
-                    />
-                ))}
+
+                <section className="custom-commands-section">
+                    {customBatchRows.map(row => (
+                        <CustomBatchCommandRow
+                            key={row.id}
+                            id={row.id}
+                            repositoryId={row.repositoryId}
+                            commands={row.commands}
+                            onDelete={deleteCustomBatchRow}
+                            onUpdate={updateCustomBatchRow}
+                            commandMode={commandMode}
+                        />
+                    ))}
+                </section>
+
                 {notification && (
                     <NotificationModal
                         title={notification.title}
@@ -345,28 +327,16 @@ const BatchOperationsTab: React.FC = () => {
                         onClose={closeModal}
                     />
                 )}
-                <br />
-                <button
-                    className="submit-button"
-                    type="submit"
-                    onClick={executeBatchOperation}
-                >
-                    Run Batch Git Commands
-                </button>
 
-                <div className="batch-page">
-                    <div
-                        style={
-                        {
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginTop: "20px",
-                            marginBottom: "8px",
-                        }
-                    }
-                    >
-                        <h3 style={{ margin: 0 }}>Operation Output</h3>
+                <div className="run-batch-section">
+                    <button className="run-batch-button" onClick={executeBatchOperation}>
+                        Run Batch Git Command
+                    </button>
+                </div>
+
+                <section className="output-section">
+                    <div className="output-header">
+                        <h3>Operation Output</h3>
                         {output && output.length > 0 && (
                             <button
                                 className="clear-output-button"
@@ -377,25 +347,22 @@ const BatchOperationsTab: React.FC = () => {
                         )}
                     </div>
                     <div className="output-window">
-                        {output && output.length === 0 && <p>No operations executed yet.</p>}
-
+                        {output?.length === 0 && <p className="no-output-text">No operations executed yet.</p>}
                         {output?.map((result, index) => (
                             <div
                                 key={index}
                                 className={`output-entry ${result.success ? "success" : "failure"}`}
                             >
-                                <div>
-                                    <strong>{result.repoName}: {result.executedCommand}</strong>
+                                <div className="output-header-row">
+                                    <strong>Repository: {result.repoName}</strong>
                                     <span className="status-icon"></span>
                                 </div>
-                                {result.message && (
-                                    <div className="output-message">{result.message}</div>
-                                )}
+                                <span className="output-command">&gt; {result.executedCommand}</span>
+                                <span className="output-stdout">{result.message}</span>
                             </div>
                         ))}
                     </div>
-                </div>
-
+                </section>
             </div>
         </>
     );

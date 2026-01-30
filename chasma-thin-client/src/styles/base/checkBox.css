@@ -1,0 +1,66 @@
+﻿.themed-checkbox {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    font-family: "Fira Code", monospace;
+    font-size: 0.95rem;
+    gap: 12px;
+    user-select: none;
+}
+
+.themed-checkbox input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.checkbox-custom {
+    width: 48px;
+    height: 24px;
+    background: #334155;
+    border-radius: 9999px;
+    position: relative;
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.4);
+}
+
+.checkbox-custom::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: #cbd5e1;
+    border-radius: 50%;
+    transition: transform 0.3s ease, background 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.themed-checkbox input[type="checkbox"]:checked + .checkbox-custom {
+    background: #22d3ee;
+}
+
+.themed-checkbox input[type="checkbox"]:checked + .checkbox-custom::before {
+    transform: translateX(24px);
+    background: #020617;
+}
+
+.themed-checkbox:hover .checkbox-custom {
+    background: #475569;
+}
+
+.themed-checkbox:hover input[type="checkbox"]:checked + .checkbox-custom {
+    background: #38bdf8;
+}
+
+.checkbox-label {
+    color: #cbd5e1;
+    transition: color 0.2s ease;
+}
+
+.themed-checkbox:hover .checkbox-label {
+    color: #22d3ee;
+}

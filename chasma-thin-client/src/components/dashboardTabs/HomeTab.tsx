@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from "react";
-import '../../css/DasboardTab.css';
 import GitRepoOverviewCard from "../GitRepoOverviewCard";
 import {
     DeleteRepositoryRequest,
@@ -71,8 +70,8 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
 
         retrieveUserRepositoryConfiguration()
             .catch(e => {
-            console.error(e.message);
-        });
+                console.error(e.message);
+            });
     }, []);
 
     useEffect(() => {
@@ -80,7 +79,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         window.addEventListener("click", closeMenu);
         return () => window.removeEventListener("click", closeMenu);
     }, []);
-
 
     /** Gets or sets the notification **/
     const [notification, setNotification] = useState<{
@@ -218,28 +216,35 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
 
     return (
         <>
-            <div className="page">
-                <h1 className="page-title">Multi-Repository Manager Home🏠</h1>
-                <p className="page-description"
-                   style={{ textAlign: "center" }}>{`${user?.username}, manage any of the registered repositories found on your filesystem.`}</p>
+            <div>
+                <div>
+                    <h1>Manage Git. Effortlessly.</h1>
+                    <p>{`${user?.username}, manage any of the registered repositories found on your filesystem.`}</p>
+                </div>
+
                 {notification && (
                     <NotificationModal
                         title={notification.title}
                         message={notification.message}
                         isError={notification.isError}
                         loading={notification.loading}
-                        onClose={closeModal} />
+                        onClose={closeModal}
+                    />
                 )}
-                <div className="card-container">
+
+                <div>
                     {localGitRepositories && localGitRepositories.length > 0 && (
                         localGitRepositories.map((repo) => (
-                            <GitRepoOverviewCard key={repo.id}
-                                                 repository={repo}
-                                                 url={`/status/${repo.name}/${repo.id}`}
-                                                 onDelete={handleRepoDelete}
-                                                 onContextMenu={(e) => handleContextMenu(e, repo)} />
+                            <GitRepoOverviewCard
+                                key={repo.id}
+                                repository={repo}
+                                url={`/status/${repo.name}/${repo.id}`}
+                                onDelete={handleRepoDelete}
+                                onContextMenu={(e) => handleContextMenu(e, repo)}
+                            />
                         ))
                     )}
+
                     {contextMenu && (
                         <div
                             className="context-menu"
@@ -263,15 +268,13 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                         </div>
                     )}
                 </div>
-                    <br/>
-                    <button
-                        className="submit-button"
-                        type="submit"
-                        onClick={handleAddLocalGitRepositories}
-                    >
-                        Add Git Repos from Local Machine
-                    </button>
-                <br/>
+                <button
+                    className="submit-button"
+                    type="submit"
+                    onClick={handleAddLocalGitRepositories}
+                >
+                    Add Git Repos from Local Machine
+                </button>
             </div>
         </>
     );

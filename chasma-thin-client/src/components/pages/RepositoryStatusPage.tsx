@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import "../../css/RepositoryStatusPage.css";
-import "../../css/InfoTable.css";
 import {
     ApplyStagingActionRequest,
     GitDiffRequest,
@@ -13,7 +11,6 @@ import {
 import NotificationModal from "../modals/NotificationModal";
 import CommitModal from "../modals/CommitModal";
 import PushModal from "../modals/PushModal";
-import { isBlankOrUndefined } from "../../stringHelperUtil";
 import CheckoutModal from "../modals/CheckoutModal";
 import PullRequestModal from "../modals/PullRequestModal";
 import CreateIssueModal from "../modals/CreateIssueModal";
@@ -174,7 +171,8 @@ const RepositoryStatusPage: React.FC = () => {
             setBranchName(response.branchName);
             setBranchUrl(response.remoteUrl);
             setCommitHash(response.commitHash);
-        } catch {
+        } catch (e) {
+            console.error(e);
             setNotification({
                 title: "Failed to perform 'git status' operation!",
                 message: "An internal server error has occurred. Review logs.",
@@ -185,12 +183,13 @@ const RepositoryStatusPage: React.FC = () => {
 
     /**
      * Handles the request to apply the staging action to the selected file.
+     * @param selectedFile The selected file.
      */
-    async function handleApplyStagingActionRequest() {
-        const stagingAction = !selectedFile?.isStaged
+    async function handleApplyStagingActionRequest(selectedFile: RepositoryStatusElement) {
+        const stagingAction = !selectedFile.isStaged
         const request = new ApplyStagingActionRequest();
-        request.repoKey = selectedFile?.repositoryId;
-        request.fileName = selectedFile?.filePath;
+        request.repoKey = selectedFile.repositoryId;
+        request.fileName = selectedFile.filePath;
         request.isStaging = stagingAction;
 
         try {
@@ -213,7 +212,8 @@ const RepositoryStatusPage: React.FC = () => {
                 setSelectedFile(file);
                 await handleGetGitDiffRequest(file, stagingAction);
             }
-        } catch {
+        } catch (e) {
+            console.error(e);
             setNotification({
                 title: `Failed to perform '${stagingAction ? "stage" : "unstage"}' operation!`,
                 message: "An internal server error has occurred. Review logs.",
@@ -261,7 +261,8 @@ const RepositoryStatusPage: React.FC = () => {
                 message: "Close to dismiss.",
                 isError: false,
             });
-        } catch {
+        } catch (e) {
+            console.error(e);
             setNotification({
                 title: "Could not pull changes!",
                 message: "An internal server error has occurred. Review logs.",
@@ -275,8 +276,8 @@ const RepositoryStatusPage: React.FC = () => {
      * @param file The file to be diffed.
      * @param isStaged Flag indicating whether the file is in the staging area.
      */
-    async function handleGetGitDiffRequest(file: RepositoryStatusElement, isStaged: boolean | undefined) {
-        if (!repoId) return;
+    async function handleGetGitDiffRequest(file: RepositoryStatusElement | null, isStaged: boolean | undefined) {
+        if (!repoId || file === null) return;
         const request = new GitDiffRequest();
         request.repositoryId = repoId;
         request.filePath = file.filePath;
@@ -299,148 +300,202 @@ const RepositoryStatusPage: React.FC = () => {
      * @param file The file to be selected.
      * @param isStaged Flag indicating whether the file is in the staging area.
      */
-    const handleSelectFile = (file: RepositoryStatusElement, isStaged: boolean) => {
+    const handleSelectFile = (file: RepositoryStatusElement | null, isStaged: boolean) => {
         setSelectedFile(file);
         handleGetGitDiffRequest(file, isStaged);
     };
 
     /** The parsed unified diff. */
     const parsedDiff = parseUnifiedDiff(rawDiff);
+
     return (
-        <>
+        <div className="dashboard-container">
             <aside className="sidebar">
-                <div className="tab" style={{ marginTop: "150px" }} onClick={() => navigate("/home")}>Home</div>
-                <br />
-                <div className="tab" onClick={handleGitStatusRequest}>Refresh Repo Status ⟳</div>
-                <div className="tab" onClick={handlePullRequest}>Pull ↓</div>
-                <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit ↑</div>
-                <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ↗</div>
-                <br />
-                <div className="tab" onClick={() => setIsCheckingOut(true)}>Checkout Branch</div>
-                <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch</div>
-                <div className="tab" onClick={() => setIsCreatingPullRequest(true)}>Create Pull Request</div>
-                <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create Issue</div>
-                <br />
-                <div className="tab" onClick={() => setIsExecutingShellCommands(true)}>Custom Shell Commands</div>
-            </aside>
-            <h1 className="repository-title-header">{repoName} Status Manager</h1>
-            <div className="page-layout">
-                <div className="left-panel">
-                    <table className="info-table summary-table" onClick={handleNavigateToBranchUrl}>
-                        <caption>{`${branchName} - ${!isBlankOrUndefined(commitHash) ? commitHash : ""}`}</caption>
-                        <thead>
-                        <tr><th colSpan={2}>Repository Summary</th></tr>
-                        </thead>
-                        <tbody>
-                        <tr><td>Commits Ahead</td><td>{commitsAhead}</td></tr>
-                        <tr><td>Commits Behind</td><td>{commitsBehind}</td></tr>
-                        </tbody>
-                    </table>
-                    <br/>
-                    <div className="file-changes-container">
-                        <h1 className="page-description">Staged Changes</h1>
-                        <table className="info-table">
-                            {statusElements?.filter(e => e.isStaged).map((element, index) => (
-                                <tbody key={index}>
-                                <tr>
-                                    <td onClick={() => handleSelectFile(element, true)}>{element.filePath}</td>
-                                </tr>
-                                </tbody>
-                            ))}
-                        </table>
-                    </div>
-                    <div className="file-changes-container">
-                        <h1 className="page-description">Unstaged Changes</h1>
-                        <table className="info-table">
-                            {statusElements?.filter(e => !e.isStaged).map((element, index) => (
-                                <tbody key={index}>
-                                <tr>
-                                    <td onClick={() => handleSelectFile(element, false)}>{element.filePath}</td>
-                                </tr>
-                                </tbody>
-                            ))}
-                        </table>
-                    </div>
+                <div className="sidebar-profile">
+                    <span className="profile-icon">📁</span>
+                    <span>{repoName}</span>
                 </div>
-                <div className="diff-right-panel diff-resizable">
-                    <div style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "8px", }}>
-                        <button
-                            className="submit-button"
-                            onClick={() => setIsSplitView(!isSplitView)}
-                        >
-                            {isSplitView ? "Toggle Unified View" : "Toggle Split View"}
-                        </button>
-                        <button
-                            className="submit-button"
-                            style={{background: selectedFile?.isStaged ? "red" : "green"}}
-                            hidden={selectedFile === null}
-                            onClick={handleApplyStagingActionRequest}
-                        >
-                            {selectedFile?.isStaged ? "Unstage" : "Stage"}
-                        </button>
-                    </div>
-                    {selectedFile ? (
-                        <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
-                            {/* Unified View */}
-                            {!isSplitView && (
-                                <div className="diff-panel">
-                                    <div className="diff-panel-header">Unified Diff: {selectedFile.filePath}</div>
-                                    {parsedDiff.map((line, i) => (
-                                        <div
-                                            key={i}
-                                            className={`diff-line ${
-                                                line.type === "add"
-                                                    ? "diff-added"
-                                                    : line.type === "remove"
-                                                        ? "diff-removed"
-                                                        : ""
-                                            }`}
-                                        >
-                                            <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
-                                            <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
-                                            <span className="diff-code">{line.content}</span>
-                                        </div>
-                                    ))}
+                <div className="tab" style={{ marginTop: "20px" }} onClick={() => navigate("/home")}>Home🏠</div>
+                <div className="tab" onClick={handleGitStatusRequest}>Refresh Repo Status 🔄</div>
+                <div className="tab" onClick={handlePullRequest}>Pull ⬇️</div>
+                <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
+                <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>
+                <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿➡️</div>
+                <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️🌿</div>
+                <div className="tab" onClick={() => setIsCreatingPullRequest(true)}>Create Pull Request📥🌿</div>
+                <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create Issue🐛</div>
+                <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsExecutingShellCommands(true)}>Custom Shell Commands🖥️</div>
+            </aside>
+
+            <div className="content">
+                <div className="main-layout">
+                    {/* Left side: Repo summary + staged/unstaged */}
+                    <div className="left-panel">
+                        <div className="panel-card">
+                            <h2 className="page-description">Repository Summary</h2>
+                            <div className="repo-summary" onClick={handleNavigateToBranchUrl}>
+                                <div className="repo-summary-item">
+                                    <span className="repo-summary-label">Branch:</span>
+                                    <span className="repo-summary-value">{branchName}</span>
                                 </div>
-                            )}
-                            {isSplitView && (
-                                <>
-                                    <div className="diff-panel">
-                                        <div className="diff-panel-header">Original: {selectedFile.filePath}</div>
-                                        {parsedDiff.map((line, i) => (
-                                            <div
-                                                key={i}
-                                                className={`diff-line ${line.type === "remove" ? "diff-removed" : ""}`}
-                                            >
-                                                <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
-                                                <span className="diff-code">{line.type === "add" ? "" : line.content}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="diff-panel">
-                                        <div className="diff-panel-header">Modified: {selectedFile.filePath}</div>
-                                        {parsedDiff.map((line, i) => (
-                                            <div
-                                                key={i}
-                                                className={`diff-line ${line.type === "add" ? "diff-added" : ""}`}
-                                            >
-                                                <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
-                                                <span className="diff-code">{line.type === "remove" ? "" : line.content}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </>
+                                <div className="repo-summary-item">
+                                    <span className="repo-summary-label">Current Commit:</span>
+                                    <span className="repo-summary-value">{commitHash}</span>
+                                </div>
+                                <div className="repo-summary-item">
+                                    <span className="repo-summary-label">Commits Ahead:</span>
+                                    <span className="repo-summary-value">{commitsAhead}</span>
+                                </div>
+                                <div className="repo-summary-item">
+                                    <span className="repo-summary-label">Commits Behind:</span>
+                                    <span className="repo-summary-value">{commitsBehind}</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div className="panel-card">
+                            <h2 className="page-description">Staged Changes</h2>
+                            {statusElements?.filter(e => e.isStaged).length ? (
+                                <table className="status-table">
+                                    <thead>
+                                    <tr>
+                                        <th>File</th>
+                                        <th>Action</th>
+                                    </tr>
+                                    </thead>
+                                    {statusElements?.filter(e => e.isStaged).map((element, index) => (
+                                        <tbody key={index}>
+                                        <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
+                                            <td onClick={() => handleSelectFile(element, true)}>{element.filePath}</td>
+                                            <td>
+                                                <button
+                                                    className="stage-button unstage"
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        handleApplyStagingActionRequest(element);
+                                                    }}
+                                                >
+                                                    -
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    ))}
+                                </table>
+                            ) : <div className="empty-table">No staged changes</div>}
+                        </div>
+
+                        <div className="panel-card">
+                            <h2 className="page-description">Unstaged Changes</h2>
+                            {statusElements?.filter(e => !e.isStaged).length ? (
+                                <table className="status-table">
+                                    <thead>
+                                    <tr>
+                                        <th>File</th>
+                                        <th>Action</th>
+                                    </tr>
+                                    </thead>
+                                    {statusElements?.filter(e => !e.isStaged).map((element, index) => (
+                                        <tbody key={index}>
+                                        <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
+                                            <td onClick={() => handleSelectFile(element, false)}>{element.filePath}</td>
+                                            <td>
+                                                <button
+                                                    className="stage-button stage"
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        handleApplyStagingActionRequest(element);
+                                                    }}
+                                                >
+                                                    +
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    ))}
+                                </table>
+                            ) : <div className="empty-table">No unstaged changes</div>}
+                        </div>
+                    </div>
+
+
+
+                    {/* Right side: Diff viewer */}
+                    <div className="right-panel">
+                        <div className="diff-toolbar">
+                            <button
+                                className="submit-button"
+                                onClick={() => setIsSplitView(!isSplitView)}
+                            >
+                                {isSplitView ? "Toggle Unified View" : "Toggle Split View"}
+                            </button>
+                            {selectedFile && (
+                                <button
+                                    className="submit-button"
+                                    style={{ background: selectedFile?.isStaged ? "red" : "green" }}
+                                    onClick={() => handleApplyStagingActionRequest(selectedFile)}
+                                >
+                                    {selectedFile?.isStaged ? "Unstage" : "Stage"}
+                                </button>
                             )}
                         </div>
-                    ) : (
-                        <div style={{ color: "#ccc", padding: "12px" }}>Select a file to view diff</div>
-                    )}
+
+                        {selectedFile ? (
+                            <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
+                                {!isSplitView && (
+                                    <div className="diff-panel">
+                                        <div className="diff-panel-header">Unified Diff: {selectedFile.filePath}</div>
+                                        {parsedDiff.map((line, i) => (
+                                            <div
+                                                key={i}
+                                                className={`diff-line ${
+                                                    line.type === "add" ? "diff-added" : line.type === "remove" ? "diff-removed" : ""
+                                                }`}
+                                            >
+                                                <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
+                                                <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
+                                                <span className="diff-code">{line.content}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {isSplitView && (
+                                    <>
+                                        <div className="diff-panel">
+                                            <div className="diff-panel-header">Original: {selectedFile.filePath}</div>
+                                            {parsedDiff.map((line, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`diff-line ${line.type === "remove" ? "diff-removed" : ""}`}
+                                                >
+                                                    <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
+                                                    <span className="diff-code">{line.type === "add" ? "" : line.content}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="diff-panel">
+                                            <div className="diff-panel-header">Modified: {selectedFile.filePath}</div>
+                                            {parsedDiff.map((line, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`diff-line ${line.type === "add" ? "diff-added" : ""}`}
+                                                >
+                                                    <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
+                                                    <span className="diff-code">{line.type === "remove" ? "" : line.content}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="empty-table">Select a file to view diff</div>
+                        )}
+                    </div>
                 </div>
             </div>
+
             {notification && (
                 <NotificationModal
                     title={notification.title}
@@ -450,48 +505,52 @@ const RepositoryStatusPage: React.FC = () => {
                     onClose={closeModal}
                 />
             )}
+
             {isEditingCommitMessage &&
                 <CommitModal
                     repositoryId={repoId}
                     email={user?.email}
                     userId={user?.userId}
                     onClose={() => setIsEditingCommitMessage(false)}
-                    onSuccess={() => setSelectedFile(null)} />
+                    onSuccess={() => handleSelectFile(null, false)} />
             }
             {isPushingChanges &&
                 <PushModal
                     repositoryId={repoId}
                     onClose={() => setIsPushingChanges(false)}
-                    onSuccess={() => setSelectedFile(null)} />
+                    onSuccess={() => handleSelectFile(null, false)} />
             }
             {isCheckingOut &&
                 <CheckoutModal
                     repositoryId={repoId}
                     onClose={() => setIsCheckingOut(false)}
-                    onSuccess={() => setSelectedFile(null)} />
+                    onSuccess={() => handleSelectFile(null, false)} />
             }
             {isCreatingPullRequest &&
                 <PullRequestModal
-                    onClose={() => setIsCreatingPullRequest(false)}
-                    repositoryId={repoId} repoName={repoName} />
+                    repositoryId={repoId}
+                    repoName={repoName}
+                    onClose={() => setIsCreatingPullRequest(false)}  />
             }
             {isCreatingIssue &&
                 <CreateIssueModal
-                    onClose={() => setIsCreatingIssue(false)}
-                    repositoryId={repoId} repoName={repoName} />
+                    repositoryId={repoId}
+                    repoName={repoName}
+                    onClose={() => setIsCreatingIssue(false)} />
             }
             {isDeletingBranch &&
                 <DeleteBranchModal
-                    onClose={() => setIsDeletingBranch(false)}
-                    repositoryId={repoId} />
+                    repositoryId={repoId}
+                    onClose={() => setIsDeletingBranch(false)}  />
             }
             {isExecutingShellCommands &&
                 <ExecuteShellCommandsModal
                     repositoryId={repoId}
                     onClose={() => setIsExecutingShellCommands(false)}
-                    onSuccess={() => setSelectedFile(null)} />
+                    onSuccess={() => handleSelectFile(null, false)} />
             }
-        </>
+        </div>
     );
 };
+
 export default RepositoryStatusPage;

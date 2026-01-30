@@ -127,24 +127,22 @@ const ExecuteShellCommandsModal: React.FC<IExecuteShellCommandsProps> = (props: 
     return (
             <>
                 <div className="modal-backdrop" onClick={props.onClose}>
-                    <div className="commit-modal" onClick={(e) => e.stopPropagation()}>
-
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
                         {!commandsExecuted && (
                             <>
-                                <div className="header-row">
-                                    {errorMessage && <h3 className="commit-modal-message">{errorMessage}</h3>}
-                                    <h2>Enter shell commands</h2>
+                                <div className="command-row modern-input-row">
+                                    {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
+                                    <h2>Enter shell commands:</h2>
                                     <button
                                         type="button"
-                                        id="addClaimButton"
-                                        className="circle-button"
+                                        className="add-button modern-add"
                                         onClick={addCustomShellCommandRow}
                                     >
                                         +
                                     </button>
                                 </div>
                                 <br/>
-                                <div id="customClaimsContainer">
+                                <div>
                                     {rows.map(row => (
                                         <div
                                             key={row.id}
@@ -157,28 +155,27 @@ const ExecuteShellCommandsModal: React.FC<IExecuteShellCommandsProps> = (props: 
                                             <input
                                                 type="text"
                                                 placeholder="Example: git log --oneline"
-                                                className="input-field"
+                                                className="command-input modern-input"
                                                 value={row.first}
                                                 onChange={e => handleShellCommandChange(row.id, "first", e.target.value)}/>
                                             <button
-                                                className="delete-button"
+                                                className="remove-button modern-remove"
                                                 type="button"
                                                 onClick={() => deleteShellCommandRow(row.id)}
                                             >
-                                                Remove
+                                                -
                                             </button>
                                         </div>
                                     ))}
                                     <br/>
                                 </div>
-                                <div>
-                                    <button className="commit-modal-button"
-                                            style={{marginRight: "50px"}}
+                                <div className="modal-actions">
+                                    <button className="modal-button primary"
                                             onClick={handleExecuteShellCommandsRequest}
                                     >
                                         Execute Commands
                                     </button>
-                                    <button className="commit-modal-button"
+                                    <button className="modal-button secondary"
                                             onClick={props.onClose}
                                     >
                                         Close
@@ -188,8 +185,8 @@ const ExecuteShellCommandsModal: React.FC<IExecuteShellCommandsProps> = (props: 
                         )}
                         {commandsExecuted && (
                             <>
-                                <div className="commit-modal-title">
-                                    <h2 style={{color: "#00bfff"}}>Console Output</h2>
+                                <div className="modal-title">
+                                    <h2>Console Output</h2>
                                 </div>
                                 <br/>
                                 <div className="output-window">
@@ -198,24 +195,20 @@ const ExecuteShellCommandsModal: React.FC<IExecuteShellCommandsProps> = (props: 
                                             key={index}
                                             className={`output-entry ${result.success ? "success" : "failure"}`}
                                         >
-                                            <div>
-                                                <strong>{result.executedCommand}</strong>
-                                                <span className="status-icon"></span>
-                                            </div>
+                                            <span className="output-command">&gt; {result.executedCommand}</span>
                                             {result.message && (
-                                                <div className="output-message">{result.message}</div>
+                                                <div className="output-stdout">{result.message}</div>
                                             )}
                                         </div>
                                     ))}
                                 </div>
-                                <div>
-                                    <button className="commit-modal-button"
-                                            style={{marginRight: "50px"}}
+                                <div className="modal-actions">
+                                    <button className="modal-button primary"
                                             onClick={resetForm}
                                     >
                                         Restart
                                     </button>
-                                    <button className="commit-modal-button"
+                                    <button className="modal-button secondary"
                                             onClick={props.onClose}
                                     >
                                         Close

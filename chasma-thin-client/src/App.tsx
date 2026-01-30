@@ -1,5 +1,5 @@
 import React from 'react';
-import './css/App.css';
+import './styles/App.css';
 import Dashboard from "./components/Dashboard";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import RepositoryStatusPage from "./components/pages/RepositoryStatusPage";

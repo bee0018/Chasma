@@ -76,25 +76,28 @@ const CustomBatchCommandRow: React.FC<BatchCommandRowProps> = (
     };
 
     return (
-        <div className="batch-command-row">
-            <button
-                className="remove-button"
-                title="Remove Repository"
-                onClick={() => onDelete(id)}
-            >
-                x
-            </button>
-            <button
-                className="add-button"
-                type="button"
-                onClick={addCustomShellCommandRow}
-                hidden={commandMode === "uniform"}
-            >
-                +
-            </button>
-            <div className="repo-section">
+        <div className="batch-command-row modern">
+            <div className="batch-header">
+                <button
+                    className="remove-button modern-remove"
+                    title="Remove Repository"
+                    onClick={() => onDelete(id)}
+                >
+                    ×
+                </button>
+                <button
+                    className="add-button modern-add"
+                    type="button"
+                    onClick={addCustomShellCommandRow}
+                    hidden={commandMode === "uniform"}
+                >
+                    +
+                </button>
+            </div>
+
+            <div className="repo-section modern">
                 <select
-                    className="repo-dropdown"
+                    className="repo-dropdown modern-input"
                     value={repositoryId ?? ""}
                     onChange={(e) => handleRepoChange(e.target.value)}
                 >
@@ -105,8 +108,9 @@ const CustomBatchCommandRow: React.FC<BatchCommandRowProps> = (
                         </option>
                     ))}
                 </select>
+
                 {selectedRepo && (
-                    <div className="repo-metadata">
+                    <div className="repo-metadata modern-card">
                         <div className="repo-meta-line">
                             <strong>Repo Title:</strong> {selectedRepo.name}
                         </div>
@@ -119,19 +123,20 @@ const CustomBatchCommandRow: React.FC<BatchCommandRowProps> = (
                     </div>
                 )}
             </div>
+
             {commandMode === "custom" && (
-                <div className="command-input-wrapper">
+                <div className="command-input-wrapper modern">
                     {commands.map(cmd => (
-                        <div key={cmd.id}>
+                        <div key={cmd.id} className="command-row modern-input-row">
                             <input
                                 type="text"
-                                className="command-input"
+                                className="command-input modern-input"
                                 value={cmd.first}
                                 onChange={e => handleShellCommandChange(cmd.id, e.target.value)}
                                 placeholder="Enter git command (e.g. git pull)"
                             />
                             <button
-                                className="remove-button"
+                                className="remove-button modern-remove"
                                 title="Remove shell command"
                                 onClick={() => deleteShellCommandRow(cmd.id)}
                             >
@@ -139,10 +144,8 @@ const CustomBatchCommandRow: React.FC<BatchCommandRowProps> = (
                             </button>
                         </div>
                     ))}
-                    <br />
                 </div>
             )}
-            <br />
         </div>
     );
 };

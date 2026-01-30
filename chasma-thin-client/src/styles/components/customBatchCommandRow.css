@@ -1,0 +1,155 @@
+﻿.batch-command-row.modern {
+    background: linear-gradient(145deg, #1b1b1b, #252525);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.batch-command-row.modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+}
+
+.batch-header {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.remove-button,
+.add-button {
+    background-color: #22d3ee;
+    color: #17020f;
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.remove-button:hover,
+.add-button:hover {
+    transform: translateY(-1px);
+}
+
+.remove-button.modern-remove {
+    background-color: transparent;
+    color: #f87171;
+    border: 1px solid #334155;
+    padding: 4px 10px;
+    font-size: 1rem;
+}
+
+.remove-button.modern-remove:hover {
+    background-color: #1e293b;
+    color: #f87171;
+}
+
+.repo-section.modern {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.repo-dropdown.modern-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #1e293b;
+    background-color: #1f2937;
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.repo-dropdown.modern-input:focus {
+    outline: none;
+    border-color: #22d3ee;
+    background-color: #111827;
+}
+
+.repo-metadata.modern-card {
+    background: #1f2937;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.repo-meta-line strong {
+    color: #22d3ee;
+}
+
+.command-input-wrapper.modern {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.command-row.modern-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.command-input.modern-input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #1e293b;
+    background-color: #1f2937;
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.command-input.modern-input:focus {
+    outline: none;
+    border-color: #22d3ee;
+    box-shadow: 0 0 6px rgba(34, 211, 238, 0.5);
+}
+
+@media (max-width: 600px) {
+    .batch-command-row.modern {
+        padding: 12px 14px;
+    }
+
+    .repo-metadata.modern-card {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+
+    .command-input.modern-input {
+        font-size: 0.9rem;
+        padding: 10px 12px;
+    }
+}
+
+.add-button.modern-add {
+    background-color: transparent;
+    color: #4ade80; /* green */
+    border: 1px solid #334155;
+    padding: 4px 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease, color 0.15s ease;
+}
+
+.add-button.modern-add:hover {
+    background-color: #1e293b;
+    color: #4ade80;
+}

@@ -82,45 +82,37 @@ const LoginPage: React.FC = () => {
     }
 
     return (
-        <div className="dashboard-container page">
-            <div className="page-body power-container">
-                <div className="info-container" style={{ maxWidth: '400px' }}>
-                    <div className="project-logo">
-                        <ChasmaLogo />
-                    </div>
-                    <h1 className="page-title"
-                        style={{textAlign: "center"}}>Sign In</h1>
-                    <br/>
-                    <form onSubmit={handleLogin}
-                        style={{textAlign: "center"}}>
-                        <input
-                            type="text"
-                            className="input-field"
-                            placeholder="Username"
-                            value={userName}
-                            onChange={(e) => setUserName(e.target.value)}
-                            required
-                        />
-                        <input
-                            type="password"
-                            className="input-field"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                        <br/>
-                        <button type="submit" className="submit-button">
-                            Login
-                        </button>
-                    </form>
-                    <p style={{ marginTop: '15px', color: '#aaa', alignSelf: 'center' }}>
-                        Don't have an account?{' '}
-                        <Link to="/register" style={{ color: '#00bfff', textDecoration: 'none' }}>
-                            Register here
-                        </Link>
-                    </p>
+        <div className="login-page">
+            <div className="login-card">
+                <div className="login-logo">
+                    <ChasmaLogo />
                 </div>
+                <h1 className="login-title">Sign In</h1>
+                <form onSubmit={handleLogin}>
+                    <input
+                        type="text"
+                        className="input-field"
+                        placeholder="Username"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        required
+                    />
+                    <input
+                        type="password"
+                        className="input-field"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                    <button type="submit" className="submit-button">
+                        Login
+                    </button>
+                </form>
+                <p className="login-footer">
+                    Don’t have an account?{" "}
+                    <Link to="/register">Register here</Link>
+                </p>
             </div>
             {notification && (
                 <NotificationModal
