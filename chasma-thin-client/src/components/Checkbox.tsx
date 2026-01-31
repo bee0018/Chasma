@@ -1,5 +1,4 @@
 ﻿import React, { useState } from "react";
-import "../css/checkbox.css"
 
 /** Interface defining the members of the checkbox. **/
 interface ICheckboxProps {

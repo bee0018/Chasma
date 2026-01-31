@@ -1,0 +1,58 @@
+﻿.context-menu {
+    position: absolute;
+    z-index: 1100;
+    background: linear-gradient(145deg, #1b1b1b, #252525);
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #e0e0e0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    opacity: 0;
+    transform: scale(0.95);
+    animation: fadeInScale 0.15s forwards;
+}
+
+@keyframes fadeInScale {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+}
+
+.context-menu li {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #e0e0e0;
+    transition: background-color 0.2s ease, color 0.15s ease, transform 0.1s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.context-menu li:hover {
+    background-color: #111827;
+    color: #22d3ee;
+    transform: translateX(2px);
+}
+
+.context-menu li:not(:last-child) {
+    border-bottom: 1px solid #1e293b;
+}
+
+.context-menu li svg {
+    width: 16px;
+    height: 16px;
+    fill: #e0e0e0;
+    transition: fill 0.15s ease;
+}
+
+.context-menu li:hover svg {
+    fill: #22d3ee;
+}

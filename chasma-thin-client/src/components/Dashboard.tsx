@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import '../css/Dashboard.css';
 import HomeTab from "./dashboardTabs/HomeTab";
 import ApiStatusTab from "./dashboardTabs/ApiStatusTab";
 import IncludeRepositoryModal from "./modals/IncludeRepositoryModal";
@@ -105,6 +104,10 @@ const Dashboard: React.FC = () => {
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
+                <div className="sidebar-profile">
+                    <span className="profile-icon">👤</span>
+                    <span className="username">{user?.username}</span>
+                </div>
                 <div
                     className={`tab ${activeTab === "home" ? "active" : ""}`}
                     onClick={() => handleTabClick("home")}
@@ -115,32 +118,46 @@ const Dashboard: React.FC = () => {
                     className={`tab ${activeTab === "batchOperations" ? "active" : ""}`}
                     onClick={() => handleTabClick("batchOperations")}
                 >
-                    Batch Operations
+                    ⚡ Batch Ops
                 </div>
                 <div
                     className="tab"
                     onClick={() => setIsAddingRepo(true)}
                 >
-                    + Add Repo
+                    ➕ Add Repo
                 </div>
                 <div
                     className="tab"
                     onClick={() => setIsIncludingRepos(true)}
-                    >
-                    ∅ Ignored Repos
+                >
+                    🚫 Ignored Repos
                 </div>
                 <div
                     className={`tab ${activeTab === "apiStatus" ? "active" : ""}`}
                     onClick={() => handleTabClick("apiStatus")}
                 >
-                    &#x23FB; API Status
+                    🔌 API Status
                 </div>
             </aside>
+
             <main className="content">
-                {activeTab === "home" && <HomeTab reposVersion={reposVersion} />}
-                {activeTab === "batchOperations" && <BatchOperationsTab/>}
-                {activeTab === "apiStatus" && <ApiStatusTab/>}
+                {activeTab === "home" && (
+                    <div className="panel-card">
+                        <HomeTab reposVersion={reposVersion} />
+                    </div>
+                )}
+                {activeTab === "batchOperations" && (
+                    <div className="panel-card">
+                        <BatchOperationsTab />
+                    </div>
+                )}
+                {activeTab === "apiStatus" && (
+                    <div className="panel-card">
+                        <ApiStatusTab />
+                    </div>
+                )}
             </main>
+
             {isIncludingRepos && (
                 <IncludeRepositoryModal
                     onClose={() => setIsIncludingRepos(false)}

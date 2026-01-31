@@ -1,0 +1,442 @@
+﻿.batch-page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    color: #e0e0e0;
+    font-family: "Inter", sans-serif;
+}
+
+.batch-page-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.page-description {
+    font-size: 1rem;
+    color: #cbd5e1;
+}
+
+.command-mode-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.command-mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+.command-mode-button {
+    padding: 10px 28px;
+    border-radius: 12px;
+    font-weight: 600;
+    background: #1f2937;
+    border: 1px solid #334155;
+    color: #cbd5e1;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.command-mode-button.active {
+    background: #22d3ee;
+    color: #020617;
+    border-color: #22d3ee;
+}
+
+.command-mode-button:hover {
+    background: #0ea5e9;
+    transform: translateY(-1px);
+}
+
+.repository-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.add-repo-button {
+    background: #22d3ee;
+    color: #020617;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.add-repo-button:hover {
+    background: #0ea5e9;
+    transform: translateY(-1px);
+}
+
+.uniform-command-section {
+    background: linear-gradient(145deg, #1b1b1b, #252525);
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+}
+
+.uniform-commands-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.command-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.command-input {
+    flex: 1;
+    padding: 12px 16px;
+    background: #1f2937;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease;
+}
+
+.command-input:focus {
+    outline: none;
+    border-color: #22d3ee;
+}
+
+.remove-command-button {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.remove-command-button:hover {
+    transform: translateY(-1px);
+}
+
+.add-command-button {
+    align-self: flex-start;
+    background: #22d3ee;
+    color: #020617;
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.add-command-button:hover {
+    background: #0ea5e9;
+    transform: translateY(-1px);
+}
+
+.run-batch-section {
+    display: flex;
+    justify-content: center;
+    margin: 24px 0;
+}
+
+.run-batch-button {
+    padding: 14px 32px;
+    background: #22d3ee;
+    color: #020617;
+    border: none;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.run-batch-button:hover {
+    background: #0ea5e9;
+    transform: translateY(-1px);
+}
+
+.output-section {
+    background: #1f2937;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    font-family: "Fira Code", "Source Code Pro", monospace;
+}
+
+.output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.clear-output-button {
+    background: #4f4b4b;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+
+.clear-output-button:hover {
+    transform: translateY(-1px);
+    background: #616161;
+}
+
+.output-window {
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #111827;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #e0e0e0;
+    scrollbar-width: thin;
+    scrollbar-color: #4f4b4b #1f2937;
+}
+
+.output-window::-webkit-scrollbar {
+    width: 8px;
+}
+
+.output-window::-webkit-scrollbar-track {
+    background: #1f2937;
+    border-radius: 8px;
+}
+
+.output-window::-webkit-scrollbar-thumb {
+    background-color: #4f4b4b;
+    border-radius: 8px;
+}
+
+.output-entry {
+    background: #1e293b;
+    padding: 10px 14px;
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    font-family: "Fira Code", monospace;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    position: relative;
+    transition: background 0.15s ease;
+}
+
+.output-entry.success::before,
+.output-entry.failure::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 4px 0 0 4px;
+}
+
+.output-entry.success::before {
+    background-color: #22d3ee;
+}
+
+.output-entry.failure::before {
+    background-color: #ef4444;
+}
+
+.output-entry:hover {
+    background: #2c2f3a;
+}
+
+.output-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #cbd5e1;
+}
+
+.status-icon {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.output-window {
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: linear-gradient(180deg, #0f111a, #1a1c24);
+    padding: 16px;
+    border-radius: 12px;
+    font-family: "Fira Code", "Source Code Pro", monospace;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #e0e0e0;
+    scrollbar-width: thin;
+    scrollbar-color: #4f4b4b #1f2937;
+}
+
+.output-window::-webkit-scrollbar {
+    width: 8px;
+}
+
+.output-window::-webkit-scrollbar-track {
+    background: #1f2937;
+    border-radius: 8px;
+}
+
+.output-window::-webkit-scrollbar-thumb {
+    background-color: #4f4b4b;
+    border-radius: 8px;
+}
+
+.output-entry {
+    background: #1a1c24;
+    padding: 12px 14px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    font-family: "Fira Code", monospace;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    position: relative;
+    overflow-x: auto;
+    transition: background 0.15s ease;
+}
+
+.output-entry.success::before,
+.output-entry.failure::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 4px 0 0 4px;
+}
+
+.output-entry.success::before {
+    background-color: #22d3ee;
+}
+
+.output-entry.failure::before {
+    background-color: #ef4444;
+}
+
+.output-entry:hover {
+    background: #2c2f3a;
+}
+
+.output-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #cbd5e1;
+}
+
+.status-icon {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.output-entry.success .status-icon {
+    background: #22d3ee;
+}
+
+.output-entry.failure .status-icon {
+    background: #ef4444;
+}
+
+.output-entry .output-command {
+    display: block;
+    color: #22d3ee;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.output-entry .output-stdout {
+    color: #e0e0e0;
+}
+
+.output-entry .output-stderr {
+    color: #f87171;
+    font-weight: 500;
+}
+
+.output-entry .cursor {
+    display: inline-block;
+    width: 8px;
+    background-color: #22d3ee;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0; }
+}
+
+.no-output-text {
+    text-align: center;
+    color: #94a3b8;
+    font-style: italic;
+    padding: 16px 0;
+}
+
+@media (max-width: 768px) {
+    .output-window {
+        max-height: 300px;
+        padding: 10px;
+    }
+
+    .output-entry {
+        font-size: 0.9rem;
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .command-mode-toggle {
+        flex-direction: column;
+    }
+
+    .repository-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .command-input-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .run-batch-button {
+        width: 100%;
+    }
+}

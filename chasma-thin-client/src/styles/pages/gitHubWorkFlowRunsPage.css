@@ -1,0 +1,247 @@
+﻿:root {
+    --color-bg: #121212;
+}
+.workflow-page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    color: #e0e0e0;
+    font-family: "Inter", sans-serif;
+}
+
+.workflow-page-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.page-description {
+    font-size: 1rem;
+    color: #cbd5e1;
+}
+
+.submit-button {
+    background: #22d3ee;
+    color: #020617;
+    border: none;
+    border-radius: 16px;
+    padding: 10px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-bottom: 16px;
+}
+
+.submit-button:hover {
+    background: #0ea5e9;
+    transform: translateY(-1px);
+}
+
+.workflow-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.workflow-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.workflow-card {
+    background: #252525;
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.workflow-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+.workflow-card.success {
+    border-left: 6px solid #22d3ee;
+}
+
+.workflow-card.failure {
+    border-left: 6px solid #ef4444;
+}
+
+.workflow-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.workflow-result {
+    font-size: 1.25rem;
+}
+
+.workflow-branch {
+    color: #cbd5e1;
+}
+
+.workflow-run-number {
+    color: #94a3b8;
+}
+
+.workflow-card-body p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+    color: #e0e0e0;
+}
+
+.no-workflows {
+    text-align: center;
+    color: #94a3b8;
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+.view-toggle {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    gap: 12px;
+}
+
+.toggle-button {
+    background: #1f2937;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 8px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.toggle-button.active {
+    background: #22d3ee;
+    color: #020617;
+    border-color: #22d3ee;
+}
+
+.toggle-button:hover {
+    background: #0ea5e9;
+    transform: translateY(-1px);
+}
+
+.workflow-actions-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.workflow-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.workflow-table th, .workflow-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #334155;
+}
+
+.workflow-table th {
+    text-align: left;
+    color: #22d3ee;
+}
+
+.workflow-table tr.success {
+    border-left: 4px solid #22d3ee;
+}
+
+.workflow-table tr.failure {
+    border-left: 4px solid #ef4444;
+}
+
+.workflow-table tr:hover {
+    background: #1f2937;
+    cursor: pointer;
+}
+
+.workflow-actions .action-button {
+    background: #22d3ee;
+    color: #020617;
+    border: none;
+    border-radius: 16px;
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.workflow-actions .action-button:hover {
+    background: #0ea5e9;
+    transform: translateY(-1px);
+}
+
+.workflow-actions .secondary-button {
+    background: #1f2937;
+    color: #22d3ee;
+    border: 1px solid #22d3ee;
+    border-radius: 16px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.workflow-actions .secondary-button:hover {
+    background: #334155;
+}
+
+.workflow-actions-container .home-button {
+    background: #1f2937;
+    color: #22d3ee;
+    border: 1px solid #22d3ee;
+    border-radius: 16px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.workflow-actions-container .home-button:hover {
+    background: #334155;
+}
+
+.workflow-actions-container .retrieve-button {
+    background: #22d3ee;
+    color: #020617;
+    border: none;
+    border-radius: 16px;
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.workflow-actions-container .retrieve-button:hover {
+    background: #0ea5e9;
+    transform: translateY(-1px);
+}

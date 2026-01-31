@@ -98,8 +98,8 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
-                <div className="commit-modal" onClick={(e) => e.stopPropagation()}>
-                    <div className="commit-modal-icon">
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-icon-container">
                         {!errorMessage && !successfullyCheckedOut && (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -146,14 +146,12 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
                             </svg>
                         )}
                     </div>
-                    <h2 className="commit-modal-title"
-                        style={{marginTop: "-30px"}}>{title}</h2>
-                    {errorMessage && <h3 className="commit-modal-message">{errorMessage}</h3>}
+                    <h2 className="modal-title">{title}</h2>
+                    {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {branchesList && branchesList.length > 0 && (
                         <select value={branchName}
                                 onChange={(e) => setBranchName(e.target.value)}
-                                className="input-field"
-                                style={{width: "-webkit-fill-available"}}
+                                className="modal-input-field"
                         >
                             {branchesList.map((branch) => (
                                 <option key={branch} value={branch}>{branch}</option>
@@ -161,15 +159,14 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
                         </select>
                     )}
                     <br/>
-                    <div>
-                        <button className="commit-modal-button"
-                                style={{marginRight: "50px"}}
+                    <div className="modal-actions">
+                        <button className="modal-button primary"
                                 disabled={checkoutRequestSent}
                                 onClick={handleCheckoutChangesRequest}
                         >
                             Checkout
                         </button>
-                        <button className="commit-modal-button"
+                        <button className="modal-button secondary"
                                 onClick={props.onClose}
                         >
                             Close

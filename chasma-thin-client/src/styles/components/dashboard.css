@@ -1,0 +1,101 @@
+﻿.dashboard-container {
+    display: flex;
+    height: 100vh;
+    background: #121212;
+    color: #eee;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.sidebar {
+    width: 220px;
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+}
+
+.sidebar .tab {
+    padding: 12px 24px;
+    margin: 6px 0;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.sidebar .tab:hover {
+    background: #1a1a1a;
+    transform: scale(1.02);
+}
+
+.sidebar .tab.active {
+    background: #22d3ee;
+    color: #111;
+    font-weight: bold;
+    box-shadow: 0 0 12px #22d3ee;
+}
+
+.content {
+    flex-grow: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background: #181818;
+}
+
+.panel-card {
+    background: #1e1e1e;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    transition: transform 0.2s ease;
+}
+
+.panel-card:hover {
+    transform: translateY(-2px);
+}
+
+.panel-card {
+    background: linear-gradient(145deg, #1c1c1c, #242424);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.panel-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.7);
+}
+
+.panel-card h2 {
+    color: #22d3ee;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.panel-card p,
+.panel-card .panel-content {
+    color: #ccc;
+}
+
+.sidebar-profile {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: #eee;
+    border-bottom: 1px solid #222;
+    margin-bottom: 20px;
+}
+
+.sidebar-profile .profile-icon {
+    font-size: 1.2rem;
+}
+

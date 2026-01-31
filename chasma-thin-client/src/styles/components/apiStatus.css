@@ -1,0 +1,91 @@
+﻿.api-status-card {
+    max-width: 520px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    color: #e5e7eb;
+}
+
+.status-pill {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.status-online {
+    background: rgba(34, 211, 238, 0.15);
+    color: #22d3ee;
+}
+
+.status-offline {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.status-unknown {
+    background: rgba(156, 163, 175, 0.15);
+    color: #9ca3af;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status-indicator.status-online {
+    background: #22d3ee;
+}
+
+.status-indicator.status-offline {
+    background: #ef4444;
+}
+
+.status-indicator.status-unknown {
+    background: #9ca3af;
+}
+
+.status-text {
+    color: #d1d5db;
+    font-size: 0.9rem;
+}
+
+.status-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input-field.subtle {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+.api-status-input-field {
+    width: 100%;
+    padding: 14px 16px;
+    background: #1f2937;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}

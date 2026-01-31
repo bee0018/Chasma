@@ -5,7 +5,7 @@ import {LocalGitRepository} from "../API/ChasmaWebApiClient";
 /** The properties of the Card component. */
 interface IProps {
     /** The repository. **/
-    repository: LocalGitRepository
+    repository: LocalGitRepository;
 
     /** The URL of the repository. **/
     url: string | undefined;
@@ -27,39 +27,40 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
     const navigate = useNavigate();
 
     return (
-        <div className="card"
-             onClick={() => navigate(`${props.url}`)}
-             onContextMenu={props.onContextMenu}
+        <div
+            className="repo-row"
+            onClick={() => navigate(`${props.url}`)}
+            onContextMenu={props.onContextMenu}
         >
-            <span
-                className="card-x"
-                onClick={async (e) => {
-                    e.stopPropagation();
-                    props.onDelete(props.repository.id);
-                }}
-            >
-                X
-            </span>
-            <div className="card-title">{props.repository.name}</div>
-            <div style={{textAlign: "left"}}>
-                <div className="card-description"><strong>ID: </strong>{props.repository.id}</div>
-                <div className="card-description"><strong>Owner: </strong>{props.repository.owner}</div>
+            <div className="repo-main">
+                <div className="repo-name">{props.repository.name}</div>
+                <div className="repo-meta">
+                    <span>ID: {props.repository.id}</span>
+                    <span>Owner: {props.repository.owner}</span>
+                </div>
             </div>
-            <table className="repo-overview-table">
-                <thead>
-                <tr>
-                    <th>⚒</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td onClick={(e) => {
+
+            <div className="repo-actions">
+                <button
+                    className="repo-action"
+                    onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/workflowruns/${props.repository.name}/${props.repository.owner}`);
-                    }}>Builds</td>
-                </tr>
-                </tbody>
-            </table>
+                    }}
+                >
+                    Builds
+                </button>
+
+                <button
+                    className="repo-delete"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        props.onDelete(props.repository.id);
+                    }}
+                >
+                    ×
+                </button>
+            </div>
         </div>
     );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../css/NotificationModal.css';
+import "../../styles/modals/modal.css"
 
 /**
  * The properties on the notification modal.
@@ -89,11 +89,12 @@ function getModalIcon(props: INotificationModalProps) {
  * @constructor Initializes a new instance of the NotificationModal.
  */
 const NotificationModal: React.FC<INotificationModalProps> = (props: INotificationModalProps) => {
-    let icon = getModalIcon(props);
     return (
         <div className="modal-backdrop" onClick={props.onClose}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
-                {icon}
+                <div className="modal-icon-container">
+                    {getModalIcon(props)}
+                </div>
                 <h2 className="modal-title">{props.title}</h2>
                 <p className="modal-message">{props.message}</p>
                 {props.loading && (

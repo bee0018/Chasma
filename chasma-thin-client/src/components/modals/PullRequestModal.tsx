@@ -107,8 +107,8 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
-                <div className="commit-modal" onClick={(e) => e.stopPropagation()}>
-                    <div className="commit-modal-icon">
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-icon-container">
                         {!errorMessage && !successfullyCreated && (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -155,16 +155,14 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                             </svg>
                         )}
                     </div>
-                    <h2 className="commit-modal-title"
-                        style={{marginTop: "-30px"}}>{title}</h2>
-                    {errorMessage && <h3 className="commit-modal-message">{errorMessage}</h3>}
+                    <h2 className="modal-title">{title}</h2>
+                    {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {branchesList && branchesList.length > 0 && (
                         <div>
                             <label style={{float: "left"}}>Choose working branch:</label>
                             <select value={workingBranchName}
                                     onChange={(e) => setWorkingBranchName(e.target.value)}
-                                    className="input-field"
-                                    style={{width: "-webkit-fill-available"}}
+                                    className="modal-input-field"
                             >
                                 {branchesList.map((branch) => (
                                     <option key={branch} value={branch}>{branch}</option>
@@ -174,8 +172,7 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                             <label style={{float: "left"}}>Choose destination branch to merge into:</label>
                             <select value={destinationBranch}
                                     onChange={(e) => setDestinationBranch(e.target.value)}
-                                    className="input-field"
-                                    style={{width: "-webkit-fill-available"}}
+                                    className="modal-input-field"
                             >
                                 {branchesList.map((branch) => (
                                     <option key={branch} value={branch}>{branch}</option>
@@ -186,34 +183,32 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                     <br/>
                     <input
                         type="text"
-                        className="input-field"
+                        className="modal-input-field"
                         placeholder="Pull Request Title"
                         value={pullRequestTitle}
                         onChange={(e) => setPullRequestTitle(e.target.value)}
-                        style={{width: "100%"}}
                         required
                     />
-                    <textarea className="input-area"
+                    <textarea className="modal-input-area"
                               placeholder="Enter Pull Request Description:"
                               value={pullRequestDescription}
                               onChange={(e) => setPullRequestDescription(e.target.value)} />
                     <br/>
                     {successfullyCreated && pullRequestUrl && (
-                        <div className="input-field"
+                        <div className="modal-input-field"
                              onClick={() => window.open(`${pullRequestUrl}`, "_blank")}>
                             GitHub Pull Request Url: {pullRequestUrl}
                         </div>
                     )}
                     <br/>
-                    <div>
-                        <button className="commit-modal-button"
-                                style={{marginRight: "50px"}}
+                    <div className="modal-actions">
+                        <button className="modal-button primary"
                                 disabled={successfullyCreated}
                                 onClick={handleCreatePrRequest}
                         >
                             Create Pull Request
                         </button>
-                        <button className="commit-modal-button"
+                        <button className="modal-button secondary"
                                 onClick={props.onClose}
                         >
                             Close

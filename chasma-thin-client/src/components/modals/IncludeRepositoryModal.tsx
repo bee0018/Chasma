@@ -99,8 +99,8 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
-                <div className="commit-modal" onClick={(e) => e.stopPropagation()}>
-                    <div className="commit-modal-icon">
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-icon-container">
                         {!errorMessage && (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -128,30 +128,29 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
                             </svg>
                         )}
                     </div>
-                    <h2 className="commit-modal-title"
-                        style={{marginTop: "-30px"}}>Select a repository to include:</h2>
-                    {errorMessage && <h3 className="commit-modal-message">{errorMessage}</h3>}
+                    <h2 className="modal-title">Select a repository to include:</h2>
+                    {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {ignoredRepositoryList && ignoredRepositoryList.length > 0 && (
                         <select value={repositoryFullId}
                                 onChange={(e) => setRepositoryFullId(e.target.value)}
                                 className="input-field"
-                                style={{width: "-webkit-fill-available"}}
                         >
                             {ignoredRepositoryList.map((fullId) => (
                                 <option key={fullId} value={fullId}>{fullId}</option>
                             ))}
                         </select>
                     )}
-                    <br/>
-                    <div>
-                        <button className="commit-modal-button"
-                                style={{marginRight: "50px"}}
-                                onClick={handleIncludeRepositoryAction}
+                    <div className="modal-actions">
+                        <button
+                            className="modal-button primary"
+                            onClick={handleIncludeRepositoryAction}
                         >
                             Include
                         </button>
-                        <button className="commit-modal-button"
-                                onClick={props.onClose}
+
+                        <button
+                            className="modal-button secondary"
+                            onClick={props.onClose}
                         >
                             Close
                         </button>

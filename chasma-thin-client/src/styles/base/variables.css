@@ -1,0 +1,16 @@
+﻿:root {
+    --color-bg: #0f172a;
+    --color-surface: #020617;
+    --color-primary: #38bdf8;
+    --color-primary-hover: #0ea5e9;
+    --color-text: #e5e7eb;
+    --color-muted: #94a3b8;
+    --color-error: #ef4444;
+
+    --radius-sm: 6px;
+    --radius-md: 12px;
+
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.6);
+
+    --transition: 0.2s ease-in-out;
+}
