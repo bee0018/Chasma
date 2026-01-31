@@ -1,6 +1,10 @@
 ﻿import React, {useCallback, useState} from "react";
 import {Row} from "../types/CustomTypes"
-import {ExecuteShellCommandRequest, ShellClient} from "../../API/ChasmaWebApiClient";
+import {
+    ExecuteShellCommandRequest,
+    ShellClient,
+    ShellCommandResult
+} from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
 import {isBlankOrUndefined} from "../../stringHelperUtil";
 
@@ -37,7 +41,11 @@ const ExecuteShellCommandsModal: React.FC<IExecuteShellCommandsProps> = (props: 
     const [commandsExecuted, setCommandsExecuted] = React.useState<boolean>(false);
 
     /** Gets or sets the command output after the commands have been executed. **/
-    const [output, setOutput] = React.useState<string>("");
+    const [output, setOutput] = useState<{
+        executedCommand: string | undefined;
+        success: boolean | undefined;
+        message?: string | undefined;
+    }[] | undefined>([]);
 
     /** Adds a shell command row to the form. **/
     const addCustomShellCommandRow = () => {
@@ -78,18 +86,21 @@ const ExecuteShellCommandsModal: React.FC<IExecuteShellCommandsProps> = (props: 
            if (response.isErrorResponse) {
                setErrorMessage(response.errorMessage);
                setCommandsExecuted(false);
-               setOutput("");
+               setOutput([]);
                return;
            }
 
-           const commandOutput = response.outputMessages
-               ? response.outputMessages.map(i => i).join("\n")
-               : "";
-           setOutput(commandOutput);
+           setOutput(
+               response.results?.map((result: ShellCommandResult) => ({
+                   executedCommand: result.executedCommand,
+                   success: result.isSuccess,
+                   message: result.outputMessage,
+               }))
+           );
            props.onSuccess();
        } catch (e) {
            console.error(e);
-           setOutput("")
+           setOutput([])
            setErrorMessage("Error executing shell commands. Check console logs for more information.")
        }
        finally {
@@ -99,7 +110,7 @@ const ExecuteShellCommandsModal: React.FC<IExecuteShellCommandsProps> = (props: 
     /** Resets the form to a pre-filled state. **/
     function resetForm() {
         setRows([]);
-        setOutput("");
+        setOutput([]);
         setCommandsExecuted(false);
         setErrorMessage(undefined);
     }
@@ -178,12 +189,25 @@ const ExecuteShellCommandsModal: React.FC<IExecuteShellCommandsProps> = (props: 
                         {commandsExecuted && (
                             <>
                                 <div className="commit-modal-title">
-                                    <h2>Console Output</h2>
+                                    <h2 style={{color: "#00bfff"}}>Console Output</h2>
                                 </div>
-                                <textarea className="input-area"
-                                        value={output}
-                                        readOnly={true}/>
                                 <br/>
+                                <div className="output-window">
+                                    {output?.map((result, index) => (
+                                        <div
+                                            key={index}
+                                            className={`output-entry ${result.success ? "success" : "failure"}`}
+                                        >
+                                            <div>
+                                                <strong>{result.executedCommand}</strong>
+                                                <span className="status-icon"></span>
+                                            </div>
+                                            {result.message && (
+                                                <div className="output-message">{result.message}</div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                                 <div>
                                     <button className="commit-modal-button"
                                             style={{marginRight: "50px"}}
