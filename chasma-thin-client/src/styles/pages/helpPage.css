@@ -22,6 +22,9 @@
 }
 
 .help-nav-item {
+    all: unset;
+    display: block;
+    width: 100%;
     padding: 10px 14px;
     margin-bottom: 6px;
     border-radius: 8px;
@@ -29,6 +32,7 @@
     color: #ccc;
     transition: all 0.2s ease;
 }
+
 
 .help-nav-item:hover {
     background: #1a1a1a;
@@ -40,6 +44,10 @@
     color: #111;
     font-weight: 600;
     box-shadow: 0 0 10px #22d3ee;
+}
+.help-nav-item:focus-visible {
+    outline: 2px solid #22d3ee;
+    outline-offset: 2px;
 }
 
 .help-content {
@@ -160,32 +168,195 @@
 }
 
 .git-command-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     margin-top: 16px;
 }
 
+
 .git-command {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 16px;
-    padding: 10px 0;
-    border-bottom: 1px solid #222;
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    padding: 12px 16px;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.git-command:hover {
+    background: #111827;
+    border-color: #22d3ee;
+    box-shadow: 0 4px 12px rgba(34,211,238,0.3);
+}
+
+.git-command-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.git-command-header code {
+    font-family: "JetBrains Mono", monospace;
+    background: #0f172a;
+    color: #22d3ee;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.git-command-description {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    color: #ccc;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-top: 4px;
 }
 
 .git-command:last-child {
     border-bottom: none;
 }
 
-.git-command code {
-    background: #0f172a;
-    color: #22d3ee;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 0.85rem;
-    white-space: nowrap;
+.git-command.expanded .git-command-description {
+    max-height: 500px; /* enough for long descriptions */
+    opacity: 1;
 }
 
 .git-command span {
     color: #ccc;
     line-height: 1.5;
+}
+
+.help-subsection {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #0b1220;
+    border: 1px solid #1f2937;
+}
+
+.help-subsection-title {
+    margin-bottom: 8px;
+    color: #22d3ee;
+    font-weight: 600;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.help-subsection-title::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22d3ee;
+    box-shadow: 0 0 6px #22d3ee;
+}
+
+.help-subsection-text {
+    color: #ccc;
+    margin-bottom: 12px;
+}
+
+.help-steps {
+    list-style: none;
+    margin-top: 12px;
+    padding: 0;
+}
+
+.help-steps li {
+    display: flex;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid #222;
+}
+
+.help-steps li:last-child {
+    border-bottom: none;
+}
+
+.help-step-index {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #22d3ee;
+    color: #111;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+    font-size: 0.85rem;
+}
+
+.help-steps strong {
+    color: #e5e7eb;
+    font-weight: 600;
+}
+
+.help-steps p {
+    margin: 4px 0 0;
+    color: #ccc;
+    line-height: 1.5;
+}
+
+.help-steps code {
+    background: #111;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #22d3ee;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8rem;
+}
+
+.help-marquee {
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+}
+
+.help-marquee > * {
+    animation: marquee-slide 0.35s ease;
+}
+
+@keyframes marquee-slide {
+    from {
+        opacity: 0;
+        transform: translateX(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.copy-button {
+    margin-top: 6px;
+    background: #111;
+    color: #22d3ee;
+    border: 1px solid #22d3ee;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-button:hover {
+    background: #22d3ee;
+    color: #111;
+}
+
+.copy-button:focus-visible {
+    outline: 2px solid #22d3ee;
+    outline-offset: 2px;
 }
