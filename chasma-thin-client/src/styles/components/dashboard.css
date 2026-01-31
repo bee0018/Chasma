@@ -99,3 +99,15 @@
     font-size: 1.2rem;
 }
 
+.sidebar-help {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: #eee;
+    border-top: 1px solid #222;
+    margin-top: auto;
+    cursor: pointer;
+}
+
