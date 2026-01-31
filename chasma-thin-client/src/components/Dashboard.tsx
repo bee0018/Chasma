@@ -138,6 +138,12 @@ const Dashboard: React.FC = () => {
                 >
                     🔌 API Status
                 </div>
+                <div
+                    className="sidebar-help"
+                    onClick={() => window.open("\help", "_blank")}>
+                    <span className="profile-icon">💡</span>
+                    <span className="username">Help</span>
+                </div>
             </aside>
 
             <main className="content">

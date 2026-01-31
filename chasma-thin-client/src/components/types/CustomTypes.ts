@@ -22,3 +22,9 @@ export type User = {
 
 /** The toggle options for selecting commands to execute uniformly or custom. **/
 export type CommandMode = "uniform" | "custom";
+
+/** The git command row used in the help page. **/
+export type GitCommand = {
+    command: string;
+    description: string;
+}

@@ -32,13 +32,13 @@ namespace ChasmaWebApi
         /// Gets or sets the GitHub API token.
         /// </summary>
         [XmlElement("githubApiToken")]
-        public required string GitHubApiToken { get; set; }
+        public string GitHubApiToken { get; set; }
         
         /// <summary>
         /// Gets or sets the maximum number of workflows to report to the client.
         /// </summary>
         [XmlElement("workflowRunReportThreshold")]
-        public required int WorkflowRunReportThreshold { get; set; }
+        public int WorkflowRunReportThreshold { get; set; }
 
         /// <summary>
         /// Gets the connection string in the format that is expected of SQLite3 database connections.
