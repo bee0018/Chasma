@@ -130,6 +130,13 @@ const RepositoryStatusPage: React.FC = () => {
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
+    /** Gets or sets the context menu. **/
+    const [contextMenu, setContextMenu] = useState<{
+        mouseX: number;
+        mouseY: number;
+        statusElement: RepositoryStatusElement;
+    } | null>(null);
+
     /**
      * Closes the modal once the user confirms the message
      */
@@ -308,6 +315,22 @@ const RepositoryStatusPage: React.FC = () => {
     /** The parsed unified diff. */
     const parsedDiff = parseUnifiedDiff(rawDiff);
 
+    /** Handles the event when the user right-clicks a file to open the context menu. **/
+    const handleContextMenu = (event: React.MouseEvent, statusElement: RepositoryStatusElement) => {
+        event.preventDefault();
+        setContextMenu({
+            mouseX: event.clientX,
+            mouseY: event.clientY,
+            statusElement,
+        });
+    };
+
+    useEffect(() => {
+        const closeMenu = () => setContextMenu(null);
+        window.addEventListener("click", closeMenu);
+        return () => window.removeEventListener("click", closeMenu);
+    }, []);
+
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
@@ -377,7 +400,12 @@ const RepositoryStatusPage: React.FC = () => {
                                     {statusElements?.filter(e => e.isStaged).map((element, index) => (
                                         <tbody key={index}>
                                         <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
-                                            <td onClick={() => handleSelectFile(element, true)}>{element.filePath}</td>
+                                            <td
+                                                onClick={() => handleSelectFile(element, true)}
+                                                onContextMenu={e => handleContextMenu(e, element)}
+                                            >
+                                                {element.filePath}
+                                            </td>
                                             <td>
                                                 <button
                                                     className="stage-button unstage"
@@ -409,7 +437,12 @@ const RepositoryStatusPage: React.FC = () => {
                                     {statusElements?.filter(e => !e.isStaged).map((element, index) => (
                                         <tbody key={index}>
                                         <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
-                                            <td onClick={() => handleSelectFile(element, false)}>{element.filePath}</td>
+                                            <td
+                                                onClick={() => handleSelectFile(element, false)}
+                                                onContextMenu={e => handleContextMenu(e, element)}
+                                            >
+                                                {element.filePath}
+                                            </td>
                                             <td>
                                                 <button
                                                     className="stage-button stage"
@@ -429,7 +462,28 @@ const RepositoryStatusPage: React.FC = () => {
                         </div>
                     </div>
 
-
+                    {contextMenu && (
+                        <div
+                            className="context-menu"
+                            style={{
+                                top: contextMenu.mouseY,
+                                left: contextMenu.mouseX,
+                            }}
+                            onClick={() => setContextMenu(null)}
+                        >
+                            <ul>
+                                <li onClick={() => handleApplyStagingActionRequest(contextMenu?.statusElement)}>
+                                    {contextMenu.statusElement && contextMenu.statusElement.isStaged ? "Unstage" : "Stage"}
+                                </li>
+                                <li>
+                                    Ignore
+                                </li>
+                                <li>
+                                    Remove
+                                </li>
+                            </ul>
+                        </div>
+                    )}
 
                     {/* Right side: Diff viewer */}
                     <div className="right-panel">
