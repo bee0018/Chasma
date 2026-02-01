@@ -108,41 +108,81 @@
 
 .diff-panel {
     flex: 1;
-    background: #181818;
-    border-radius: 8px;
+    background: #0d1117;
+    border-radius: 10px;
     padding: 12px;
     overflow: auto;
-    font-family: monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #c9d1d9;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
 }
 
 .diff-panel-header {
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #22d3ee;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 10px;
+    color: #58a6ff;
+    letter-spacing: 0.02em;
+    font-family: "Fira Code", ui-monospace, monospace;
 }
 
 .diff-line {
     display: flex;
-    font-family: monospace;
+    align-items: flex-start;
+    white-space: pre;
+    border-radius: 4px;
+    padding: 2px 0;
+    transition: background-color 0.12s ease;
+}
+
+.diff-line:hover {
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .diff-line-number {
-    width: 40px;
+    width: 44px;
     text-align: right;
-    padding-right: 8px;
-    color: #888;
+    padding-right: 10px;
+    user-select: none;
+    color: #6e7681;
+    font-size: 12px;
 }
 
 .diff-code {
     flex: 1;
+    padding-right: 8px;
 }
 
 .diff-added {
-    background: rgba(34, 211, 238, 0.2);
+    background: rgba(46, 160, 67, 0.18);
+}
+
+.diff-added .diff-code {
+    color: #aff5b4;
 }
 
 .diff-removed {
-    background: rgba(255, 99, 71, 0.2);
+    background: rgba(248, 81, 73, 0.18);
+}
+
+.diff-removed .diff-code {
+    color: #ffdcd7;
+}
+
+.diff-line:not(.diff-added):not(.diff-removed) .diff-code {
+    color: #c9d1d9;
+}
+
+.diff-line.hunk {
+    background: rgba(56, 139, 253, 0.12);
+}
+
+.diff-line.hunk .diff-code {
+    color: #79c0ff;
+    font-weight: 500;
 }
 
 @media (max-width: 1200px) {
@@ -184,5 +224,4 @@
 
 .repo-summary-value {
     font-weight: 500;
-    color: #ffffff;
 }
