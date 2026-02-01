@@ -344,11 +344,21 @@ const RepositoryStatusPage: React.FC = () => {
                                 </div>
                                 <div className="repo-summary-item">
                                     <span className="repo-summary-label">Commits Ahead:</span>
-                                    <span className="repo-summary-value">{commitsAhead}</span>
+                                    <span
+                                        className="repo-summary-value"
+                                        style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "#aaaaaa" }}
+                                    >
+                                        {commitsAhead}
+                                    </span>
                                 </div>
                                 <div className="repo-summary-item">
                                     <span className="repo-summary-label">Commits Behind:</span>
-                                    <span className="repo-summary-value">{commitsBehind}</span>
+                                    <span
+                                        className="repo-summary-value"
+                                        style={{ color: commitsBehind && commitsBehind > 0 ? "red" : "#aaaaaa" }}
+                                    >
+                                        {commitsBehind}
+                                    </span>
                                 </div>
                             </div>
                         </div>
