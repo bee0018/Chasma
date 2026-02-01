@@ -149,7 +149,9 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = (props: CreateIssueMod
                     <br/>
                     {successfullyCreatedIssue && issueHtmlUrl && (
                         <div className="modal-input-field"
-                             onClick={() => window.open(`${issueHtmlUrl}`, "_blank")}>
+                             onClick={() => window.open(`${issueHtmlUrl}`, "_blank")}
+                             style={{cursor: "pointer"}}
+                        >
                             GitHub Issue Url: {issueHtmlUrl}
                         </div>
                     )}

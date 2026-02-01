@@ -196,7 +196,9 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                     <br/>
                     {successfullyCreated && pullRequestUrl && (
                         <div className="modal-input-field"
-                             onClick={() => window.open(`${pullRequestUrl}`, "_blank")}>
+                             onClick={() => window.open(`${pullRequestUrl}`, "_blank")}
+                             style={{cursor: "pointer"}}
+                        >
                             GitHub Pull Request Url: {pullRequestUrl}
                         </div>
                     )}
