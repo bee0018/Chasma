@@ -46,6 +46,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
 
     /** Handles the request to commit local changes. **/
     async function handleCommitChangesRequest() {
+        setTitle("Attempting to commit changes...");
         try {
             const request = new GitCommitRequest();
             request.repositoryId = props.repositoryId;
