@@ -14,6 +14,16 @@ namespace ChasmaWebApi.Data.Objects
         public int Number { get; set; }
 
         /// <summary>
+        /// Gets or sets the name of the repository this pull request is in.
+        /// </summary>
+        public string RepositoryName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the owner of the repository this pull request is in.
+        /// </summary>
+        public string RepositoryOwner { get; set; }
+
+        /// <summary>
         /// The branch name that is being merged in the pull request.
         /// </summary>
         public string BranchName { get; set; }

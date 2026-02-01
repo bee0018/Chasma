@@ -178,10 +178,11 @@ namespace ChasmaWebApi.HostedServices
                 List<GitHubPullRequest> gitHubPullRequests = [];
                 foreach (PullRequest pullRequest in pullRequests)
                 {
-                    
                     GitHubPullRequest pr = new()
                     {
                         Number = pullRequest.Number,
+                        RepositoryName = pullRequest.Head.Repository.Name,
+                        RepositoryOwner = pullRequest.Head.Repository.Owner.Login,
                         BranchName = pullRequest.Head.Ref,
                         ActiveState = pullRequest.State.StringValue,
                         MergeableState = pullRequest.MergeableState.HasValue ? pullRequest.MergeableState.Value.StringValue : MergeableState.Unknown.ToString(),
@@ -199,6 +200,46 @@ namespace ChasmaWebApi.HostedServices
             catch (Exception e)
             {
                 logger.LogWarning("Error when trying to get list of open pull request in {repoName}: {error}", repoName, e);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the pull request by its number via the GitHub API.
+        /// </summary>
+        /// <param name="client">The GitHub API client.</param>
+        /// <param name="owner">The repository owner.</param>
+        /// <param name="name">The repoository name.</param>
+        /// <param name="prNumber">The GitHub pull request number.</param>
+        /// <returns>The internal GitHub pull request.</returns>
+        private async Task<GitHubPullRequest?> GetPullRequestByPrNumberAsync(GitHubClient client, string owner, string name, int prNumber)
+        {
+            try
+            {
+                PullRequest? pullRequest = await client.PullRequest.Get(owner, name, prNumber);
+                if (pullRequest == null)
+                {
+                    return null;
+                }
+
+                GitHubPullRequest pr = new()
+                {
+                    Number = pullRequest.Number,
+                    BranchName = pullRequest.Head.Ref,
+                    RepositoryName = pullRequest.Head.Repository.Name,
+                    RepositoryOwner = pullRequest.Head.Repository.Owner.Login,
+                    ActiveState = pullRequest.State.StringValue,
+                    MergeableState = pullRequest.MergeableState.HasValue ? pullRequest.MergeableState.Value.StringValue : MergeableState.Unknown.ToString(),
+                    CreatedAt = pullRequest.CreatedAt.ToLocalTime().ToString("g"),
+                    MergedAt = pullRequest.MergedAt.HasValue ? pullRequest.MergedAt.Value.ToLocalTime().ToString("g") : null,
+                    Merged = pullRequest.Merged,
+                    HtmlUrl = pullRequest.HtmlUrl
+                };
+                return pr;
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning("Error when trying to get pull request #{prNumber}: {error}", prNumber, e);
                 return null;
             }
         }
@@ -237,30 +278,16 @@ namespace ChasmaWebApi.HostedServices
         /// </summary>
         private async Task RefreshPullRequestsAsync(CancellationToken cancellationToken)
         {
-            HashSet<int> existingPullRequestNumbers = cacheManager.GitHubPullRequests.Keys.ToHashSet();
-            foreach (LocalGitRepository repository in cacheManager.Repositories.Values)
+            foreach (GitHubPullRequest existingPullRequest in cacheManager.GitHubPullRequests.Values)
             {
-                Client = CreateGitHubClient(repository.Name);
-                List<GitHubPullRequest>? pullRequests = await GetPullRequestAsync(Client, repository.Owner, repository.Name);
-                if (pullRequests == null)
+                Client = CreateGitHubClient(existingPullRequest.RepositoryName);
+                GitHubPullRequest? pr = await GetPullRequestByPrNumberAsync(Client, existingPullRequest.RepositoryOwner, existingPullRequest.RepositoryName, existingPullRequest.Number);
+                if (pr == null)
                 {
                     continue;
                 }
 
-                foreach (GitHubPullRequest pr in pullRequests)
-                {
-                    cacheManager.GitHubPullRequests.AddOrUpdate(pr.Number, pr, (_, _) => pr);
-                }
-            }
-
-            // Remove pull requests that no longer exist
-            HashSet<int> currentPullRequestNumbers = cacheManager.GitHubPullRequests.Keys.ToHashSet();
-            foreach (int prNumber in existingPullRequestNumbers)
-            {
-                if (!currentPullRequestNumbers.Contains(prNumber))
-                {
-                    cacheManager.GitHubPullRequests.TryRemove(prNumber, out _);
-                }
+                cacheManager.GitHubPullRequests.AddOrUpdate(pr.Number, pr, (_, _) => pr);
             }
         }
 

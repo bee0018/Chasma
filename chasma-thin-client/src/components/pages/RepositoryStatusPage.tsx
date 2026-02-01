@@ -20,6 +20,7 @@ import { apiBaseUrl } from "../../environmentConstants";
 import ExecuteShellCommandsModal from "../modals/ExecuteShellCommandsModal";
 import {DiffLine} from "../types/CustomTypes";
 import {useCacheStore} from "../../managers/CacheManager";
+import {capitalizeFirst} from "../../stringHelperUtil";
 
 /** Status client for the API **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
@@ -448,9 +449,9 @@ const RepositoryStatusPage: React.FC = () => {
                                                 <span className="repo-summary-label">Mergeable State:</span>
                                                 <span
                                                     className="repo-summary-value"
-                                                    style={{ color: "orange"}}
+                                                    style={{ color: pr.mergeableState === "clean" ? "lightblue" : "orange" }}
                                                 >
-                                                    {pr.mergeableState}
+                                                    {capitalizeFirst(pr.mergeableState)}
                                                 </span>
                                             </div>
 

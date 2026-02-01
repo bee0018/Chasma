@@ -21,6 +21,7 @@ const HelpConfigXmlPage: React.FC = () => (
 \t<thinClientUrl>http://localhost:3000</thinClientUrl>
 \t<githubApiToken>token</githubApiToken>
 \t<workflowRunReportThreshold>30</workflowRunReportThreshold>
+\t<gitHubPullRequestScanIntervalSeconds>20</gitHubPullRequestScanIntervalSeconds>
 </configurations>`}
                     </pre>
         <h3 className="help-subtitle">Attributes</h3>
@@ -72,6 +73,16 @@ const HelpConfigXmlPage: React.FC = () => (
             </div>
             <p>Defines the maximum number of workflow runs to report to the web application.</p>
             <p className="xml-meta">Default: <code>30</code></p>
+        </div>
+
+        <div className="xml-attr">
+            <div className="xml-attr-header">
+                <span className="xml-name">gitHubPullRequestScanIntervalSeconds</span>
+                <span className="xml-type">integer</span>
+                <span className="xml-optional">optional</span>
+            </div>
+            <p>Defines the interval in seconds at which GitHub pull requests are scanned for updates.</p>
+            <p className="xml-meta">Default: <code>25</code></p>
         </div>
     </section>
 );

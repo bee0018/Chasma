@@ -24,3 +24,13 @@ export async function copyToClipboard(text: string): Promise<boolean>  {
         return false;
     }
 }
+
+/**
+ * Capitalizes the first letter in a string.
+ * @param str The string to capitalize.
+ */
+export function capitalizeFirst(str: string | undefined): string {
+    if (!str) return "";
+    if (str.length === 1) return str.charAt(0).toUpperCase();
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}

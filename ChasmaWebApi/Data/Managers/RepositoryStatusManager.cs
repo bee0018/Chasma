@@ -317,6 +317,8 @@ namespace ChasmaWebApi.Data.Managers
             GitHubPullRequest pr = new()
             {
                 Number = createdPullRequest.Number,
+                RepositoryName = repoName,
+                RepositoryOwner = owner,
                 BranchName = createdPullRequest.Head.Ref,
                 ActiveState = createdPullRequest.State.StringValue,
                 MergeableState = createdPullRequest.MergeableState.HasValue ? createdPullRequest.MergeableState.Value.StringValue : MergeableState.Unknown.ToString(),
