@@ -42,6 +42,7 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
      * Handles the push changes request.
      */
     const handlePushChangesRequest = async () => {
+        setTitle("Attempting to push changes. May take a few moments...");
         const request = new GitPushRequest();
         request.repositoryId = props.repositoryId;
         try {
