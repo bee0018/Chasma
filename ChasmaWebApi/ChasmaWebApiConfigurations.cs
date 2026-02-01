@@ -38,7 +38,13 @@ namespace ChasmaWebApi
         /// Gets or sets the maximum number of workflows to report to the client.
         /// </summary>
         [XmlElement("workflowRunReportThreshold")]
-        public int WorkflowRunReportThreshold { get; set; }
+        public int WorkflowRunReportThreshold { get; set; } = 30;
+
+        /// <summary>
+        /// Gets or sets the interval in seconds at which GitHub pull requests are scanned for updates.
+        /// </summary>
+        [XmlElement("gitHubPullRequestScanIntervalSeconds")]
+        public int GitHubPullRequestScanIntervalSeconds { get; set; } = 45;
 
         /// <summary>
         /// Gets the connection string in the format that is expected of SQLite3 database connections.

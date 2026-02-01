@@ -412,12 +412,23 @@ const RepositoryStatusPage: React.FC = () => {
                                 <br/>
                                 {openPullRequests && openPullRequests.length > 0 && (
                                     openPullRequests.map((pr) => (
-                                        <div>
+                                        <div
+                                            key={pr.number}
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                window.open(pr.htmlUrl, "_blank");
+                                            }}
+                                        >
                                             <div className="repo-summary-item">
-                                                <span className="repo-summary-label">Is Merged:</span>
+                                                <span className="repo-summary-label">PR Number:</span>
+                                                <span className="repo-summary-value">{pr.number}</span>
+                                            </div>
+
+                                            <div className="repo-summary-item">
+                                                <span className="repo-summary-label">Merged State:</span>
                                                 <span
                                                     className="repo-summary-value"
-                                                    style={{ color: !pr.merged ? "white" : "purple" }}
+                                                    style={{ color: !pr.merged ? "yellow" : "purple" }}
                                                 >
                                                 {!pr.merged ? "Unmerged" : "Merged"}
                                                 </span>
@@ -425,12 +436,22 @@ const RepositoryStatusPage: React.FC = () => {
 
                                             <div className="repo-summary-item">
                                                 <span className="repo-summary-label">Active State:</span>
-                                                <span className="repo-summary-value">{pr.activeState}</span>
+                                                <span
+                                                    className="repo-summary-value"
+                                                    style={{ color: pr.activeState === "open" ? "lightgreen" : "lightblue" }}
+                                                >
+                                                    {pr.activeState === "open" ? "Active" : "Inactive"}
+                                                </span>
                                             </div>
 
                                             <div className="repo-summary-item">
                                                 <span className="repo-summary-label">Mergeable State:</span>
-                                                <span className="repo-summary-value">{pr.mergeableState}</span>
+                                                <span
+                                                    className="repo-summary-value"
+                                                    style={{ color: "orange"}}
+                                                >
+                                                    {pr.mergeableState}
+                                                </span>
                                             </div>
 
                                             <div className="repo-summary-item">
@@ -439,7 +460,7 @@ const RepositoryStatusPage: React.FC = () => {
                                             </div>
 
                                             <div className="repo-summary-item">
-                                                <span className="repo-summary-label">Merged  at:</span>
+                                                <span className="repo-summary-label">Merged at:</span>
                                                 <span className="repo-summary-value">{pr.mergedAt}</span>
                                             </div>
                                         </div>

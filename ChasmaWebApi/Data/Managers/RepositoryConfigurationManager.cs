@@ -159,6 +159,17 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
 
         repository.Branches.Remove(branchToDelete);
         ClientLogger.LogInformation("Successfully deleted branch {branchName} from repository with id: {id}", branchName, repository);
+
+        // Delete tracking of pull requests associated with this branch.
+        List<int> pullRequestNumbersToDelete = CacheManager.GitHubPullRequests.Values
+            .Where(i => i.BranchName == branchName)
+            .Select(i => i.Number)
+            .ToList();
+        foreach (int prNumber in pullRequestNumbersToDelete)
+        {
+            CacheManager.GitHubPullRequests.TryRemove(prNumber, out _);
+        }
+        
         return true;
     }
 
