@@ -1144,6 +1144,12 @@
               },
               "commitHash": {
                 "type": "string"
+              },
+              "pullRequests": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GitHubPullRequest"
+                }
               }
             }
           }
@@ -1279,6 +1285,45 @@
           16384,
           32768,
           -2147483648
+        ]
+      },
+      "GitHubPullRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "number": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "branchName": {
+                "type": "string"
+              },
+              "activeState": {
+                "type": "string"
+              },
+              "mergeableState": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string"
+              },
+              "mergedAt": {
+                "type": "string",
+                "nullable": true
+              },
+              "merged": {
+                "type": "boolean"
+              },
+              "htmlUrl": {
+                "type": "string"
+              }
+            }
+          }
         ]
       },
       "GitStatusRequest": {

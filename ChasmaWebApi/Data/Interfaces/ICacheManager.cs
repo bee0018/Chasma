@@ -23,4 +23,9 @@ public interface ICacheManager
     /// Gets the mapping of user identifiers to users in the system.
     /// </summary>
     ConcurrentDictionary<int, UserAccountModel> Users { get; }
+
+    /// <summary>
+    /// Gets the mapping of GitHub pull request numbers to pull request details.
+    /// </summary>
+    ConcurrentDictionary<int, GitHubPullRequest> GitHubPullRequests { get; }
 }

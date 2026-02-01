@@ -5,4 +5,5 @@
   <thinClientUrl>http://localhost:3000</thinClientUrl>
   <githubApiToken>token</githubApiToken>
   <workflowRunReportThreshold>30</workflowRunReportThreshold>
+	<gitHubPullRequestScanIntervalSeconds>45</gitHubPullRequestScanIntervalSeconds>
 </configurations>

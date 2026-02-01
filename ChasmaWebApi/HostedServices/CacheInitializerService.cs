@@ -3,6 +3,7 @@ using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
 using Microsoft.EntityFrameworkCore;
+using Octokit;
 
 namespace ChasmaWebApi.HostedServices
 {
@@ -12,7 +13,8 @@ namespace ChasmaWebApi.HostedServices
     /// <param name="logger">The internal logging interface.</param>
     /// <param name="cacheManager">The application's cache manager.</param>
     /// <param name="serviceScopeFactory">The service scope factory used for getting required services.</param>
-    public class CacheInitializerService(ILogger<CacheInitializerService> logger, ICacheManager cacheManager, IServiceScopeFactory serviceScopeFactory) : IHostedService
+    /// <param name="config">The application configurations.</param>
+    public class CacheInitializerService(ILogger<CacheInitializerService> logger, ICacheManager cacheManager, IServiceScopeFactory serviceScopeFactory, ChasmaWebApiConfigurations config) : IHostedService
     {
         /// <summary>
         /// The internal logging interface.
@@ -29,10 +31,25 @@ namespace ChasmaWebApi.HostedServices
         /// </summary>
         private readonly IServiceScopeFactory serviceScopeFactory = serviceScopeFactory;
 
+        /// <summary>
+        /// The web API application configurations.
+        /// </summary>
+        private readonly ChasmaWebApiConfigurations configurations = config;
+
+        /// <summary>
+        /// The GitHub API client.
+        /// </summary>
+        private GitHubClient Client { get; set; }
+
+        /// <summary>
+        /// The timer used to poll for GitHub pull request updates.
+        /// </summary>
+        private PeriodicTimer PullRequestPollTimer { get; set; }
+
         // <inheritdoc/>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _ = Task.Run(() => InitializeCacheAsync(cancellationToken), cancellationToken);
+            _ = Task.Run(() => InitializeInternalCacheAsync(cancellationToken), cancellationToken);
             return Task.CompletedTask;
         }
 
@@ -43,15 +60,17 @@ namespace ChasmaWebApi.HostedServices
             cacheManager.WorkingDirectories.Clear();
             cacheManager.Repositories.Clear();
             cacheManager.Users.Clear();
+            cacheManager.GitHubPullRequests.Clear();
+            PullRequestPollTimer?.Dispose();
             logger.LogInformation("Cache cleared successfully.");
             return Task.CompletedTask;
         }
 
         /// <summary>
-        /// Initializes the cache with data stored in the database.
+        /// Initializes the internal API cache with data stored in the database.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token</param>
-        private async Task InitializeCacheAsync(CancellationToken cancellationToken)
+        private async Task InitializeInternalCacheAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation("Initializing the cache with the database information.");
             using IServiceScope scope = serviceScopeFactory.CreateScope();
@@ -60,7 +79,7 @@ namespace ChasmaWebApi.HostedServices
             List<RepositoryModel> repositories = await applicationDbContext.Repositories.ToListAsync(cancellationToken);
             foreach (RepositoryModel repoModel in repositories)
             {
-                LocalGitRepository repository = new LocalGitRepository()
+                LocalGitRepository repository = new()
                 {
                     Id = repoModel.Id,
                     UserId = repoModel.UserId,
@@ -85,6 +104,166 @@ namespace ChasmaWebApi.HostedServices
             }
 
             logger.LogInformation("Finished updating the cache with the database data.");
+            _ = Task.Run(() => InitializeNetworkCacheAsync(cancellationToken), cancellationToken);
         }
+
+        /// <summary>
+        /// Initializes the network cache with the Git client information.
+        /// </summary>
+        /// <returns>Task that initializes the cache with data from network clients.</returns>
+        private async Task InitializeNetworkCacheAsync(CancellationToken cancellationToken)
+        {
+            logger.LogInformation("Populating the network cache with data from Git clients.");
+            if (string.IsNullOrEmpty(configurations.GitHubApiToken))
+            {
+                logger.LogWarning("GitHub API token is not provided. Skipping GitHub network cache initialization.");
+                return;
+            }
+
+            try
+            {
+                foreach (LocalGitRepository repository in cacheManager.Repositories.Values)
+                {
+                    string repoName = repository.Name;
+                    Client = CreateGitHubClient(repoName);
+                    List<GitHubPullRequest>? pullRequests = await GetPullRequestAsync(Client, repository.Owner, repository.Name);
+                    if (pullRequests == null)
+                    {
+                        logger.LogWarning("Skipping cache initialization for {name}.", repoName);
+                        continue;
+                    }
+
+                    pullRequests.ForEach(pr =>
+                    {
+                        cacheManager.GitHubPullRequests.TryAdd(pr.Number, pr);
+                    });
+                }
+
+                // Start polling ONLY after GitHub pull requests are populated
+                StartPullRequestPolling(cancellationToken);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Error populating network cache: {error}", e);
+            }
+        }
+
+        #region GitHub
+
+        /// <summary>
+        /// Creates a new GitHub API client for the specified repository.
+        /// </summary>
+        /// <param name="repoName">The repository name.</param>
+        /// <returns>The GitHub client for the specified repo.</returns>
+        private GitHubClient CreateGitHubClient(string repoName)
+        {
+            return new GitHubClient(new ProductHeaderValue(repoName))
+            {
+                Credentials = new Credentials(configurations.GitHubApiToken)
+            };
+        }
+
+        /// <summary>
+        /// Gets all the open pull requests via the GitHub API.
+        /// </summary>
+        /// <param name="client">The Ocktokit GitHub API client.</param>
+        /// <param name="owner">The repository owner.</param>
+        /// <param name="repoName">The repository owner.</param>
+        /// <returns>Task containing the result of the API operation.</returns>
+        private async Task<List<GitHubPullRequest>?> GetPullRequestAsync(GitHubClient client, string owner, string repoName)
+        {
+            try
+            {
+                IReadOnlyList<PullRequest> pullRequests = await client.PullRequest.GetAllForRepository(owner, repoName);
+                List<GitHubPullRequest> gitHubPullRequests = [];
+                foreach (PullRequest pullRequest in pullRequests)
+                {
+                    
+                    GitHubPullRequest pr = new()
+                    {
+                        Number = pullRequest.Number,
+                        BranchName = pullRequest.Head.Ref,
+                        ActiveState = pullRequest.State.StringValue,
+                        MergeableState = pullRequest.MergeableState.HasValue ? pullRequest.MergeableState.Value.StringValue : MergeableState.Unknown.ToString(),
+                        CreatedAt = pullRequest.CreatedAt.ToLocalTime().ToString("g"),
+                        MergedAt = pullRequest.MergedAt.HasValue ? pullRequest.MergedAt.Value.ToLocalTime().ToString("g") : null,
+                        Merged = pullRequest.Merged,
+                        HtmlUrl = pullRequest.HtmlUrl
+                    };
+
+                    gitHubPullRequests.Add(pr);
+                }
+                
+                return gitHubPullRequests;
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning("Error when trying to get list of open pull request in {repoName}: {error}", repoName, e);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Starts the periodic polling of GitHub pull requests.
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// </summary>
+        private void StartPullRequestPolling(CancellationToken cancellationToken)
+        {
+            int intervalSeconds = configurations.GitHubPullRequestScanIntervalSeconds;
+            PullRequestPollTimer = new PeriodicTimer(TimeSpan.FromSeconds(intervalSeconds));
+            _ = Task.Run(async () =>
+            {
+                while (await PullRequestPollTimer.WaitForNextTickAsync(cancellationToken))
+                {
+                    try
+                    {
+                        await RefreshPullRequestsAsync(cancellationToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError("Error while polling GitHub pull requests: {error}", ex);
+                    }
+                }
+            }, cancellationToken);
+        }
+
+        /// <summary>
+        /// Refreshes the GitHub pull request cache.
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// </summary>
+        private async Task RefreshPullRequestsAsync(CancellationToken cancellationToken)
+        {
+            HashSet<int> existingPullRequestNumbers = cacheManager.GitHubPullRequests.Keys.ToHashSet();
+            foreach (LocalGitRepository repository in cacheManager.Repositories.Values)
+            {
+                Client = CreateGitHubClient(repository.Name);
+                List<GitHubPullRequest>? pullRequests = await GetPullRequestAsync(Client, repository.Owner, repository.Name);
+                if (pullRequests == null)
+                {
+                    continue;
+                }
+
+                foreach (GitHubPullRequest pr in pullRequests)
+                {
+                    cacheManager.GitHubPullRequests.AddOrUpdate(pr.Number, pr, (_, _) => pr);
+                }
+            }
+
+            // Remove pull requests that no longer exist
+            HashSet<int> currentPullRequestNumbers = cacheManager.GitHubPullRequests.Keys.ToHashSet();
+            foreach (int prNumber in existingPullRequestNumbers)
+            {
+                if (!currentPullRequestNumbers.Contains(prNumber))
+                {
+                    cacheManager.GitHubPullRequests.TryRemove(prNumber, out _);
+                }
+            }
+        }
+
+        #endregion
     }
 }
