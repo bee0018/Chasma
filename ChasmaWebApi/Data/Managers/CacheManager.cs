@@ -18,4 +18,7 @@ public class CacheManager : ICacheManager
 
     // <inheritdoc />
     public ConcurrentDictionary<int, UserAccountModel> Users { get; } = new();
+
+    // <inheritdoc />
+    public ConcurrentDictionary<int, GitHubPullRequest> GitHubPullRequests { get; } = new();
 }

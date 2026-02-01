@@ -36,5 +36,10 @@ namespace ChasmaWebApi.Data.Responses.Status
         /// Gets or sets the latest commit hash of the repository.
         /// </summary>
         public string CommitHash { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of GitHub pull requests associated with the repository on a specific branch.
+        /// </summary>
+        public List<GitHubPullRequest> PullRequests { get; set; } = new();
     }
 }

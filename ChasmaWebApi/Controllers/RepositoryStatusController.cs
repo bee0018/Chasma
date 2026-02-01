@@ -159,6 +159,7 @@ namespace ChasmaWebApi.Controllers
             gitStatusResponse.BranchName = summary.BranchName;
             gitStatusResponse.RemoteUrl = summary.RemoteUrl;
             gitStatusResponse.CommitHash = summary.CommitHash;
+            gitStatusResponse.PullRequests = summary.PullRequests;
             return Ok(gitStatusResponse);
         }
 

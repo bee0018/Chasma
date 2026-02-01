@@ -105,6 +105,7 @@ namespace ChasmaWebApi.Data.Managers
             (string branchName, int aheadCount, int behindCount) = GetBranchDiversionCalculation(workingDirectory);
             string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
             string commitHash = GetCommitHash(repo.Head);
+            List<GitHubPullRequest> gitHubPullRequests = CacheManager.GitHubPullRequests.Values.Where(i => i.BranchName == branchName).ToList();
             RepositorySummary repositorySummary = new()
             {
                 StatusElements = statusElements,
@@ -113,6 +114,7 @@ namespace ChasmaWebApi.Data.Managers
                 BranchName = branchName,
                 RemoteUrl = remoteUrl,
                 CommitHash = commitHash,
+                PullRequests = gitHubPullRequests,
             };
             return repositorySummary;
         }
@@ -312,6 +314,18 @@ namespace ChasmaWebApi.Data.Managers
             pullRequestId = createdPullRequest.Number;
             prUrl = createdPullRequest.HtmlUrl;
             timestamp = createdPullRequest.CreatedAt.ToLocalTime().ToString("g");
+            GitHubPullRequest pr = new()
+            {
+                Number = createdPullRequest.Number,
+                BranchName = createdPullRequest.Head.Ref,
+                ActiveState = createdPullRequest.State.StringValue,
+                MergeableState = createdPullRequest.MergeableState.HasValue ? createdPullRequest.MergeableState.Value.StringValue : MergeableState.Unknown.ToString(),
+                CreatedAt = timestamp,
+                MergedAt = null,
+                Merged = false,
+                HtmlUrl = createdPullRequest.HtmlUrl
+            };
+            CacheManager.GitHubPullRequests.TryAdd(pr.Number, pr);
             ClientLogger.LogInformation("Created pull request {prId} in {repoName}.", pullRequestId, repoName);
             return true;
         }

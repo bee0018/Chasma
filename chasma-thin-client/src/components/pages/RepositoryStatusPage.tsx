@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
     ApplyStagingActionRequest,
     GitDiffRequest,
+    GitHubPullRequest,
     GitPullRequest,
     GitStatusRequest,
     RepositoryStatusClient,
@@ -127,6 +128,9 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets a value indicating whether the diff viewer is in split mode. **/
     const [isSplitView, setIsSplitView] = useState(false);
 
+    /** Gets or sets the open pull request associated with the current branch. **/
+    const [openPullRequests, setOpenPullRequests] = useState<GitHubPullRequest[] | undefined>(undefined);
+
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
@@ -178,6 +182,7 @@ const RepositoryStatusPage: React.FC = () => {
             setBranchName(response.branchName);
             setBranchUrl(response.remoteUrl);
             setCommitHash(response.commitHash);
+            setOpenPullRequests(response.pullRequests);
         } catch (e) {
             console.error(e);
             setNotification({
@@ -325,6 +330,18 @@ const RepositoryStatusPage: React.FC = () => {
         });
     };
 
+    /**
+     * Gets the push state phrase.
+     * @param commitsAhead The number of commits ahead of the base branch.
+     */
+    function getPushStatePhrase(commitsAhead: number | undefined) {
+        if (!commitsAhead || commitsAhead === 0) {
+            return "Not ready";
+        }
+
+        return `Ready with ${commitsAhead} commit${commitsAhead && commitsAhead > 1 ? "s" : ""}`
+    }
+
     useEffect(() => {
         const closeMenu = () => setContextMenu(null);
         window.addEventListener("click", closeMenu);
@@ -383,6 +400,51 @@ const RepositoryStatusPage: React.FC = () => {
                                         {commitsBehind}
                                     </span>
                                 </div>
+                                <div className="repo-summary-item">
+                                    <span className="repo-summary-label">Push State:</span>
+                                    <span
+                                        className="repo-summary-value"
+                                        style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "white" }}
+                                    >
+                                        {getPushStatePhrase(commitsAhead)}
+                                    </span>
+                                </div>
+                                <br/>
+                                {openPullRequests && openPullRequests.length > 0 && (
+                                    openPullRequests.map((pr) => (
+                                        <div>
+                                            <div className="repo-summary-item">
+                                                <span className="repo-summary-label">Is Merged:</span>
+                                                <span
+                                                    className="repo-summary-value"
+                                                    style={{ color: !pr.merged ? "white" : "purple" }}
+                                                >
+                                                {!pr.merged ? "Unmerged" : "Merged"}
+                                                </span>
+                                            </div>
+
+                                            <div className="repo-summary-item">
+                                                <span className="repo-summary-label">Active State:</span>
+                                                <span className="repo-summary-value">{pr.activeState}</span>
+                                            </div>
+
+                                            <div className="repo-summary-item">
+                                                <span className="repo-summary-label">Mergeable State:</span>
+                                                <span className="repo-summary-value">{pr.mergeableState}</span>
+                                            </div>
+
+                                            <div className="repo-summary-item">
+                                                <span className="repo-summary-label">Created at:</span>
+                                                <span className="repo-summary-value">{pr.createdAt}</span>
+                                            </div>
+
+                                            <div className="repo-summary-item">
+                                                <span className="repo-summary-label">Merged  at:</span>
+                                                <span className="repo-summary-value">{pr.mergedAt}</span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
 
