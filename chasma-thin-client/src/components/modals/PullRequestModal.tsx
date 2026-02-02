@@ -205,7 +205,7 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                     <br/>
                     <div className="modal-actions">
                         <button className="modal-button primary"
-                                disabled={successfullyCreated}
+                                hidden={successfullyCreated}
                                 onClick={handleCreatePrRequest}
                         >
                             Create Pull Request
