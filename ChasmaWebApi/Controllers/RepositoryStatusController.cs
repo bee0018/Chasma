@@ -767,5 +767,76 @@ namespace ChasmaWebApi.Controllers
             response.DiffContent = diffContent;
             return Ok(response);
         }
+
+        /// <summary>
+        /// Merges the specified branch into the current branch for the repository.
+        /// </summary>
+        /// <param name="request">The request to merge one branch into another.</param>
+        /// <returns>The response to the merge.</returns>
+        [HttpPost]
+        [Route("gitMerge")]
+        public ActionResult<GitMergeResponse> MergeBranch([FromBody] GitMergeRequest request)
+        {
+            string requestName = nameof(GitMergeRequest);
+            logger.LogInformation("Received a {request}", requestName);
+            GitMergeResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot merge branch.";
+                logger.LogError("{request} received is null. Sending error response", requestName);
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot merge branch.";
+                logger.LogError("Null or empty repository identifier received when trying to merge branch. Sending error response");
+                return Ok(response);
+            }
+
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot merge branch.";
+                logger.LogError("No working directory was found for repo identifier {repoId} when trying to merge branch. Sending error response", repoId);
+                return Ok(response);
+            }
+
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No user found in cache for user ID: {request.UserId}. Cannot merge branch.";
+                logger.LogError("No user was found for user ID: {userId} when trying to merge branch. Sending error response", request.UserId);
+                return Ok(response);
+            }
+
+            try
+            {
+                string sourceBranchName = request.SourceBranch;
+                string destinationBranchName = request.DestinationBranch;
+                string token = webApiConfigurations.GitHubApiToken;
+                if (!statusManager.TryMergeBranch(workingDirectory, sourceBranchName, destinationBranchName, user.Name, user.Email, token, out string errorMessage))
+                {
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = errorMessage;
+                    logger.LogError("Failed to merge branch to repo: {repoId}. {errorMessage}", repoId, errorMessage);
+                    return Ok(response);
+                }
+
+                logger.LogInformation("Successfully merged branch to repo: {repoId}", repoId);
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Error merging branch to repo: {repoId}. Check server logs for more information.";
+                logger.LogError(e, "Error merging branch to repo: {repoId}", repoId);
+                return Ok(response);
+            }
+        }
     }
 }

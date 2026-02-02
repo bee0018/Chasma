@@ -123,5 +123,18 @@ namespace ChasmaWebApi.Data.Interfaces
         /// <param name="errorMessage">The error message if an error occurs.</param>
         /// <returns>True if the file was successfully diffed; false otherwise.</returns>
         bool TryGetGitDiff(string workingDirectory, string filePath, bool isStaged, out string diffContent, out string errorMessage);
+
+        /// <summary>
+        /// Tries to merge the specified source branch into the current branch.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="sourceBranchName">The name of the branch to merge from.</param>
+        /// <param name="destinationBranchName">The name of the branch to merge into.</param>
+        /// <param name="fullName">The user's full name.</param>
+        /// <param name="email">The user's email.</param>
+        /// <param name="token">The GitHub API token.</param>
+        /// <param name="errorMessage">The error message if an error occurs.</param>
+        /// <returns>True if the merge was successful; false otherwise.</returns>
+        bool TryMergeBranch(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage);
     }
 }

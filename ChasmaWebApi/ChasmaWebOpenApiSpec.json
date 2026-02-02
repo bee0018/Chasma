@@ -604,6 +604,38 @@
         }
       }
     },
+    "/api/RepositoryStatus/gitMerge": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_MergeBranch",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitMergeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitMergeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Shell/executeShellCommands": {
       "post": {
         "tags": [
@@ -1300,6 +1332,12 @@
                 "type": "integer",
                 "format": "int32"
               },
+              "repositoryName": {
+                "type": "string"
+              },
+              "repositoryOwner": {
+                "type": "string"
+              },
               "branchName": {
                 "type": "string"
               },
@@ -1678,6 +1716,43 @@
               },
               "isStaged": {
                 "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "GitMergeResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "GitMergeRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "sourceBranch": {
+                "type": "string"
+              },
+              "destinationBranch": {
+                "type": "string"
               }
             }
           }
