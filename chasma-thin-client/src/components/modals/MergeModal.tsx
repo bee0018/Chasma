@@ -87,6 +87,11 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
             }
 
             setBranchesList(response.branchNames);
+            if (response.branchNames && response.branchNames.length > 0){
+                const branch = response.branchNames[0];
+                setWorkingBranchName(branch);
+                setDestinationBranch(branch);
+            }
         }
         catch (e) {
             console.error(e);
@@ -152,7 +157,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {branchesList && branchesList.length > 0 && (
-                        <div>
+                        <div hidden={successfullyMerged}>
                             <label style={{float: "left"}}>Choose source branch:</label>
                             <select value={workingBranchName}
                                     onChange={(e) => setWorkingBranchName(e.target.value)}

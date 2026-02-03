@@ -1058,7 +1058,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty,
             };
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository identifier must be populated. Cannot get branches.", response.ErrorMessage);
         }
@@ -1075,7 +1075,7 @@ namespace ChasmaWebApi.Tests.Controllers
             };
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(new ConcurrentDictionary<string, string>());
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"No working directory found in cache for {request.RepositoryId}. Cannot get branches.", response.ErrorMessage);
         }
@@ -1099,7 +1099,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Pull request title must be populated. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1124,7 +1124,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Working branch name must be populated. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1150,7 +1150,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Destination branch name must be populated. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1177,7 +1177,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Pull request body message must be populated. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1205,7 +1205,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.Repositories).Returns(new ConcurrentDictionary<string, LocalGitRepository>());
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Owner of repository not found. Cannot create pull request.", response.ErrorMessage);
         }
@@ -1245,7 +1245,7 @@ namespace ChasmaWebApi.Tests.Controllers
             cacheManagerMock.SetupGet(i => i.Repositories).Returns(repositories);
             
             ActionResult<CreatePRResponse> actionResult = Controller.CreatePullRequest(request);
-            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            CreatePRResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Repository name must be populated. Cannot create pull request.", response.ErrorMessage);
         }

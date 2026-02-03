@@ -35,9 +35,6 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
     /** Gets or sets a value indicating whether the push response was successful. **/
     const [successfullyPushed, setSuccessfullyPushed] = useState<boolean | undefined>(undefined);
 
-    /** Gets or sets a value indicating whether the push request was sent. **/
-    const [pushRequestSent, setPushRequestSent] = useState<boolean>(false);
-
     /**
      * Handles the push changes request.
      */
@@ -63,9 +60,6 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
             setTitle("Could not push changes!");
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyPushed(false);
-        }
-        finally {
-            setPushRequestSent(true);
         }
     };
     return (
@@ -124,7 +118,7 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
                     <div className="modal-actions">
                         <button
                             className="modal-button primary"
-                            disabled={pushRequestSent}
+                            hidden={successfullyPushed}
                             onClick={handlePushChangesRequest}
                         >
                             Push

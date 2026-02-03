@@ -537,7 +537,7 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Repository identifier must be populated. Cannot get branches.";
                 logger.LogError("Null or empty repository identifier received. Sending error response");
-                return BadRequest(response);
+                return Ok(response);
             }
 
             string repoId = request.RepositoryId;
@@ -546,7 +546,7 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"No working directory found in cache for {repoId}. Cannot get branches.";
                 logger.LogError("No working directory was found for repo identifier {repoId}. Sending error response", repoId);
-                return BadRequest(response);
+                return Ok(response);
             }
 
             if (string.IsNullOrEmpty(request.PullRequestTitle))
@@ -554,7 +554,7 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Pull request title must be populated. Cannot create pull request.";
                 logger.LogError("Null or empty pull request title received. Sending error response");
-                return BadRequest(response);
+                return Ok(response);
             }
 
             if (string.IsNullOrEmpty(request.WorkingBranchName))
@@ -562,7 +562,7 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Working branch name must be populated. Cannot create pull request.";
                 logger.LogError("Null or empty working branch name received. Sending error response");
-                return BadRequest(response);
+                return Ok(response);
             }
 
             if (string.IsNullOrEmpty(request.DestinationBranchName))
@@ -570,7 +570,7 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Destination branch name must be populated. Cannot create pull request.";
                 logger.LogError("Null or empty destination branch name received. Sending error response");
-                return BadRequest(response);
+                return Ok(response);
             }
 
             if (string.IsNullOrEmpty(request.PullRequestBody))
@@ -578,7 +578,7 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Pull request body message must be populated. Cannot create pull request.";
                 logger.LogError("Null or empty pull request body message received. Sending error response");
-                return BadRequest(response);
+                return Ok(response);
             }
 
             string owner = cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repo) ? repo.Owner : string.Empty;
@@ -587,7 +587,7 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Owner of repository not found. Cannot create pull request.";
                 logger.LogError("Owner could be found when creating pull request. Sending error response");
-                return BadRequest(response);
+                return Ok(response);
             }
 
             if (string.IsNullOrEmpty(request.RepositoryName))
@@ -595,7 +595,7 @@ namespace ChasmaWebApi.Controllers
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Repository name must be populated. Cannot create pull request.";
                 logger.LogError("Null or empty repository name received. Sending error response");
-                return BadRequest(response);
+                return Ok(response);
             }
 
             try

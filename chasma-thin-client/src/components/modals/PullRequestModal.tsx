@@ -1,4 +1,4 @@
-﻿import React, {useState} from "react";
+﻿import React, {useEffect, useState} from "react";
 import {CreatePRRequest, GitBranchRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
 
@@ -82,6 +82,9 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
             setTitle("Error creating Pull Request");
             setSuccessfullyCreated(false);
         }
+        finally {
+            fetchAssociatedBranches().catch(e => console.error(e));
+        }
     };
 
     /** Fetches the local and remote branches associated with this repository. **/
@@ -96,6 +99,11 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
             }
 
             setBranchesList(response.branchNames);
+            if (response.branchNames && response.branchNames.length > 0){
+                const branch = response.branchNames[0];
+                setWorkingBranchName(branch);
+                setDestinationBranch(branch);
+            }
         }
         catch (e) {
             console.error(e);
@@ -103,7 +111,9 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
         }
     }
 
-    fetchAssociatedBranches().catch(e => console.error(e));
+    useEffect(() => {
+        fetchAssociatedBranches().catch(e => console.error(e));
+    }, []);
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
