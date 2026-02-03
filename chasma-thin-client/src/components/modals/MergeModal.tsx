@@ -1,42 +1,36 @@
 ﻿import React, {useEffect, useState} from "react";
-import {CreatePRRequest, GitBranchRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
+import {GitBranchRequest, GitMergeRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
 
 /** The status client for the web API. **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
 
-/** Defines the properties of the pull request modal. **/
-interface IPullRequestProps {
+/** Defines the properties of the merge branches modal. **/
+interface IMergeModal {
     /** The confirmation action of the close function. **/
     onClose: () => void;
 
     /** The repository identifier. **/
     repositoryId: string | undefined;
-
-    /** The repository name. **/
-    repoName: string | undefined;
+    
+    /** The user identifier. **/
+    userId: number | undefined;
 }
 
 /**
- * Initializes a new instance of the PullRequestModal class.
- * @param props The properties of the pull request modal.
+ * Initializes a new instance of the MergeModal class.
+ * @param props The properties of the merge modal.
  * @constructor
  */
-const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps) => {
+const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
     /** Gets or sets the modal title. **/
-    const [title, setTitle] = useState<string>("Create Pull Request");
+    const [title, setTitle] = useState<string>("Merge Changes:");
 
     /** Gets or sets the error message. **/
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
-    /** Gets or sets a value indicating whether the pull request response was successful. **/
-    const [successfullyCreated, setSuccessfullyCreated] = useState<boolean | undefined>(undefined);
-
-    /** Gets or sets the pull request description. **/
-    const [pullRequestDescription, setPullRequestDescription] = useState<string | undefined>(undefined);
-
-    /** Gets or sets the pull request title. **/
-    const [pullRequestTitle, setPullRequestTitle] = useState<string | undefined>(undefined);
+    /** Gets or sets a value indicating whether the merge response was successful. **/
+    const [successfullyMerged, setSuccessfullyMerged] = useState<boolean | undefined>(undefined);
 
     /** Gets or sets the destination branch. **/
     const [destinationBranch, setDestinationBranch] = useState<string | undefined>(undefined);
@@ -44,46 +38,40 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
     /** Gets or sets the working branch name. **/
     const [workingBranchName, setWorkingBranchName] = useState<string | undefined>(undefined);
 
-    /** Gets or sets the remote branches to checkout. **/
+    /** Gets or sets the remote branches to merge. **/
     const [branchesList, setBranchesList] = React.useState<string[] | undefined>([]);
 
-    /** Gets or sets the pull request URL. **/
-    const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(undefined);
-
     /**
-     * Handles the event when a user intends to create a pull request on GitHub.
+     * Handles the event when a user intends to merge one branch into another.
      */
-    const handleCreatePrRequest = async () => {
-        setTitle("Creating pull request. May take a few moments...");
-        const request = new CreatePRRequest();
+    const handleMergeBranches = async () => {
+        setTitle("Attempting to merge changes. May take a few moments...");
+        const request = new GitMergeRequest();
         request.repositoryId = props.repositoryId;
-        request.pullRequestBody = pullRequestDescription;
-        request.pullRequestTitle = pullRequestTitle;
-        request.repositoryName = props.repoName;
-        request.destinationBranchName = destinationBranch
-        request.workingBranchName = workingBranchName;
+        request.destinationBranch = destinationBranch
+        request.sourceBranch = workingBranchName;
+        request.userId = props.userId;
         try {
-            const response = await statusClient.createPullRequest(request);
+            const response = await statusClient.mergeBranch(request);
             if (response.isErrorResponse) {
-                setTitle("Error creating Pull Request");
+                setTitle("Error creating merging changes!");
                 setErrorMessage(response.errorMessage);
-                setSuccessfullyCreated(false);
+                setSuccessfullyMerged(false);
                 return;
             }
 
-            setTitle(`Pull Request ${response.pullRequestId} successfully created at ${response.timeStamp}`);
+            setTitle(`${workingBranchName} was successfully merged into ${destinationBranch}`);
             setErrorMessage(undefined);
-            setSuccessfullyCreated(true);
-            setPullRequestUrl(response.pullRequestUrl);
+            setSuccessfullyMerged(true);
         }
         catch (e) {
             console.error(e);
-            setErrorMessage("Error occurred while creating Pull Request. Check error logs.");
-            setTitle("Error creating Pull Request");
-            setSuccessfullyCreated(false);
+            setErrorMessage("Error occurred while attempting to merge changes. Check error logs.");
+            setTitle("Error finishing merge!");
+            setSuccessfullyMerged(false);
         }
         finally {
-            fetchAssociatedBranches().catch(e => console.error(e));
+            await fetchAssociatedBranches();
         }
     };
 
@@ -114,12 +102,13 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
     useEffect(() => {
         fetchAssociatedBranches().catch(e => console.error(e));
     }, []);
+
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
                 <div className="modal" onClick={(e) => e.stopPropagation()}>
                     <div className="modal-icon-container">
-                        {!errorMessage && !successfullyCreated && (
+                        {!errorMessage && !successfullyMerged && (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
@@ -132,7 +121,7 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                                 <rect x="11" y="7" width="2" height="2" fill="#ffffff" />
                             </svg>
                         )}
-                        {!errorMessage && successfullyCreated && (
+                        {!errorMessage && successfullyMerged && (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
@@ -168,8 +157,8 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {branchesList && branchesList.length > 0 && (
-                        <div>
-                            <label style={{float: "left"}}>Choose working branch:</label>
+                        <div hidden={successfullyMerged}>
+                            <label style={{float: "left"}}>Choose source branch:</label>
                             <select value={workingBranchName}
                                     onChange={(e) => setWorkingBranchName(e.target.value)}
                                     className="modal-input-field"
@@ -189,36 +178,13 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
                                 ))}
                             </select>
                         </div>
-                )}
-                    <br/>
-                    <input
-                        type="text"
-                        className="modal-input-field"
-                        placeholder="Pull Request Title"
-                        value={pullRequestTitle}
-                        onChange={(e) => setPullRequestTitle(e.target.value)}
-                        required
-                    />
-                    <textarea className="modal-input-area"
-                              placeholder="Enter Pull Request Description:"
-                              value={pullRequestDescription}
-                              onChange={(e) => setPullRequestDescription(e.target.value)} />
-                    <br/>
-                    {successfullyCreated && pullRequestUrl && (
-                        <div className="modal-input-field"
-                             onClick={() => window.open(`${pullRequestUrl}`, "_blank")}
-                             style={{cursor: "pointer"}}
-                        >
-                            GitHub Pull Request Url: {pullRequestUrl}
-                        </div>
                     )}
-                    <br/>
                     <div className="modal-actions">
                         <button className="modal-button primary"
-                                hidden={successfullyCreated}
-                                onClick={handleCreatePrRequest}
+                                hidden={successfullyMerged}
+                                onClick={handleMergeBranches}
                         >
-                            Create Pull Request
+                            Merge
                         </button>
                         <button className="modal-button secondary"
                                 onClick={props.onClose}
@@ -232,4 +198,4 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
     )
 }
 
-export default PullRequestModal;
+export default MergeModal;

@@ -403,6 +403,73 @@ namespace ChasmaWebApi.Data.Managers
             return true;
         }
 
+        // <inheritdoc />
+        public bool TryMergeBranch(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                // The following git commands is what is being done programatically:
+                // git fetch && git checkout main && git merge origin/feature && git push
+                using Repository repo = new Repository(workingDirectory);
+                Branch sourceBranch = repo.Branches[sourceBranchName];
+                if (sourceBranch == null)
+                {
+                    errorMessage = $"Source branch {sourceBranchName} does not exist.";
+                    ClientLogger.LogError("Source branch {sourceBranchName} does not exist. Sending error response.", sourceBranchName);
+                    return false;
+                }
+
+                Branch destinationBranch = repo.Branches[destinationBranchName];
+                if (destinationBranch == null)
+                {
+                    errorMessage = $"Destination branch {destinationBranchName} does not exist.";
+                    ClientLogger.LogError("Destination branch {destinationBranchName} does not exist. Sending error response.", destinationBranchName);
+                    return false;
+                }
+
+                Commands.Fetch(repo, sourceBranch.RemoteName, [], new FetchOptions(), null);
+                Commands.Checkout(repo, destinationBranch);
+                Signature author = new(fullName, email, DateTimeOffset.Now);
+                MergeOptions options = new()
+                {
+                    CommitOnSuccess = true,
+                    FailOnConflict = true,
+                    FastForwardStrategy = FastForwardStrategy.Default,
+                    MergeFileFavor = MergeFileFavor.Normal,
+                    FileConflictStrategy = CheckoutFileConflictStrategy.Normal,
+                };
+
+                MergeResult mergeResult = repo.Merge(sourceBranch, author, options);
+                if (mergeResult.Status == MergeStatus.Conflicts)
+                {
+                    errorMessage = $"Merge failed with status {mergeResult.Status}. May: resolve merge conflicts, abort merge, or reset and then redo merge.";
+                    ClientLogger.LogError("Merge of branch {sourceBranch} into {destinationBranch} failed with status {status}.", sourceBranchName, destinationBranchName, mergeResult.Status);
+                    return false;
+                }
+
+                string username = repo.Config.Get<string>("user.name")?.Value ?? "chasma-bot";
+                PushOptions pushOptions = new()
+                {
+                    CredentialsProvider = (url, usernameFromUrl, types) =>
+                        new UsernamePasswordCredentials
+                        {
+                            Username = username,
+                            Password = token,
+                        }
+                };
+
+                repo.Network.Push(destinationBranch, pushOptions);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"Failed to merge branch {sourceBranchName} into {destinationBranchName} for repository at {workingDirectory}. Check server logs for more information.";
+                ClientLogger.LogError(e, errorMessage);
+                return false;
+            }
+        }
+
         #region Private Methods
 
         /// <summary>
@@ -458,7 +525,7 @@ namespace ChasmaWebApi.Data.Managers
         private static bool PullRequestCanBeCreated(string workingDirectory, string headBranchName, string baseBranchName, out string reason)
         {
             reason = string.Empty;
-            using Repository repo = new Repository(workingDirectory);
+            using Repository repo = new(workingDirectory);
             Branch headBranch = repo.Branches[headBranchName];
             if (headBranch == null)
             {
@@ -551,7 +618,7 @@ namespace ChasmaWebApi.Data.Managers
         /// <returns>The number of local branch name, commits ahead, and behind.</returns>
         private (string branchName, int aheadCount, int behindCount) GetBranchDiversionCalculation(string workingDirectory)
         {
-            using Repository repo = new Repository(workingDirectory);
+            using Repository repo = new(workingDirectory);
             Branch branch = repo.Head;
             if (branch == null)
             {

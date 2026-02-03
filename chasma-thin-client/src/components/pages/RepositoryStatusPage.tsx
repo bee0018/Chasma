@@ -21,6 +21,7 @@ import ExecuteShellCommandsModal from "../modals/ExecuteShellCommandsModal";
 import {DiffLine} from "../types/CustomTypes";
 import {useCacheStore} from "../../managers/CacheManager";
 import {capitalizeFirst} from "../../stringHelperUtil";
+import MergeModal from "../modals/MergeModal";
 
 /** Status client for the API **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
@@ -104,6 +105,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user executing shell commands. **/
     const [isExecutingShellCommands, setIsExecutingShellCommands] = useState(false);
+
+    /** Gets or sets a flag indicating whether the user is merging branches. **/
+    const [isMergingBranch, setIsMergingBranch] = useState(false);
 
     /** Gets or sets the number of commits the local repo is ahead of the remote. **/
     const [commitsAhead, setCommitsAhead] = useState<number | undefined>(0);
@@ -361,9 +365,10 @@ const RepositoryStatusPage: React.FC = () => {
                 <div className="tab" onClick={handlePullRequest}>Pull ⬇️</div>
                 <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
                 <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>
-                <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿➡️</div>
-                <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️🌿</div>
-                <div className="tab" onClick={() => setIsCreatingPullRequest(true)}>Create Pull Request📥🌿</div>
+                <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
+                <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
+                <div className="tab" onClick={() => setIsCreatingPullRequest(true)}>Create Pull Request📥</div>
+                <div className="tab" onClick={() => setIsMergingBranch(true)}>Merge 🔀</div>
                 <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create Issue🐛</div>
                 <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsExecutingShellCommands(true)}>Custom Shell Commands🖥️</div>
             </aside>
@@ -696,6 +701,12 @@ const RepositoryStatusPage: React.FC = () => {
                     repositoryId={repoId}
                     onClose={() => setIsExecutingShellCommands(false)}
                     onSuccess={() => handleSelectFile(null, false)} />
+            }
+            {isMergingBranch &&
+                <MergeModal
+                    onClose={() => setIsMergingBranch(false)}
+                    repositoryId={repoId}
+                    userId={user?.userId} />
             }
         </div>
     );
