@@ -158,7 +158,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = (props: CreateIssueMod
                     <br/>
                     <div className="modal-actions">
                         <button className="modal-button primary"
-                                disabled={successfullyCreatedIssue}
+                                hidden={successfullyCreatedIssue}
                                 onClick={handleCreateIssueRequest}
                         >
                             Create Issue

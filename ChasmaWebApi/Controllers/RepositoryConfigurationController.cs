@@ -67,6 +67,7 @@ public class RepositoryConfigurationController : ControllerBase
         logger.LogInformation("Getting repositories for user with id: {userId}.", userId);
         List<LocalGitRepository> repositories = cacheManager.Repositories.Values
             .Where(i => i.UserId == userId && !i.IsIgnored)
+            .OrderBy(i => i.Name)
             .ToList();
         LocalRepositoriesInfoMessage message = new()
         {

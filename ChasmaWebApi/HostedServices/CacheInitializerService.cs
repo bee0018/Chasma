@@ -94,6 +94,21 @@ namespace ChasmaWebApi.HostedServices
             List<WorkingDirectoryModel> workingDirectories = await applicationDbContext.WorkingDirectories.ToListAsync(cancellationToken);
             foreach (WorkingDirectoryModel workingDirectoryModel in workingDirectories)
             {
+                // Clean up entries that are no longer valid. User may have deleted repositories outside of the application.
+                if (!Directory.Exists(workingDirectoryModel.WorkingDirectory))
+                {
+                    logger.LogWarning("Working directory {workingDirectory} does not exist anymore. Skipping adding it to the cache and removing from database.", workingDirectoryModel.WorkingDirectory);
+                    cacheManager.Repositories.TryRemove(workingDirectoryModel.RepositoryId, out _);
+                    RepositoryModel? repository = await applicationDbContext.Repositories.FirstOrDefaultAsync(i => i.Id == workingDirectoryModel.RepositoryId, cancellationToken);
+                    if (repository != null)
+                    {
+                        applicationDbContext.Repositories.Remove(repository);
+                    }
+                    applicationDbContext.WorkingDirectories.Remove(workingDirectoryModel);
+                    applicationDbContext.SaveChanges();
+                    continue;
+                }
+
                 cacheManager.WorkingDirectories.TryAdd(workingDirectoryModel.RepositoryId, workingDirectoryModel.WorkingDirectory);
             }
 
