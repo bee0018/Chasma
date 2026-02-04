@@ -18,50 +18,15 @@ import CreateIssueModal from "../modals/CreateIssueModal";
 import DeleteBranchModal from "../modals/DeleteBranchModal";
 import { apiBaseUrl } from "../../environmentConstants";
 import ExecuteShellCommandsModal from "../modals/ExecuteShellCommandsModal";
-import {DiffLine} from "../types/CustomTypes";
 import {useCacheStore} from "../../managers/CacheManager";
 import {capitalizeFirst} from "../../stringHelperUtil";
 import MergeModal from "../modals/MergeModal";
+import RepositoryStashesPage from "./statusComponents/RepositoryStashesPage";
+import {parseUnifiedDiff} from "../../managers/DiffViewerManager";
+import AddStashModal from "../modals/AddStashModal";
 
 /** Status client for the API **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
-
-/**
- * Parses the unified diff and track line numbers.
- * @param diff The line difference.
- */
-function parseUnifiedDiff(diff: string): DiffLine[] {
-    let oldLineNum = 0;
-    let newLineNum = 0;
-    const lines: DiffLine[] = [];
-    diff.split("\n").forEach((line) => {
-        if (line.startsWith("@@")) {
-            const match = line.match(/@@ -(\d+),?\d* \+(\d+),?\d* @@/);
-            if (match) {
-                oldLineNum = parseInt(match[1], 10) - 1;
-                newLineNum = parseInt(match[2], 10) - 1;
-            }
-            lines.push({ type: "hunk", content: line });
-        } else if (line.startsWith("+")) {
-            newLineNum++;
-            lines.push({ type: "add", content: line.slice(1), oldLineNumber: undefined, newLineNumber: newLineNum });
-        } else if (line.startsWith("-")) {
-            oldLineNum++;
-            lines.push({ type: "remove", content: line.slice(1), oldLineNumber: oldLineNum, newLineNumber: undefined });
-        } else {
-            oldLineNum++;
-            newLineNum++;
-            lines.push({
-                type: "context",
-                content: line.startsWith(" ") ? line.slice(1) : line,
-                oldLineNumber: oldLineNum,
-                newLineNumber: newLineNum,
-            });
-        }
-    });
-
-    return lines;
-}
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -133,6 +98,9 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets a value indicating whether the diff viewer is in split mode. **/
     const [isSplitView, setIsSplitView] = useState(false);
 
+    /** Gets or sets a value indicating whether the user is adding a stash. **/
+    const [isAddingStash, setIsAddingStash] = useState(false);
+
     /** Gets or sets the open pull request associated with the current branch. **/
     const [openPullRequests, setOpenPullRequests] = useState<GitHubPullRequest[] | undefined>(undefined);
 
@@ -145,6 +113,14 @@ const RepositoryStatusPage: React.FC = () => {
         mouseY: number;
         statusElement: RepositoryStatusElement;
     } | null>(null);
+
+    /** Gets or sets the active tab that the user has selected. **/
+    const [activeTab, setActiveTab] = useState<string>("home");
+
+    /** Handles the event when the user selects a tab. **/
+    const handleTabClick = (tab: string) => {
+        setActiveTab(tab);
+    };
 
     /**
      * Closes the modal once the user confirms the message
@@ -341,7 +317,7 @@ const RepositoryStatusPage: React.FC = () => {
      */
     function getPushStatePhrase(commitsAhead: number | undefined) {
         if (!commitsAhead || commitsAhead === 0) {
-            return "Not ready";
+            return "Nothing to push";
         }
 
         return `Ready with ${commitsAhead} commit${commitsAhead && commitsAhead > 1 ? "s" : ""}`
@@ -360,11 +336,23 @@ const RepositoryStatusPage: React.FC = () => {
                     <span className="profile-icon">📁</span>
                     <span>{repoName}</span>
                 </div>
-                <div className="tab" style={{ marginTop: "20px" }} onClick={() => navigate("/home")}>Home🏠</div>
+                <div className="tab" style={{ marginTop: "20px" }} onClick={() => navigate("/home")}>Dashboard 👈</div>
+                <div
+                    className={`tab ${activeTab === "home" ? "active" : ""}`}
+                    onClick={() => handleTabClick("home")}
+                >
+                    Home 🏠
+                </div>
                 <div className="tab" onClick={handleGitStatusRequest}>Refresh Repo Status 🔄</div>
                 <div className="tab" onClick={handlePullRequest}>Pull ⬇️</div>
                 <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
                 <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>
+                <div
+                    className={`tab ${activeTab === "stashes" ? "active" : ""}`}
+                    onClick={() => handleTabClick("stashes")}
+                >
+                    Stashes🗄️
+                </div>
                 <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
                 <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
                 <div className="tab" onClick={() => setIsCreatingPullRequest(true)}>Create Pull Request📥</div>
@@ -373,282 +361,286 @@ const RepositoryStatusPage: React.FC = () => {
                 <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsExecutingShellCommands(true)}>Custom Shell Commands🖥️</div>
             </aside>
 
-            <div className="content">
-                <div className="main-layout">
-                    {/* Left side: Repo summary + staged/unstaged */}
-                    <div className="left-panel">
-                        <div className="panel-card">
-                            <h2 className="page-description">Repository Summary</h2>
-                            <div className="repo-summary" onClick={handleNavigateToBranchUrl}>
-                                <div className="repo-summary-item">
-                                    <span className="repo-summary-label">Branch:</span>
-                                    <span className="repo-summary-value">{branchName}</span>
-                                </div>
-                                <div className="repo-summary-item">
-                                    <span className="repo-summary-label">Current Commit:</span>
-                                    <span className="repo-summary-value">{commitHash}</span>
-                                </div>
-                                <div className="repo-summary-item">
-                                    <span className="repo-summary-label">Commits Ahead:</span>
-                                    <span
-                                        className="repo-summary-value"
-                                        style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "#aaaaaa" }}
-                                    >
+            {activeTab === "home" && (
+                <div className="content">
+                    <div className="main-layout">
+                        {/* Left side: Repo summary + staged/unstaged */}
+                        <div className="left-panel">
+                            <div className="panel-card">
+                                <h2 className="page-description">Repository Summary</h2>
+                                <div className="repo-summary" onClick={handleNavigateToBranchUrl}>
+                                    <div className="repo-summary-item">
+                                        <span className="repo-summary-label">Branch:</span>
+                                        <span className="repo-summary-value">{branchName}</span>
+                                    </div>
+                                    <div className="repo-summary-item">
+                                        <span className="repo-summary-label">Current Commit:</span>
+                                        <span className="repo-summary-value">{commitHash}</span>
+                                    </div>
+                                    <div className="repo-summary-item">
+                                        <span className="repo-summary-label">Commits Ahead:</span>
+                                        <span
+                                            className="repo-summary-value"
+                                            style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "#aaaaaa" }}
+                                        >
                                         {commitsAhead}
                                     </span>
-                                </div>
-                                <div className="repo-summary-item">
-                                    <span className="repo-summary-label">Commits Behind:</span>
-                                    <span
-                                        className="repo-summary-value"
-                                        style={{ color: commitsBehind && commitsBehind > 0 ? "red" : "#aaaaaa" }}
-                                    >
+                                    </div>
+                                    <div className="repo-summary-item">
+                                        <span className="repo-summary-label">Commits Behind:</span>
+                                        <span
+                                            className="repo-summary-value"
+                                            style={{ color: commitsBehind && commitsBehind > 0 ? "red" : "#aaaaaa" }}
+                                        >
                                         {commitsBehind}
                                     </span>
-                                </div>
-                                <div className="repo-summary-item">
-                                    <span className="repo-summary-label">Push State:</span>
-                                    <span
-                                        className="repo-summary-value"
-                                        style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "white" }}
-                                    >
+                                    </div>
+                                    <div className="repo-summary-item">
+                                        <span className="repo-summary-label">Push State:</span>
+                                        <span
+                                            className="repo-summary-value"
+                                            style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "white" }}
+                                        >
                                         {getPushStatePhrase(commitsAhead)}
                                     </span>
-                                </div>
-                                <br/>
-                                {openPullRequests && openPullRequests.length > 0 && (
-                                    openPullRequests.map((pr) => (
-                                        <div
-                                            key={pr.number}
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                window.open(pr.htmlUrl, "_blank");
-                                            }}
-                                        >
-                                            <div className="repo-summary-item">
-                                                <span className="repo-summary-label">PR Number:</span>
-                                                <span className="repo-summary-value">{pr.number}</span>
-                                            </div>
+                                    </div>
+                                    <br/>
+                                    {openPullRequests && openPullRequests.length > 0 && (
+                                        openPullRequests.map((pr) => (
+                                            <div
+                                                key={pr.number}
+                                                onClick={e => {
+                                                    e.stopPropagation();
+                                                    window.open(pr.htmlUrl, "_blank");
+                                                }}
+                                            >
+                                                <div className="repo-summary-item">
+                                                    <span className="repo-summary-label">PR Number:</span>
+                                                    <span className="repo-summary-value">{pr.number}</span>
+                                                </div>
 
-                                            <div className="repo-summary-item">
-                                                <span className="repo-summary-label">Merged State:</span>
-                                                <span
-                                                    className="repo-summary-value"
-                                                    style={{ color: !pr.merged ? "yellow" : "purple" }}
-                                                >
+                                                <div className="repo-summary-item">
+                                                    <span className="repo-summary-label">Merged State:</span>
+                                                    <span
+                                                        className="repo-summary-value"
+                                                        style={{ color: !pr.merged ? "yellow" : "purple" }}
+                                                    >
                                                 {!pr.merged ? "Unmerged" : "Merged"}
                                                 </span>
-                                            </div>
+                                                </div>
 
-                                            <div className="repo-summary-item">
-                                                <span className="repo-summary-label">Active State:</span>
-                                                <span
-                                                    className="repo-summary-value"
-                                                    style={{ color: pr.activeState === "open" ? "lightgreen" : "lightblue" }}
-                                                >
+                                                <div className="repo-summary-item">
+                                                    <span className="repo-summary-label">Active State:</span>
+                                                    <span
+                                                        className="repo-summary-value"
+                                                        style={{ color: pr.activeState === "open" ? "lightgreen" : "lightblue" }}
+                                                    >
                                                     {pr.activeState === "open" ? "Active" : "Inactive"}
                                                 </span>
-                                            </div>
+                                                </div>
 
-                                            <div className="repo-summary-item">
-                                                <span className="repo-summary-label">Mergeable State:</span>
-                                                <span
-                                                    className="repo-summary-value"
-                                                    style={{ color: pr.mergeableState === "clean" ? "lightblue" : "orange" }}
-                                                >
+                                                <div className="repo-summary-item">
+                                                    <span className="repo-summary-label">Mergeable State:</span>
+                                                    <span
+                                                        className="repo-summary-value"
+                                                        style={{ color: pr.mergeableState === "clean" ? "lightblue" : "orange" }}
+                                                    >
                                                     {capitalizeFirst(pr.mergeableState)}
                                                 </span>
-                                            </div>
+                                                </div>
 
-                                            <div className="repo-summary-item">
-                                                <span className="repo-summary-label">Created at:</span>
-                                                <span className="repo-summary-value">{pr.createdAt}</span>
-                                            </div>
+                                                <div className="repo-summary-item">
+                                                    <span className="repo-summary-label">Created at:</span>
+                                                    <span className="repo-summary-value">{pr.createdAt}</span>
+                                                </div>
 
-                                            <div className="repo-summary-item">
-                                                <span className="repo-summary-label">Merged at:</span>
-                                                <span className="repo-summary-value">{pr.mergedAt}</span>
+                                                <div className="repo-summary-item">
+                                                    <span className="repo-summary-label">Merged at:</span>
+                                                    <span className="repo-summary-value">{pr.mergedAt}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
-                                )}
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+
+                            <div className="panel-card">
+                                <h2 className="page-description">Staged Changes</h2>
+                                {statusElements?.filter(e => e.isStaged).length ? (
+                                    <table className="status-table">
+                                        <thead>
+                                        <tr>
+                                            <th>File</th>
+                                            <th>Action</th>
+                                        </tr>
+                                        </thead>
+                                        {statusElements?.filter(e => e.isStaged).map((element, index) => (
+                                            <tbody key={index}>
+                                            <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
+                                                <td
+                                                    onClick={() => handleSelectFile(element, true)}
+                                                    onContextMenu={e => handleContextMenu(e, element)}
+                                                >
+                                                    {element.filePath}
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="stage-button unstage"
+                                                        onClick={e => {
+                                                            e.stopPropagation();
+                                                            handleApplyStagingActionRequest(element);
+                                                        }}
+                                                    >
+                                                        -
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        ))}
+                                    </table>
+                                ) : <div className="empty-table">No staged changes</div>}
+                            </div>
+
+                            <div className="panel-card">
+                                <h2 className="page-description">Unstaged Changes</h2>
+                                {statusElements?.filter(e => !e.isStaged).length ? (
+                                    <table className="status-table">
+                                        <thead>
+                                        <tr>
+                                            <th>File</th>
+                                            <th>Action</th>
+                                        </tr>
+                                        </thead>
+                                        {statusElements?.filter(e => !e.isStaged).map((element, index) => (
+                                            <tbody key={index}>
+                                            <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
+                                                <td
+                                                    onClick={() => handleSelectFile(element, false)}
+                                                    onContextMenu={e => handleContextMenu(e, element)}
+                                                >
+                                                    {element.filePath}
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="stage-button stage"
+                                                        onClick={e => {
+                                                            e.stopPropagation();
+                                                            handleApplyStagingActionRequest(element);
+                                                        }}
+                                                    >
+                                                        +
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        ))}
+                                    </table>
+                                ) : <div className="empty-table">No unstaged changes</div>}
                             </div>
                         </div>
 
-
-                        <div className="panel-card">
-                            <h2 className="page-description">Staged Changes</h2>
-                            {statusElements?.filter(e => e.isStaged).length ? (
-                                <table className="status-table">
-                                    <thead>
-                                    <tr>
-                                        <th>File</th>
-                                        <th>Action</th>
-                                    </tr>
-                                    </thead>
-                                    {statusElements?.filter(e => e.isStaged).map((element, index) => (
-                                        <tbody key={index}>
-                                        <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
-                                            <td
-                                                onClick={() => handleSelectFile(element, true)}
-                                                onContextMenu={e => handleContextMenu(e, element)}
-                                            >
-                                                {element.filePath}
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="stage-button unstage"
-                                                    onClick={e => {
-                                                        e.stopPropagation();
-                                                        handleApplyStagingActionRequest(element);
-                                                    }}
-                                                >
-                                                    -
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    ))}
-                                </table>
-                            ) : <div className="empty-table">No staged changes</div>}
-                        </div>
-
-                        <div className="panel-card">
-                            <h2 className="page-description">Unstaged Changes</h2>
-                            {statusElements?.filter(e => !e.isStaged).length ? (
-                                <table className="status-table">
-                                    <thead>
-                                    <tr>
-                                        <th>File</th>
-                                        <th>Action</th>
-                                    </tr>
-                                    </thead>
-                                    {statusElements?.filter(e => !e.isStaged).map((element, index) => (
-                                        <tbody key={index}>
-                                        <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
-                                            <td
-                                                onClick={() => handleSelectFile(element, false)}
-                                                onContextMenu={e => handleContextMenu(e, element)}
-                                            >
-                                                {element.filePath}
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="stage-button stage"
-                                                    onClick={e => {
-                                                        e.stopPropagation();
-                                                        handleApplyStagingActionRequest(element);
-                                                    }}
-                                                >
-                                                    +
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    ))}
-                                </table>
-                            ) : <div className="empty-table">No unstaged changes</div>}
-                        </div>
-                    </div>
-
-                    {contextMenu && (
-                        <div
-                            className="context-menu"
-                            style={{
-                                top: contextMenu.mouseY,
-                                left: contextMenu.mouseX,
-                            }}
-                            onClick={() => setContextMenu(null)}
-                        >
-                            <ul>
-                                <li onClick={() => handleApplyStagingActionRequest(contextMenu?.statusElement)}>
-                                    {contextMenu.statusElement && contextMenu.statusElement.isStaged ? "Unstage" : "Stage"}
-                                </li>
-                                <li>
-                                    Ignore
-                                </li>
-                                <li>
-                                    Remove
-                                </li>
-                            </ul>
-                        </div>
-                    )}
-
-                    {/* Right side: Diff viewer */}
-                    <div className="right-panel">
-                        <div className="diff-toolbar">
-                            <button
-                                className="submit-button"
-                                onClick={() => setIsSplitView(!isSplitView)}
+                        {contextMenu && (
+                            <div
+                                className="context-menu"
+                                style={{
+                                    top: contextMenu.mouseY,
+                                    left: contextMenu.mouseX,
+                                }}
+                                onClick={() => setContextMenu(null)}
                             >
-                                {isSplitView ? "Toggle Unified View" : "Toggle Split View"}
-                            </button>
-                            {selectedFile && (
+                                <ul>
+                                    <li onClick={() => handleApplyStagingActionRequest(contextMenu?.statusElement)}>
+                                        {contextMenu.statusElement && contextMenu.statusElement.isStaged ? "Unstage" : "Stage"}
+                                    </li>
+                                    <li>
+                                        Ignore
+                                    </li>
+                                    <li>
+                                        Remove
+                                    </li>
+                                    <li onClick={() => setIsAddingStash(true)}>
+                                        View Stash Options
+                                    </li>
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Right side: Diff viewer */}
+                        <div className="right-panel">
+                            <div className="diff-toolbar">
                                 <button
                                     className="submit-button"
-                                    style={{ background: selectedFile?.isStaged ? "red" : "green" }}
-                                    onClick={() => handleApplyStagingActionRequest(selectedFile)}
+                                    onClick={() => setIsSplitView(!isSplitView)}
                                 >
-                                    {selectedFile?.isStaged ? "Unstage" : "Stage"}
+                                    {isSplitView ? "Toggle Unified View" : "Toggle Split View"}
                                 </button>
-                            )}
-                        </div>
-
-                        {selectedFile ? (
-                            <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
-                                {!isSplitView && (
-                                    <div className="diff-panel">
-                                        <div className="diff-panel-header">Unified Diff: {selectedFile.filePath}</div>
-                                        {parsedDiff.map((line, i) => (
-                                            <div
-                                                key={i}
-                                                className={`diff-line ${
-                                                    line.type === "add" ? "diff-added" : line.type === "remove" ? "diff-removed" : ""
-                                                }`}
-                                            >
-                                                <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
-                                                <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
-                                                <span className="diff-code">{line.content}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                {isSplitView && (
-                                    <>
-                                        <div className="diff-panel">
-                                            <div className="diff-panel-header">Original: {selectedFile.filePath}</div>
-                                            {parsedDiff.map((line, i) => (
-                                                <div
-                                                    key={i}
-                                                    className={`diff-line ${line.type === "remove" ? "diff-removed" : ""}`}
-                                                >
-                                                    <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
-                                                    <span className="diff-code">{line.type === "add" ? "" : line.content}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="diff-panel">
-                                            <div className="diff-panel-header">Modified: {selectedFile.filePath}</div>
-                                            {parsedDiff.map((line, i) => (
-                                                <div
-                                                    key={i}
-                                                    className={`diff-line ${line.type === "add" ? "diff-added" : ""}`}
-                                                >
-                                                    <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
-                                                    <span className="diff-code">{line.type === "remove" ? "" : line.content}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </>
+                                {selectedFile && (
+                                    <button
+                                        className="submit-button"
+                                        style={{ background: selectedFile?.isStaged ? "red" : "green" }}
+                                        onClick={() => handleApplyStagingActionRequest(selectedFile)}
+                                    >
+                                        {selectedFile?.isStaged ? "Unstage" : "Stage"}
+                                    </button>
                                 )}
                             </div>
-                        ) : (
-                            <div className="empty-table">Select a file to view diff</div>
-                        )}
+
+                            {selectedFile ? (
+                                <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
+                                    {!isSplitView && (
+                                        <div className="diff-panel">
+                                            <div className="diff-panel-header">Unified Diff: {selectedFile.filePath}</div>
+                                            {parsedDiff.map((line, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`diff-line ${
+                                                        line.type === "add" ? "diff-added" : line.type === "remove" ? "diff-removed" : ""
+                                                    }`}
+                                                >
+                                                    <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
+                                                    <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
+                                                    <span className="diff-code">{line.content}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {isSplitView && (
+                                        <>
+                                            <div className="diff-panel">
+                                                <div className="diff-panel-header">Original: {selectedFile.filePath}</div>
+                                                {parsedDiff.map((line, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className={`diff-line ${line.type === "remove" ? "diff-removed" : ""}`}
+                                                    >
+                                                        <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
+                                                        <span className="diff-code">{line.type === "add" ? "" : line.content}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="diff-panel">
+                                                <div className="diff-panel-header">Modified: {selectedFile.filePath}</div>
+                                                {parsedDiff.map((line, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className={`diff-line ${line.type === "add" ? "diff-added" : ""}`}
+                                                    >
+                                                        <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
+                                                        <span className="diff-code">{line.type === "remove" ? "" : line.content}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="empty-table">Select a file to view diff</div>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-
+            )}
             {notification && (
                 <NotificationModal
                     title={notification.title}
@@ -708,6 +700,16 @@ const RepositoryStatusPage: React.FC = () => {
                     repositoryId={repoId}
                     userId={user?.userId} />
             }
+            {isAddingStash &&
+                <AddStashModal
+                    repositoryId={repoId}
+                    onClose={() => setIsAddingStash(false)} />
+            }
+            {activeTab === "stashes" && (
+                <div className="panel-card">
+                    <RepositoryStashesPage repositoryId={repoId} />
+                </div>
+            )}
         </div>
     );
 };

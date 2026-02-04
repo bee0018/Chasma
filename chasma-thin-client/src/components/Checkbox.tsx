@@ -7,6 +7,12 @@ interface ICheckboxProps {
 
     /** The action to execute once the box is checked. **/
     onBoxChecked: (isChecked: boolean) => void;
+
+    /** The flag indicating whether the checked event is managed with custom logic outside the component. **/
+    checked?: boolean;
+
+    /** The tooltip for the label. **/
+    tooltip?: string;
 }
 
 /**
@@ -26,11 +32,16 @@ const Checkbox: React.FC<ICheckboxProps> = (props: ICheckboxProps) => {
         <label className="themed-checkbox">
             <input
                 type="checkbox"
-                checked={checked}
+                checked={props.checked !== undefined ? props.checked : checked}
                 onChange={(e) => handleOnChangedEvent(e.target.checked)}
             />
             <span className="checkbox-custom" />
-            <span className="checkbox-label">{props.label}</span>
+            <span
+                className="checkbox-label"
+                title={props.tooltip}
+            >
+                {props.label}
+            </span>
         </label>
     );
 }
