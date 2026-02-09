@@ -252,6 +252,166 @@
         }
       }
     },
+    "/api/RepositoryConfiguration/gitStash": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_GitStash",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddStashRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddStashResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryConfiguration/getStashList": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_GetStashList",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStashListRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetStashListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryConfiguration/getStashDetails": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_GetStashDetails",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStashDetailsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetStashDetailsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryConfiguration/applyStash": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_ApplyStash",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyStashRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyStashResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryConfiguration/deleteStash": {
+      "delete": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_DeleteStash",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteStashRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteStashResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryStatus/workflowRuns": {
       "post": {
         "tags": [
@@ -1065,6 +1225,276 @@
               },
               "isIgnored": {
                 "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "AddStashResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "AddStashRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "stashModifier": {
+                "$ref": "#/components/schemas/StashModifiers"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "StashModifiers": {
+        "type": "integer",
+        "description": "Options controlling Stash behavior.\n            ",
+        "x-enumFlags": true,
+        "x-enum-names": [
+          "Default",
+          "KeepIndex",
+          "IncludeUntracked",
+          "IncludeIgnored"
+        ],
+        "x-enum-varnames": [
+          "Default",
+          "KeepIndex",
+          "IncludeUntracked",
+          "IncludeIgnored"
+        ],
+        "x-enumNames": [
+          "Default",
+          "KeepIndex",
+          "IncludeUntracked",
+          "IncludeIgnored"
+        ],
+        "x-enum-descriptions": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "x-enumDescriptions": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          4
+        ]
+      },
+      "GetStashListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stashList": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StashEntry"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "StashEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stashMessage": {
+            "type": "string"
+          }
+        }
+      },
+      "GetStashListRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "GetStashDetailsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "patchEntries": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PatchEntry"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PatchEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "filePath": {
+            "type": "string"
+          },
+          "diff": {
+            "type": "string"
+          }
+        }
+      },
+      "GetStashDetailsRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "stashEntry": {
+                "$ref": "#/components/schemas/StashEntry"
+              }
+            }
+          }
+        ]
+      },
+      "ApplyStashResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ApplyStashRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "stashIndex": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "applyStashModifier": {
+                "$ref": "#/components/schemas/StashApplyModifiers"
+              }
+            }
+          }
+        ]
+      },
+      "StashApplyModifiers": {
+        "type": "integer",
+        "description": "The flags which control whether the index should be reinstated.",
+        "x-enumFlags": true,
+        "x-enum-names": [
+          "Default",
+          "ReinstateIndex"
+        ],
+        "x-enum-varnames": [
+          "Default",
+          "ReinstateIndex"
+        ],
+        "x-enumNames": [
+          "Default",
+          "ReinstateIndex"
+        ],
+        "x-enum-descriptions": [
+          null,
+          null
+        ],
+        "x-enumDescriptions": [
+          null,
+          null
+        ],
+        "enum": [
+          0,
+          1
+        ]
+      },
+      "DeleteStashResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "DeleteStashRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "stashIndex": {
+                "type": "integer",
+                "format": "int32"
               }
             }
           }

@@ -1,4 +1,5 @@
 ﻿using ChasmaWebApi.Data.Interfaces;
+using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
 using LibGit2Sharp;
 using Repository = LibGit2Sharp.Repository;
@@ -260,6 +261,169 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
         CacheManager.WorkingDirectories.TryAdd(localGitRepository.Id, repoPath);
         CacheManager.Repositories.TryAdd(localGitRepository.Id, localGitRepository);
         return true;
+    }
+
+    // <inheritdoc/>
+    public List<StashEntry>? GetStashList(string workingDirectory, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        try
+        {
+            using Repository repo = new(workingDirectory);
+            List<StashEntry> stashEntries = new();
+            int index = 0;
+            foreach (Stash stash in repo.Stashes)
+            {
+                // Stash index is not directly accessible, so we will have to keep track of it manually.
+                StashEntry stashEntry = new()
+                {
+                    Index = index,
+                    StashMessage = stash.Message,
+                };
+                stashEntries.Add(stashEntry);
+                index++;
+            }
+
+            return stashEntries;
+        }
+        catch (Exception e)
+        {
+            errorMessage = $"An error occurred while retrieving the stash list for the repository. Check internal server logs for more information.";
+            ClientLogger.LogError("An error occurred while retrieving the stash list for the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
+            return null;
+        }
+    }
+
+    // <inheritdoc/>
+    public List<PatchEntry>? GetStashDetails(string workingDirectory, StashEntry stashEntry, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        if (stashEntry == null)
+        {
+            errorMessage = "Stash entry cannot be null.";
+            ClientLogger.LogError("Received a null stash entry. Cannot get stash details. Sending error response.");
+            return null;
+        }
+
+        try
+        {
+            using Repository repo = new(workingDirectory);
+            int index = stashEntry.Index;
+            Stash? stash = repo.Stashes[index];
+            if (stash == null)
+            {
+                errorMessage = $"No stash found at index {index} in repository.";
+                ClientLogger.LogError("Could not find stash at index {index} for working directory {workingDirectory}.", index, workingDirectory);
+                return null;
+            }
+
+            // Diff base → stash (working tree changes)
+            List<PatchEntry> patchEntries = new();
+            CompareOptions options = new()
+            {
+                Similarity = SimilarityOptions.Renames,
+            };
+            Patch patches = repo.Diff.Compare<Patch>(stash.Base.Tree, stash.WorkTree.Tree, options);
+            foreach (PatchEntryChanges entry in patches)
+            {
+                PatchEntry patchEntry = new()
+                {
+                    FilePath = entry.Path,
+                    Diff = entry.Patch,
+                };
+                patchEntries.Add(patchEntry);
+            }
+
+            return patchEntries;
+        }
+        catch (Exception e)
+        {
+            errorMessage = $"An error occurred while retrieving the stash list for the repository. Check internal server logs for more information.";
+            ClientLogger.LogError("An error occurred while retrieving the stash list for the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
+            return null;
+        }
+    }
+
+    // <inheritdoc/>
+    public bool TryAddStash(string workingDirectory, UserAccountModel user, string stashMessage, StashModifiers stashOptions, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        try
+        {
+            using Repository repository = new(workingDirectory);
+            Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
+            Stash stash = repository.Stashes.Add(author, stashMessage, stashOptions);
+            ClientLogger.LogInformation("Successfully created stash {stashName} in repository at {repoPath}.", stash.CanonicalName, workingDirectory);
+            return true;
+        }
+        catch (Exception e)
+        {
+            errorMessage = $"An error occurred while creating a stash in the repository at {workingDirectory}: {e.Message}";
+            ClientLogger.LogError("An error occurred while creating a stash in the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
+            return false;
+        }
+    }
+
+    // <inheritdoc/>
+    public bool TryApplyStash(string workingDirectory, int stashIndex, StashApplyModifiers stashApplyOptions, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        try
+        {
+            using Repository repository = new(workingDirectory);
+            Stash stash = repository.Stashes.ElementAtOrDefault(stashIndex);
+            if (stash == null)
+            {
+                errorMessage = $"No stash found at index {stashIndex} in repository at {workingDirectory}.";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            StashApplyOptions applyOptions = new() { ApplyModifiers = stashApplyOptions };
+            StashApplyStatus status = repository.Stashes.Apply(stashIndex, applyOptions);
+            if (status != StashApplyStatus.Applied)
+            {
+                errorMessage = $"Failed to apply stash at index {stashIndex} in repository at {workingDirectory}.";
+                ClientLogger.LogError("Failed to apply stash at index {indexNumber} and finished with status code: {code}", stashIndex, status);
+                return false;
+            }
+
+            ClientLogger.LogInformation("Successfully applied stash {stashName} in repository at {repoPath}.", stash.CanonicalName, workingDirectory);
+            return true;
+        }
+        catch (Exception e)
+        {
+            errorMessage = $"An error occurred while applying a stash in the repository at {workingDirectory}: {e.Message}";
+            ClientLogger.LogError("An error occurred while applying a stash in the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
+            return false;
+        }
+    }
+
+    // <inheritdoc/>
+    public bool TryRemoveStash(string workingDirectory, int stashIndex, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        try
+        {
+            using Repository repository = new(workingDirectory);
+            Stash stash = repository.Stashes.ElementAtOrDefault(stashIndex);
+            if (stash == null)
+            {
+                errorMessage = $"No stash found at index {stashIndex} in repository at {workingDirectory}.";
+                ClientLogger.LogError(errorMessage);
+                return false;
+            }
+
+            repository.Stashes.Remove(stashIndex);
+            ClientLogger.LogInformation("Successfully dropped stash {stashName} in repository at {repoPath}.", stash.CanonicalName, workingDirectory);
+            return true;
+        }
+        catch (Exception e)
+        {
+            errorMessage = $"An error occurred while dropping a stash in the repository at {workingDirectory}: {e.Message}";
+            ClientLogger.LogError("An error occurred while dropping a stash in the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
+            return false;
+        }
     }
 
     #region Private Methods
