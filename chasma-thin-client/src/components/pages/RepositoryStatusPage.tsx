@@ -147,6 +147,7 @@ const RepositoryStatusPage: React.FC = () => {
         try {
             const request = new GitStatusRequest();
             request.repositoryId = repoId;
+            request.userId = user?.userId
             const response = await statusClient.getRepoStatus(request);
             if (response.isErrorResponse) {
                 setNotification({
@@ -184,6 +185,7 @@ const RepositoryStatusPage: React.FC = () => {
         request.repoKey = selectedFile.repositoryId;
         request.fileName = selectedFile.filePath;
         request.isStaging = stagingAction;
+        request.userId = user?.userId;
 
         try {
             const response = await statusClient.applyStagingAction(request);

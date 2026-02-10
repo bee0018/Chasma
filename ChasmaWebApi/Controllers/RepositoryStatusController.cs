@@ -63,29 +63,29 @@ namespace ChasmaWebApi.Controllers
         [Route("workflowRuns")]
         public ActionResult<GitHubWorkflowRunResponse> GetChasmaWorkflowResults([FromBody] GetWorkflowResultsRequest request)
         {
-            GitHubWorkflowRunResponse gitHubWorkflowRunResponse = new();
+            GitHubWorkflowRunResponse response = new();
             if (request == null)
             {
                 logger.LogError("Null request received to get workflow run results. Sending error response.");
-                gitHubWorkflowRunResponse.IsErrorResponse = true;
-                gitHubWorkflowRunResponse.ErrorMessage = "Null request received. Cannot get workflow runs.";
-                return BadRequest(gitHubWorkflowRunResponse);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot get workflow runs.";
+                return BadRequest(response);
             }
 
             if (string.IsNullOrEmpty(request.RepositoryName))
             {
                 logger.LogError("Empty repository name received when attempting to get workflow run results. Sending error response.");
-                gitHubWorkflowRunResponse.IsErrorResponse = true;
-                gitHubWorkflowRunResponse.ErrorMessage = "Invalid request. Repository name is required.";
-                return BadRequest(gitHubWorkflowRunResponse);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid request. Repository name is required.";
+                return BadRequest(response);
             }
 
             if (string.IsNullOrEmpty(request.RepositoryOwner))
             {
                 logger.LogError("Empty repository owner received when attempting to get workflow run results. Sending error response.");
-                gitHubWorkflowRunResponse.IsErrorResponse = true;
-                gitHubWorkflowRunResponse.ErrorMessage = "Invalid request. Repository owner is required.";
-                return BadRequest(gitHubWorkflowRunResponse);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid request. Repository owner is required.";
+                return BadRequest(response);
             }
 
             logger.LogInformation("Attempting to get workflow data for the last {threshold} builds for {repoName}.", webApiConfigurations.WorkflowRunReportThreshold, request.RepositoryName);
@@ -98,69 +98,79 @@ namespace ChasmaWebApi.Controllers
                 bool runsRetrieved = statusManager.TryGetWorkflowRunResults(repoName, repoOwner, token, buildCount, out List<WorkflowRunResult> runResults, out string errorMessage);
                 if (!runsRetrieved && !string.IsNullOrEmpty(errorMessage))
                 {
-                    gitHubWorkflowRunResponse.IsErrorResponse = true;
-                    gitHubWorkflowRunResponse.ErrorMessage = errorMessage;
-                    return Ok(gitHubWorkflowRunResponse);
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = errorMessage;
+                    return Ok(response);
                 }
 
-                gitHubWorkflowRunResponse.RepositoryName = repoName;
-                gitHubWorkflowRunResponse.WorkflowRunResults.AddRange(runResults);
+                response.RepositoryName = repoName;
+                response.WorkflowRunResults.AddRange(runResults);
                 logger.LogInformation("Retrieved latest {count} build runs from {repo}.", runResults.Count, repoName);
-                return Ok(gitHubWorkflowRunResponse);
+                return Ok(response);
             }
             catch
             {
-                gitHubWorkflowRunResponse.IsErrorResponse = true;
-                gitHubWorkflowRunResponse.ErrorMessage = $"Error fetching workflow runs from {repoName}. Check server logs for more information.";
-                return BadRequest(gitHubWorkflowRunResponse);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Error fetching workflow runs from {repoName}. Check server logs for more information.";
+                return BadRequest(response);
             }
         }
 
         /// <summary>
         /// Gets the git repository status for the specified repo ID.
         /// </summary>
-        /// <param name="gitStatusRequest">The git status request.</param>
+        /// <param name="request">The git status request.</param>
         /// <returns>The git status response.</returns>
         [HttpPost]
         [Route("gitStatus")]
-        public ActionResult<GitStatusResponse> GetRepoStatus([FromBody] GitStatusRequest gitStatusRequest)
+        public ActionResult<GitStatusResponse> GetRepoStatus([FromBody] GitStatusRequest request)
         {
-            GitStatusResponse gitStatusResponse = new();
-            if (gitStatusRequest == null)
+            GitStatusResponse response = new();
+            if (request == null)
             {
                 logger.LogError("Null git status request received.");
-                gitStatusResponse.IsErrorResponse = true;
-                gitStatusResponse.ErrorMessage = "Request must be populated.";
-                return BadRequest(gitStatusResponse);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(gitStatusRequest.RepositoryId))
+            if (string.IsNullOrEmpty(request.RepositoryId))
             {
                 logger.LogError("Cannot process git status request because the repository identifier is null or empty.");
-                gitStatusResponse.IsErrorResponse = true;
-                gitStatusResponse.ErrorMessage = "The repository identifier is null or empty.";
-                return BadRequest(gitStatusResponse);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The repository identifier is null or empty.";
+                return Ok(response);
             }
 
-            string repoId = gitStatusRequest.RepositoryId;
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            {
+                logger.LogError("No user found in cache for user ID: {userId}. Cannot get repository status. Sending error response.", request.UserId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No user found in cache for user ID: {request.UserId}. Cannot get repository status.";
+                return Ok(response);
+            }
+
+            string repoId = request.RepositoryId;
+            string token = webApiConfigurations.GitHubApiToken;
             logger.LogInformation("Received request to run git status for repository ID: {repoId}", repoId);
-            RepositorySummary summary = statusManager.GetRepositoryStatus(repoId);
+            RepositorySummary summary = statusManager.GetRepositoryStatus(repoId, user.UserName, token);
             if (summary == null)
             {
                 logger.LogError("Failed to get repository status for repo ID: {repoId}", repoId);
-                gitStatusResponse.IsErrorResponse = true;
-                gitStatusResponse.ErrorMessage = $"Failed to get repository status for repo ID: {repoId}";
-                return BadRequest(gitStatusResponse);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to get repository status for repo ID: {repoId}";
+                return Ok(response);
             }
 
-            gitStatusResponse.StatusElements = summary.StatusElements;
-            gitStatusResponse.CommitsAhead = summary.CommitsAhead;
-            gitStatusResponse.CommitsBehind = summary.CommitsBehind;
-            gitStatusResponse.BranchName = summary.BranchName;
-            gitStatusResponse.RemoteUrl = summary.RemoteUrl;
-            gitStatusResponse.CommitHash = summary.CommitHash;
-            gitStatusResponse.PullRequests = summary.PullRequests;
-            return Ok(gitStatusResponse);
+            response.StatusElements = summary.StatusElements;
+            response.CommitsAhead = summary.CommitsAhead;
+            response.CommitsBehind = summary.CommitsBehind;
+            response.BranchName = summary.BranchName;
+            response.RemoteUrl = summary.RemoteUrl;
+            response.CommitHash = summary.CommitHash;
+            response.PullRequests = summary.PullRequests;
+            return Ok(response);
         }
 
         /// <summary>
@@ -186,7 +196,7 @@ namespace ChasmaWebApi.Controllers
                 logger.LogError("Repository key must be populated.");
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Cannot process request because the repository key is not populated.";
-                return BadRequest(response);
+                return Ok(response);
             }
 
             if (string.IsNullOrEmpty(applyStagingActionRequest.FileName))
@@ -194,19 +204,29 @@ namespace ChasmaWebApi.Controllers
                 logger.LogError("File name must be populated.");
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Cannot process request because the file name is not populated.";
-                return BadRequest(response);
+                return Ok(response);
             }
 
+            int userId = applyStagingActionRequest.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            {
+                logger.LogError("No user found in cache for user ID: {userId}. Cannot apply staging action. Sending error response.", userId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No user found in cache for user ID: {userId}.";
+                return Ok(response);
+            }
+
+            string token = webApiConfigurations.GitHubApiToken;
             string repoKey = applyStagingActionRequest.RepoKey;
             string fileName = applyStagingActionRequest.FileName;
             bool isStaging = applyStagingActionRequest.IsStaging;
-            List<RepositoryStatusElement>? statusElements = statusManager.ApplyStagingAction(repoKey, fileName, isStaging);
+            List<RepositoryStatusElement>? statusElements = statusManager.ApplyStagingAction(repoKey, fileName, isStaging, user.UserName, token);
             if (statusElements == null)
             {
                 logger.LogError("Failed to apply staging action for repo ID: {repoId}", repoKey);
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"Failed to apply staging action for repo ID: {repoKey}. Check server logs for more information.";
-                return BadRequest(response);
+                return Ok(response);
             }
 
             response.StatusElements = statusElements;
@@ -713,14 +733,14 @@ namespace ChasmaWebApi.Controllers
         /// <summary>
         /// Gets the git diff for the specified repository and file path.
         /// </summary>
-        /// <param name="gitDiffRequest">The request to run 'git diff' on the specified file.</param>
+        /// <param name="request">The request to run 'git diff' on the specified file.</param>
         /// <returns>The response to a 'git diff' request.</returns>
         [HttpPost]
         [Route("gitDiff")]
-        public ActionResult<GitDiffResponse> GetGitDiff([FromBody] GitDiffRequest gitDiffRequest)
+        public ActionResult<GitDiffResponse> GetGitDiff([FromBody] GitDiffRequest request)
         {
             GitDiffResponse response = new();
-            if (gitDiffRequest == null)
+            if (request == null)
             {
                 logger.LogError("Null {request} received. Sending error response", nameof(GitDiffRequest));
                 response.IsErrorResponse = true;
@@ -728,8 +748,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            string repoId = gitDiffRequest.RepositoryId;
-            if (string.IsNullOrEmpty(gitDiffRequest.RepositoryId))
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(request.RepositoryId))
             {
                 logger.LogError("Cannot process git diff request because the repository identifier is null or empty. Sending error response.");
                 response.IsErrorResponse = true;
@@ -745,8 +765,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            string filePath = gitDiffRequest.FilePath;
-            if (string.IsNullOrEmpty(gitDiffRequest.FilePath))
+            string filePath = request.FilePath;
+            if (string.IsNullOrEmpty(request.FilePath))
             {
                 logger.LogError("Cannot process git diff request because the file path is null or empty.");
                 response.IsErrorResponse = true;
@@ -755,7 +775,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             logger.LogInformation("Received request to get git diff for repository ID: {repoId}, file path: {filePath}", repoId, filePath);
-            bool isStaged = gitDiffRequest.IsStaged;
+            bool isStaged = request.IsStaged;
             if (!statusManager.TryGetGitDiff(workingDirectory, filePath, isStaged, out string diffContent, out string errorMessage))
             {
                 logger.LogError(errorMessage);
