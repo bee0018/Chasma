@@ -451,7 +451,7 @@
         ],
         "operationId": "RepositoryStatus_GetRepoStatus",
         "requestBody": {
-          "x-name": "gitStatusRequest",
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
@@ -739,7 +739,7 @@
         ],
         "operationId": "RepositoryStatus_GetGitDiff",
         "requestBody": {
-          "x-name": "gitDiffRequest",
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
@@ -853,6 +853,70 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ExecuteBatchShellCommandsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Shell/openFile": {
+      "post": {
+        "tags": [
+          "Shell"
+        ],
+        "operationId": "Shell_OpenFile",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenFileRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenFileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Shell/gitRestore": {
+      "post": {
+        "tags": [
+          "Shell"
+        ],
+        "operationId": "Shell_GitRestore",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscardFileChangesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscardFileChangesResponse"
                 }
               }
             }
@@ -1637,6 +1701,9 @@
               },
               "isStaged": {
                 "type": "boolean"
+              },
+              "isTracked": {
+                "type": "boolean"
               }
             }
           }
@@ -2329,6 +2396,66 @@
             }
           }
         }
+      },
+      "OpenFileResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "OpenFileRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "filePath": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "DiscardFileChangesResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "DiscardFileChangesRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "filePath": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       },
       "LoginResponse": {
         "allOf": [

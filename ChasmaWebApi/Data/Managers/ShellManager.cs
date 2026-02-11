@@ -100,5 +100,67 @@ namespace ChasmaWebApi.Data.Managers
 
             return results;
         }
+
+        // <inheritdoc/>
+        public bool TryOpenFile(string filePath, string workingDirectory, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                string openCommand = ShellUtility.GetFileOpenCommand();
+                Process process = ShellUtility.GetFileProcessingShell(openCommand, filePath, workingDirectory);
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+                if (process.ExitCode != 0)
+                {
+                    errorMessage = $"Command '{openCommand}' failed with error: {error}\n";
+                    logger.LogError("Command '{command} {file}' failed to open. Sending error response.", openCommand, filePath);
+                    return false;
+                }
+                 
+                string successMessage = $"Command '{openCommand} {filePath}' executed successfully: {output}\n";
+                logger.LogInformation(successMessage);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ClientLogger.LogError("Error opening file and sending error response The error is: {message}", ex.Message);
+                errorMessage = $"Error opening {filePath}. Check server logs for more information.";
+                return false;
+            }
+        }
+
+        // <inheritdoc/>
+        public bool TryDiscardFileChanges(string workingDirectory, string filePath, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                string discardCommand = "git restore";
+                Process process = ShellUtility.GetFileProcessingShell(discardCommand, filePath, workingDirectory);
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+                if (process.ExitCode != 0)
+                {
+                    errorMessage = $"Command '{discardCommand}' failed with error: {error}\n";
+                    logger.LogError("Command '{command} {file}' failed to discard changes. Sending error response.", discardCommand, filePath);
+                    return false;
+                }
+
+                string successMessage = $"Command '{discardCommand} {filePath}' executed successfully: {output}\n";
+                logger.LogInformation(successMessage);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ClientLogger.LogError("Error discarding file changes and sending error response. The error is: {message}", ex.Message);
+                errorMessage = $"Error discarding file changes for file: {filePath}. Check server logs for more information.";
+                return false;
+            }
+        }
     }
 }

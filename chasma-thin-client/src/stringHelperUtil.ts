@@ -13,7 +13,12 @@ export const isBlankOrUndefined = (value: string | undefined | null) => {
  * Copies the text to the clipboard.
  * @param text The text to copy.
  */
-export async function copyToClipboard(text: string): Promise<boolean>  {
+export async function copyToClipboard(text: string | undefined): Promise<boolean>  {
+    if (!text) {
+        console.error("Could not copy text from clipboard");
+        return false;
+    }
+
     try {
         await navigator.clipboard.writeText(text);
         console.log("Successfully copied to clipboard");

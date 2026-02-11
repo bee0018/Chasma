@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-    ApplyStagingActionRequest,
+    ApplyStagingActionRequest, DiscardFileChangesRequest,
     GitDiffRequest,
     GitHubPullRequest,
     GitPullRequest,
-    GitStatusRequest,
+    GitStatusRequest, OpenFileRequest,
     RepositoryStatusClient,
-    RepositoryStatusElement,
+    RepositoryStatusElement, ShellClient,
 } from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
 import CommitModal from "../modals/CommitModal";
@@ -19,7 +19,7 @@ import DeleteBranchModal from "../modals/DeleteBranchModal";
 import { apiBaseUrl } from "../../environmentConstants";
 import ExecuteShellCommandsModal from "../modals/ExecuteShellCommandsModal";
 import {useCacheStore} from "../../managers/CacheManager";
-import {capitalizeFirst} from "../../stringHelperUtil";
+import {capitalizeFirst, copyToClipboard} from "../../stringHelperUtil";
 import MergeModal from "../modals/MergeModal";
 import RepositoryStashesPage from "./statusComponents/RepositoryStashesPage";
 import {parseUnifiedDiff} from "../../managers/DiffViewerManager";
@@ -27,6 +27,9 @@ import AddStashModal from "../modals/AddStashModal";
 
 /** Status client for the API **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
+
+/** The client for interacting with the Web API shell. **/
+const shellClient = new ShellClient(apiBaseUrl);
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -325,6 +328,64 @@ const RepositoryStatusPage: React.FC = () => {
         return `Ready with ${commitsAhead} commit${commitsAhead && commitsAhead > 1 ? "s" : ""}`
     }
 
+    /**
+     * Handles the event when the user wants to open the selected file.
+     * @param filepath The specified file.
+     */
+    const handleOpenFileRequest = async (filepath : string | undefined) => {
+        const request = new OpenFileRequest();
+        request.repositoryId = repoId;
+        request.filePath = filepath;
+        try {
+            const response = await shellClient.openFile(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: `Could not open ${filepath}!`,
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+        }
+        catch (e) {
+            setNotification({
+                title: `Error opening ${filepath}!`,
+                message: "An internal server error has occurred. Review logs.",
+                isError: true,
+            });
+        }
+    }
+
+    /**
+     * Handles the event when the user wants ot restore file changes for the specified file.
+     * @param filePath The file to restore.
+     */
+    const handleGitRestore = async (filePath : string | undefined) => {
+        const request = new DiscardFileChangesRequest();
+        request.repositoryId = repoId;
+        request.filePath = filePath;
+        try {
+            const response = await shellClient.gitRestore(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: `Could not discard changes for  ${filePath}!`,
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+
+            setSelectedFile(null);
+        }
+        catch (e) {
+            setNotification({
+                title: `Error restoring ${filePath}!`,
+                message: "An internal server error has occurred. Review logs.",
+                isError: true,
+            });
+        }
+    }
+
     useEffect(() => {
         const closeMenu = () => setContextMenu(null);
         window.addEventListener("click", closeMenu);
@@ -552,14 +613,31 @@ const RepositoryStatusPage: React.FC = () => {
                                 onClick={() => setContextMenu(null)}
                             >
                                 <ul>
+                                    <li onClick={() => handleOpenFileRequest(contextMenu?.statusElement.filePath)}>
+                                        Open
+                                    </li>
+                                    <li onClick={() => copyToClipboard(contextMenu?.statusElement.filePath)}>
+                                        Copy Path to Clipboard
+                                    </li>
                                     <li onClick={() => handleApplyStagingActionRequest(contextMenu?.statusElement)}>
                                         {contextMenu.statusElement && contextMenu.statusElement.isStaged ? "Unstage" : "Stage"}
                                     </li>
-                                    <li>
+                                    <li
+                                        onClick={() => handleGitRestore(contextMenu?.statusElement.filePath)}
+                                        hidden={contextMenu.statusElement.isTracked}
+                                    >
+                                        Discard File Changes
+                                    </li>
+                                    <li hidden={!contextMenu.statusElement.isTracked}>
                                         Ignore
                                     </li>
                                     <li>
                                         Remove
+                                    </li>
+                                    <li
+                                        hidden={contextMenu.statusElement.isTracked}
+                                    >
+                                        Stop Tracking
                                     </li>
                                     <li onClick={() => setIsAddingStash(true)}>
                                         View Stash Options

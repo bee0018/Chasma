@@ -28,5 +28,10 @@ namespace ChasmaWebApi.Data.Objects
         /// Gets or sets a value indicating whether this file is staged or not.
         /// </summary>
         public bool IsStaged { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the file is being tracked.
+        /// </summary>
+        public bool IsTracked { get; set; }
     }
 }

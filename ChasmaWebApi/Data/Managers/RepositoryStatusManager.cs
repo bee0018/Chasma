@@ -85,6 +85,7 @@ namespace ChasmaWebApi.Data.Managers
                     FilePath = item.FilePath,
                     State = item.State,
                     IsStaged = isStaged,
+                    IsTracked = state != FileStatus.NewInWorkdir,
                 };
                 statusElements.Add(statusElement);
                 if (hasUnstagedChanges)

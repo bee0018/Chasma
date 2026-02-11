@@ -136,5 +136,119 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
         }
+
+        /// <summary>
+        /// Opens the specified file in the request.
+        /// </summary>
+        /// <param name="request">The open file request.</param>
+        /// <returns>The response to opening a file.</returns>
+        [HttpPost]
+        [Route("openFile")]
+        public ActionResult<OpenFileResponse> OpenFile([FromBody] OpenFileRequest request)
+        {
+            string requestName = nameof(OpenFileRequest);
+            OpenFileResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Received null {request}. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Invalid {request}. Cannot open file because the repository identifier is null or empty. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The repository identifier is null or empty.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                logger.LogError("Invalid {request}. There is no working directory found when trying to open file for repository {id}. Sending error response.", requestName, repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}";
+                return Ok(response);
+            }
+
+            string filePath = request.FilePath;
+            if (string.IsNullOrEmpty(request.FilePath))
+            {
+                logger.LogError("Cannot process {request} because the file path is null or empty.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The file path is null or empty.";
+                return Ok(response);
+            }
+
+            if (!shellManager.TryOpenFile(filePath, workingDirectory, out string errorMessage))
+            {
+                logger.LogError("Failed to open {file}. Sending error response.", filePath);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = errorMessage;
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully opened file {file}.", filePath);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Restores changes of the specified file.
+        /// </summary>
+        /// <param name="request">The request to discard changes.</param>
+        /// <returns>The response to discarding file changes.</returns>
+        [HttpPost]
+        [Route("gitRestore")]
+        public ActionResult<DiscardFileChangesResponse> GitRestore([FromBody] DiscardFileChangesRequest request)
+        {
+            string requestName = nameof(DiscardFileChangesRequest);
+            DiscardFileChangesResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Received null {request}. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Invalid {request}. Cannot restore file because the repository identifier is null or empty. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The repository identifier is null or empty.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                logger.LogError("Invalid {request}. There is no working directory found when trying to open file for repository {id}. Sending error response.", requestName, repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found in cache for {repoId}";
+                return Ok(response);
+            }
+
+            string filePath = request.FilePath;
+            if (string.IsNullOrEmpty(request.FilePath))
+            {
+                logger.LogError("Cannot restore {request} because the file path is null or empty.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The file path is null or empty.";
+                return Ok(response);
+            }
+
+            if (!shellManager.TryDiscardFileChanges(workingDirectory, filePath, out string errorMessage))
+            {
+                logger.LogError("Failed to restore {file}. Sending error response.", filePath);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = errorMessage;
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully restored file {file}.", filePath);
+            return Ok(response);
+        }
     }
 }

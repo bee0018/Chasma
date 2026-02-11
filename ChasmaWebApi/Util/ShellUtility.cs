@@ -53,7 +53,7 @@ namespace ChasmaWebApi.Util
             if (OperatingSystem.IsWindows())
             {
                 shell = "cmd.exe";
-                shellArgs = $"/c {command} {EscapeArgument(filePath)}";
+                shellArgs = $"/c {command} {filePath}";
             }
             else
             {
@@ -81,5 +81,25 @@ namespace ChasmaWebApi.Util
             OperatingSystem.IsWindows()
             ? $"\"{filePath.Replace("\"", "\\\"")}\""
             : $"'{filePath.Replace("'", "'\\''")}'";
+
+        /// <summary>
+        /// Gets the command to open a file based on the specified machine's operating system.
+        /// </summary>
+        /// <returns>The command to open a file.</returns>
+        public static string GetFileOpenCommand()
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                return "start";
+            }
+
+            if (OperatingSystem.IsLinux())
+            {
+                return "xdg-open";
+            }
+
+            // This assumed to be a mac OS.
+            return "open";
+        }
     }
 }
