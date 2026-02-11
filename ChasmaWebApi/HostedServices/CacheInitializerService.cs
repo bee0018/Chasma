@@ -104,6 +104,7 @@ namespace ChasmaWebApi.HostedServices
                     {
                         applicationDbContext.Repositories.Remove(repository);
                     }
+
                     applicationDbContext.WorkingDirectories.Remove(workingDirectoryModel);
                     applicationDbContext.SaveChanges();
                     continue;

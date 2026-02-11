@@ -58,7 +58,7 @@ namespace ChasmaWebApi.Data.Managers
         }
 
         // <inheritdoc/>
-        public RepositorySummary? GetRepositoryStatus(string repoKey)
+        public RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token)
         {
             if (!CacheManager.WorkingDirectories.TryGetValue(repoKey, out string workingDirectory))
             {
@@ -102,7 +102,7 @@ namespace ChasmaWebApi.Data.Managers
             }
 
             ClientLogger.LogInformation("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
-            (string branchName, int aheadCount, int behindCount) = GetBranchDiversionCalculation(workingDirectory);
+            (string branchName, int aheadCount, int behindCount) = GetBranchDiversionCalculation(workingDirectory, username, token);
             string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
             string commitHash = GetCommitHash(repo.Head);
             List<GitHubPullRequest> gitHubPullRequests = CacheManager.GitHubPullRequests.Values.Where(i => i.BranchName == branchName).ToList();
@@ -120,7 +120,7 @@ namespace ChasmaWebApi.Data.Managers
         }
 
         // <inheritdoc />
-        public List<RepositoryStatusElement>? ApplyStagingAction(string repoKey, string fileName, bool stagingFile)
+        public List<RepositoryStatusElement>? ApplyStagingAction(string repoKey, string fileName, bool stagingFile, string username, string token)
         {
             List<RepositoryStatusElement> statusElements = new();
             if (!CacheManager.WorkingDirectories.TryGetValue(repoKey, out string workingDirectory))
@@ -143,7 +143,7 @@ namespace ChasmaWebApi.Data.Managers
             }
             
             ClientLogger.LogInformation("{action} file {file}", stagingAction, fileName);
-            RepositorySummary summary = GetRepositoryStatus(repoKey);
+            RepositorySummary summary = GetRepositoryStatus(repoKey, username, token);
             return summary?.StatusElements;
         }
 
@@ -615,8 +615,10 @@ namespace ChasmaWebApi.Data.Managers
         /// Gets the branch diversion calculation for the specified repository.
         /// </summary>
         /// <param name="workingDirectory">The specified repository working directory.</param>
+        /// <param name="username">The username for authentication when fetching updates from remote.</param>
+        /// <param name="token">The token for authentication when fetching updates from remote.</param>
         /// <returns>The number of local branch name, commits ahead, and behind.</returns>
-        private (string branchName, int aheadCount, int behindCount) GetBranchDiversionCalculation(string workingDirectory)
+        private (string branchName, int aheadCount, int behindCount) GetBranchDiversionCalculation(string workingDirectory, string username, string token)
         {
             using Repository repo = new(workingDirectory);
             Branch branch = repo.Head;
@@ -634,7 +636,16 @@ namespace ChasmaWebApi.Data.Managers
 
             try
             {
-                Commands.Fetch(repo, branch.RemoteName, [], new FetchOptions(), null);
+                FetchOptions fetchOptions = new()
+                {
+                    CredentialsProvider = (url, user, credentials) =>
+                    new UsernamePasswordCredentials
+                    {
+                        Username = username,
+                        Password = token
+                    }
+                };
+                Commands.Fetch(repo, branch.RemoteName, [], fetchOptions, null);
             }
             catch (Exception e)
             {

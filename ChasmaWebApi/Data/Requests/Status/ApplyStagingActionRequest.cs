@@ -11,7 +11,12 @@ public class ApplyStagingActionRequest : ChasmaXmlBase
     /// Gets or sets the repository key.
     /// </summary>
     public string RepoKey { get; set; }
-    
+
+    /// <summary>
+    /// Gets or sets the user identifier to apply the staging action for.
+    /// </summary>
+    public int UserId { get; set; }
+
     /// <summary>
     /// Gets or sets the file name.
     /// </summary>

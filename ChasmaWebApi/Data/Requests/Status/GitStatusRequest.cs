@@ -11,5 +11,10 @@ namespace ChasmaWebApi.Data.Requests.Status
         /// Gets or sets the repository identifier to get the status for.
         /// </summary>
         public string RepositoryId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user identifier to get the repository status for.
+        /// </summary>
+        public int UserId { get; set; }
     }
 }

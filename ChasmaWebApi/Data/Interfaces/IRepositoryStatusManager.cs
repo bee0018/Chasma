@@ -24,8 +24,10 @@ namespace ChasmaWebApi.Data.Interfaces
         /// Gets the status of the specified repository.
         /// </summary>
         /// <param name="repoKey">The repository identifier.</param>
+        /// <param name="username">The git username.</param>
+        /// <param name="token">The git API token.</param>
         /// <returns>A repository summary of running the command 'git status'.</returns>
-        RepositorySummary? GetRepositoryStatus(string repoKey);
+        RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token);
 
         /// <summary>
         /// Stages or unstages the file for the specified repository.
@@ -33,8 +35,10 @@ namespace ChasmaWebApi.Data.Interfaces
         /// <param name="repoKey">The repository key.</param>
         /// <param name="fileName">The name of the file to stage.</param>
         /// <param name="isStaging">Flag indicating whether the file is being staged.</param>
+        /// <param name="username">The git username.</param>
+        /// <param name="token">The git API token.</param>
         /// <returns>A list of the updated file statuses after staging or unstaging.</returns>
-        List<RepositoryStatusElement>? ApplyStagingAction(string repoKey, string fileName, bool isStaging);
+        List<RepositoryStatusElement>? ApplyStagingAction(string repoKey, string fileName, bool isStaging, string username, string token);
 
         /// <summary>
         /// Commits the staged changes for the specified repository.

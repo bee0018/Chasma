@@ -225,9 +225,29 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = string.Empty,
             };
             ActionResult<GitStatusResponse> actionResult = Controller.GetRepoStatus(request);
-            GitStatusResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            GitStatusResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("The repository identifier is null or empty.", response.ErrorMessage);
+        }
+
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.GetRepoStatus(GitStatusRequest)"/> sends error response when user cannot be found.
+        /// </summary>
+        [TestMethod]
+        public void TestGetRepoStatusFailsWithUnknownUser()
+        {
+            ApplyStagingActionRequest request = new()
+            {
+                RepoKey = Guid.NewGuid().ToString(),
+                FileName = "path",
+            };
+
+            ConcurrentDictionary<int, UserAccountModel> usersMapping = new();
+            cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
+            ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual($"No user found in cache for user ID: {request.UserId}.", response.ErrorMessage);
         }
 
         /// <summary>
@@ -237,14 +257,27 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestMethod]
         public void TestGetRepoStatusWithFailureToGetStatus()
         {
+            int userId = 1;
             GitStatusRequest request = new()
             {
                 RepositoryId = Guid.NewGuid().ToString(),
+                UserId = userId
             };
+            UserAccountModel user = new()
+            {
+                Id = userId,
+                Email = "email",
+                Name = "name",
+                Password = "password",
+                Salt = [],
+                UserName = "username"
+            };
+            ConcurrentDictionary<int, UserAccountModel> usersMapping = new() { [user.Id] = user };
+            cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
             RepositorySummary summary = null;
-            statusManagerMock.Setup(i => i.GetRepositoryStatus(It.IsAny<string>())).Returns(summary);
+            statusManagerMock.Setup(i => i.GetRepositoryStatus(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(summary);
             ActionResult<GitStatusResponse> actionResult = Controller.GetRepoStatus(request);
-            GitStatusResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            GitStatusResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Failed to get repository status for repo ID: {request.RepositoryId}", response.ErrorMessage);
         }
@@ -256,17 +289,30 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestMethod]
         public void TestGetRepoStatusNominalCase()
         {
+            int userId = 1;
             GitStatusRequest request = new()
             {
                 RepositoryId = Guid.NewGuid().ToString(),
+                UserId = userId,
             };
+            UserAccountModel user = new()
+            {
+                Id = userId,
+                Email = "email",
+                Name = "name",
+                Password = "password",
+                Salt = [],
+                UserName = "username"
+            };
+            ConcurrentDictionary<int, UserAccountModel> usersMapping = new() { [user.Id] = user };
+            cacheManagerMock.Setup(i => i.Users).Returns(usersMapping);
             RepositorySummary summary = new()
             {
                 CommitsAhead = 1,
                 CommitsBehind = 2,
                 CommitHash = "commit_hash",
             };
-            statusManagerMock.Setup(i => i.GetRepositoryStatus(It.IsAny<string>())).Returns(summary);
+            statusManagerMock.Setup(i => i.GetRepositoryStatus(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(summary);
             ActionResult<GitStatusResponse> actionResult = Controller.GetRepoStatus(request);
             GitStatusResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
@@ -299,7 +345,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepoKey = string.Empty,
             };
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
-            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Cannot process request because the repository key is not populated.", response.ErrorMessage);
         }
@@ -316,9 +362,30 @@ namespace ChasmaWebApi.Tests.Controllers
                 FileName = string.Empty
             };
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
-            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual("Cannot process request because the file name is not populated.", response.ErrorMessage);
+        }
+
+        /// <summary>
+        /// Tests that the <see cref="RepositoryStatusController.ApplyStagingAction(ApplyStagingActionRequest)"/> sends error response when user cannot be found.
+        /// </summary>
+        [TestMethod]
+        public void TestApplyStagingActionFailsWithUnknownUser()
+        {
+            ApplyStagingActionRequest request = new()
+            {
+                RepoKey = Guid.NewGuid().ToString(),
+                FileName = "path",
+                UserId = 1,
+            };
+
+            ConcurrentDictionary<int, UserAccountModel> usersMapping = new();
+            cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
+            ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
+            Assert.IsTrue(response.IsErrorResponse);
+            Assert.AreEqual($"No user found in cache for user ID: {request.UserId}.", response.ErrorMessage);
         }
 
         /// <summary>
@@ -327,15 +394,28 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestMethod]
         public void TestApplyStagingActionFailsToApplyStagingAction()
         {
+            int userId = 1;
             ApplyStagingActionRequest request = new()
             {
                 RepoKey = Guid.NewGuid().ToString(),
-                FileName = "path"
+                FileName = "path",
+                UserId = userId,
             };
+            UserAccountModel user = new()
+            {
+                Id = userId,
+                Email = "email",
+                Name = "name",
+                Password = "password",
+                Salt = [],
+                UserName = "username"
+            };
+            ConcurrentDictionary<int, UserAccountModel> usersMapping = new() { [user.Id] = user };
+            cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
             List<RepositoryStatusElement>? statusElements = null;
-            statusManagerMock.Setup(i => i.ApplyStagingAction(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>())).Returns(statusElements);
+            statusManagerMock.Setup(i => i.ApplyStagingAction(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns(statusElements);
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
-            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual($"Failed to apply staging action for repo ID: {request.RepoKey}. Check server logs for more information.", response.ErrorMessage);
         }
@@ -346,13 +426,26 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestMethod]
         public void TestApplyStagingActionNominalCase()
         {
+            int userId = 1;
             ApplyStagingActionRequest request = new()
             {
                 RepoKey = Guid.NewGuid().ToString(),
-                FileName = "path"
+                FileName = "path",
+                UserId = userId,
             };
+            UserAccountModel user = new()
+            {
+                Id = userId,
+                Email = "email",
+                Name = "name",
+                Password = "password",
+                Salt = [],
+                UserName = "username"
+            };
+            ConcurrentDictionary<int, UserAccountModel> usersMapping = new() { [user.Id] = user };
             List<RepositoryStatusElement>? statusElements = [new(), new()];
-            statusManagerMock.Setup(i => i.ApplyStagingAction(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>())).Returns(statusElements);
+            cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
+            statusManagerMock.Setup(i => i.ApplyStagingAction(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns(statusElements);
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
             ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);

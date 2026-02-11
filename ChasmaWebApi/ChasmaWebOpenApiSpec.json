@@ -1805,6 +1805,10 @@
             "properties": {
               "repositoryId": {
                 "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
               }
             }
           }
@@ -1840,6 +1844,10 @@
             "properties": {
               "repoKey": {
                 "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
               },
               "fileName": {
                 "type": "string"
