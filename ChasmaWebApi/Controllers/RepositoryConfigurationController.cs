@@ -28,6 +28,11 @@ public class RepositoryConfigurationController : ControllerBase
     private readonly IRepositoryConfigurationManager configurationManager;
 
     /// <summary>
+    /// The internal repository status manager.
+    /// </summary>
+    private readonly IRepositoryStatusManager statusManager;
+
+    /// <summary>
     /// The internal cache manager.
     /// </summary>
     private readonly ICacheManager cacheManager;
@@ -36,6 +41,11 @@ public class RepositoryConfigurationController : ControllerBase
     /// The database context used for interacting with the database.
     /// </summary>
     private readonly ApplicationDbContext applicationDbContext;
+
+    /// <summary>
+    /// The Chasma Web API configurations.
+    /// </summary>
+    private readonly ChasmaWebApiConfigurations webApiConfigurations;
 
     #region Constructor
 
@@ -46,12 +56,16 @@ public class RepositoryConfigurationController : ControllerBase
     /// <param name="configManager">The repository configuration manager.</param>
     /// <param name="internalCacheManager">The internal cache manager.</param>
     /// <param name="dbContext">The application database context.</param>
-    public RepositoryConfigurationController(ILogger<RepositoryConfigurationController> log, IRepositoryConfigurationManager configManager, ICacheManager internalCacheManager, ApplicationDbContext dbContext)
+    /// <param name="config">The Chasma Web API configurations.</param>
+    /// <param name="internalStatusManager">The internal repository status manager.</param>
+    public RepositoryConfigurationController(ILogger<RepositoryConfigurationController> log, IRepositoryConfigurationManager configManager, ICacheManager internalCacheManager, ApplicationDbContext dbContext, ChasmaWebApiConfigurations config, IRepositoryStatusManager internalStatusManager)
     {
         logger = log;
         configurationManager = configManager;
         cacheManager = internalCacheManager;
         applicationDbContext = dbContext;
+        webApiConfigurations = config;
+        statusManager = internalStatusManager;
     }
 
     #endregion
@@ -641,6 +655,79 @@ public class RepositoryConfigurationController : ControllerBase
         }
 
         logger.LogInformation("Successfully deleted stash entry at index {index} for repository {repoId}.", stashIndex, repoId);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Adds the branch with the specified branch name to the repository with the specified repository identifier.
+    /// </summary>
+    /// <param name="request">The request to add a branch.</param>
+    /// <returns>The response to adding a branch.</returns>
+    public ActionResult<AddNewBranchResponse> AddNewBranch([FromBody] AddNewBranchRequest request)
+    {
+        AddNewBranchResponse response = new();
+        string requestName = nameof(AddNewBranchRequest);
+        if (request == null)
+        {
+            logger.LogError("Received a null {request}. Sending error response.", requestName);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Request must be populated.";
+            return BadRequest(response);
+        }
+
+        string repoId = request.RepositoryId;
+        if (string.IsNullOrEmpty(repoId))
+        {
+            logger.LogError("Invalid {request}. Repository identifier is required. Sending error response.", requestName);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Repository identifier is required.";
+            return Ok(response);
+        }
+
+        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+        {
+            logger.LogError("Invalid {request}. Working directory with identifier {id} does not exist. Sending error response.", requestName, repoId);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Could not find working directory for selected repository.";
+            return Ok(response);
+        }
+
+        int userId = request.UserId;
+        if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+        {
+            logger.LogError("Invalid {request}. User with identifier {id} does not exist. Sending error response.", requestName, userId);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Could not find user.";
+            return Ok(response);
+        }
+
+        string branchName = request.BranchName;
+        if (string.IsNullOrEmpty(branchName))
+        {
+            logger.LogError("Invalid {request}. Branch name is required. Sending error response.", requestName);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Branch name is required.";
+            return Ok(response);
+        }
+
+        string token = webApiConfigurations.GitHubApiToken;
+        if (!configurationManager.TryAddBranch(workingDirectory, branchName, user.UserName, token, out string errorMessage))
+        {
+            logger.LogError("Failed to create new branch {branchName} for repository {repoId}. Reason: {reason}", branchName, repoId, errorMessage);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = errorMessage;
+            return Ok(response);
+        }
+
+        if (request.IsCheckingOutNewBranch && !statusManager.TryCheckoutBranch(workingDirectory, branchName, out string checkoutErrorMessage))
+        {
+            logger.LogError("Successfully created branch but failed to checkout to new branch {branchName} for repository {repoId}. Reason: {reason}", branchName, repoId, checkoutErrorMessage);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = $"Branch {branchName} was created successfully but failed to checkout. Reason: {checkoutErrorMessage}";
+            return Ok(response);
+        }
+
+        logger.LogInformation("Successfully created new branch {branchName} for repository {repoId}.", branchName, repoId);
         return Ok(response);
     }
 }

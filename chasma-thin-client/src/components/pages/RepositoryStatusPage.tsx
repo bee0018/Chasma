@@ -24,6 +24,7 @@ import MergeModal from "../modals/MergeModal";
 import RepositoryStashesPage from "./statusComponents/RepositoryStashesPage";
 import {parseUnifiedDiff} from "../../managers/DiffViewerManager";
 import AddStashModal from "../modals/AddStashModal";
+import AddBranchModal from "../modals/AddBranchModal";
 
 /** Status client for the API **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
@@ -103,6 +104,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets the open pull request associated with the current branch. **/
     const [openPullRequests, setOpenPullRequests] = useState<GitHubPullRequest[] | undefined>(undefined);
+
+    /** Gets or sets a value indicating whether the user is adding a new branch. **/
+    const [isAddingBranch, setIsAddingBranch] = useState(false);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
@@ -356,6 +360,7 @@ const RepositoryStatusPage: React.FC = () => {
                     Stashes🗄️
                 </div>
                 <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
+                <div className="tab" onClick={() => setIsAddingBranch(true)}>Add Branch ➕</div>
                 <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
                 <div className="tab" onClick={() => setIsCreatingPullRequest(true)}>Create Pull Request📥</div>
                 <div className="tab" onClick={() => setIsMergingBranch(true)}>Merge 🔀</div>
@@ -706,6 +711,12 @@ const RepositoryStatusPage: React.FC = () => {
                 <AddStashModal
                     repositoryId={repoId}
                     onClose={() => setIsAddingStash(false)} />
+            }
+            {isAddingBranch &&
+            <AddBranchModal
+                repositoryId={repoId}
+                userId={user?.userId}
+                onClose={() => setIsAddingBranch(false)} />
             }
             {activeTab === "stashes" && (
                 <div className="panel-card">

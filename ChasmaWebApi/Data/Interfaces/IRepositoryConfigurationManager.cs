@@ -93,4 +93,15 @@ public interface IRepositoryConfigurationManager
     /// <param name="errorMessage">The error message.</param>
     /// <returns>True if the stash was removed; false otherwise.</returns>
     bool TryRemoveStash(string workingDirectory, int stashIndex, out string errorMessage);
+
+    /// <summary>
+    /// Tries to add a branch with the specified name to the repository.
+    /// </summary>
+    /// <param name="workingDirectory">The working directory of the repository.</param>
+    /// <param name="branchName">The branch name to be added.</param>
+    /// <param name="username">The username for authentication to the repository.</param>
+    /// <param name="token">The token for authentication to the repository.</param>
+    /// <param name="errorMessage">The error message.</param>
+    /// <returns>True if the branch was created; false otherwise.</returns>
+    bool TryAddBranch(string workingDirectory, string branchName, string username, string token, out string errorMessage);
 }

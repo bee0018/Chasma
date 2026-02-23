@@ -40,6 +40,16 @@ namespace ChasmaWebApi.Tests.Controllers
         /// </summary>
         private ApplicationDbContext applicationDbContext;
 
+        /// <summary>
+        /// The mocked web API configurations.
+        /// </summary>
+        private readonly Mock<ChasmaWebApiConfigurations> webApiConfigurationsMock;
+
+        /// <summary>
+        /// The mocked repository status manager.
+        /// </summary>
+        private readonly Mock<IRepositoryStatusManager> statusManagerMock;
+
         #region Constructor
 
         /// <summary>
@@ -50,6 +60,8 @@ namespace ChasmaWebApi.Tests.Controllers
             loggerMock = new Mock<ILogger<RepositoryConfigurationController>>();
             configurationManagerMock = new Mock<IRepositoryConfigurationManager>();
             cacheManagerMock = new Mock<ICacheManager>();
+            webApiConfigurationsMock = new Mock<ChasmaWebApiConfigurations>();
+            statusManagerMock = new Mock<IRepositoryStatusManager>();
         }
 
         #endregion
@@ -61,7 +73,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void Setup()
         {
             CacheManagerFactory.SeedCacheManager(cacheManagerMock, TestRepositoryName, TestUserName);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
         }
 
         /// <summary>
@@ -72,6 +84,9 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             configurationManagerMock.Reset();
             cacheManagerMock.Reset();
+            loggerMock.Reset();
+            webApiConfigurationsMock.Reset();
+            statusManagerMock.Reset();
         }
 
         /// <summary>
@@ -114,7 +129,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             applicationDbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(applicationDbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
             List<LocalGitRepository> newRepositories = new()
             {
                 CacheManagerFactory.CreateLocalGitRepository(1, TestRepositoryName, "chasma-bot"),
@@ -231,7 +246,7 @@ namespace ChasmaWebApi.Tests.Controllers
             string errorMessage = string.Empty;
             configurationManagerMock.Setup(manager => manager.TryDeleteRepository(It.IsAny<string>(), It.IsAny<int>(), out repositories, out errorMessage)).Returns(true);
             
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
             Task<ActionResult<DeleteRepositoryResponse>> responseTask = Controller.DeleteRepository(request);
             DeleteRepositoryResponse response = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
@@ -462,7 +477,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             ApplicationDbContext dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
             string repoId = Guid.NewGuid().ToString();
             ConcurrentDictionary<string, string> workingDirectories = new()
             {
@@ -502,7 +517,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             ApplicationDbContext dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
             string repoId = "testRepo1234";
             ConcurrentDictionary<string, string> workingDirectories = new()
             {
@@ -547,7 +562,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             ApplicationDbContext dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
             string repoId = "testRepo1234";
             ConcurrentDictionary<string, string> workingDirectories = new()
             {
@@ -716,7 +731,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 UserId = user.Id,
             };
             applicationDbContext = TestDbContextFactory.CreateApplicationDbContext();
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
             Task<ActionResult<AddGitRepositoryResponse>> task = Controller.AddGitRepository(request);
             AddGitRepositoryResponse response = GetResponseFromHttpAction(task, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);

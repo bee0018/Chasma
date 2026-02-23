@@ -412,6 +412,38 @@
         }
       }
     },
+    "/api/RepositoryConfiguration": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_AddNewBranch",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddNewBranchRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddNewBranchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryStatus/workflowRuns": {
       "post": {
         "tags": [
@@ -451,7 +483,7 @@
         ],
         "operationId": "RepositoryStatus_GetRepoStatus",
         "requestBody": {
-          "x-name": "gitStatusRequest",
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
@@ -739,7 +771,7 @@
         ],
         "operationId": "RepositoryStatus_GetGitDiff",
         "requestBody": {
-          "x-name": "gitDiffRequest",
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
@@ -1495,6 +1527,43 @@
               "stashIndex": {
                 "type": "integer",
                 "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "AddNewBranchResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "AddNewBranchRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "branchName": {
+                "type": "string"
+              },
+              "isCheckingOutNewBranch": {
+                "type": "boolean"
               }
             }
           }
