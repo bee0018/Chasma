@@ -1,7 +1,9 @@
 ﻿using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Util;
 using LibGit2Sharp;
+using System.Diagnostics;
 using Repository = LibGit2Sharp.Repository;
 
 namespace ChasmaWebApi.Data.Managers;
@@ -426,6 +428,18 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
         }
     }
 
+    // <inheritdoc/>
+    public bool TryAddBranch(string workingDirectory, string branchName, string username, string token, out string errorMessage)
+    {
+        if (TryAddBranchAutomatically(workingDirectory, branchName, username, token, out errorMessage))
+        {
+            return true;
+        }
+
+        ClientLogger.LogWarning("Automatic branch creation failed for branch {branchName} in repository at {repoPath} with error: {error}. Attempting manual branch creation.", branchName, workingDirectory, errorMessage);
+        return TryAddBranchManually(workingDirectory, branchName, out errorMessage);
+    }
+
     #region Private Methods
 
     /// <summary>
@@ -548,6 +562,127 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
     /// <param name="repoPath">The full file system path to the repository directory.</param>
     /// <returns>The name of the repository directory with the ".git" suffix removed if present.</returns>
     private static string? GetRepositoryName(string repoPath) => new DirectoryInfo(repoPath).Name?.Replace(".git", "");
+
+    /// <summary>
+    /// Tries to add a branch with the specified name to the repository at the specified working directory, and pushes it to the remote.
+    /// </summary>
+    /// <param name="workingDirectory">The working directory.</param>
+    /// <param name="branchName">The branch to be created.</param>
+    /// <param name="username">The user name of the user creating branch.</param>
+    /// <param name="token">The GitHub API token.</param>
+    /// <param name="errorMessage">The error message.</param>
+    /// <returns>True if the branch is added; false otherwise.</returns>
+    private bool TryAddBranchAutomatically(string workingDirectory, string branchName, string username, string token, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        Repository repository = null;
+        try
+        {
+            repository = new(workingDirectory);
+            if (repository.Branches.Any(i => i.FriendlyName == branchName || i.CanonicalName == branchName || i.UpstreamBranchCanonicalName == branchName))
+            {
+                errorMessage = $"Branch with name {branchName} already exists in the repository.";
+                ClientLogger.LogError("Failed to create branch with name {branchName} because it already exists in the repository at {repoPath}. Sending error response.", branchName, workingDirectory);
+                return false;
+            }
+
+            Branch newBranch = repository.CreateBranch(branchName);
+            if (newBranch == null)
+            {
+                errorMessage = $"Failed to create branch {branchName}. Review server logs for more information.";
+                ClientLogger.LogError("Failed to create branch with name {branchName} in repository at {repoPath} for an unknown reason. Sending error response.", branchName, workingDirectory);
+                return false;
+            }
+
+            Remote remoteOrigin = repository.Network.Remotes.FirstOrDefault(i => i.Name == "origin");
+            if (remoteOrigin == null)
+            {
+                errorMessage = $"Failed to find remote origin for the repository, so the new branch {branchName} cannot be pushed to the remote. Review server logs for more information.";
+                ClientLogger.LogError("Failed to find remote origin for repository at {repoPath}, so the new branch {branchName} cannot be pushed to the remote. Sending error response.", workingDirectory, branchName);
+                return false;
+            }
+
+            repository.Branches.Update(newBranch, b => b.Remote = remoteOrigin.Name, b => b.UpstreamBranch = newBranch.CanonicalName);
+            PushOptions pushOptions = new()
+            {
+                CredentialsProvider = (url, usernameFromUrl, types) =>
+                    new UsernamePasswordCredentials
+                    {
+                        Username = username,
+                        Password = token
+                    }
+            };
+            repository.Network.Push(newBranch, pushOptions);
+            ClientLogger.LogInformation("Successfully created branch {branchName} in repository at {repoPath}.", branchName, workingDirectory);
+            return true;
+        }
+        catch (Exception e)
+        {
+            errorMessage = $"An error occurred while creating {branchName}. Check server logs for more information.";
+            ClientLogger.LogError("An error occurred while creating a branch in the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
+            return false;
+        }
+        finally
+        {
+            repository?.Branches.Remove(branchName);
+            repository?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Tries to add a branch with the specified name to the repository at the specified working directory by executing git commands in a shell, and pushes it to the remote.
+    /// </summary>
+    /// <param name="workingDirectory">The working directory.</param>
+    /// <param name="branchName">The name of the branch to add.</param>
+    /// <param name="errorMessage">The error message.</param>
+    /// <returns>True if the branch is added; false otherwise.</returns>
+    private bool TryAddBranchManually(string workingDirectory, string branchName, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        Process process = new Process();
+        try
+        {
+            string command = $"git checkout -b {branchName}";
+            process = ShellUtility.GetStandardShell(command, workingDirectory);
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+            {
+                errorMessage = $"Failed to create branch {branchName} due to the following error: {error}";
+                ClientLogger.LogError("Failed to create branch with name {branchName} in repository at {repoPath} due to the following error: {error}. Sending error response.", branchName, workingDirectory, error);
+                return false;
+            }
+
+            command = $"git push -u origin {branchName}";
+            process = ShellUtility.GetStandardShell(command, workingDirectory);
+            process.Start();
+            output = process.StandardOutput.ReadToEnd();
+            error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+            {
+                errorMessage = $"Failed to push branch changes for {branchName} due to the following error: {error}";
+                ClientLogger.LogError("Failed to push branch changes with name {branchName} in repository at {repoPath} due to the following error: {error}. Sending error response.", branchName, workingDirectory, error);
+                return false;
+            }
+
+            ClientLogger.LogInformation("Successfully created branch {branchName} in repository at {repoPath}.", branchName, workingDirectory);
+            return true;
+        }
+        catch (Exception e)
+        {
+            errorMessage = $"An error occurred while creating {branchName}. Check server logs for more information.";
+            ClientLogger.LogError("An error occurred while creating a branch in the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
+            return false;
+        }
+        finally
+        {
+            process?.Close();
+            process?.Dispose();
+        }
+    }
 
     #endregion
 }

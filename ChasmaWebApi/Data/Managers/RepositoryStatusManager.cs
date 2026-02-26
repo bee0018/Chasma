@@ -693,7 +693,7 @@ namespace ChasmaWebApi.Data.Managers
         /// <returns>The remote URL of the repository.</returns>
         private string? GetRemoteUrl(Branch branch, RemoteCollection remoteBranches, string workingDirectory)
         {
-            string remoteName = branch.RemoteName;
+            string remoteName = !string.IsNullOrEmpty(branch.RemoteName) ? branch.RemoteName : "origin";
             Remote? remote = remoteBranches[remoteName];
             if (remote == null)
             {
