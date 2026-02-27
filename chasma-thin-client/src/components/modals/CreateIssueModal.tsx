@@ -48,7 +48,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = (props: CreateIssueMod
     /** Handles the event when user attempts to create a GitHub issue. **/
     const handleCreateIssueRequest = async () => {
         setTitle("Creating issue. May take a few moments...");
-        const repository = localGitRepositories.find(i => i.id == props.repositoryId);
+        const repository = localGitRepositories.find(i => i.id === props.repositoryId);
         if (!repository) {
             setTitle("Cannot Create Issue");
             setSuccessfullyCreatedIssue(false);
@@ -79,6 +79,16 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = (props: CreateIssueMod
             setSuccessfullyCreatedIssue(false);
             setErrorMessage("Review the console logs for more information.");
         }
+    };
+
+    /** Resets the modal form user input data. **/
+    const resetForm = () => {
+        setTitle("Create Issue");
+        setSuccessfullyCreatedIssue(false);
+        setIssueTitle("");
+        setErrorMessage("");
+        setIssueHtmlUrl("");
+        setIssueMessage("");
     };
     return (
         <>
@@ -162,6 +172,11 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = (props: CreateIssueMod
                                 onClick={handleCreateIssueRequest}
                         >
                             Create Issue
+                        </button>
+                        <button className="modal-button primary"
+                                onClick={resetForm}
+                        >
+                            Restart
                         </button>
                         <button className="modal-button secondary"
                                 onClick={props.onClose}
