@@ -145,14 +145,11 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
                                 Commit
                             </button>
                         }
-                        {commitRequestSent &&
-                            <button
-                                className="modal-button secondary"
+                        <button className="modal-button secondary"
                                 onClick={props.onClose}
-                            >
-                                Close
-                            </button>
-                        }
+                        >
+                            Close
+                        </button>
                     </div>
                 </div>
             </div>
