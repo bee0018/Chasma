@@ -81,5 +81,36 @@ namespace ChasmaWebApi.Util
             OperatingSystem.IsWindows()
             ? $"\"{filePath.Replace("\"", "\\\"")}\""
             : $"'{filePath.Replace("'", "'\\''")}'";
+
+        /// <summary>
+        /// Tries to execute a shell command and captures any error messages that occur during execution.
+        /// </summary>
+        /// <param name="command">The command to execute.</param>
+        /// <param name="workingDirectory">The working directory to execute commands in.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the command executed successfully, false otherwise.</returns>
+        public static bool TryExecuteShellCommand(string command, string workingDirectory, out string errorMessage)
+        {
+            try
+            {
+                errorMessage = string.Empty;
+                using Process process = GetStandardShell(command, workingDirectory);
+                process.Start();
+                string error = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+                if (process.ExitCode != 0)
+                {
+                    errorMessage = $"Command '{command}' failed with error: {error}\n";
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"An exception occurred while executing command: {ex.Message}";
+                return false;
+            }
+        }
     }
 }

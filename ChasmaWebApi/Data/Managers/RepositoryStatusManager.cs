@@ -406,68 +406,13 @@ namespace ChasmaWebApi.Data.Managers
         // <inheritdoc />
         public bool TryMergeBranch(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage)
         {
-            errorMessage = string.Empty;
-            try
+            if (TryMergeBranchAutomatically(workingDirectory, sourceBranchName, destinationBranchName, fullName, email, token, out errorMessage))
             {
-                // The following git commands is what is being done programatically:
-                // git fetch && git checkout main && git merge origin/feature && git push
-                using Repository repo = new Repository(workingDirectory);
-                Branch sourceBranch = repo.Branches[sourceBranchName];
-                if (sourceBranch == null)
-                {
-                    errorMessage = $"Source branch {sourceBranchName} does not exist.";
-                    ClientLogger.LogError("Source branch {sourceBranchName} does not exist. Sending error response.", sourceBranchName);
-                    return false;
-                }
-
-                Branch destinationBranch = repo.Branches[destinationBranchName];
-                if (destinationBranch == null)
-                {
-                    errorMessage = $"Destination branch {destinationBranchName} does not exist.";
-                    ClientLogger.LogError("Destination branch {destinationBranchName} does not exist. Sending error response.", destinationBranchName);
-                    return false;
-                }
-
-                Commands.Fetch(repo, sourceBranch.RemoteName, [], new FetchOptions(), null);
-                Commands.Checkout(repo, destinationBranch);
-                Signature author = new(fullName, email, DateTimeOffset.Now);
-                MergeOptions options = new()
-                {
-                    CommitOnSuccess = true,
-                    FailOnConflict = true,
-                    FastForwardStrategy = FastForwardStrategy.Default,
-                    MergeFileFavor = MergeFileFavor.Normal,
-                    FileConflictStrategy = CheckoutFileConflictStrategy.Normal,
-                };
-
-                MergeResult mergeResult = repo.Merge(sourceBranch, author, options);
-                if (mergeResult.Status == MergeStatus.Conflicts)
-                {
-                    errorMessage = $"Merge failed with status {mergeResult.Status}. May: resolve merge conflicts, abort merge, or reset and then redo merge.";
-                    ClientLogger.LogError("Merge of branch {sourceBranch} into {destinationBranch} failed with status {status}.", sourceBranchName, destinationBranchName, mergeResult.Status);
-                    return false;
-                }
-
-                string username = repo.Config.Get<string>("user.name")?.Value ?? "chasma-bot";
-                PushOptions pushOptions = new()
-                {
-                    CredentialsProvider = (url, usernameFromUrl, types) =>
-                        new UsernamePasswordCredentials
-                        {
-                            Username = username,
-                            Password = token,
-                        }
-                };
-
-                repo.Network.Push(destinationBranch, pushOptions);
                 return true;
             }
-            catch (Exception e)
-            {
-                errorMessage = $"Failed to merge branch {sourceBranchName} into {destinationBranchName} for repository at {workingDirectory}. Check server logs for more information.";
-                ClientLogger.LogError(e, errorMessage);
-                return false;
-            }
+
+            ClientLogger.LogWarning("Automatic merge failed for branch {sourceBranchName} into {destinationBranchName}. Reason: {errorMessage}", sourceBranchName, destinationBranchName, errorMessage);
+            return TryMergeBranchManually(workingDirectory, destinationBranchName, sourceBranchName, out errorMessage);
         }
 
         #region Private Methods
@@ -748,6 +693,121 @@ namespace ChasmaWebApi.Data.Managers
             {
                 return "git diff --cached";
             }
+        }
+
+        /// <summary>
+        /// Tries to merge the source branch into the destination branch automatically.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="sourceBranchName">The source branch.</param>
+        /// <param name="destinationBranchName">The destination branch to be merged in to.</param>
+        /// <param name="fullName">The name of the user.</param>
+        /// <param name="email">The email of the user.</param>
+        /// <param name="token">The Git client API token.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the branch was merged; false otherwise.</returns>
+        private bool TryMergeBranchAutomatically(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                // The following git commands is what is being done programatically:
+                // git fetch && git checkout main && git merge origin/feature && git push
+                using Repository repo = new Repository(workingDirectory);
+                Branch sourceBranch = repo.Branches[sourceBranchName];
+                if (sourceBranch == null)
+                {
+                    errorMessage = $"Source branch {sourceBranchName} does not exist.";
+                    ClientLogger.LogError("Source branch {sourceBranchName} does not exist. Sending error response.", sourceBranchName);
+                    return false;
+                }
+
+                Branch destinationBranch = repo.Branches[destinationBranchName];
+                if (destinationBranch == null)
+                {
+                    errorMessage = $"Destination branch {destinationBranchName} does not exist.";
+                    ClientLogger.LogError("Destination branch {destinationBranchName} does not exist. Sending error response.", destinationBranchName);
+                    return false;
+                }
+
+                Commands.Fetch(repo, sourceBranch.RemoteName, [], new FetchOptions(), null);
+                Commands.Checkout(repo, destinationBranch);
+                Signature author = new(fullName, email, DateTimeOffset.Now);
+                MergeOptions options = new()
+                {
+                    CommitOnSuccess = true,
+                    FailOnConflict = true,
+                    FastForwardStrategy = FastForwardStrategy.Default,
+                    MergeFileFavor = MergeFileFavor.Normal,
+                    FileConflictStrategy = CheckoutFileConflictStrategy.Normal,
+                };
+
+                MergeResult mergeResult = repo.Merge(sourceBranch, author, options);
+                if (mergeResult.Status == MergeStatus.Conflicts)
+                {
+                    errorMessage = $"Merge failed with status {mergeResult.Status}. May: resolve merge conflicts, abort merge, or reset and then redo merge.";
+                    ClientLogger.LogError("Merge of branch {sourceBranch} into {destinationBranch} failed with status {status}.", sourceBranchName, destinationBranchName, mergeResult.Status);
+                    return false;
+                }
+
+                string username = repo.Config.Get<string>("user.name")?.Value ?? "chasma-bot";
+                PushOptions pushOptions = new()
+                {
+                    CredentialsProvider = (url, usernameFromUrl, types) =>
+                        new UsernamePasswordCredentials
+                        {
+                            Username = username,
+                            Password = token,
+                        }
+                };
+
+                repo.Network.Push(destinationBranch, pushOptions);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"Failed to merge branch {sourceBranchName} into {destinationBranchName} for repository at {workingDirectory}. Check server logs for more information.";
+                ClientLogger.LogError(e, errorMessage);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Tries to merge the source branch into the destination branch manually by executing git commands in the shell.
+        /// </summary>
+        /// <remarks>This is used as a fallback when automatic merging fails, which can happen for various reasons such as merge conflicts or issues with the Git library.</remarks>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <param name="destinationBranch">The branch to merge changes in.</param>
+        /// <param name="sourceBranch">The changes to merge changes from.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the branch is merged; false otherwise.</returns>
+        private bool TryMergeBranchManually(string workingDirectory, string destinationBranch, string sourceBranch, out string errorMessage)
+        {
+            if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out errorMessage))
+            {
+                logger.LogError(errorMessage);
+                return false;
+            }
+
+            if (!ShellUtility.TryExecuteShellCommand($"git checkout {destinationBranch}", workingDirectory, out errorMessage))
+            {
+                logger.LogError(errorMessage);
+                return false;
+            }
+
+            if (!ShellUtility.TryExecuteShellCommand($"git merge origin/{sourceBranch}", workingDirectory, out errorMessage))
+            {
+                logger.LogError(errorMessage);
+                return false;
+            }
+
+            if (!ShellUtility.TryExecuteShellCommand("git push", workingDirectory, out errorMessage))
+            {
+                logger.LogError(errorMessage);
+                return false;
+            }
+
+            return true;
         }
 
         #endregion
