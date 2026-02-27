@@ -415,6 +415,28 @@ namespace ChasmaWebApi.Data.Managers
             return TryMergeBranchManually(workingDirectory, destinationBranchName, sourceBranchName, out errorMessage);
         }
 
+        // <inheritdoc />
+        public bool TryResetRepository(string workingDirectory, string revParseSpec, ResetMode resetMode, out string commitMessage, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            commitMessage = string.Empty;
+            try
+            {
+                string revision = !string.IsNullOrEmpty(revParseSpec) ? revParseSpec : "HEAD";
+                using Repository repo = new(workingDirectory);
+                repo.Reset(resetMode, revision);
+                commitMessage = repo.Head.Tip.MessageShort;
+                ClientLogger.LogInformation("Successfully reset repository at {workingDirectory} to {revParseSpec} with reset mode {resetMode}.", workingDirectory, revParseSpec, resetMode);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"Failed to reset repository to {revParseSpec} with reset mode {resetMode}. Check server logs for more information.";
+                ClientLogger.LogError(e, errorMessage);
+                return false;
+            }
+        }
+
         #region Private Methods
 
         /// <summary>
