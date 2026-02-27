@@ -1,4 +1,5 @@
 ﻿using ChasmaWebApi.Data.Objects;
+using LibGit2Sharp;
 
 namespace ChasmaWebApi.Data.Interfaces
 {
@@ -140,5 +141,16 @@ namespace ChasmaWebApi.Data.Interfaces
         /// <param name="errorMessage">The error message if an error occurs.</param>
         /// <returns>True if the merge was successful; false otherwise.</returns>
         bool TryMergeBranch(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage);
+
+        /// <summary>
+        /// Tries to reset the repository to the specified revision with the given reset mode.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="revParseSpec">A revparse spec for the target commit object.</param>
+        /// <param name="resetMode">Specifies the kind of operation that the repository reset should perform. </param>
+        /// <param name="commitMessage">The revision short message.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the reset was successful; false otherwise.</returns>
+        bool TryResetRepository(string workingDirectory, string revParseSpec, ResetMode resetMode, out string commitMessage, out string errorMessage);
     }
 }

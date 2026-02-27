@@ -5,6 +5,7 @@ using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
 using ChasmaWebApi.Data.Responses.Status;
+using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -857,6 +858,58 @@ namespace ChasmaWebApi.Controllers
                 logger.LogError(e, "Error merging branch to repo: {repoId}", repoId);
                 return Ok(response);
             }
+        }
+
+        /// <summary>
+        /// Resets the repository to the specified commit and updates the staging area.
+        /// </summary>
+        /// <param name="request">The request to reset changes.</param>
+        /// <returns>The response to resetting changes.</returns>
+        [HttpPost]
+        [Route("gitReset")]
+        public ActionResult<GitResetResponse> ResetChanges([FromBody] GitResetRequest request)
+        {
+            string requestName = nameof(GitResetRequest);
+            logger.LogInformation("Received a {request}", requestName);
+            GitResetResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot reset changes.";
+                logger.LogError("{request} received is null. Sending error response", requestName);
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier must be populated. Cannot reset changes.";
+                logger.LogError("Null or empty repository identifier received when trying to reset changes. Sending error response");
+                return Ok(response);
+            }
+
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found. Cannot reset changes.";
+                logger.LogError("No working directory was found for repo identifier {repoId} when trying to reset changes. Sending error response", repoId);
+                return Ok(response);
+            }
+
+            string revParseSpec = request.RevParseSpec;
+            ResetMode resetMode = request.ResetMode;
+            if (!statusManager.TryResetRepository(workingDirectory, revParseSpec, resetMode, out string commitMessage, out string errorMessage))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to reset changes for repo: {errorMessage}";
+                logger.LogError("Failed to reset changes for repo: {repoId}. {errorMessage}", repoId, errorMessage);
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully reset changes for repo: {repoId}", repoId);
+            response.CommitMessage = commitMessage;
+            return Ok(response);
         }
     }
 }

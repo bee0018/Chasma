@@ -25,6 +25,7 @@ import RepositoryStashesPage from "./statusComponents/RepositoryStashesPage";
 import {parseUnifiedDiff} from "../../managers/DiffViewerManager";
 import AddStashModal from "../modals/AddStashModal";
 import AddBranchModal from "../modals/AddBranchModal";
+import ResetModal from "../modals/ResetModal";
 
 /** Status client for the API **/
 const statusClient = new RepositoryStatusClient(apiBaseUrl);
@@ -107,6 +108,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a value indicating whether the user is adding a new branch. **/
     const [isAddingBranch, setIsAddingBranch] = useState(false);
+
+    /** Gets or sets a value indicating whether the user is resetting changes. **/
+    const [isResettingChanges, setIsResettingChanges] = useState<boolean>(false);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
@@ -353,6 +357,7 @@ const RepositoryStatusPage: React.FC = () => {
                 <div className="tab" onClick={handlePullRequest}>Pull ⬇️</div>
                 <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
                 <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>
+                <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>
                 <div
                     className={`tab ${activeTab === "stashes" ? "active" : ""}`}
                     onClick={() => handleTabClick("stashes")}
@@ -723,6 +728,11 @@ const RepositoryStatusPage: React.FC = () => {
                     <RepositoryStashesPage repositoryId={repoId} />
                 </div>
             )}
+            {isResettingChanges &&
+            <ResetModal
+                repositoryId={repoId}
+                onClose={() => setIsResettingChanges(false)} />
+            }
         </div>
     );
 };

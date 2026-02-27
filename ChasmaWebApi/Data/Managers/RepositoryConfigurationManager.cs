@@ -655,7 +655,7 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
                 return false;
             }
 
-            command = $"git push -u origin {branchName}";
+            command = $"git push --set-upstream origin {branchName}";
             process = ShellUtility.GetStandardShell(command, workingDirectory);
             process.Start();
             output = process.StandardOutput.ReadToEnd();
