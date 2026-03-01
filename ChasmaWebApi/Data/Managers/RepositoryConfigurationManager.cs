@@ -576,6 +576,7 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
     {
         errorMessage = string.Empty;
         Repository repository = null;
+        bool branchCreationFailed = false;
         try
         {
             repository = new(workingDirectory);
@@ -618,14 +619,19 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
         }
         catch (Exception e)
         {
+            branchCreationFailed = true;
             errorMessage = $"An error occurred while creating {branchName}. Check server logs for more information.";
             ClientLogger.LogError("An error occurred while creating a branch in the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
             return false;
         }
         finally
         {
-            repository?.Branches.Remove(branchName);
-            repository?.Dispose();
+            // Performs clean up if the branch creation failed.
+            if (branchCreationFailed)
+            {
+                repository?.Branches.Remove(branchName);
+                repository?.Dispose();
+            }
         }
     }
 
@@ -639,7 +645,7 @@ public class RepositoryConfigurationManager(ILogger<RepositoryConfigurationManag
     private bool TryAddBranchManually(string workingDirectory, string branchName, out string errorMessage)
     {
         errorMessage = string.Empty;
-        Process process = new Process();
+        Process process = new();
         try
         {
             string command = $"git checkout -b {branchName}";
