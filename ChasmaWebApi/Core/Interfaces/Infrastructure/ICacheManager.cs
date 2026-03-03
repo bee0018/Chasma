@@ -2,7 +2,7 @@
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
 
-namespace ChasmaWebApi.Data.Interfaces;
+namespace ChasmaWebApi.Core.Interfaces.Infrastructure;
 
 /// <summary>
 /// Interface containing the members that this application stores resources for.

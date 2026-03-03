@@ -1,14 +1,18 @@
 import React, {useState} from "react";
 import NotificationModal from "../modals/NotificationModal";
-import {GetWorkflowResultsRequest, RepositoryStatusClient, WorkflowRunResult} from "../../API/ChasmaWebApiClient";
+import {
+    GetWorkflowResultsRequest,
+    RemoteClient,
+    WorkflowRunResult
+} from "../../API/ChasmaWebApiClient";
 import "../../styles/App.css"
 import {useNavigate, useParams} from "react-router-dom";
 import {apiBaseUrl} from "../../environmentConstants";
 
 /**
- * The repository status client that interfaces with the web API.
+ * The remote repository client that interfaces with the web API.
  */
-const statusClient = new RepositoryStatusClient(apiBaseUrl);
+const remoteClient = new RemoteClient(apiBaseUrl);
 
 /**
  * Initializes a new instance of the WorkflowRunsPage.
@@ -56,7 +60,7 @@ const WorkflowRunsPage: React.FC = () => {
             request.repositoryName = repoName;
             request.repositoryOwner = repoOwner;
 
-            const response = await statusClient.getChasmaWorkflowResults(request);
+            const response = await remoteClient.getGitHubWorkflowResults(request);
             if (response.isErrorResponse) {
                 setNotification({
                     title: "Retrieval failed!",

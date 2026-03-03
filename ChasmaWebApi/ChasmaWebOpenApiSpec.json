@@ -11,6 +11,166 @@
     }
   ],
   "paths": {
+    "/api/Branch/addBranch": {
+      "post": {
+        "tags": [
+          "Branch"
+        ],
+        "operationId": "Branch_AddNewBranch",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddNewBranchRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddNewBranchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Branch/deleteBranch": {
+      "delete": {
+        "tags": [
+          "Branch"
+        ],
+        "operationId": "Branch_DeleteBranch",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteBranchRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteBranchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Branch/gitCheckout": {
+      "post": {
+        "tags": [
+          "Branch"
+        ],
+        "operationId": "Branch_CheckoutBranch",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitCheckoutRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitCheckoutResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Branch/gitBranch": {
+      "post": {
+        "tags": [
+          "Branch"
+        ],
+        "operationId": "Branch_GetBranches",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitBranchRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitBranchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Branch/gitMerge": {
+      "post": {
+        "tags": [
+          "Branch"
+        ],
+        "operationId": "Branch_MergeBranch",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitMergeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitMergeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Health/heartbeat": {
       "get": {
         "tags": [
@@ -24,6 +184,102 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HeartbeatMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Remote/workflowRuns": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_GetGitHubWorkflowResults",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetWorkflowResultsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubWorkflowRunResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Remote/createPullRequest": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_CreatePullRequest",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePRRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePRResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Remote/createGitHubIssue": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_CreateGitHubIssue",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGitHubIssueRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGitHubIssueResponse"
                 }
               }
             }
@@ -188,38 +444,6 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/deleteBranch": {
-      "delete": {
-        "tags": [
-          "RepositoryConfiguration"
-        ],
-        "operationId": "RepositoryConfiguration_DeleteBranch",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteBranchRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeleteBranchResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/RepositoryConfiguration/ignoreRepository": {
       "post": {
         "tags": [
@@ -245,230 +469,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/IgnoreRepositoryResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryConfiguration/gitStash": {
-      "post": {
-        "tags": [
-          "RepositoryConfiguration"
-        ],
-        "operationId": "RepositoryConfiguration_GitStash",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddStashRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddStashResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryConfiguration/getStashList": {
-      "post": {
-        "tags": [
-          "RepositoryConfiguration"
-        ],
-        "operationId": "RepositoryConfiguration_GetStashList",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GetStashListRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetStashListResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryConfiguration/getStashDetails": {
-      "post": {
-        "tags": [
-          "RepositoryConfiguration"
-        ],
-        "operationId": "RepositoryConfiguration_GetStashDetails",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GetStashDetailsRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetStashDetailsResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryConfiguration/applyStash": {
-      "post": {
-        "tags": [
-          "RepositoryConfiguration"
-        ],
-        "operationId": "RepositoryConfiguration_ApplyStash",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApplyStashRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApplyStashResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryConfiguration/deleteStash": {
-      "delete": {
-        "tags": [
-          "RepositoryConfiguration"
-        ],
-        "operationId": "RepositoryConfiguration_DeleteStash",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteStashRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeleteStashResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryConfiguration": {
-      "post": {
-        "tags": [
-          "RepositoryConfiguration"
-        ],
-        "operationId": "RepositoryConfiguration_AddNewBranch",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddNewBranchRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddNewBranchResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryStatus/workflowRuns": {
-      "post": {
-        "tags": [
-          "RepositoryStatus"
-        ],
-        "operationId": "RepositoryStatus_GetChasmaWorkflowResults",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GetWorkflowResultsRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GitHubWorkflowRunResponse"
                 }
               }
             }
@@ -636,134 +636,6 @@
         }
       }
     },
-    "/api/RepositoryStatus/gitCheckout": {
-      "post": {
-        "tags": [
-          "RepositoryStatus"
-        ],
-        "operationId": "RepositoryStatus_CheckoutBranch",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GitCheckoutRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GitCheckoutResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryStatus/gitBranch": {
-      "post": {
-        "tags": [
-          "RepositoryStatus"
-        ],
-        "operationId": "RepositoryStatus_GetBranches",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GitBranchRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GitBranchResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryStatus/createPullRequest": {
-      "post": {
-        "tags": [
-          "RepositoryStatus"
-        ],
-        "operationId": "RepositoryStatus_CreatePullRequest",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePRRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatePRResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryStatus/createGitHubIssue": {
-      "post": {
-        "tags": [
-          "RepositoryStatus"
-        ],
-        "operationId": "RepositoryStatus_CreateGitHubIssue",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateGitHubIssueRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateGitHubIssueResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/RepositoryStatus/gitDiff": {
       "post": {
         "tags": [
@@ -789,38 +661,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GitDiffResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/RepositoryStatus/gitMerge": {
-      "post": {
-        "tags": [
-          "RepositoryStatus"
-        ],
-        "operationId": "RepositoryStatus_MergeBranch",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GitMergeRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GitMergeResponse"
                 }
               }
             }
@@ -924,6 +764,166 @@
         }
       }
     },
+    "/api/Stash/gitStash": {
+      "post": {
+        "tags": [
+          "Stash"
+        ],
+        "operationId": "Stash_GitStash",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddStashRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddStashResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Stash/getStashList": {
+      "post": {
+        "tags": [
+          "Stash"
+        ],
+        "operationId": "Stash_GetStashList",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStashListRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetStashListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Stash/getStashDetails": {
+      "post": {
+        "tags": [
+          "Stash"
+        ],
+        "operationId": "Stash_GetStashDetails",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStashDetailsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetStashDetailsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Stash/applyStash": {
+      "post": {
+        "tags": [
+          "Stash"
+        ],
+        "operationId": "Stash_ApplyStash",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyStashRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyStashResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Stash/deleteStash": {
+      "delete": {
+        "tags": [
+          "Stash"
+        ],
+        "operationId": "Stash_DeleteStash",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteStashRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteStashResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/User/login": {
       "post": {
         "tags": [
@@ -991,6 +991,199 @@
   },
   "components": {
     "schemas": {
+      "AddNewBranchResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ResponseBase": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "isErrorResponse": {
+                "type": "boolean"
+              },
+              "errorMessage": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
+      "ChasmaXmlBase": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AddNewBranchRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "branchName": {
+                "type": "string"
+              },
+              "isCheckingOutNewBranch": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "DeleteBranchResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "DeleteBranchRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "branchName": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "GitCheckoutResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "GitCheckoutRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "branchName": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "GitBranchResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "branchNames": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GitBranchRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "GitMergeResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "GitMergeRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "sourceBranch": {
+                "type": "string"
+              },
+              "destinationBranch": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
       "HeartbeatMessage": {
         "allOf": [
           {
@@ -1038,9 +1231,179 @@
           1
         ]
       },
-      "ChasmaXmlBase": {
+      "GitHubWorkflowRunResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryName": {
+                "type": "string"
+              },
+              "buildCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "workflowRunResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WorkflowRunResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WorkflowRunResult": {
         "type": "object",
-        "additionalProperties": false
+        "additionalProperties": false,
+        "properties": {
+          "branchName": {
+            "type": "string"
+          },
+          "runNumber": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "buildTrigger": {
+            "type": "string"
+          },
+          "commitMessage": {
+            "type": "string"
+          },
+          "buildStatus": {
+            "type": "string"
+          },
+          "buildConclusion": {
+            "type": "string"
+          },
+          "createdDate": {
+            "type": "string"
+          },
+          "updatedDate": {
+            "type": "string"
+          },
+          "workflowUrl": {
+            "type": "string"
+          },
+          "authorName": {
+            "type": "string"
+          }
+        }
+      },
+      "GetWorkflowResultsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryName": {
+            "type": "string"
+          },
+          "repositoryOwner": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePRResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "pullRequestId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "pullRequestUrl": {
+                "type": "string"
+              },
+              "timeStamp": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "CreatePRRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "pullRequestTitle": {
+                "type": "string"
+              },
+              "workingBranchName": {
+                "type": "string"
+              },
+              "destinationBranchName": {
+                "type": "string"
+              },
+              "pullRequestBody": {
+                "type": "string"
+              },
+              "repositoryName": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "CreateGitHubIssueResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issueId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "issueUrl": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "CreateGitHubIssueRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryName": {
+                "type": "string"
+              },
+              "repositoryOwner": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "body": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       },
       "LocalRepositoriesInfoMessage": {
         "allOf": [
@@ -1127,26 +1490,6 @@
           }
         ]
       },
-      "ResponseBase": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "isErrorResponse": {
-                "type": "boolean"
-              },
-              "errorMessage": {
-                "type": "string",
-                "nullable": true
-              }
-            }
-          }
-        ]
-      },
       "AddGitRepositoryResponse": {
         "allOf": [
           {
@@ -1222,36 +1565,6 @@
           }
         ]
       },
-      "DeleteBranchResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "DeleteBranchRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "branchName": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
       "IgnoreRepositoryResponse": {
         "allOf": [
           {
@@ -1293,388 +1606,6 @@
             }
           }
         ]
-      },
-      "AddStashResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "AddStashRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "stashModifier": {
-                "$ref": "#/components/schemas/StashModifiers"
-              },
-              "message": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "StashModifiers": {
-        "type": "integer",
-        "description": "Options controlling Stash behavior.\n            ",
-        "x-enumFlags": true,
-        "x-enum-names": [
-          "Default",
-          "KeepIndex",
-          "IncludeUntracked",
-          "IncludeIgnored"
-        ],
-        "x-enum-varnames": [
-          "Default",
-          "KeepIndex",
-          "IncludeUntracked",
-          "IncludeIgnored"
-        ],
-        "x-enumNames": [
-          "Default",
-          "KeepIndex",
-          "IncludeUntracked",
-          "IncludeIgnored"
-        ],
-        "x-enum-descriptions": [
-          null,
-          null,
-          null,
-          null
-        ],
-        "x-enumDescriptions": [
-          null,
-          null,
-          null,
-          null
-        ],
-        "enum": [
-          0,
-          1,
-          2,
-          4
-        ]
-      },
-      "GetStashListResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "stashList": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/StashEntry"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "StashEntry": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "index": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "stashMessage": {
-            "type": "string"
-          }
-        }
-      },
-      "GetStashListRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "GetStashDetailsResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "patchEntries": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/PatchEntry"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "PatchEntry": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "filePath": {
-            "type": "string"
-          },
-          "diff": {
-            "type": "string"
-          }
-        }
-      },
-      "GetStashDetailsRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "stashEntry": {
-                "$ref": "#/components/schemas/StashEntry"
-              }
-            }
-          }
-        ]
-      },
-      "ApplyStashResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "ApplyStashRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "stashIndex": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "applyStashModifier": {
-                "$ref": "#/components/schemas/StashApplyModifiers"
-              }
-            }
-          }
-        ]
-      },
-      "StashApplyModifiers": {
-        "type": "integer",
-        "description": "The flags which control whether the index should be reinstated.",
-        "x-enumFlags": true,
-        "x-enum-names": [
-          "Default",
-          "ReinstateIndex"
-        ],
-        "x-enum-varnames": [
-          "Default",
-          "ReinstateIndex"
-        ],
-        "x-enumNames": [
-          "Default",
-          "ReinstateIndex"
-        ],
-        "x-enum-descriptions": [
-          null,
-          null
-        ],
-        "x-enumDescriptions": [
-          null,
-          null
-        ],
-        "enum": [
-          0,
-          1
-        ]
-      },
-      "DeleteStashResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "DeleteStashRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "stashIndex": {
-                "type": "integer",
-                "format": "int32"
-              }
-            }
-          }
-        ]
-      },
-      "AddNewBranchResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "AddNewBranchRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "branchName": {
-                "type": "string"
-              },
-              "isCheckingOutNewBranch": {
-                "type": "boolean"
-              }
-            }
-          }
-        ]
-      },
-      "GitHubWorkflowRunResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryName": {
-                "type": "string"
-              },
-              "buildCount": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "workflowRunResults": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/WorkflowRunResult"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "WorkflowRunResult": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "branchName": {
-            "type": "string"
-          },
-          "runNumber": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "buildTrigger": {
-            "type": "string"
-          },
-          "commitMessage": {
-            "type": "string"
-          },
-          "buildStatus": {
-            "type": "string"
-          },
-          "buildConclusion": {
-            "type": "string"
-          },
-          "createdDate": {
-            "type": "string"
-          },
-          "updatedDate": {
-            "type": "string"
-          },
-          "workflowUrl": {
-            "type": "string"
-          },
-          "authorName": {
-            "type": "string"
-          }
-        }
-      },
-      "GetWorkflowResultsRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "repositoryName": {
-            "type": "string"
-          },
-          "repositoryOwner": {
-            "type": "string"
-          }
-        }
       },
       "GitStatusResponse": {
         "allOf": [
@@ -2058,170 +1989,6 @@
           }
         ]
       },
-      "GitCheckoutResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "GitCheckoutRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "branchName": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "GitBranchResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "branchNames": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "GitBranchRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "CreatePRResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "pullRequestId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "pullRequestUrl": {
-                "type": "string"
-              },
-              "timeStamp": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "CreatePRRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "pullRequestTitle": {
-                "type": "string"
-              },
-              "workingBranchName": {
-                "type": "string"
-              },
-              "destinationBranchName": {
-                "type": "string"
-              },
-              "pullRequestBody": {
-                "type": "string"
-              },
-              "repositoryName": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "CreateGitHubIssueResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "issueId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "issueUrl": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "CreateGitHubIssueRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryName": {
-                "type": "string"
-              },
-              "repositoryOwner": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              },
-              "body": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
       "GitDiffResponse": {
         "allOf": [
           {
@@ -2255,43 +2022,6 @@
               },
               "isStaged": {
                 "type": "boolean"
-              }
-            }
-          }
-        ]
-      },
-      "GitMergeResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "GitMergeRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "sourceBranch": {
-                "type": "string"
-              },
-              "destinationBranch": {
-                "type": "string"
               }
             }
           }
@@ -2502,6 +2232,276 @@
             }
           }
         }
+      },
+      "AddStashResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "AddStashRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "stashModifier": {
+                "$ref": "#/components/schemas/StashModifiers"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "StashModifiers": {
+        "type": "integer",
+        "description": "Options controlling Stash behavior.\n            ",
+        "x-enumFlags": true,
+        "x-enum-names": [
+          "Default",
+          "KeepIndex",
+          "IncludeUntracked",
+          "IncludeIgnored"
+        ],
+        "x-enum-varnames": [
+          "Default",
+          "KeepIndex",
+          "IncludeUntracked",
+          "IncludeIgnored"
+        ],
+        "x-enumNames": [
+          "Default",
+          "KeepIndex",
+          "IncludeUntracked",
+          "IncludeIgnored"
+        ],
+        "x-enum-descriptions": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "x-enumDescriptions": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          4
+        ]
+      },
+      "GetStashListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stashList": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StashEntry"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "StashEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stashMessage": {
+            "type": "string"
+          }
+        }
+      },
+      "GetStashListRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "GetStashDetailsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "patchEntries": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PatchEntry"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PatchEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "filePath": {
+            "type": "string"
+          },
+          "diff": {
+            "type": "string"
+          }
+        }
+      },
+      "GetStashDetailsRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "stashEntry": {
+                "$ref": "#/components/schemas/StashEntry"
+              }
+            }
+          }
+        ]
+      },
+      "ApplyStashResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ApplyStashRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "stashIndex": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "applyStashModifier": {
+                "$ref": "#/components/schemas/StashApplyModifiers"
+              }
+            }
+          }
+        ]
+      },
+      "StashApplyModifiers": {
+        "type": "integer",
+        "description": "The flags which control whether the index should be reinstated.",
+        "x-enumFlags": true,
+        "x-enum-names": [
+          "Default",
+          "ReinstateIndex"
+        ],
+        "x-enum-varnames": [
+          "Default",
+          "ReinstateIndex"
+        ],
+        "x-enumNames": [
+          "Default",
+          "ReinstateIndex"
+        ],
+        "x-enum-descriptions": [
+          null,
+          null
+        ],
+        "x-enumDescriptions": [
+          null,
+          null
+        ],
+        "enum": [
+          0,
+          1
+        ]
+      },
+      "DeleteStashResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "DeleteStashRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
+              "stashIndex": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
       },
       "LoginResponse": {
         "allOf": [

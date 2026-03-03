@@ -1,9 +1,9 @@
 ﻿import React, {useEffect, useState} from "react";
-import {GitBranchRequest, GitMergeRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
+import {BranchClient, GitBranchRequest, GitMergeRequest} from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
 
-/** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient(apiBaseUrl);
+/** The branch management client for the web API. **/
+const branchClient = new BranchClient(apiBaseUrl)
 
 /** Defines the properties of the merge branches modal. **/
 interface IMergeModal {
@@ -52,7 +52,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
         request.sourceBranch = workingBranchName;
         request.userId = props.userId;
         try {
-            const response = await statusClient.mergeBranch(request);
+            const response = await branchClient.mergeBranch(request);
             if (response.isErrorResponse) {
                 setTitle("Error creating merging changes!");
                 setErrorMessage(response.errorMessage);
@@ -80,7 +80,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
         const request = new GitBranchRequest();
         request.repositoryId = props.repositoryId;
         try {
-            const response = await statusClient.getBranches(request);
+            const response = await branchClient.getBranches(request);
             if (response.isErrorResponse) {
                 setBranchesList([]);
                 return;

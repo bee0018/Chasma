@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Interfaces
+﻿namespace ChasmaWebApi.Core.Interfaces.Infrastructure
 {
     /// <summary>
     /// Defines the members of the password utility interface.

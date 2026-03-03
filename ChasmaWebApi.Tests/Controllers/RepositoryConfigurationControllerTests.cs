@@ -1,6 +1,7 @@
 ﻿using ChasmaWebApi.Controllers;
+using ChasmaWebApi.Core.Interfaces.Control;
+using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
-using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Messages;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
@@ -26,9 +27,9 @@ namespace ChasmaWebApi.Tests.Controllers
         private readonly Mock<ILogger<RepositoryConfigurationController>> loggerMock;
 
         /// <summary>
-        /// The mocked repository configuration manager.
+        /// The mocked application control service.
         /// </summary>
-        private readonly Mock<IRepositoryConfigurationManager> configurationManagerMock;
+        private readonly Mock<IApplicationControlService> controlServiceMock;
 
         /// <summary>
         /// The mocked cached manager.
@@ -45,10 +46,6 @@ namespace ChasmaWebApi.Tests.Controllers
         /// </summary>
         private readonly Mock<ChasmaWebApiConfigurations> webApiConfigurationsMock;
 
-        /// <summary>
-        /// The mocked repository status manager.
-        /// </summary>
-        private readonly Mock<IRepositoryStatusManager> statusManagerMock;
 
         #region Constructor
 
@@ -58,10 +55,9 @@ namespace ChasmaWebApi.Tests.Controllers
         public RepositoryConfigurationControllerTests()
         {
             loggerMock = new Mock<ILogger<RepositoryConfigurationController>>();
-            configurationManagerMock = new Mock<IRepositoryConfigurationManager>();
+            controlServiceMock = new Mock<IApplicationControlService>();
             cacheManagerMock = new Mock<ICacheManager>();
             webApiConfigurationsMock = new Mock<ChasmaWebApiConfigurations>();
-            statusManagerMock = new Mock<IRepositoryStatusManager>();
         }
 
         #endregion
@@ -73,7 +69,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void Setup()
         {
             CacheManagerFactory.SeedCacheManager(cacheManagerMock, TestRepositoryName, TestUserName);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, controlServiceMock.Object, cacheManagerMock.Object, applicationDbContext);
         }
 
         /// <summary>
@@ -82,11 +78,10 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestCleanup]
         public void Cleanup()
         {
-            configurationManagerMock.Reset();
+            controlServiceMock.Reset();
             cacheManagerMock.Reset();
             loggerMock.Reset();
             webApiConfigurationsMock.Reset();
-            statusManagerMock.Reset();
         }
 
         /// <summary>
@@ -114,7 +109,7 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestAddLocalGitRepositoriesSendsErrorResponseWhenNoReposFound()
         {
             List<LocalGitRepository> newRepositories = new();
-            configurationManagerMock.Setup(x => x.TryAddLocalGitRepositories(It.IsAny<int>(), out newRepositories)).Returns(false);
+            controlServiceMock.Setup(x => x.TryAddLocalGitRepositoriesFromFileSystem(It.IsAny<int>(), out newRepositories)).Returns(false);
             Task<ActionResult<AddLocalRepositoriesResponse>> addLocalGitRepositoriesTask = Controller.AddLocalGitRepositories(1);
             AddLocalRepositoriesResponse response = GetResponseFromHttpAction(addLocalGitRepositoriesTask, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
@@ -129,7 +124,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             applicationDbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(applicationDbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, controlServiceMock.Object, cacheManagerMock.Object, applicationDbContext);
             List<LocalGitRepository> newRepositories = new()
             {
                 CacheManagerFactory.CreateLocalGitRepository(1, TestRepositoryName, "chasma-bot"),
@@ -141,7 +136,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 workingDirectories.TryAdd(repo.Id, repo.Name);
             }
             cacheManagerMock.Setup(cacheManager => cacheManager.WorkingDirectories).Returns(workingDirectories);
-            configurationManagerMock.Setup(x => x.TryAddLocalGitRepositories(It.IsAny<int>(), out newRepositories)).Returns(true);
+            controlServiceMock.Setup(x => x.TryAddLocalGitRepositoriesFromFileSystem(It.IsAny<int>(), out newRepositories)).Returns(true);
             Task<ActionResult<AddLocalRepositoriesResponse>> addLocalGitRepositoriesTask = Controller.AddLocalGitRepositories(1);
             AddLocalRepositoriesResponse response = GetResponseFromHttpAction(addLocalGitRepositoriesTask, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
@@ -194,7 +189,7 @@ namespace ChasmaWebApi.Tests.Controllers
 
             List<LocalGitRepository> repositories = new();
             string errorMessage = "Error deleting repository.";
-            configurationManagerMock.Setup(manager => manager.TryDeleteRepository(It.IsAny<string>(), It.IsAny<int>(), out repositories, out errorMessage)).Returns(false);
+            controlServiceMock.Setup(manager => manager.TryDeleteRepository(It.IsAny<string>(), It.IsAny<int>(), out repositories, out errorMessage)).Returns(false);
             Task<ActionResult<DeleteRepositoryResponse>> responseTask = Controller.DeleteRepository(request);
             DeleteRepositoryResponse response = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
@@ -244,9 +239,9 @@ namespace ChasmaWebApi.Tests.Controllers
 
             List<LocalGitRepository> repositories = new();
             string errorMessage = string.Empty;
-            configurationManagerMock.Setup(manager => manager.TryDeleteRepository(It.IsAny<string>(), It.IsAny<int>(), out repositories, out errorMessage)).Returns(true);
+            controlServiceMock.Setup(manager => manager.TryDeleteRepository(It.IsAny<string>(), It.IsAny<int>(), out repositories, out errorMessage)).Returns(true);
             
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, controlServiceMock.Object, cacheManagerMock.Object, applicationDbContext);
             Task<ActionResult<DeleteRepositoryResponse>> responseTask = Controller.DeleteRepository(request);
             DeleteRepositoryResponse response = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
@@ -257,98 +252,6 @@ namespace ChasmaWebApi.Tests.Controllers
             CollectionAssert.DoesNotContain(repoIds, testRepo.Id);
             CollectionAssert.DoesNotContain(workingDirectoryKeys, testRepo.Id);
             TestDbContextFactory.DestroyDatabase(applicationDbContext);
-        }
-
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends error response when the request is null.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchWithNullRequest()
-        {
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(null);
-            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
-            Assert.IsTrue(response.IsErrorResponse);
-            Assert.AreEqual("Null request received. Request must be populated.", response.ErrorMessage);
-        }
-        
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends error response when the repository
-        /// identifier is empty.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchWithEmptyRepositoryId()
-        {
-            DeleteBranchRequest request = new()
-            {
-                RepositoryId = string.Empty,
-            };
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
-            Assert.IsTrue(response.IsErrorResponse);
-            Assert.AreEqual("Empty repository identifier received. Field must be populated.", response.ErrorMessage);
-        }
-        
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends error response when the
-        /// branch name is empty.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchWithEmptyBranchName()
-        {
-            DeleteBranchRequest request = new()
-            {
-                RepositoryId = Guid.NewGuid().ToString(),
-                BranchName = string.Empty,
-            };
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
-            Assert.IsTrue(response.IsErrorResponse);
-            Assert.AreEqual("Empty branch name received. Field must be populated.", response.ErrorMessage);
-        }
-        
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends error response when repository
-        /// fails to delete the branch.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchWithFailureToDeleteBranch()
-        {
-            DeleteBranchRequest request = new()
-            {
-                RepositoryId = Guid.NewGuid().ToString(),
-                BranchName = "branch_name",
-            };
-
-            string errorMessage = "Failed to delete branch.";
-            configurationManagerMock
-                .Setup(i => i.TryDeleteBranch(It.IsAny<string>(), It.IsAny<string>(), out errorMessage))
-                .Returns(false);
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
-            Assert.IsTrue(response.IsErrorResponse);
-            Assert.AreEqual(errorMessage, response.ErrorMessage);
-        }
-        
-        /// <summary>
-        /// Tests that the <see cref="RepositoryConfigurationController.DeleteBranch(DeleteBranchRequest)"/> sends successful response
-        /// in the nominal case of deleting a branch.
-        /// </summary>
-        [TestMethod]
-        public void TestDeleteBranchNominalCase()
-        {
-            DeleteBranchRequest request = new()
-            {
-                RepositoryId = Guid.NewGuid().ToString(),
-                BranchName = "branch_name",
-            };
-            string errorMessage = null;
-            configurationManagerMock
-                .Setup(i => i.TryDeleteBranch(It.IsAny<string>(), It.IsAny<string>(), out errorMessage))
-                .Returns(true);
-            ActionResult<DeleteBranchResponse> actionResult = Controller.DeleteBranch(request);
-            DeleteBranchResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
-            Assert.IsFalse(response.IsErrorResponse);
-            Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
 
         /// <summary>
@@ -477,7 +380,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             ApplicationDbContext dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, controlServiceMock.Object, cacheManagerMock.Object, dbContext);
             string repoId = Guid.NewGuid().ToString();
             ConcurrentDictionary<string, string> workingDirectories = new()
             {
@@ -517,7 +420,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             ApplicationDbContext dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, controlServiceMock.Object, cacheManagerMock.Object, dbContext);
             string repoId = "testRepo1234";
             ConcurrentDictionary<string, string> workingDirectories = new()
             {
@@ -562,7 +465,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             ApplicationDbContext dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, dbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, controlServiceMock.Object, cacheManagerMock.Object, dbContext);
             string repoId = "testRepo1234";
             ConcurrentDictionary<string, string> workingDirectories = new()
             {
@@ -669,7 +572,7 @@ namespace ChasmaWebApi.Tests.Controllers
 
             LocalGitRepository testRepo = null;
             string errorMessage = "Could not add repository";
-            configurationManagerMock.Setup(i => i.TryAddGitRepository(
+            controlServiceMock.Setup(i => i.TryAddSpecificGitRepository(
                 It.IsAny<string>(),
                 It.IsAny<int>(),
                 out testRepo,
@@ -718,7 +621,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Url = "test_url",
             };
             string errorMessage = null;
-            configurationManagerMock.Setup(i => i.TryAddGitRepository(
+            controlServiceMock.Setup(i => i.TryAddSpecificGitRepository(
                 It.IsAny<string>(),
                 It.IsAny<int>(),
                 out testRepo,
@@ -731,7 +634,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 UserId = user.Id,
             };
             applicationDbContext = TestDbContextFactory.CreateApplicationDbContext();
-            Controller = new RepositoryConfigurationController(loggerMock.Object, configurationManagerMock.Object, cacheManagerMock.Object, applicationDbContext, webApiConfigurationsMock.Object, statusManagerMock.Object);
+            Controller = new RepositoryConfigurationController(loggerMock.Object, controlServiceMock.Object, cacheManagerMock.Object, applicationDbContext);
             Task<ActionResult<AddGitRepositoryResponse>> task = Controller.AddGitRepository(request);
             AddGitRepositoryResponse response = GetResponseFromHttpAction(task, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);

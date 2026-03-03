@@ -1,4 +1,4 @@
-﻿using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using System.Security.Cryptography;
 
 namespace ChasmaWebApi.Util

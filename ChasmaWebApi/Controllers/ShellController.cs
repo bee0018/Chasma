@@ -1,4 +1,5 @@
-﻿using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Core.Interfaces.Control;
+using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Requests.Shell;
 using ChasmaWebApi.Data.Responses.Shell;
@@ -13,10 +14,10 @@ namespace ChasmaWebApi.Controllers
     /// Initializes a new instance of the <see cref="ShellController"/> class.
     /// </remarks>
     /// <param name="internalLogger">The internal API logger.</param>
-    /// <param name="manager">The internal API shell manager.</param>
+    /// <param name="controlService">The internal application orchestrator.</param>
     /// <param name="internalCacheManager">The internal API cache manager.</param>
     [Route("api/[controller]")]
-    public class ShellController(ILogger<ShellController> internalLogger, IShellManager manager, ICacheManager internalCacheManager) : ControllerBase
+    public class ShellController(ILogger<ShellController> internalLogger, IApplicationControlService controlService, ICacheManager internalCacheManager) : ControllerBase
     {
         /// <summary>
         /// The internal API logger.
@@ -24,9 +25,9 @@ namespace ChasmaWebApi.Controllers
         private readonly ILogger<ShellController> logger = internalLogger;
 
         /// <summary>
-        /// The internal API shell manager.
+        /// The internal API application control service for managing application-level operations.
         /// </summary>
-        private readonly IShellManager shellManager = manager;
+        private readonly IApplicationControlService applicationControlService = controlService;
 
         /// <summary>
         /// The internal API cache manager.
@@ -80,7 +81,7 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
-                response.Results = shellManager.ExecuteShellCommands(workingDirectory, commands);
+                response.Results = applicationControlService.RunShellCommands(workingDirectory, commands);
                 logger.LogInformation("Successfully executed shell commands without any exceptions. Sending response.");
                 return Ok(response);
             }
@@ -124,7 +125,7 @@ namespace ChasmaWebApi.Controllers
             try
             {
                 List<BatchCommandEntry> batchCommands = request.BatchCommands;
-                response.Results = shellManager.ExecuteShellCommandsInBatch(batchCommands);
+                response.Results = applicationControlService.RunBatchShellCommands(batchCommands);
                 logger.LogInformation("Successfully executed shell commands without any exceptions. Sending successful response.");
                 return Ok(response);
             }

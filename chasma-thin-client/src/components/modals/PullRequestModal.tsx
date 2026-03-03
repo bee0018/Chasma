@@ -1,9 +1,12 @@
 ﻿import React, {useEffect, useState} from "react";
-import {CreatePRRequest, GitBranchRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
+import {BranchClient, CreatePRRequest, GitBranchRequest, RemoteClient} from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
 
-/** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient(apiBaseUrl);
+/** The remote repository management client for the web API. **/
+const remoteClient = new RemoteClient(apiBaseUrl);
+
+/** The branch management client for the web API. **/
+const branchClient = new BranchClient(apiBaseUrl)
 
 /** Defines the properties of the pull request modal. **/
 interface IPullRequestProps {
@@ -63,7 +66,7 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
         request.destinationBranchName = destinationBranch
         request.workingBranchName = workingBranchName;
         try {
-            const response = await statusClient.createPullRequest(request);
+            const response = await remoteClient.createPullRequest(request);
             if (response.isErrorResponse) {
                 setTitle("Error creating Pull Request");
                 setErrorMessage(response.errorMessage);
@@ -92,7 +95,7 @@ const PullRequestModal: React.FC<IPullRequestProps> = (props: IPullRequestProps)
         const request = new GitBranchRequest();
         request.repositoryId = props.repositoryId;
         try {
-            const response = await statusClient.getBranches(request);
+            const response = await branchClient.getBranches(request);
             if (response.isErrorResponse) {
                 setBranchesList([]);
                 return;

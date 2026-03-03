@@ -1,10 +1,10 @@
-﻿import {CreateGitHubIssueRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
+﻿import {CreateGitHubIssueRequest, RemoteClient} from "../../API/ChasmaWebApiClient";
 import React, {useState} from "react";
 import {apiBaseUrl} from "../../environmentConstants";
 import {useCacheStore} from "../../managers/CacheManager";
 
-/** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient(apiBaseUrl);
+/** The remote repository management client for the web API. **/
+const remoteClient = new RemoteClient(apiBaseUrl);
 
 /** The members of the modal to create issues. **/
 interface CreateIssueModalProps {
@@ -62,7 +62,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = (props: CreateIssueMod
         request.title = issueTitle;
         request.body = issueMessage;
         try {
-            const response = await statusClient.createGitHubIssue(request);
+            const response = await remoteClient.createGitHubIssue(request);
             if (response.isErrorResponse) {
                 setTitle("Cannot Create Issue");
                 setSuccessfullyCreatedIssue(false);

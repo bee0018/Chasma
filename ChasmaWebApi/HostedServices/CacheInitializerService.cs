@@ -1,5 +1,5 @@
-﻿using ChasmaWebApi.Data;
-using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
 using Microsoft.EntityFrameworkCore;

@@ -2,7 +2,7 @@
 import {
     GetStashDetailsRequest, GetStashListRequest,
     PatchEntry,
-    RepositoryConfigurationClient,
+    StashClient,
     StashEntry
 } from "../../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../../environmentConstants";
@@ -17,8 +17,8 @@ interface IRepositoryStashesPageProps {
     repositoryId: string | undefined;
 }
 
-/** Repository configuration client for the API **/
-const configClient = new RepositoryConfigurationClient(apiBaseUrl);
+/** Repository stash client for the API **/
+const stashClient = new StashClient(apiBaseUrl);
 
 /**
  * Initializes a new instance of the RepositoryStashesPage component.
@@ -105,7 +105,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
             const request = new GetStashDetailsRequest();
             request.repositoryId = props.repositoryId;
             request.stashEntry = stashEntry;
-            const response = await configClient.getStashDetails(request);
+            const response = await stashClient.getStashDetails(request);
             if (response.isErrorResponse) {
                 setNotification({
                     title: "Could not get stash details!",
@@ -150,7 +150,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
         try {
             const request = new GetStashListRequest()
             request.repositoryId = props.repositoryId;
-            const response = await configClient.getStashList(request);
+            const response = await stashClient.getStashList(request);
             if (response.isErrorResponse) {
                 setNotification({
                     title: "Could not get stash list!",

@@ -1,19 +1,40 @@
-﻿using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Util;
 using System.Diagnostics;
 
-namespace ChasmaWebApi.Data.Managers
+namespace ChasmaWebApi.Core.Services.Infrastructure
 {
     /// <summary>
-    /// Provides functionality for executing shell commands, specifically Git commands, and managing related client
-    /// operations within the application.
+    /// Class responsible for executing shell commands, specifically Git commands, and managing related operations within the application.
     /// </summary>
-    /// <param name="logger">The internal API logger.</param>
-    /// <param name="cacheManager">The internal cache manager.</param>
-    public class ShellManager(ILogger<ShellManager> logger, ICacheManager cacheManager)
-        : ClientManagerBase<ShellManager>(logger, cacheManager), IShellManager
+    public class ShellExecutionService : IShellExecutionService
     {
+        /// <summary>
+        /// The logger instance for logging diagnostic and operational information within class.
+        /// </summary>
+        private readonly ILogger<ShellExecutionService> Logger;
+
+        /// <summary>
+        /// The cache manager instance for accessing cached data such as repository information and working directories within the system.
+        /// </summary>
+        private readonly ICacheManager CacheManager;
+
+        #region Constructor
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ShellExecutionService"/> class.
+        /// </summary>
+        /// <param name="logger">The internal API logger.</param>
+        /// <param name="cacheManager">The internal cache manager.</param>
+        public ShellExecutionService(ILogger<ShellExecutionService> logger, ICacheManager cacheManager)
+        {
+            Logger = logger;
+            CacheManager = cacheManager;
+        }
+
+        #endregion
+
         // <inheritdoc/>
         public List<ShellCommandResult> ExecuteShellCommands(string workingDirectory, IEnumerable<string> shellCommands)
         {
@@ -33,14 +54,14 @@ namespace ChasmaWebApi.Data.Managers
                         commandResult.IsSuccess = false;
                         commandResult.OutputMessage = error;
                         string errorMessage = $"Command '{command}' failed with error: {error}\n";
-                        logger.LogError(errorMessage);
+                        Logger.LogError(errorMessage);
                     }
                     else
                     {
                         commandResult.IsSuccess = true;
                         commandResult.OutputMessage = output;
                         string successMessage = $"Command '{command}' executed successfully: {output}\n";
-                        logger.LogInformation(successMessage);
+                        Logger.LogInformation(successMessage);
                     }
 
                     commandResults.Add(commandResult);
@@ -49,7 +70,7 @@ namespace ChasmaWebApi.Data.Managers
             catch (Exception ex)
             {
                 string errorMessage = $"An exception occurred while executing commands: {ex.Message}";
-                logger.LogError(ex, errorMessage);
+                Logger.LogError(ex, errorMessage);
                 ShellCommandResult errorResult = new()
                 {
                     IsSuccess = false,
@@ -70,7 +91,7 @@ namespace ChasmaWebApi.Data.Managers
                 string repoId = entry.RepositoryId;
                 if (!CacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
                 {
-                    ClientLogger.LogWarning("Repository ID {repoId} not found in working directories cache.", repoId);
+                    Logger.LogWarning("Repository ID {repoId} not found in working directories cache.", repoId);
                     BatchCommandEntryResult result = new()
                     {
                         RepositoryName = repoId,

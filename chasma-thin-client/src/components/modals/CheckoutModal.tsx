@@ -1,9 +1,9 @@
-﻿import {GitBranchRequest, GitCheckoutRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
+﻿import {BranchClient, GitBranchRequest, GitCheckoutRequest} from "../../API/ChasmaWebApiClient";
 import React, {useState} from "react";
 import {apiBaseUrl} from "../../environmentConstants";
 
-/** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient(apiBaseUrl)
+/** The branch management client for the web API. **/
+const branchClient = new BranchClient(apiBaseUrl)
 
 /**
  * The members of the checkout modal.
@@ -49,7 +49,7 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
         request.repositoryId = props.repositoryId;
         request.branchName = branchName;
         try {
-            const response = await statusClient.checkoutBranch(request);
+            const response = await branchClient.checkoutBranch(request);
             if (response.isErrorResponse) {
                 setErrorMessage(response.errorMessage);
                 setTitle("Could not check out branch!")
@@ -76,7 +76,7 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
         const request = new GitBranchRequest();
         request.repositoryId = props.repositoryId;
         try {
-            const response = await statusClient.getBranches(request);
+            const response = await branchClient.getBranches(request);
             if (response.isErrorResponse) {
                 setErrorMessage(response.errorMessage);
                 setBranchesList([]);
