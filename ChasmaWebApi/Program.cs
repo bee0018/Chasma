@@ -1,7 +1,15 @@
 using ChasmaWebApi;
+using ChasmaWebApi.Core.Interfaces.Control;
+using ChasmaWebApi.Core.Interfaces.Git;
+using ChasmaWebApi.Core.Interfaces.Index;
+using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Core.Interfaces.Remote;
+using ChasmaWebApi.Core.Services.Control;
+using ChasmaWebApi.Core.Services.Git;
+using ChasmaWebApi.Core.Services.Index;
+using ChasmaWebApi.Core.Services.Infrastructure;
+using ChasmaWebApi.Core.Services.Remote;
 using ChasmaWebApi.Data;
-using ChasmaWebApi.Data.Interfaces;
-using ChasmaWebApi.Data.Managers;
 using ChasmaWebApi.HostedServices;
 using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
@@ -51,9 +59,13 @@ builder.Services.AddCors(options =>
     .AddSingleton(webApiConfigurations)
     .AddSingleton<IPasswordUtility, PasswordUtility>()
     .AddSingleton<ICacheManager, CacheManager>()
-    .AddSingleton<IRepositoryConfigurationManager, RepositoryConfigurationManager>()
-    .AddSingleton<IRepositoryStatusManager, RepositoryStatusManager>()
-    .AddSingleton<IShellManager, ShellManager>()
+    .AddSingleton<IApplicationControlService, ApplicationControlService>()
+    .AddSingleton<IGitBranchService, GitBranchService>()
+    .AddSingleton<IGitRepositoryService, GitRepositoryService>()
+    .AddSingleton<IGitStashService, GitStashService>()
+    .AddSingleton<IRepositoryIndexService, RepositoryIndexService>()
+    .AddSingleton<IShellExecutionService, ShellExecutionService>()
+    .AddSingleton<IGitHubService, GitHubService>()
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>
     {

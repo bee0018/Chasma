@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
-using ChasmaWebApi.Data.Interfaces;
+using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
 
-namespace ChasmaWebApi.Data.Managers;
+namespace ChasmaWebApi.Core.Services.Infrastructure;
 
 /// <summary>
 /// The concrete implementation of the <see cref="ICacheManager"/>.

@@ -2,8 +2,7 @@
 import Checkbox from "../Checkbox";
 import {
     ApplyStashRequest,
-    RepositoryConfigurationClient,
-    StashApplyModifiers,
+    StashApplyModifiers, StashClient,
 } from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
 
@@ -24,8 +23,8 @@ interface IApplyStashModalProps {
     onSuccess: () => void;
 }
 
-/** The repository configuration client for the web API. **/
-const configClient = new RepositoryConfigurationClient(apiBaseUrl)
+/** The repository stash management client for the web API. **/
+const stashClient = new StashClient(apiBaseUrl)
 
 /**
  * Initializes a new instance of the ApplyStashModal component.
@@ -53,7 +52,7 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
             request.repositoryId = props.repositoryId;
             request.applyStashModifier = applyStashOption;
             request.stashIndex = props.stashIndex;
-            const response = await configClient.applyStash(request);
+            const response = await stashClient.applyStash(request);
             if (response.isErrorResponse) {
                 setTitle(`Error applying stash ${props.stashIndex}`);
                 setErrorMessage(response.errorMessage);

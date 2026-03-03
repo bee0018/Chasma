@@ -1,11 +1,11 @@
-﻿using ChasmaWebApi.Data;
-using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Core.Interfaces.Control;
+using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Messages;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Responses.Configuration;
-using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,14 +23,9 @@ public class RepositoryConfigurationController : ControllerBase
     private readonly ILogger<RepositoryConfigurationController> logger;
 
     /// <summary>
-    /// The repository configuration manager.
+    /// The internal API application control service for managing application-level operations.
     /// </summary>
-    private readonly IRepositoryConfigurationManager configurationManager;
-
-    /// <summary>
-    /// The internal repository status manager.
-    /// </summary>
-    private readonly IRepositoryStatusManager statusManager;
+    private readonly IApplicationControlService applicationControlService;
 
     /// <summary>
     /// The internal cache manager.
@@ -42,30 +37,21 @@ public class RepositoryConfigurationController : ControllerBase
     /// </summary>
     private readonly ApplicationDbContext applicationDbContext;
 
-    /// <summary>
-    /// The Chasma Web API configurations.
-    /// </summary>
-    private readonly ChasmaWebApiConfigurations webApiConfigurations;
-
     #region Constructor
 
     /// <summary>
     /// Instantiates a new <see cref="RepositoryConfigurationController"/> class.
     /// </summary>
     /// <param name="log">The internal API logger.</param>
-    /// <param name="configManager">The repository configuration manager.</param>
+    /// <param name="controlService">The internal application control service.</param>
     /// <param name="internalCacheManager">The internal cache manager.</param>
     /// <param name="dbContext">The application database context.</param>
-    /// <param name="config">The Chasma Web API configurations.</param>
-    /// <param name="internalStatusManager">The internal repository status manager.</param>
-    public RepositoryConfigurationController(ILogger<RepositoryConfigurationController> log, IRepositoryConfigurationManager configManager, ICacheManager internalCacheManager, ApplicationDbContext dbContext, ChasmaWebApiConfigurations config, IRepositoryStatusManager internalStatusManager)
+    public RepositoryConfigurationController(ILogger<RepositoryConfigurationController> log, IApplicationControlService controlService, ICacheManager internalCacheManager, ApplicationDbContext dbContext)
     {
         logger = log;
-        configurationManager = configManager;
+        applicationControlService = controlService;
         cacheManager = internalCacheManager;
         applicationDbContext = dbContext;
-        webApiConfigurations = config;
-        statusManager = internalStatusManager;
     }
 
     #endregion
@@ -124,7 +110,7 @@ public class RepositoryConfigurationController : ControllerBase
     {
         logger.LogInformation("Attempting to add local git repositories on the machine's logical drives.");
         AddLocalRepositoriesResponse response = new();
-        if (!configurationManager.TryAddLocalGitRepositories(userId, out List<LocalGitRepository> newRepositories))
+        if (!applicationControlService.TryAddLocalGitRepositoriesFromFileSystem(userId, out List<LocalGitRepository> newRepositories))
         {
             logger.LogError("No new local git repositories added.");
             response.IsErrorResponse = true;
@@ -198,7 +184,7 @@ public class RepositoryConfigurationController : ControllerBase
             return BadRequest(response);
         }
 
-        if (!configurationManager.TryAddGitRepository(repoPath, userId, out LocalGitRepository localGitRepository, out string errorMessage))
+        if (!applicationControlService.TryAddSpecificGitRepository(repoPath, userId, out LocalGitRepository localGitRepository, out string errorMessage))
         {
             logger.LogError("Failed to add git repository from path {repoPath}. Reason: {reason}", repoPath, errorMessage);
             response.IsErrorResponse = true;
@@ -254,7 +240,7 @@ public class RepositoryConfigurationController : ControllerBase
         }
 
         logger.LogInformation("Attempting to delete repository with key {repoKey} from cache.", request.RepositoryId);
-        if (!configurationManager.TryDeleteRepository(request.RepositoryId, request.UserId, out List<LocalGitRepository> localGitRepositories, out string errorMessage))
+        if (!applicationControlService.TryDeleteRepository(request.RepositoryId, request.UserId, out List<LocalGitRepository> localGitRepositories, out string errorMessage))
         {
             response.IsErrorResponse = true;
             response.ErrorMessage = errorMessage;
@@ -274,54 +260,6 @@ public class RepositoryConfigurationController : ControllerBase
 
         await applicationDbContext.SaveChangesAsync();
         response.Repositories = localGitRepositories;
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Deletes the branch from the specified repository.
-    /// </summary>
-    /// <param name="request">The request to delete a branch.</param>
-    /// <returns>Response to deleting a branch.</returns>
-    [HttpDelete]
-    [Route("deleteBranch")]
-    public ActionResult<DeleteBranchResponse> DeleteBranch([FromBody] DeleteBranchRequest request)
-    {
-        DeleteBranchResponse response = new();
-        if (request == null)
-        {
-            logger.LogError("Received a null {request}. Sending error response.", nameof(DeleteBranchRequest));
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Null request received. Request must be populated.";
-            return BadRequest(response);
-        }
-
-        string repoId = request.RepositoryId;
-        if (string.IsNullOrEmpty(repoId))
-        {
-            logger.LogError("Invalid request. Repository identifier is required. Sending error response.");
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Empty repository identifier received. Field must be populated.";
-            return BadRequest(response);
-        }
-
-        string branchName = request.BranchName;
-        if (string.IsNullOrEmpty(branchName))
-        {
-            logger.LogError("Invalid request. Branch name is required. Sending error response.");
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Empty branch name received. Field must be populated.";
-            return BadRequest(response);
-        }
-
-        if (!configurationManager.TryDeleteBranch(repoId, branchName, out string errorMessage))
-        {
-            logger.LogError("Failure to delete branch: {reason}", errorMessage);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = errorMessage;
-            return Ok(response);
-        }
-
-        logger.LogInformation("Successfully deleted the branch {branchName}.", branchName);
         return Ok(response);
     }
 
@@ -398,336 +336,6 @@ public class RepositoryConfigurationController : ControllerBase
         response.IncludedRepositories = cacheManager.Repositories.Values
             .Where(i => i.UserId == request.UserId && !i.IsIgnored)
             .ToList();
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Stashes the changes in the repository with the specified repository identifier.
-    /// </summary>
-    /// <param name="request">The request to stash changes.</param>
-    /// <returns>The response to adding a new stash entry.</returns>
-    [HttpPost]
-    [Route("gitStash")]
-    public ActionResult<AddStashResponse> GitStash([FromBody] AddStashRequest request)
-    {
-        AddStashResponse response = new();
-        if (request == null)
-        {
-            logger.LogError("Received a null {request}. Sending error response.", nameof(AddStashRequest));
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Request must be populated.";
-            return BadRequest(response);
-        }
-
-        string repoId = request.RepositoryId;
-        if (string.IsNullOrEmpty(repoId))
-        {
-            logger.LogError("Invalid {request}. Repository identifier is required. Sending error response.", nameof(AddStashRequest));
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Repository identifier is required.";
-            return Ok(response);
-        }
-
-        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
-        {
-            logger.LogError("Invalid {request}. Working directory with identifier {id} does not exist. Sending error response.", nameof(AddStashRequest), repoId);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Could not find working directory for selected repository.";
-            return Ok(response);
-        }
-
-        int userId = request.UserId;
-        if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
-        {
-            logger.LogError("Invalid {request}. User with identifier {id} does not exist. Sending error response.", nameof(AddStashRequest), userId);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Could not find user.";
-            return Ok(response);
-        }
-
-        string stashMessage = request.Message;
-        StashModifiers stashOptions = request.StashModifier;
-        if (!configurationManager.TryAddStash(workingDirectory, user, stashMessage, stashOptions, out string errorMessage))
-        {
-            logger.LogError("Failed to create git stash for repository {repoId}. Reason: {reason}", repoId, errorMessage);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = errorMessage;
-        }
-
-        logger.LogInformation("Successfully created git stash for repository {repoId}.", repoId);
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Gets the list of stash entries for the repository with the specified repository identifier.
-    /// </summary>
-    /// <param name="request">The request to get the stash list of the repository.</param>
-    /// <returns>The response containing the stash list data.</returns>
-    [HttpPost]
-    [Route("getStashList")]
-    public ActionResult<GetStashListResponse> GetStashList([FromBody] GetStashListRequest request)
-    {
-        GetStashListResponse response = new();
-        string requestName = nameof(GetStashListRequest);
-        if (request == null)
-        {
-            logger.LogError("Received a null {request}. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Request must be populated.";
-            return BadRequest(response);
-        }
-
-        string repoId = request.RepositoryId;
-        if (string.IsNullOrEmpty(repoId))
-        {
-            logger.LogError("Invalid {request}. Repository identifier is required. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Repository identifier is required.";
-            return Ok(response);
-        }
-
-        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
-        {
-            logger.LogError("Invalid {request}. Working directory with identifier {id} does not exist. Sending error response.", requestName, repoId);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Could not find working directory for selected repository.";
-            return Ok(response);
-        }
-
-        List<StashEntry>? stashEntries = configurationManager.GetStashList(workingDirectory, out string errorMessage);
-        if (stashEntries == null)
-        {
-            logger.LogError("Failed to retrieve stash list for repository {repoId}. Reason: {reason}", repoId, errorMessage);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = errorMessage;
-            return Ok(response);
-        }
-
-        response.StashList = stashEntries;
-        logger.LogInformation("Successfully retrieved stash list for repository {repoId}.", repoId);
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Gets the details of the specified stash entry from the repository with the specified repository identifier.
-    /// </summary>
-    /// <param name="request">The request to get the stash details</param>
-    /// <returns>The response to get the stash details</returns>
-    [HttpPost]
-    [Route("getStashDetails")]
-    public ActionResult<GetStashDetailsResponse> GetStashDetails([FromBody] GetStashDetailsRequest request)
-    {
-        GetStashDetailsResponse response = new();
-        string requestName = nameof(GetStashDetailsRequest);
-        if (request == null)
-        {
-            logger.LogError("Received a null {request}. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Request must be populated.";
-            return BadRequest(response);
-        }
-
-        string repoId = request.RepositoryId;
-        if (string.IsNullOrEmpty(repoId))
-        {
-            logger.LogError("Invalid {request}. Repository identifier is required. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Repository identifier is required.";
-            return Ok(response);
-        }
-
-        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
-        {
-            logger.LogError("Invalid {request}. Working directory with identifier {id} does not exist. Sending error response.", requestName, repoId);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Could not find working directory for selected repository.";
-            return Ok(response);
-        }
-
-        StashEntry stashEntry = request.StashEntry;
-        List<PatchEntry>? patchEntries = configurationManager.GetStashDetails(workingDirectory, stashEntry, out string errorMessage);
-        if (patchEntries == null)
-        {
-            logger.LogError("Failed to retrieve stash details for repository {repoId}. Reason: {reason}", repoId, errorMessage);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = errorMessage;
-            return Ok(response);
-        }
-
-        response.PatchEntries = patchEntries;
-        logger.LogInformation("Successfully retrieved stash details for repository {repoId}.", repoId);
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Applies the specified stash entry to the repository with the specified repository identifier.
-    /// </summary>
-    /// <param name="request">The request to apply a stash.</param>
-    /// <returns>A response to apply a stash.</returns>
-    [HttpPost]
-    [Route("applyStash")]
-    public ActionResult<ApplyStashResponse> ApplyStash([FromBody] ApplyStashRequest request)
-    {
-        ApplyStashResponse response = new();
-        string requestName = nameof(ApplyStashRequest);
-        if (request == null)
-        {
-            logger.LogError("Received a null {request}. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Request must be populated.";
-            return BadRequest(response);
-        }
-
-        string repoId = request.RepositoryId;
-        if (string.IsNullOrEmpty(repoId))
-        {
-            logger.LogError("Invalid {request}. Repository identifier is required. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Repository identifier is required.";
-            return Ok(response);
-        }
-
-        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
-        {
-            logger.LogError("Invalid {request}. Working directory with identifier {id} does not exist. Sending error response.", requestName, repoId);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Could not find working directory for selected repository.";
-            return Ok(response);
-        }
-
-        int stashIndex = request.StashIndex;
-        StashApplyModifiers applyOptions = request.ApplyStashModifier;
-        if (!configurationManager.TryApplyStash(workingDirectory, stashIndex, applyOptions, out string errorMessage))
-        {
-            logger.LogError("Failed to apply stash entry at index {index} for repository {repoId}. Reason: {reason}", stashIndex, repoId, errorMessage);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = errorMessage;
-            return Ok(response);
-        }
-
-        logger.LogInformation("Successfully applied stash entry at index {index} for repository {repoId}.", stashIndex, repoId);
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Deletes the specified stash entry from the repository with the specified repository identifier.
-    /// </summary>
-    /// <param name="request">The request to delete a stash.</param>
-    /// <returns>The response to delete a stash.</returns>
-    [HttpDelete]
-    [Route("deleteStash")]
-    public ActionResult<DeleteStashResponse> DeleteStash([FromBody] DeleteStashRequest request)
-    {
-        DeleteStashResponse response = new();
-        string requestName = nameof(DeleteStashRequest);
-        if (request == null)
-        {
-            logger.LogError("Received a null {request}. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Request must be populated.";
-            return BadRequest(response);
-        }
-
-        string repoId = request.RepositoryId;
-        if (string.IsNullOrEmpty(repoId))
-        {
-            logger.LogError("Invalid {request}. Repository identifier is required. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Repository identifier is required.";
-            return Ok(response);
-        }
-
-        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
-        {
-            logger.LogError("Invalid {request}. Working directory with identifier {id} does not exist. Sending error response.", requestName, repoId);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Could not find working directory for selected repository.";
-            return Ok(response);
-        }
-
-        int stashIndex = request.StashIndex;
-        if (!configurationManager.TryRemoveStash(workingDirectory, stashIndex, out string errorMessage))
-        {
-            logger.LogError("Failed to delete stash entry at index {index} for repository {repoId}. Reason: {reason}", stashIndex, repoId, errorMessage);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = errorMessage;
-            return Ok(response);
-        }
-
-        logger.LogInformation("Successfully deleted stash entry at index {index} for repository {repoId}.", stashIndex, repoId);
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Adds the branch with the specified branch name to the repository with the specified repository identifier.
-    /// </summary>
-    /// <param name="request">The request to add a branch.</param>
-    /// <returns>The response to adding a branch.</returns>
-    public ActionResult<AddNewBranchResponse> AddNewBranch([FromBody] AddNewBranchRequest request)
-    {
-        AddNewBranchResponse response = new();
-        string requestName = nameof(AddNewBranchRequest);
-        if (request == null)
-        {
-            logger.LogError("Received a null {request}. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Request must be populated.";
-            return BadRequest(response);
-        }
-
-        string repoId = request.RepositoryId;
-        if (string.IsNullOrEmpty(repoId))
-        {
-            logger.LogError("Invalid {request}. Repository identifier is required. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Repository identifier is required.";
-            return Ok(response);
-        }
-
-        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
-        {
-            logger.LogError("Invalid {request}. Working directory with identifier {id} does not exist. Sending error response.", requestName, repoId);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Could not find working directory for selected repository.";
-            return Ok(response);
-        }
-
-        int userId = request.UserId;
-        if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
-        {
-            logger.LogError("Invalid {request}. User with identifier {id} does not exist. Sending error response.", requestName, userId);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Could not find user.";
-            return Ok(response);
-        }
-
-        string branchName = request.BranchName;
-        if (string.IsNullOrEmpty(branchName))
-        {
-            logger.LogError("Invalid {request}. Branch name is required. Sending error response.", requestName);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Branch name is required.";
-            return Ok(response);
-        }
-
-        string token = webApiConfigurations.GitHubApiToken;
-        if (!configurationManager.TryAddBranch(workingDirectory, branchName, user.UserName, token, out string errorMessage))
-        {
-            logger.LogError("Failed to create new branch {branchName} for repository {repoId}. Reason: {reason}", branchName, repoId, errorMessage);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = errorMessage;
-            return Ok(response);
-        }
-
-        if (request.IsCheckingOutNewBranch && !statusManager.TryCheckoutBranch(workingDirectory, branchName, out string checkoutErrorMessage))
-        {
-            logger.LogError("Successfully created branch but failed to checkout to new branch {branchName} for repository {repoId}. Reason: {reason}", branchName, repoId, checkoutErrorMessage);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = $"Branch {branchName} was created successfully but failed to checkout. Reason: {checkoutErrorMessage}";
-            return Ok(response);
-        }
-
-        logger.LogInformation("Successfully created new branch {branchName} for repository {repoId}.", branchName, repoId);
         return Ok(response);
     }
 }

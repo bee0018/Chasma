@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Interfaces;
+﻿namespace ChasmaWebApi.Core.Interfaces.Infrastructure;
 
 /// <summary>
 /// Interface containing the members that will be inherited by Chasma responses.

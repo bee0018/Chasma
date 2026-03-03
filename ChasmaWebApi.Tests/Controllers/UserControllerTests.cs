@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Controllers;
+using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
-using ChasmaWebApi.Data.Interfaces;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;

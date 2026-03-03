@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using ChasmaWebApi.Controllers;
-using ChasmaWebApi.Data.Interfaces;
+using ChasmaWebApi.Core.Interfaces.Control;
+using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Requests.Shell;
 using ChasmaWebApi.Data.Responses.Shell;
@@ -22,9 +23,9 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
     private readonly Mock<ILogger<ShellController>> loggerMock;
     
     /// <summary>
-    /// The mocked implementation of the internal Shell Manager.
+    /// The mocked implementation of the internal application control service.
     /// </summary>
-    private readonly Mock<IShellManager> shellManagerMock;
+    private readonly Mock<IApplicationControlService> controlServiceMock;
     
     /// <summary>
     /// The mocked implementation of the internal cache manager.
@@ -39,7 +40,7 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
     public ShellControllerTests()
     {
         loggerMock = new Mock<ILogger<ShellController>>();
-        shellManagerMock = new Mock<IShellManager>();
+        controlServiceMock = new Mock<IApplicationControlService>();
         cacheManagerMock = new Mock<ICacheManager>();
     }
 
@@ -51,7 +52,7 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
     [TestInitialize]
     public void Setup()
     {
-        Controller = new ShellController(loggerMock.Object, shellManagerMock.Object, cacheManagerMock.Object);
+        Controller = new ShellController(loggerMock.Object, controlServiceMock.Object, cacheManagerMock.Object);
     }
     
     /// <summary>
@@ -61,7 +62,7 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
     public void Cleanup()
     {
         loggerMock.Reset();
-        shellManagerMock.Reset();
+        controlServiceMock.Reset();
         cacheManagerMock.Reset();
     }
     
@@ -147,7 +148,7 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
             RepositoryId = repositoryId,
             Commands = commands
         };
-        shellManagerMock.Setup(i => i.ExecuteShellCommands(It.IsAny<string>(), commands)).Throws(new Exception());
+        controlServiceMock.Setup(i => i.RunShellCommands(It.IsAny<string>(), commands)).Throws(new Exception());
         ActionResult<ExecuteShellCommandResponse> actionResult = Controller.ExecuteShellCommands(request);
         ExecuteShellCommandResponse response =  GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
         Assert.IsTrue(response.IsErrorResponse);
@@ -189,7 +190,7 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
                 OutputMessage = "git push failed to execute."
             }
         ];
-        shellManagerMock.Setup(i => i.ExecuteShellCommands(It.IsAny<string>(), commands)).Returns(commandResults);
+        controlServiceMock.Setup(i => i.RunShellCommands(It.IsAny<string>(), commands)).Returns(commandResults);
 
         ActionResult<ExecuteShellCommandResponse> actionResult = Controller.ExecuteShellCommands(request);
         ExecuteShellCommandResponse response =  GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
@@ -238,7 +239,7 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
     {
         List<BatchCommandEntry> entries = [new()];
         ExecuteBatchShellCommandsRequest request = new(){ BatchCommands = entries };
-        shellManagerMock.Setup(i => i.ExecuteShellCommandsInBatch(It.IsAny<List<BatchCommandEntry>>()))
+        controlServiceMock.Setup(i => i.RunBatchShellCommands(It.IsAny<List<BatchCommandEntry>>()))
             .Throws(new Exception("error executing batch commands."));
         ActionResult<ExecuteBatchShellCommandsResponse> actionResult = Controller.ExecuteBatchShellCommands(request);
         ExecuteBatchShellCommandsResponse response =  GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
@@ -278,7 +279,7 @@ public class ShellControllerTests : ControllerTestBase<ShellController>
         };
         List<BatchCommandEntryResult> results = [result1, result2];
         ExecuteBatchShellCommandsRequest request = new(){ BatchCommands = entries };
-        shellManagerMock.Setup(i => i.ExecuteShellCommandsInBatch(It.IsAny<List<BatchCommandEntry>>()))
+        controlServiceMock.Setup(i => i.RunBatchShellCommands(It.IsAny<List<BatchCommandEntry>>()))
             .Returns(results);
         ActionResult<ExecuteBatchShellCommandsResponse> actionResult = Controller.ExecuteBatchShellCommands(request);
         ExecuteBatchShellCommandsResponse response =  GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));

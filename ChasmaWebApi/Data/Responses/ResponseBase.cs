@@ -1,4 +1,4 @@
-﻿using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Responses;

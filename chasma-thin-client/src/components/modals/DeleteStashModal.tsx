@@ -1,7 +1,7 @@
 ﻿import React from "react";
 import {
     DeleteStashRequest,
-    RepositoryConfigurationClient,
+    StashClient,
 } from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
 
@@ -22,8 +22,8 @@ interface IDeleteStashModalProps {
     onSuccess: () => void;
 }
 
-/** The repository configuration client for the web API. **/
-const configClient = new RepositoryConfigurationClient(apiBaseUrl)
+/** The repository stashing client for the web API. **/
+const stashClient = new StashClient(apiBaseUrl)
 
 /**
  * Initializes a new instance of the DeleteStashModal component.
@@ -47,7 +47,7 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
             const request = new DeleteStashRequest();
             request.repositoryId = props.repositoryId;
             request.stashIndex = props.stashIndex;
-            const response = await configClient.deleteStash(request);
+            const response = await stashClient.deleteStash(request);
             if (response.isErrorResponse) {
                 setTitle(`Error deleting stash ${props.stashIndex}`);
                 setErrorMessage(response.errorMessage);

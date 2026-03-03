@@ -1,11 +1,11 @@
 ﻿using ChasmaWebApi.Data.Objects;
 
-namespace ChasmaWebApi.Data.Interfaces
+namespace ChasmaWebApi.Core.Interfaces.Infrastructure
 {
     /// <summary>
-    /// Class defining the members required for a shell manager.
+    /// Interface containing the members on the shell execution service, which is responsible for executing shell commands, specifically Git commands, and managing related operations within the application.
     /// </summary>
-    public interface IShellManager
+    public interface IShellExecutionService
     {
         /// <summary>
         /// Executes the list of git command in the system shell.

@@ -1,6 +1,10 @@
 ﻿import React from "react";
 import Checkbox from "../Checkbox";
-import {AddStashRequest, RepositoryConfigurationClient, StashModifiers} from "../../API/ChasmaWebApiClient";
+import {
+    AddStashRequest,
+    StashClient,
+    StashModifiers
+} from "../../API/ChasmaWebApiClient";
 import {useCacheStore} from "../../managers/CacheManager";
 import {apiBaseUrl} from "../../environmentConstants";
 
@@ -15,8 +19,8 @@ interface IAddStashModalProps {
     onClose: () => void;
 }
 
-/** The repository configuration client for the web API. **/
-const configClient = new RepositoryConfigurationClient(apiBaseUrl)
+/** The repository stash management client for the web API. **/
+const stashClient = new StashClient(apiBaseUrl)
 
 /**
  * Initializes a new instance of the AddStashModal component.
@@ -51,7 +55,7 @@ const AddStashModal: React.FC<IAddStashModalProps> = (props: IAddStashModalProps
             request.stashModifier = stashOption;
             request.userId = user?.userId;
             request.message = stashMessage;
-            const response = await configClient.gitStash(request);
+            const response = await stashClient.gitStash(request);
             if (response.isErrorResponse) {
                 setTitle("Error stashing changes");
                 setErrorMessage(response.errorMessage);

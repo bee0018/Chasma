@@ -1,4 +1,4 @@
-﻿using ChasmaWebApi.Data.Interfaces;
+﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects;
 using Moq;
 using System.Collections.Concurrent;

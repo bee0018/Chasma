@@ -1,16 +1,13 @@
 ﻿import {
     DeleteBranchRequest,
     GitBranchRequest,
-    RepositoryConfigurationClient, RepositoryStatusClient,
+    BranchClient,
 } from "../../API/ChasmaWebApiClient";
 import React, {useEffect} from "react";
 import {apiBaseUrl} from "../../environmentConstants";
 
-/** The repository configuration client for the web API. **/
-const configClient = new RepositoryConfigurationClient(apiBaseUrl)
-
-/** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient(apiBaseUrl)
+/** The branch management client for the web API. **/
+const branchClient = new BranchClient(apiBaseUrl)
 
 /**
  * The members of the delete branch modal.
@@ -48,7 +45,7 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
         const request = new GitBranchRequest();
         request.repositoryId = props.repositoryId;
         try {
-            const response = await statusClient.getBranches(request);
+            const response = await branchClient.getBranches(request);
             setBranchesList(response.branchNames);
             if (response.branchNames && response.branchNames.length > 0) {
                 setBranchName(response.branchNames[0]);
@@ -67,7 +64,7 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
         request.repositoryId = props.repositoryId;
         request.branchName = branchName;
         try {
-            const response = await configClient.deleteBranch(request);
+            const response = await branchClient.deleteBranch(request);
             if (response.isErrorResponse) {
                 setErrorMessage(response.errorMessage);
                 setTitle("Could not delete branch!")

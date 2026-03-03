@@ -1,5 +1,5 @@
 ﻿import React, {useState} from "react";
-import {RepositoryConfigurationClient, AddNewBranchRequest} from "../../API/ChasmaWebApiClient";
+import {AddNewBranchRequest, BranchClient} from "../../API/ChasmaWebApiClient";
 import {apiBaseUrl} from "../../environmentConstants";
 import Checkbox from "../Checkbox";
 
@@ -15,8 +15,8 @@ interface IAddBranchModalProps {
     userId: number | undefined;
 }
 
-/** The configuration client for the web API. **/
-const configClient = new RepositoryConfigurationClient(apiBaseUrl)
+/** The branch management client for the web API. **/
+const branchClient = new BranchClient(apiBaseUrl)
 
 /**
  * Initializes a new AddBranchModal class.
@@ -51,7 +51,7 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
             request.branchName = branchName;
             request.userId = props.userId;
             request.isCheckingOutNewBranch = isCheckingOutBranch;
-            const response = await configClient.addNewBranch(request);
+            const response = await branchClient.addNewBranch(request);
             setAddBranchRequestSent(true);
             if (response.isErrorResponse) {
                 setTitle("Error adding new branch!")
