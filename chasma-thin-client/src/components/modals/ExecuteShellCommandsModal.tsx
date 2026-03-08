@@ -2,11 +2,10 @@
 import {Row} from "../types/CustomTypes"
 import {
     ExecuteShellCommandRequest,
-    ShellClient,
     ShellCommandResult
 } from "../../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../../environmentConstants";
 import {isBlankOrUndefined} from "../../stringHelperUtil";
+import {shellClient} from "../../managers/ApiClientManager";
 
 /**
  * The members of the execute shell commands modal.
@@ -21,9 +20,6 @@ interface IExecuteShellCommandsProps {
     /** Function to call when the response is successful. **/
     onSuccess: () => void,
 }
-
-/** The shell client used to interact with the API. **/
-const shellClient = new ShellClient(apiBaseUrl);
 
 /**
  * Initializes a new ExecuteShellCommandsModal class.

@@ -56,5 +56,13 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the stash was removed; false otherwise.</returns>
         bool TryRemoveStash(string workingDirectory, int stashIndex, out string errorMessage);
+
+        /// <summary>
+        /// Tries to pop the latest stash from the repository.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <param name="stashApplyError">The error message when popping the stash.</param>
+        /// <returns>True if the stash was popped; false otherwise.</returns>
+        bool TryPopStash(string workingDirectory, out string stashApplyError);
     }
 }

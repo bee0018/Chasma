@@ -1,12 +1,6 @@
 ﻿import React, {useEffect, useState} from "react";
-import {BranchClient, CreatePRRequest, GitBranchRequest, RemoteClient} from "../../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../../environmentConstants";
-
-/** The remote repository management client for the web API. **/
-const remoteClient = new RemoteClient(apiBaseUrl);
-
-/** The branch management client for the web API. **/
-const branchClient = new BranchClient(apiBaseUrl)
+import {CreatePRRequest, GitBranchRequest} from "../../API/ChasmaWebApiClient";
+import {branchClient, remoteClient} from "../../managers/ApiClientManager";
 
 /** Defines the properties of the pull request modal. **/
 interface IPullRequestProps {

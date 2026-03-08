@@ -4,11 +4,13 @@ using ChasmaWebApi.Core.Interfaces.Git;
 using ChasmaWebApi.Core.Interfaces.Index;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
+using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Core.Services.Control;
 using ChasmaWebApi.Core.Services.Git;
 using ChasmaWebApi.Core.Services.Index;
 using ChasmaWebApi.Core.Services.Infrastructure;
 using ChasmaWebApi.Core.Services.Remote;
+using ChasmaWebApi.Core.Services.Simulation;
 using ChasmaWebApi.Data;
 using ChasmaWebApi.HostedServices;
 using ChasmaWebApi.Util;
@@ -66,6 +68,7 @@ builder.Services.AddCors(options =>
     .AddSingleton<IRepositoryIndexService, RepositoryIndexService>()
     .AddSingleton<IShellExecutionService, ShellExecutionService>()
     .AddSingleton<IGitHubService, GitHubService>()
+    .AddSingleton<ISimulationService, SimulationService>()
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>
     {

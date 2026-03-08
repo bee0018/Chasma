@@ -1,7 +1,12 @@
 ﻿import React, {useState} from "react";
-import {AddNewBranchRequest, BranchClient} from "../../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../../environmentConstants";
+import {
+    AddBranchSimulationEntry,
+    AddNewBranchRequest,
+    SimulateAddBranchRequest,
+    SimulatedAddBranchResult
+} from "../../API/ChasmaWebApiClient";
 import Checkbox from "../Checkbox";
+import {branchClient, dryRunClient} from "../../managers/ApiClientManager";
 
 /** The properties to handle commit messages. **/
 interface IAddBranchModalProps {
@@ -13,10 +18,13 @@ interface IAddBranchModalProps {
 
     /** The user identifier. **/
     userId: number | undefined;
-}
 
-/** The branch management client for the web API. **/
-const branchClient = new BranchClient(apiBaseUrl)
+    /** Flag indicating whether the mode is safe. **/
+    isSafeMode: boolean;
+
+    /** Event to fire when the results are received. **/
+    onSuccess: (simulationResults: SimulatedAddBranchResult[]) => void;
+}
 
 /**
  * Initializes a new AddBranchModal class.
@@ -41,6 +49,18 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
 
     /** Gets or sets a value indicating whether to check out the branch after successful creation. **/
     const [isCheckingOutBranch, setIsCheckingOutBranch] = useState<boolean>(false);
+
+    /**
+     * Handles the event when the user wants to add branches.
+     */
+    const handleAddBranchOperation = () => {
+        if (props.isSafeMode) {
+            handleAddBranchDryRunRequest()
+            return;
+        }
+
+        handleAddBranchRequest();
+    }
 
     /** Handles the request to add branch. **/
     async function handleAddBranchRequest() {
@@ -74,6 +94,43 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
             setAddBranchRequestSent(false);
             setBranchName(undefined);
             setIsCheckingOutBranch(false);
+        }
+    }
+
+    /** Handles the request to simulate adding a branch. **/
+    async function handleAddBranchDryRunRequest() {
+        setTitle("Simulating adding branch...");
+        try {
+            const request = new SimulateAddBranchRequest();
+            const entry = new AddBranchSimulationEntry();
+            entry.repositoryId = props.repositoryId;
+            entry.branchToAdd = branchName;
+            request.entries = [entry];
+            const response = await dryRunClient.simulateAddBranch(request);
+            setAddBranchRequestSent(true);
+            if (response.isErrorResponse) {
+                setTitle("Error simulating branch addition!")
+                setErrorMessage(response.errorMessage);
+                setSuccessfullyAdded(false);
+                return;
+            }
+
+            setErrorMessage(undefined);
+            setTitle("Branch addition simulation complete!");
+            setSuccessfullyAdded(true);
+            if (response.simulationResults) {
+                props.onSuccess(response.simulationResults);
+            }
+        }
+        catch (e) {
+            setTitle("Error creating branch!")
+            setErrorMessage("Check console logs for more information.");
+            console.error(e);
+            setSuccessfullyAdded(false);
+        }
+        finally {
+            setAddBranchRequestSent(false);
+            setBranchName(undefined);
         }
     }
 
@@ -130,10 +187,12 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
                     </div>
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
-                    <Checkbox
-                        label={"Checkout branch after creation"}
-                        onBoxChecked={setIsCheckingOutBranch}
-                    />
+                    {!props.isSafeMode &&
+                        <Checkbox
+                            label={"Checkout branch after creation"}
+                            onBoxChecked={setIsCheckingOutBranch}
+                        />
+                    }
                     <input className="modal-input-field"
                               placeholder="Enter branch name:"
                               value={branchName}
@@ -143,10 +202,10 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
                         {!successfullyAdded &&
                             <button
                                 className="modal-button primary"
-                                onClick={handleAddBranchRequest}
+                                onClick={handleAddBranchOperation}
                                 disabled={addBranchRequestSent}
                             >
-                                Add Branch
+                                {props.isSafeMode ? "Simulating " : ""}Add Branch
                             </button>
                         }
                         {successfullyAdded &&

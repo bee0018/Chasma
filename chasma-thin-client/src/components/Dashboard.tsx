@@ -5,12 +5,10 @@ import IncludeRepositoryModal from "./modals/IncludeRepositoryModal";
 import BatchOperationsTab from "./dashboardTabs/BatchOperationsTab";
 import NotificationModal from "./modals/NotificationModal";
 import {useCacheStore} from "../managers/CacheManager";
-import {AddGitRepositoryRequest, RepositoryConfigurationClient} from "../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../environmentConstants";
+import {AddGitRepositoryRequest} from "../API/ChasmaWebApiClient";
 import AddRepositoryModal from "./modals/AddRepositoryModal";
-
-/** The Git API Configuration client. **/
-const configClient = new RepositoryConfigurationClient(apiBaseUrl)
+import {configClient} from "../managers/ApiClientManager";
+import MultiDryRunSimulationTab from "./dashboardTabs/MultiDryRunSimulationTab";
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -18,13 +16,13 @@ const configClient = new RepositoryConfigurationClient(apiBaseUrl)
  */
 const Dashboard: React.FC = () => {
     /** Gets or sets the active tab that the user has selected. **/
-    const [activeTab, setActiveTab] = useState<string>("home");
+    const [activeTab, setActiveTab] = useState("home");
 
     /** Gets or sets a value indicating whether the user is including repositories. **/
-    const [isIncludingRepos, setIsIncludingRepos] = useState<boolean>(false);
+    const [isIncludingRepos, setIsIncludingRepos] = useState(false);
 
     /** Gets or sets a value indicating whether the user is adding a repository. **/
-    const [isAddingRepo, setIsAddingRepo] = useState<boolean>(false);
+    const [isAddingRepo, setIsAddingRepo] = useState(false);
 
     /** Gets or sets the repository version. Serves as a trigger to update child components. **/
     const [reposVersion, setReposVersion] = useState(0);
@@ -121,6 +119,12 @@ const Dashboard: React.FC = () => {
                     ⚡ Batch Ops
                 </div>
                 <div
+                    className={`tab ${activeTab === "dryRun" ? "active" : ""}`}
+                    onClick={() => handleTabClick("dryRun")}
+                >
+                    🧪 Simulate
+                </div>
+                <div
                     className="tab"
                     onClick={() => setIsAddingRepo(true)}
                 >
@@ -155,6 +159,11 @@ const Dashboard: React.FC = () => {
                 {activeTab === "batchOperations" && (
                     <div className="panel-card">
                         <BatchOperationsTab />
+                    </div>
+                )}
+                {activeTab === "dryRun" && (
+                    <div className="panel-card">
+                        <MultiDryRunSimulationTab />
                     </div>
                 )}
                 {activeTab === "apiStatus" && (

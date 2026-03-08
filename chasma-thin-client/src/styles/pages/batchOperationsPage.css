@@ -352,14 +352,6 @@
     background: #2c2f3a;
 }
 
-.output-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 600;
-    color: #cbd5e1;
-}
-
 .status-icon {
     width: 10px;
     height: 10px;

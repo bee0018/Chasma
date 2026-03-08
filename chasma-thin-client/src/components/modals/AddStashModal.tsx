@@ -2,11 +2,10 @@
 import Checkbox from "../Checkbox";
 import {
     AddStashRequest,
-    StashClient,
     StashModifiers
 } from "../../API/ChasmaWebApiClient";
 import {useCacheStore} from "../../managers/CacheManager";
-import {apiBaseUrl} from "../../environmentConstants";
+import {stashClient} from "../../managers/ApiClientManager";
 
 /**
  * The members of the Add stash modal.
@@ -18,9 +17,6 @@ interface IAddStashModalProps {
     /** The confirmation action of the close function. **/
     onClose: () => void;
 }
-
-/** The repository stash management client for the web API. **/
-const stashClient = new StashClient(apiBaseUrl)
 
 /**
  * Initializes a new instance of the AddStashModal component.

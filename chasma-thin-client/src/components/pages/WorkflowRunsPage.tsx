@@ -2,17 +2,11 @@ import React, {useState} from "react";
 import NotificationModal from "../modals/NotificationModal";
 import {
     GetWorkflowResultsRequest,
-    RemoteClient,
     WorkflowRunResult
 } from "../../API/ChasmaWebApiClient";
 import "../../styles/App.css"
 import {useNavigate, useParams} from "react-router-dom";
-import {apiBaseUrl} from "../../environmentConstants";
-
-/**
- * The remote repository client that interfaces with the web API.
- */
-const remoteClient = new RemoteClient(apiBaseUrl);
+import {remoteClient} from "../../managers/ApiClientManager";
 
 /**
  * Initializes a new instance of the WorkflowRunsPage.

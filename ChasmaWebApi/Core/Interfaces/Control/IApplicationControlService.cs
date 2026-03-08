@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.DryRun;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Interfaces.Control
@@ -264,5 +265,26 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the issue is created; false otherwise.</returns>
         bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage);
+
+        /// <summary>
+        /// Performs a dry run of the git pull operation for the specified repositories.
+        /// </summary>
+        /// <param name="entries">The simulation inputs.</param>
+        /// <returns>The list of simulated git pull dry run results.</returns>
+        List<SimulatedGitPullResult> PerformGitPullDryRun(IEnumerable<PullSimulationEntry> entries);
+
+        /// <summary>
+        /// Performs a dry run of adding a new branch to the specified repositories.
+        /// </summary>
+        /// <param name="entries">The simulation inputs.</param>
+        /// <returns>The list of simulated branch addition results.</returns>
+        List<SimulatedAddBranchResult> PerformAddBranchDryRun(IEnumerable<AddBranchSimulationEntry> entries);
+
+        /// <summary>
+        /// Performs a dry run of merging a source branch into a destination branch for the specified repositories.
+        /// </summary>
+        /// <param name="entries">The repository entries.</param>
+        /// <returns>The list of simulated merge results.</returns>
+        List<SimulatedMergeResult> PerformMergeBranchDryRun(IEnumerable<MergeSimulationEntry> entries);
     }
 }

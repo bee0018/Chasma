@@ -1,6 +1,6 @@
 import React, {useState} from "react";
-import {GitCommitRequest, RepositoryStatusClient} from "../../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../../environmentConstants";
+import {GitCommitRequest} from "../../API/ChasmaWebApiClient";
+import {statusClient} from "../../managers/ApiClientManager";
 
 /** The properties to handle commit messages. **/
 interface ICommitModalProps {
@@ -19,9 +19,6 @@ interface ICommitModalProps {
     /** Function to call when the response is successful. **/
     onSuccess: () => void,
 }
-
-/** The status client for the web API. **/
-const statusClient = new RepositoryStatusClient(apiBaseUrl)
 
 /**
  * Initializes a new CommitModal class.

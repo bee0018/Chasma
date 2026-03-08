@@ -4,14 +4,10 @@ import {
     DeleteRepositoryRequest,
     IgnoreRepositoryRequest,
     LocalGitRepository,
-    RepositoryConfigurationClient
 } from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
-import {apiBaseUrl} from "../../environmentConstants";
 import {useCacheStore} from "../../managers/CacheManager";
-
-/** The Git API client. **/
-const configClient = new RepositoryConfigurationClient(apiBaseUrl)
+import {configClient} from "../../managers/ApiClientManager";
 
 /**
  * The properties of the Home Tab.

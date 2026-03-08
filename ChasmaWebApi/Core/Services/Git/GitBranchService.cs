@@ -22,6 +22,11 @@ namespace ChasmaWebApi.Core.Services.Git
         private readonly ICacheManager CacheManager;
 
         /// <summary>
+        /// The Git stash service, which is responsible for handling Git stash operations.
+        /// </summary>
+        private readonly IGitStashService GitStashService;
+
+        /// <summary>
         /// The lock object used for concurrency.
         /// </summary>
         private readonly object lockObject = new();
@@ -33,10 +38,12 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         /// <param name="logger">The logger to use for logging diagnostic and operational information within the service.</param>
         /// <param name="cacheManager">The cache manager to use for managing cached data to optimize performance of Git operations.</param>
-        public GitBranchService(ILogger<GitBranchService> logger, ICacheManager cacheManager)
+        /// <param name="stashService">The Git stash service to use for handling git stash operations.</param>
+        public GitBranchService(ILogger<GitBranchService> logger, ICacheManager cacheManager, IGitStashService stashService)
         {
             Logger = logger;
             CacheManager = cacheManager;
+            GitStashService = stashService;
         }
 
         #endregion
@@ -97,14 +104,20 @@ namespace ChasmaWebApi.Core.Services.Git
         public bool TryCheckoutBranch(string workingDirectory, string branchName, out string errorMessage)
         {
             errorMessage = string.Empty;
-            using Repository repo = new(workingDirectory);
             try
             {
+                using Repository repo = new(workingDirectory);
                 Commands.Checkout(repo, branchName);
                 return true;
             }
             catch (Exception e)
             {
+                Logger.LogWarning(e, "Failed to checkout branch {branchName} for repository at {workingDirectory}. Attempting manual checkout.", branchName, workingDirectory);
+                if (ShellUtility.TryExecuteShellCommand($"git checkout {branchName}", workingDirectory, out errorMessage))
+                {
+                    return true;
+                }
+
                 errorMessage = $"Failed to checkout branch {branchName} for repository at {workingDirectory}. Check server logs for more information.";
                 Logger.LogError(e, errorMessage);
                 return false;
@@ -121,7 +134,11 @@ namespace ChasmaWebApi.Core.Services.Git
             }
             catch (Exception e)
             {
-                Logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}.", repo.Head.RemoteName, repo.Info.WorkingDirectory);
+                Logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}. Attempting manual fetch.", repo.Head.RemoteName, repo.Info.WorkingDirectory);
+                if (ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out string errorMessage))
+                {
+                    Logger.LogError(errorMessage);
+                }
             }
 
             return repo.Branches
@@ -196,7 +213,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 if (mergeResult.Status == MergeStatus.Conflicts)
                 {
                     errorMessage = $"Merge failed with status {mergeResult.Status}. May: resolve merge conflicts, abort merge, or reset and then redo merge.";
-                    Logger.LogError("Merge of branch {sourceBranch} into {destinationBranch} failed with status {status}.", sourceBranchName, destinationBranchName, mergeResult.Status);
+                    Logger.LogError("Merge of branch {sourceBranchName} into {destinationBranchName} failed with status {status}.", sourceBranchName, destinationBranchName, mergeResult.Status);
                     return false;
                 }
 
@@ -386,8 +403,8 @@ namespace ChasmaWebApi.Core.Services.Git
                 process?.Close();
                 process?.Dispose();
             }
-
-            #endregion
         }
+
+        #endregion
     }
 }

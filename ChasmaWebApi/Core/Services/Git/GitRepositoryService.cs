@@ -22,6 +22,11 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         private readonly ICacheManager CacheManager;
 
+        /// <summary>
+        /// The Git branch service, which is responsible for handling branch related operations.
+        /// </summary>
+        private readonly IGitBranchService GitBranchService;
+
         #region Constructor
 
         /// <summary>
@@ -29,10 +34,12 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         /// <param name="logger">The logger used to record diagnostic and operational messages for the service.</param>
         /// <param name="cacheManager">The cache manager used to store and retrieve cached data for repository operations.</param>
-        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager)
+        /// <param name="branchService">The Git branch service used to perform branch-related operations.</param>
+        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager, IGitBranchService branchService)
         {
             Logger = logger;
             CacheManager = cacheManager;
+            GitBranchService = branchService;
         }
 
         #endregion
@@ -69,7 +76,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 statusElements.Add(statusElement);
                 if (hasUnstagedChanges)
                 {
-                    // Add another entry for the unstaged changes.
+                    // Add another commitEntry for the unstaged changes.
                     RepositoryStatusElement unstagedElement = new()
                     {
                         RepositoryId = repoKey,
@@ -84,7 +91,7 @@ namespace ChasmaWebApi.Core.Services.Git
             Logger.LogInformation("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
             (string branchName, int aheadCount, int behindCount) = GetBranchDiversionCalculation(workingDirectory, username, token);
             string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
-            string commitHash = GetCommitHash(repo.Head);
+            string commitHash = GetCommitHash(repo.Head, Logger);
             List<GitHubPullRequest> gitHubPullRequests = CacheManager.GitHubPullRequests.Values.Where(i => i.BranchName == branchName).ToList();
             RepositorySummary repositorySummary = new()
             {
@@ -181,9 +188,16 @@ namespace ChasmaWebApi.Core.Services.Git
             }
             catch (Exception e)
             {
-                errorMessage = $"Failed to push changes to remote for branch {branch.FriendlyName}. Check server logs for more information.";
-                Logger.LogError(e, errorMessage);
-                return false;
+                Logger.LogWarning("Failed to push changes automatically, trying manual push.");
+                if (!ShellUtility.TryExecuteShellCommand("git push", filePath, out string pushError))
+                {
+                    errorMessage = $"Failed to push changes to remote for branch {branch.FriendlyName}: {pushError}";
+                    Logger.LogError(e, pushError);
+                    return false;
+
+                }
+
+                return true;
             }
         }
 
@@ -214,9 +228,15 @@ namespace ChasmaWebApi.Core.Services.Git
             }
             catch (Exception e)
             {
-                errorMessage = $"Failed to pull changes from remote for repository at {workingDirectory}. Check server logs for more information.";
-                Logger.LogError(e, errorMessage);
-                return false;
+                Logger.LogWarning("Failed to automatically pull changes. Attempting manual pull.");
+                if (!ShellUtility.TryExecuteShellCommand("git pull", workingDirectory, out string pullError))
+                {
+                    errorMessage = $"Failed to pull changes from remote for repository at {workingDirectory}: {pullError}";
+                    Logger.LogError(e, pullError);
+                    return false;
+                }
+
+                return true;
             }
         }
 
@@ -344,16 +364,34 @@ namespace ChasmaWebApi.Core.Services.Git
         /// Gets the commit hash for the specified branch.
         /// </summary>
         /// <param name="branch">The current branch.</param>
+        /// <param name="logger">The logger.</param>
         /// <returns>The latest commit hash.</returns>
-        private string GetCommitHash(Branch branch)
+        private static string GetCommitHash(Branch branch, ILogger logger)
         {
             if (branch?.Tip == null)
             {
-                Logger.LogError("Cannot get commit hash. Failed to get branch information.");
+                logger.LogError("Cannot get commit hash. Failed to get branch information.");
                 return string.Empty;
             }
 
-            return branch.Tip.Sha.Length > 7 ? branch.Tip.Sha[..7] : branch.Tip.Sha;
+            return GetCommitHash(branch.Tip, logger);
+        }
+
+        /// <summary>
+        /// Gest the commit hash for the specified commit.
+        /// </summary>
+        /// <param name="commit">The commit.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The short commit hash.</returns>
+        public static string GetCommitHash(Commit commit, ILogger logger)
+        {
+            if (commit == null)
+            {
+                logger.LogError("Cannot get commit hash. Commit information is null.");
+                return string.Empty;
+            }
+
+            return commit.Sha.Length > 7 ? commit.Sha[..7] : commit.Sha;
         }
 
         /// <summary>
@@ -424,7 +462,11 @@ namespace ChasmaWebApi.Core.Services.Git
             }
             catch (Exception e)
             {
-                Logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}.", branch.RemoteName, repo.Info.WorkingDirectory);
+                Logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}. Attempting manual fetch.", branch.RemoteName, repo.Info.WorkingDirectory);
+                if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out string errorMessage))
+                {
+                    Logger.LogError(errorMessage);
+                }
             }
 
             string localBranchName = branch.FriendlyName;

@@ -1,13 +1,9 @@
 ﻿import {
     DeleteBranchRequest,
     GitBranchRequest,
-    BranchClient,
 } from "../../API/ChasmaWebApiClient";
 import React, {useEffect} from "react";
-import {apiBaseUrl} from "../../environmentConstants";
-
-/** The branch management client for the web API. **/
-const branchClient = new BranchClient(apiBaseUrl)
+import {branchClient} from "../../managers/ApiClientManager";
 
 /**
  * The members of the delete branch modal.

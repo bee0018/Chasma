@@ -2,9 +2,9 @@
 import Checkbox from "../Checkbox";
 import {
     ApplyStashRequest,
-    StashApplyModifiers, StashClient,
+    StashApplyModifiers,
 } from "../../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../../environmentConstants";
+import {stashClient} from "../../managers/ApiClientManager";
 
 /**
  * The members of the Add stash modal.
@@ -22,9 +22,6 @@ interface IApplyStashModalProps {
     /** The action to invoke when the stash is successfully applied. **/
     onSuccess: () => void;
 }
-
-/** The repository stash management client for the web API. **/
-const stashClient = new StashClient(apiBaseUrl)
 
 /**
  * Initializes a new instance of the ApplyStashModal component.

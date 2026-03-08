@@ -49,7 +49,7 @@ namespace ChasmaWebApi.Controllers
         /// <param name="request">The request to get workflow run results.</param>
         /// <returns>The workflow results.</returns>
         [HttpPost]
-        [Route("workflowRuns")]
+        [Route("retrieveGitHubWorkflowRuns")]
         public ActionResult<GitHubWorkflowRunResponse> GetGitHubWorkflowResults([FromBody] GetWorkflowResultsRequest request)
         {
             GitHubWorkflowRunResponse response = new();
@@ -111,7 +111,7 @@ namespace ChasmaWebApi.Controllers
         /// <param name="request">Request containing the details to create a PR.</param>
         /// <returns>Pull request response if successful.</returns>
         [HttpPost]
-        [Route("createPullRequest")]
+        [Route("createGitHubPullRequest")]
         public ActionResult<CreatePRResponse> CreatePullRequest([FromBody] CreatePRRequest request)
         {
             CreatePRResponse response = new();

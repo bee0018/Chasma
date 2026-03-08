@@ -3,18 +3,14 @@ import {
     BatchCommandEntry,
     BatchCommandEntryResult,
     ExecuteBatchShellCommandsRequest,
-    ShellClient
 } from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
-import {apiBaseUrl} from "../../environmentConstants";
 import {useCacheStore} from "../../managers/CacheManager";
 import Checkbox from "../Checkbox";
-import CustomBatchCommandRow from "./CustomBatchCommandRow";
+import CustomBatchCommandRow from "./rows/CustomBatchCommandRow";
 import {CommandMode} from "../types/CustomTypes";
 import {isBlankOrUndefined} from "../../stringHelperUtil";
-
-/** The GitCtrl Shell API client. **/
-const shellClient = new ShellClient(apiBaseUrl);
+import {shellClient} from "../../managers/ApiClientManager";
 
 /**
  * Initializes a new BatchOperationsTab class.
