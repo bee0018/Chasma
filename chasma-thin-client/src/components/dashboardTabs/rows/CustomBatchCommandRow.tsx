@@ -1,10 +1,10 @@
 ﻿import React from "react";
-import { useCacheStore } from "../../managers/CacheManager";
-import { LocalGitRepository } from "../../API/ChasmaWebApiClient";
-import {CommandMode, Row} from "../types/CustomTypes";
+import { useCacheStore } from "../../../managers/CacheManager";
+import { LocalGitRepository } from "../../../API/ChasmaWebApiClient";
+import {CommandMode, Row} from "../../types/CustomTypes";
 
 /** Interface for the members on the batch command row. **/
-interface BatchCommandRowProps {
+interface IBatchCommandRowProps {
     /** The row identifier. **/
     id: string;
 
@@ -34,7 +34,7 @@ interface BatchCommandRowProps {
  * @param commandMode The current command mode.
  * @constructor
  */
-const CustomBatchCommandRow: React.FC<BatchCommandRowProps> = (
+const CustomBatchCommandRow: React.FC<IBatchCommandRowProps> = (
     {
         id,
         repositoryId,

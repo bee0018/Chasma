@@ -28,3 +28,22 @@ export type GitCommand = {
     command: string;
     description: string;
 }
+
+/** The toggle options for git command simulations. **/
+export enum GitSimulationCase {
+    Select = "Select Simulation",
+    Pull = "Pull",
+    AddBranch = "Add Branch",
+    Merge = "Merge",
+}
+
+/** The entry used for testing simulation functionality. **/
+export type SimulationEntry = {
+    id: string;
+    simCase: GitSimulationCase;
+    repositoryId?: string;
+    branchToPull?: string;
+    branchToAdd?: string;
+    baseBranchToMerge?: string;
+    destinationBranchToMerge?: string;
+}

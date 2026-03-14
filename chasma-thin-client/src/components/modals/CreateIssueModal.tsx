@@ -1,10 +1,7 @@
-﻿import {CreateGitHubIssueRequest, RemoteClient} from "../../API/ChasmaWebApiClient";
+﻿import {CreateGitHubIssueRequest} from "../../API/ChasmaWebApiClient";
 import React, {useState} from "react";
-import {apiBaseUrl} from "../../environmentConstants";
 import {useCacheStore} from "../../managers/CacheManager";
-
-/** The remote repository management client for the web API. **/
-const remoteClient = new RemoteClient(apiBaseUrl);
+import {remoteClient} from "../../managers/ApiClientManager";
 
 /** The members of the modal to create issues. **/
 interface CreateIssueModalProps {

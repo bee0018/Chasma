@@ -1,9 +1,6 @@
 ﻿import React from "react";
-import {
-    DeleteStashRequest,
-    StashClient,
-} from "../../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../../environmentConstants";
+import {DeleteStashRequest} from "../../API/ChasmaWebApiClient";
+import {stashClient} from "../../managers/ApiClientManager";
 
 /**
  * The members of the Add stash modal.
@@ -21,9 +18,6 @@ interface IDeleteStashModalProps {
     /** The action to invoke when the stash is successfully applied. **/
     onSuccess: () => void;
 }
-
-/** The repository stashing client for the web API. **/
-const stashClient = new StashClient(apiBaseUrl)
 
 /**
  * Initializes a new instance of the DeleteStashModal component.

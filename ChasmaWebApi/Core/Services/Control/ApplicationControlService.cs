@@ -3,8 +3,10 @@ using ChasmaWebApi.Core.Interfaces.Git;
 using ChasmaWebApi.Core.Interfaces.Index;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
+using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.DryRun;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Services.Control
@@ -45,6 +47,11 @@ namespace ChasmaWebApi.Core.Services.Control
         private readonly IGitHubService gitHubService;
 
         /// <summary>
+        /// The simulation service used for dry running git operations.
+        /// </summary>
+        private readonly ISimulationService simulationService;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationControlService"/> class with the specified dependencies.
         /// </summary>
         /// <param name="repoIndexService">The repository index service.</param>
@@ -53,7 +60,7 @@ namespace ChasmaWebApi.Core.Services.Control
         /// <param name="shellService">The shell service.</param>
         /// <param name="stashService">The stash management service.</param>
         /// <param name="gitHubRemoteService">The GitHub remote repository management service.</param>
-        public ApplicationControlService(IRepositoryIndexService repoIndexService, IGitRepositoryService gitRepoService, IGitBranchService branchService, IShellExecutionService shellService, IGitStashService stashService, IGitHubService gitHubRemoteService)
+        public ApplicationControlService(IRepositoryIndexService repoIndexService, IGitRepositoryService gitRepoService, IGitBranchService branchService, IShellExecutionService shellService, IGitStashService stashService, IGitHubService gitHubRemoteService, ISimulationService simService)
         {
             repositoryIndexService = repoIndexService;
             gitRepositoryService = gitRepoService;
@@ -61,6 +68,7 @@ namespace ChasmaWebApi.Core.Services.Control
             shellExecutionService = shellService;
             gitStashService = stashService;
             gitHubService = gitHubRemoteService;
+            simulationService = simService;
         }
 
         #region Shell Interactions 
@@ -233,6 +241,28 @@ namespace ChasmaWebApi.Core.Services.Control
         public bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage)
         {
             return gitHubService.TryCreateIssue(repoName, repoOwner, title, body, token, out issueId, out issueUrl, out errorMessage);
+        }
+
+        #endregion
+
+        #region Dry Run Simulations
+
+        // <inheritdoc />
+        public List<SimulatedGitPullResult> PerformGitPullDryRun(IEnumerable<PullSimulationEntry> entries)
+        {
+            return simulationService.SimulateGitPull(entries);
+        }
+
+        // <inheritdoc />
+        public List<SimulatedAddBranchResult> PerformAddBranchDryRun(IEnumerable<AddBranchSimulationEntry> entries)
+        {
+            return simulationService.SimulateAddBranch(entries);
+        }
+
+        // <inheritdoc />
+        public List<SimulatedMergeResult> PerformMergeBranchDryRun(IEnumerable<MergeSimulationEntry> entries)
+        {
+            return simulationService.SimulateMergeBranch(entries);
         }
 
         #endregion

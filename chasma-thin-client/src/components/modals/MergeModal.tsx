@@ -1,9 +1,12 @@
 ﻿import React, {useEffect, useState} from "react";
-import {BranchClient, GitBranchRequest, GitMergeRequest} from "../../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../../environmentConstants";
-
-/** The branch management client for the web API. **/
-const branchClient = new BranchClient(apiBaseUrl)
+import {
+    GitBranchRequest,
+    GitMergeRequest,
+    MergeSimulationEntry,
+    SimulateBranchMergeRequest,
+    SimulatedMergeResult
+} from "../../API/ChasmaWebApiClient";
+import {branchClient, dryRunClient} from "../../managers/ApiClientManager";
 
 /** Defines the properties of the merge branches modal. **/
 interface IMergeModal {
@@ -15,6 +18,12 @@ interface IMergeModal {
     
     /** The user identifier. **/
     userId: number | undefined;
+
+    /** Flag indicating whether the mode is safe. **/
+    isSafeMode: boolean;
+
+    /** Event to fire when the results are received. **/
+    onSuccess: (simulationResults: SimulatedMergeResult[]) => void;
 }
 
 /**
@@ -40,6 +49,18 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
 
     /** Gets or sets the remote branches to merge. **/
     const [branchesList, setBranchesList] = React.useState<string[] | undefined>([]);
+
+    /**
+     * Handles the event when the user wants to merge changes.
+     */
+    const handleMergeOperation = () => {
+        if (props.isSafeMode) {
+            handleMergeDryRun();
+            return;
+        }
+
+        handleMergeBranches();
+    }
 
     /**
      * Handles the event when a user intends to merge one branch into another.
@@ -74,6 +95,42 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
             await fetchAssociatedBranches();
         }
     };
+
+    /**
+     * Handles the event when the user wants to dry run a merge.
+     */
+    const handleMergeDryRun = async () => {
+        setTitle("Simulating merge operation. May take a few moments...");
+        const request = new SimulateBranchMergeRequest();
+        const mergeEntry = new MergeSimulationEntry();
+        mergeEntry.repositoryId = props.repositoryId;
+        mergeEntry.destinationBranch = destinationBranch
+        mergeEntry.sourceBranch = workingBranchName;
+        mergeEntry.userId = props.userId;
+        request.mergeEntries = [mergeEntry];
+        try {
+            const response = await dryRunClient.simulateMergeBranches(request);
+            if (response.isErrorResponse) {
+                setTitle("Error simulating merge operation");
+                setErrorMessage(response.errorMessage);
+                setSuccessfullyMerged(false);
+                return;
+            }
+
+            setTitle("Merge simulation complete.");
+            setErrorMessage(undefined);
+            setSuccessfullyMerged(true);
+            if (response.simulationResults) {
+                props.onSuccess(response.simulationResults);
+            }
+        }
+        catch (e) {
+            console.error(e);
+            setErrorMessage("Error occurred while attempting to simulate merging changes. Check error logs.");
+            setTitle("Error simulating merge operation");
+            setSuccessfullyMerged(false);
+        }
+    }
 
     /** Fetches the local and remote branches associated with this repository. **/
     async function fetchAssociatedBranches() {
@@ -155,10 +212,11 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
                         )}
                     </div>
                     <h2 className="modal-title">{title}</h2>
+                    <span><code>{workingBranchName}</code> ➜ <code>{destinationBranch}</code></span>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {branchesList && branchesList.length > 0 && (
                         <div hidden={successfullyMerged}>
-                            <label style={{float: "left"}}>Choose source branch:</label>
+                            <label style={{float: "left", marginTop: "30px"}}>Choose source branch:</label>
                             <select value={workingBranchName}
                                     onChange={(e) => setWorkingBranchName(e.target.value)}
                                     className="modal-input-field"
@@ -182,9 +240,9 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
                     <div className="modal-actions">
                         <button className="modal-button primary"
                                 hidden={successfullyMerged}
-                                onClick={handleMergeBranches}
+                                onClick={handleMergeOperation}
                         >
-                            Merge
+                            {props.isSafeMode ? "Simulate ": ""}Merge
                         </button>
                         <button className="modal-button secondary"
                                 onClick={props.onClose}

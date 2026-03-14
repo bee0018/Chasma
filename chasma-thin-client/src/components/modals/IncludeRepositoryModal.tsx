@@ -1,13 +1,7 @@
-﻿import {
-    IgnoreRepositoryRequest,
-    RepositoryConfigurationClient,
-} from "../../API/ChasmaWebApiClient";
+﻿import {IgnoreRepositoryRequest} from "../../API/ChasmaWebApiClient";
 import React, {useEffect} from "react";
-import {apiBaseUrl} from "../../environmentConstants";
 import {useCacheStore} from "../../managers/CacheManager";
-
-/** The repository configuration client for the web API. **/
-const configClient = new RepositoryConfigurationClient(apiBaseUrl)
+import {configClient} from "../../managers/ApiClientManager";
 
 /**
  * The members of the delete branch modal.

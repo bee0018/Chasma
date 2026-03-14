@@ -1,7 +1,7 @@
 ﻿import React from "react";
 import Checkbox from "../Checkbox";
-import {GitResetRequest, RepositoryStatusClient, ResetMode,} from "../../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../../environmentConstants";
+import {GitResetRequest, ResetMode,} from "../../API/ChasmaWebApiClient";
+import {statusClient} from "../../managers/ApiClientManager";
 
 /**
  * The members of the Add stash modal.
@@ -13,9 +13,6 @@ interface IResetModalProps {
     /** The confirmation action of the close function. **/
     onClose: () => void;
 }
-
-/** The repository status client for the web API. **/
-const statusClient = new RepositoryStatusClient(apiBaseUrl)
 
 /**
  * Initializes a new instance of the ResetModal component.

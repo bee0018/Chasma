@@ -171,6 +171,102 @@
         }
       }
     },
+    "/api/DryRun/simulateGitPull": {
+      "post": {
+        "tags": [
+          "DryRun"
+        ],
+        "operationId": "DryRun_SimulateGitPull",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateGitPullRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulateGitPullResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/DryRun/simulateAddBranch": {
+      "post": {
+        "tags": [
+          "DryRun"
+        ],
+        "operationId": "DryRun_SimulateAddBranch",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateAddBranchRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulateAddBranchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/DryRun/simulateMergeBranches": {
+      "post": {
+        "tags": [
+          "DryRun"
+        ],
+        "operationId": "DryRun_SimulateMergeBranches",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateBranchMergeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulateBranchMergeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Health/heartbeat": {
       "get": {
         "tags": [
@@ -191,7 +287,7 @@
         }
       }
     },
-    "/api/Remote/workflowRuns": {
+    "/api/Remote/retrieveGitHubWorkflowRuns": {
       "post": {
         "tags": [
           "Remote"
@@ -223,7 +319,7 @@
         }
       }
     },
-    "/api/Remote/createPullRequest": {
+    "/api/Remote/createGitHubPullRequest": {
       "post": {
         "tags": [
           "Remote"
@@ -1183,6 +1279,256 @@
             }
           }
         ]
+      },
+      "SimulateGitPullResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "pullResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SimulatedGitPullResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SimulatedGitPullResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SimulatedResultBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "commitsToPull": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CommitEntry"
+                }
+              },
+              "branchName": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "CommitEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "commitHash": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "SimulatedResultBase": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "repositoryId": {
+            "type": "string"
+          },
+          "repositoryName": {
+            "type": "string"
+          }
+        }
+      },
+      "SimulateGitPullRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "entries": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PullSimulationEntry"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PullSimulationEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "branchToPull": {
+            "type": "string"
+          }
+        }
+      },
+      "SimulateAddBranchResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "simulationResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SimulatedAddBranchResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SimulatedAddBranchResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SimulatedResultBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "infoMessage": {
+                "type": "string"
+              },
+              "branchToAdd": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "SimulateAddBranchRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "entries": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AddBranchSimulationEntry"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "AddBranchSimulationEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "branchToAdd": {
+            "type": "string"
+          }
+        }
+      },
+      "SimulateBranchMergeResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "simulationResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SimulatedMergeResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SimulatedMergeResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SimulatedResultBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conflictingFiles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "mergeStatus": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "SimulateBranchMergeRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mergeEntries": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MergeSimulationEntry"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "MergeSimulationEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sourceBranch": {
+            "type": "string"
+          },
+          "destinationBranch": {
+            "type": "string"
+          }
+        }
       },
       "HeartbeatMessage": {
         "allOf": [

@@ -1,9 +1,6 @@
-﻿import {BranchClient, GitBranchRequest, GitCheckoutRequest} from "../../API/ChasmaWebApiClient";
-import React, {useState} from "react";
-import {apiBaseUrl} from "../../environmentConstants";
-
-/** The branch management client for the web API. **/
-const branchClient = new BranchClient(apiBaseUrl)
+﻿import {GitBranchRequest, GitCheckoutRequest} from "../../API/ChasmaWebApiClient";
+import React, {useEffect, useState} from "react";
+import {branchClient} from "../../managers/ApiClientManager";
 
 /**
  * The members of the checkout modal.
@@ -85,6 +82,16 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
             }
 
             setBranchesList(response.branchNames);
+            if (!response.branchNames) {
+                setErrorMessage("Cannot get branches for this repository. Ensure there are branches created!");
+                setTitle("Cannot get branches!");
+                return;
+            }
+
+            if (response.branchNames.length > 0) {
+                setBranchName(response.branchNames[0]);
+            }
+
             setErrorMessage(undefined);
         }
         catch (e) {
@@ -94,7 +101,9 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
         }
     }
 
-    fetchAssociatedBranches().catch(e => console.error(e));
+    useEffect(() => {
+        fetchAssociatedBranches().catch(e => console.error(e));
+    }, []);
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>

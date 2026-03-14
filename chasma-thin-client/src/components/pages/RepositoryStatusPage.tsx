@@ -5,9 +5,12 @@ import {
     GitDiffRequest,
     GitHubPullRequest,
     GitPullRequest,
-    GitStatusRequest,
-    RepositoryStatusClient,
+    GitStatusRequest, PullSimulationEntry,
     RepositoryStatusElement,
+    SimulatedAddBranchResult,
+    SimulatedGitPullResult,
+    SimulatedMergeResult,
+    SimulateGitPullRequest,
 } from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
 import CommitModal from "../modals/CommitModal";
@@ -16,7 +19,6 @@ import CheckoutModal from "../modals/CheckoutModal";
 import PullRequestModal from "../modals/PullRequestModal";
 import CreateIssueModal from "../modals/CreateIssueModal";
 import DeleteBranchModal from "../modals/DeleteBranchModal";
-import { apiBaseUrl } from "../../environmentConstants";
 import ExecuteShellCommandsModal from "../modals/ExecuteShellCommandsModal";
 import {useCacheStore} from "../../managers/CacheManager";
 import {capitalizeFirst} from "../../stringHelperUtil";
@@ -26,9 +28,9 @@ import {parseUnifiedDiff} from "../../managers/DiffViewerManager";
 import AddStashModal from "../modals/AddStashModal";
 import AddBranchModal from "../modals/AddBranchModal";
 import ResetModal from "../modals/ResetModal";
-
-/** Status client for the API **/
-const statusClient = new RepositoryStatusClient(apiBaseUrl);
+import {dryRunClient, statusClient} from "../../managers/ApiClientManager";
+import Checkbox from "../Checkbox";
+import "../../styles/pages/batchOperationsPage.css"
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -110,7 +112,19 @@ const RepositoryStatusPage: React.FC = () => {
     const [isAddingBranch, setIsAddingBranch] = useState(false);
 
     /** Gets or sets a value indicating whether the user is resetting changes. **/
-    const [isResettingChanges, setIsResettingChanges] = useState<boolean>(false);
+    const [isResettingChanges, setIsResettingChanges] = useState(false);
+
+    /** Gets or sets a value indicating whether the user is in safe mode. **/
+    const [isSafeMode, setIsSafeMode] = useState(false);
+
+    /** Gets or sets the simulated pull results. **/
+    const [simulatedPullResults, setSimulatedPullResults] = useState<SimulatedGitPullResult[]>([]);
+
+    /** Gets or sets the simulated add branch results. **/
+    const [simulatedAddBranchResults, setSimulatedAddBranchResults] = useState<SimulatedAddBranchResult[]>([]);
+
+    /** Gets or sets the simulated merge results. **/
+    const [simulatedMergeResults, setSimulatedMergeResults] = useState<SimulatedMergeResult[]>([]);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
@@ -234,6 +248,18 @@ const RepositoryStatusPage: React.FC = () => {
     };
 
     /**
+     * Handles the event when the user wants to pull changes.
+     */
+    const handlePullRequestOperation = () => {
+        if (isSafeMode) {
+            handleGitPullRequestDryRun();
+            return;
+        }
+
+        handlePullRequest();
+    }
+
+    /**
      * Handles the event when the user wants to pull latest changes.
      */
     const handlePullRequest = async () => {
@@ -273,6 +299,58 @@ const RepositoryStatusPage: React.FC = () => {
             });
         }
     };
+
+    /**
+     * Handles the event when the user wants to simulate pulling changes.
+     */
+    const handleGitPullRequestDryRun = async () => {
+        setNotification({
+            title: "Performing pull simulation...",
+            message: "Please wait while your dry run is being processed..",
+            isError: false,
+            loading: true
+        });
+
+        const request = new SimulateGitPullRequest();
+        const entry = new PullSimulationEntry();
+        entry.repositoryId = repoId;
+        request.entries = [entry];
+        try {
+            const response = await dryRunClient.simulateGitPull(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Failed to perform pull simulation!",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+
+            if (!response.pullResults) {
+                setNotification({
+                    title: "Failed to perform pull simulation!",
+                    message: "There were no simulation results. Check server logs for more information.",
+                    isError: true,
+                });
+                return;
+            }
+
+            setNotification({
+                title: "Successfully performed pull simulation!",
+                message: "Close to dismiss.",
+                isError: false,
+            });
+
+            setSimulatedPullResults(response.pullResults);
+        } catch (e) {
+            console.error(e);
+            setNotification({
+                title: "Could not simulate pull simulation!",
+                message: "An internal server error has occurred. Review logs.",
+                isError: true,
+            });
+        }
+    }
 
     /**
      * Handles the event when the user wants to get the diff of a file.
@@ -333,6 +411,15 @@ const RepositoryStatusPage: React.FC = () => {
         return `Ready with ${commitsAhead} commit${commitsAhead && commitsAhead > 1 ? "s" : ""}`
     }
 
+    /**
+     * Cleans up the simulation results from the console.
+     */
+    const cleanUpSimulationResults = () => {
+        setSimulatedPullResults([]);
+        setSimulatedAddBranchResults([]);
+        setSimulatedMergeResults([]);
+    }
+
     useEffect(() => {
         const closeMenu = () => setContextMenu(null);
         window.addEventListener("click", closeMenu);
@@ -353,24 +440,44 @@ const RepositoryStatusPage: React.FC = () => {
                 >
                     Home 🏠
                 </div>
-                <div className="tab" onClick={handleGitStatusRequest}>Refresh Repo Status 🔄</div>
-                <div className="tab" onClick={handlePullRequest}>Pull ⬇️</div>
-                <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
-                <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>
-                <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>
                 <div
-                    className={`tab ${activeTab === "stashes" ? "active" : ""}`}
-                    onClick={() => handleTabClick("stashes")}
+                    className="tab"
+                     onClick={() => {
+                         cleanUpSimulationResults();
+                         handlePullRequestOperation();
+                     }}
                 >
-                    Stashes🗄️
+                    Pull ⬇️
                 </div>
-                <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
+                {!isSafeMode && <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>}
+                {!isSafeMode && <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>}
+                {!isSafeMode && <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>}
+                {!isSafeMode &&
+                    <>
+                        <div
+                            className={`tab ${activeTab === "stashes" ? "active" : ""}`}
+                            onClick={() => handleTabClick("stashes")}
+                        >
+                            Stashes🗄️
+                        </div>
+                    </>
+                }
+                {!isSafeMode && <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>}
                 <div className="tab" onClick={() => setIsAddingBranch(true)}>Add Branch ➕</div>
-                <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
-                <div className="tab" onClick={() => setIsCreatingPullRequest(true)}>Create Pull Request📥</div>
+                {!isSafeMode &&
+                    <>
+                        <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
+                        <div className="tab" onClick={() => setIsCreatingPullRequest(true)}>Create Pull Request📥</div>
+
+                    </>
+                }
                 <div className="tab" onClick={() => setIsMergingBranch(true)}>Merge 🔀</div>
-                <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create Issue🐛</div>
-                <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsExecutingShellCommands(true)}>Custom Shell Commands🖥️</div>
+                {!isSafeMode &&
+                    <>
+                        <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create Issue🐛</div>
+                        <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsExecutingShellCommands(true)}>Custom Shell Commands🖥️</div>
+                    </>
+                }
             </aside>
 
             {activeTab === "home" && (
@@ -379,7 +486,14 @@ const RepositoryStatusPage: React.FC = () => {
                         {/* Left side: Repo summary + staged/unstaged */}
                         <div className="left-panel">
                             <div className="panel-card">
-                                <h2 className="page-description">Repository Summary</h2>
+                                <div className="panel-header">
+                                    <h2 className="page-description">Repository Summary</h2>
+                                    <Checkbox
+                                        label={"Safe Mode"}
+                                        onBoxChecked={setIsSafeMode}
+                                        tooltip={"When safe mode is enabled, no actual git execution will be performed. It will be all simulated."}
+                                    />
+                                </div>
                                 <div className="repo-summary" onClick={handleNavigateToBranchUrl}>
                                     <div className="repo-summary-item">
                                         <span className="repo-summary-label">Branch:</span>
@@ -476,80 +590,87 @@ const RepositoryStatusPage: React.FC = () => {
                                 </div>
                             </div>
 
-
-                            <div className="panel-card">
-                                <h2 className="page-description">Staged Changes</h2>
-                                {statusElements?.filter(e => e.isStaged).length ? (
-                                    <table className="status-table">
-                                        <thead>
-                                        <tr>
-                                            <th>File</th>
-                                            <th>Action</th>
-                                        </tr>
-                                        </thead>
-                                        {statusElements?.filter(e => e.isStaged).map((element, index) => (
-                                            <tbody key={index}>
-                                            <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
-                                                <td
-                                                    onClick={() => handleSelectFile(element, true)}
-                                                    onContextMenu={e => handleContextMenu(e, element)}
-                                                >
-                                                    {element.filePath}
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        className="stage-button unstage"
-                                                        onClick={e => {
-                                                            e.stopPropagation();
-                                                            handleApplyStagingActionRequest(element);
-                                                        }}
-                                                    >
-                                                        -
-                                                    </button>
-                                                </td>
+                            {!isSafeMode &&
+                                <div className="panel-card">
+                                    <h2 className="page-description">Staged Changes</h2>
+                                    {statusElements?.filter(e => e.isStaged).length ? (
+                                        <table className="status-table">
+                                            <thead>
+                                            <tr>
+                                                <th>File</th>
+                                                <th>Action</th>
                                             </tr>
-                                            </tbody>
-                                        ))}
-                                    </table>
-                                ) : <div className="empty-table">No staged changes</div>}
-                            </div>
-
-                            <div className="panel-card">
-                                <h2 className="page-description">Unstaged Changes</h2>
-                                {statusElements?.filter(e => !e.isStaged).length ? (
-                                    <table className="status-table">
-                                        <thead>
-                                        <tr>
-                                            <th>File</th>
-                                            <th>Action</th>
-                                        </tr>
-                                        </thead>
-                                        {statusElements?.filter(e => !e.isStaged).map((element, index) => (
-                                            <tbody key={index}>
-                                            <tr className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
-                                                <td
-                                                    onClick={() => handleSelectFile(element, false)}
-                                                    onContextMenu={e => handleContextMenu(e, element)}
-                                                >
-                                                    {element.filePath}
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        className="stage-button stage"
-                                                        onClick={e => {
-                                                            e.stopPropagation();
-                                                            handleApplyStagingActionRequest(element);
-                                                        }}
+                                            </thead>
+                                            <tbody>
+                                            {statusElements?.filter(e => e.isStaged).map((element, index) => (
+                                                <tr
+                                                    key={index}
+                                                    className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
+                                                    <td
+                                                        onClick={() => handleSelectFile(element, true)}
+                                                        onContextMenu={e => handleContextMenu(e, element)}
                                                     >
-                                                        +
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                                        {element.filePath}
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            className="stage-button unstage"
+                                                            onClick={e => {
+                                                                e.stopPropagation();
+                                                                handleApplyStagingActionRequest(element);
+                                                            }}
+                                                        >
+                                                            -
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
                                             </tbody>
-                                        ))}
-                                    </table>
-                                ) : <div className="empty-table">No unstaged changes</div>}
-                            </div>
+                                        </table>
+                                    ) : <div className="empty-table">No staged changes</div>}
+                                </div>
+                            }
+
+                            {!isSafeMode &&
+                                <div className="panel-card">
+                                    <h2 className="page-description">Unstaged Changes</h2>
+                                    {statusElements?.filter(e => !e.isStaged).length ? (
+                                        <table className="status-table">
+                                            <thead>
+                                            <tr>
+                                                <th>File</th>
+                                                <th>Action</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {statusElements?.filter(e => !e.isStaged).map((element, index) => (
+                                                <tr
+                                                    key={index}
+                                                    className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
+                                                    <td
+                                                        onClick={() => handleSelectFile(element, false)}
+                                                        onContextMenu={e => handleContextMenu(e, element)}
+                                                    >
+                                                        {element.filePath}
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            className="stage-button stage"
+                                                            onClick={e => {
+                                                                e.stopPropagation();
+                                                                handleApplyStagingActionRequest(element);
+                                                            }}
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            </tbody>
+                                        </table>
+                                    ) : <div className="empty-table">No unstaged changes</div>}
+                                </div>
+                            }
                         </div>
 
                         {contextMenu && (
@@ -578,78 +699,176 @@ const RepositoryStatusPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Right side: Diff viewer */}
-                        <div className="right-panel">
-                            <div className="diff-toolbar">
-                                <button
-                                    className="submit-button"
-                                    onClick={() => setIsSplitView(!isSplitView)}
-                                >
-                                    {isSplitView ? "Toggle Unified View" : "Toggle Split View"}
-                                </button>
-                                {selectedFile && (
-                                    <button
-                                        className="submit-button"
-                                        style={{ background: selectedFile?.isStaged ? "red" : "green" }}
-                                        onClick={() => handleApplyStagingActionRequest(selectedFile)}
-                                    >
-                                        {selectedFile?.isStaged ? "Unstage" : "Stage"}
-                                    </button>
-                                )}
-                            </div>
+                        {!isSafeMode &&
+                            <>
+                                {/* Right side: Diff viewer */}
+                                <div className="right-panel">
+                                    <div className="diff-toolbar">
+                                        <button
+                                            className="submit-button"
+                                            onClick={() => setIsSplitView(!isSplitView)}
+                                        >
+                                            {isSplitView ? "Toggle Unified View" : "Toggle Split View"}
+                                        </button>
+                                        {selectedFile && (
+                                            <button
+                                                className="submit-button"
+                                                style={{ background: selectedFile?.isStaged ? "red" : "green" }}
+                                                onClick={() => handleApplyStagingActionRequest(selectedFile)}
+                                            >
+                                                {selectedFile?.isStaged ? "Unstage" : "Stage"}
+                                            </button>
+                                        )}
+                                    </div>
 
-                            {selectedFile ? (
-                                <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
-                                    {!isSplitView && (
-                                        <div className="diff-panel">
-                                            <div className="diff-panel-header">Unified Diff: {selectedFile.filePath}</div>
-                                            {parsedDiff.map((line, i) => (
-                                                <div
-                                                    key={i}
-                                                    className={`diff-line ${
-                                                        line.type === "add" ? "diff-added" : line.type === "remove" ? "diff-removed" : ""
-                                                    }`}
-                                                >
-                                                    <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
-                                                    <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
-                                                    <span className="diff-code">{line.content}</span>
+                                    {selectedFile ? (
+                                        <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
+                                            {!isSplitView && (
+                                                <div className="diff-panel">
+                                                    <div className="diff-panel-header">Unified Diff: {selectedFile.filePath}</div>
+                                                    {parsedDiff.map((line, i) => (
+                                                        <div
+                                                            key={i}
+                                                            className={`diff-line ${
+                                                                line.type === "add" ? "diff-added" : line.type === "remove" ? "diff-removed" : ""
+                                                            }`}
+                                                        >
+                                                            <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
+                                                            <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
+                                                            <span className="diff-code">{line.content}</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            )}
+                                            {isSplitView && (
+                                                <>
+                                                    <div className="diff-panel">
+                                                        <div className="diff-panel-header">Original: {selectedFile.filePath}</div>
+                                                        {parsedDiff.map((line, i) => (
+                                                            <div
+                                                                key={i}
+                                                                className={`diff-line ${line.type === "remove" ? "diff-removed" : ""}`}
+                                                            >
+                                                                <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
+                                                                <span className="diff-code">{line.type === "add" ? "" : line.content}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <div className="diff-panel">
+                                                        <div className="diff-panel-header">Modified: {selectedFile.filePath}</div>
+                                                        {parsedDiff.map((line, i) => (
+                                                            <div
+                                                                key={i}
+                                                                className={`diff-line ${line.type === "add" ? "diff-added" : ""}`}
+                                                            >
+                                                                <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
+                                                                <span className="diff-code">{line.type === "remove" ? "" : line.content}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
-                                    )}
-                                    {isSplitView && (
-                                        <>
-                                            <div className="diff-panel">
-                                                <div className="diff-panel-header">Original: {selectedFile.filePath}</div>
-                                                {parsedDiff.map((line, i) => (
-                                                    <div
-                                                        key={i}
-                                                        className={`diff-line ${line.type === "remove" ? "diff-removed" : ""}`}
-                                                    >
-                                                        <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
-                                                        <span className="diff-code">{line.type === "add" ? "" : line.content}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <div className="diff-panel">
-                                                <div className="diff-panel-header">Modified: {selectedFile.filePath}</div>
-                                                {parsedDiff.map((line, i) => (
-                                                    <div
-                                                        key={i}
-                                                        className={`diff-line ${line.type === "add" ? "diff-added" : ""}`}
-                                                    >
-                                                        <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
-                                                        <span className="diff-code">{line.type === "remove" ? "" : line.content}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </>
+                                    ) : (
+                                        <div className="empty-table">Select a file to view diff</div>
                                     )}
                                 </div>
-                            ) : (
-                                <div className="empty-table">Select a file to view diff</div>
-                            )}
-                        </div>
+                            </>
+                        }
+
+                        {/*The simulated dry run section*/}
+                        {isSafeMode &&
+                            <div className="right-panel">
+                                <section className="output-section">
+                                        {simulatedPullResults.length > 0 && (
+                                            <div className="output-header">
+                                                <h3>Pull Dry Run Results</h3>
+                                                <button
+                                                    className="clear-output-button"
+                                                    onClick={cleanUpSimulationResults}
+                                                >
+                                                    Clear Output
+                                                </button>
+                                            </div>
+                                        )}
+                                    {simulatedAddBranchResults.length > 0 && (
+                                        <div className="output-header">
+                                            <h3>Add Branch Dry Run Results</h3>
+                                            <button
+                                                className="clear-output-button"
+                                                onClick={cleanUpSimulationResults}
+                                            >
+                                                Clear Output
+                                            </button>
+                                        </div>
+                                    )}
+                                    {simulatedMergeResults.length > 0 && (
+                                        <div className="output-header">
+                                            <h3>Merge Dry Run Results</h3>
+                                            <button
+                                                className="clear-output-button"
+                                                onClick={cleanUpSimulationResults}
+                                            >
+                                                Clear Output
+                                            </button>
+                                        </div>
+                                    )}
+                                    <div className="output-window">
+                                        {
+                                            simulatedPullResults.length === 0 &&
+                                            simulatedAddBranchResults.length === 0 &&
+                                            simulatedMergeResults.length === 0 &&
+                                            <p className="no-output-text">No results to report.</p>
+                                        }
+                                        {simulatedPullResults.map((result, index) => (
+                                            <div
+                                                key={index}
+                                                className={`output-entry ${result.isSuccessful ? "success" : "failure"}`}
+                                            >
+                                                <div className="output-header-row">
+                                                    <strong>{result.isSuccessful ? "Safe to pull!": "'git pull' would fail!"}</strong>
+                                                    <span className="status-icon" />
+                                                </div>
+                                                {result.commitsToPull?.map((entry, i) => (
+                                                    <span
+                                                        key={i}
+                                                        className="output-command"
+                                                    >
+                                                        &gt; {entry.commitHash} - {entry.message}
+                                                    </span>
+                                                ))}
+                                                <span className="output-stdout">{result.errorMessage}</span>
+                                            </div>
+                                        ))}
+                                        {simulatedAddBranchResults.map((result, index) => (
+                                            <div
+                                                key={index}
+                                                className={`output-entry ${result.isSuccessful ? "success" : "failure"}`}
+                                            >
+                                                <div className="output-header-row">
+                                                    <strong>{result.isSuccessful ? "Safe to add branch!": "Add branch operation would fail!"}</strong>
+                                                    <span className="status-icon" />
+                                                </div>
+                                                <span className="output-command">&gt; {result.infoMessage ? result.infoMessage : "Branch Naming Conflict"}</span>
+                                                <span className="output-stdout">{result.errorMessage}</span>
+                                            </div>
+                                        ))}
+                                        {simulatedMergeResults.map((result, index) => (
+                                            <div
+                                                key={index}
+                                                className={`output-entry ${result.isSuccessful ? "success" : "failure"}`}
+                                            >
+                                                <div className="output-header-row">
+                                                    <strong>{result.mergeStatus}</strong>
+                                                    <span className="status-icon" />
+                                                </div>
+                                                <span className="output-stdout">{result.errorMessage}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            </div>
+                        }
                     </div>
                 </div>
             )}
@@ -710,7 +929,13 @@ const RepositoryStatusPage: React.FC = () => {
                 <MergeModal
                     onClose={() => setIsMergingBranch(false)}
                     repositoryId={repoId}
-                    userId={user?.userId} />
+                    userId={user?.userId}
+                    isSafeMode={isSafeMode}
+                    onSuccess={results => {
+                        cleanUpSimulationResults();
+                        setSimulatedMergeResults(results);
+                    }}
+                />
             }
             {isAddingStash &&
                 <AddStashModal
@@ -721,7 +946,13 @@ const RepositoryStatusPage: React.FC = () => {
             <AddBranchModal
                 repositoryId={repoId}
                 userId={user?.userId}
-                onClose={() => setIsAddingBranch(false)} />
+                onClose={() => setIsAddingBranch(false)}
+                isSafeMode={isSafeMode}
+                onSuccess={results => {
+                    cleanUpSimulationResults();
+                    setSimulatedAddBranchResults(results);
+                }}
+            />
             }
             {activeTab === "stashes" && (
                 <div className="panel-card">

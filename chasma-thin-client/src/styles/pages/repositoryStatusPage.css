@@ -9,6 +9,13 @@
     background: #1a1a1a;
 }
 
+.status-table thead th {
+    position: sticky;
+    top: 0;
+    background: #1a1a1a;
+    z-index: 2;
+}
+
 .status-table th,
 .status-table td {
     padding: 12px 16px;
@@ -54,6 +61,18 @@
     transform: scale(1.05);
 }
 
+.stage-button:active {
+    transform: scale(0.95);
+}
+
+.stage-button.stage:hover {
+    background: #16a34a;
+}
+
+.stage-button.unstage:hover {
+    background: #dc2626;
+}
+
 .empty-table {
     padding: 12px;
     color: #888;
@@ -77,7 +96,7 @@
 
 .right-panel {
     flex: 2;
-    min-width: 500px;
+    min-width: 0;
     max-width: 70%;
     background: #1e1e1e;
     border-radius: 12px;
@@ -132,10 +151,12 @@
 .diff-line {
     display: flex;
     align-items: flex-start;
-    white-space: pre;
+    white-space: pre-wrap;
+    word-break: break-word;
     border-radius: 4px;
     padding: 2px 0;
     transition: background-color 0.12s ease;
+    min-height: 20px;
 }
 
 .diff-line:hover {

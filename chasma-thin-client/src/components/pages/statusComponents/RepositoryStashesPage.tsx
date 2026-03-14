@@ -1,24 +1,21 @@
 ﻿import React, {useEffect, useState} from "react";
 import {
-    GetStashDetailsRequest, GetStashListRequest,
+    GetStashDetailsRequest,
+    GetStashListRequest,
     PatchEntry,
-    StashClient,
     StashEntry
 } from "../../../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../../../environmentConstants";
 import NotificationModal from "../../modals/NotificationModal";
 import {parseUnifiedDiff} from "../../../managers/DiffViewerManager";
 import ApplyStashModal from "../../modals/ApplyStashModal";
 import DeleteStashModal from "../../modals/DeleteStashModal";
+import {stashClient} from "../../../managers/ApiClientManager";
 
 /** Defines the properties of the Repository Stashes Page. **/
 interface IRepositoryStashesPageProps {
     /** The repository identifier. **/
     repositoryId: string | undefined;
 }
-
-/** Repository stash client for the API **/
-const stashClient = new StashClient(apiBaseUrl);
 
 /**
  * Initializes a new instance of the RepositoryStashesPage component.

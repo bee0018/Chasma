@@ -33,7 +33,11 @@ namespace ChasmaWebApi.Core.Services.Git
                 using Repository repository = new(workingDirectory);
                 Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
                 Stash stash = repository.Stashes.Add(author, stashMessage, stashOptions);
-                Logger.LogInformation("Successfully created stash {stashName} in repository at {repoPath}.", stash.CanonicalName, workingDirectory);
+                if (stash != null)
+                {
+                    Logger.LogInformation("Successfully created stash {stashName} in repository at {repoPath}.", stash.CanonicalName, workingDirectory);
+                }
+
                 return true;
             }
             catch (Exception e)
@@ -183,6 +187,46 @@ namespace ChasmaWebApi.Core.Services.Git
             {
                 errorMessage = $"An error occurred while dropping a stash in the repository at {workingDirectory}: {e.Message}";
                 Logger.LogError("An error occurred while dropping a stash in the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
+                return false;
+            }
+        }
+
+        // <inheritdoc/>
+        public bool TryPopStash(string workingDirectory, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                using Repository repository = new(workingDirectory);
+                if (!repository.Stashes.Any())
+                {
+                    errorMessage = $"No stashes found in repository at {workingDirectory}.";
+                    Logger.LogError(errorMessage);
+                    return false;
+                }
+
+                if (repository.Stashes.Count() == 0)
+                {
+                    errorMessage = $"No stashes found in repository at {workingDirectory}.";
+                    Logger.LogError(errorMessage);
+                    return false;
+                }
+
+                StashApplyStatus status = repository.Stashes.Pop(0);
+                if (status != StashApplyStatus.Applied)
+                {
+                    errorMessage = $"Failed to pop the latest stash in repository at {workingDirectory}.";
+                    Logger.LogError("Failed to pop the latest stash and finished with status code: {code}", status);
+                    return false;
+                }
+
+                Logger.LogInformation("Successfully popped the latest stash in repository at {repoPath}.", workingDirectory);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"An error occurred while popping a stash in the repository at {workingDirectory}: {e.Message}";
+                Logger.LogError("An error occurred while popping a stash in the repository at {repoPath}: {error}. Sending error response.", workingDirectory, e);
                 return false;
             }
         }
