@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Objects;
+﻿namespace ChasmaWebApi.Data.Objects.Remote;
 
 /// <summary>
 /// Class representing the GitHub workflow status results.

@@ -1,4 +1,6 @@
-﻿namespace ChasmaWebApi.Data.Objects.DryRun
+﻿using ChasmaWebApi.Data.Objects.Git;
+
+namespace ChasmaWebApi.Data.Objects.DryRun
 {
     /// <summary>
     /// Class representing the result of simulating a Git pull operation in a dry run context.

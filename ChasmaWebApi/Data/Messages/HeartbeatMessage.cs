@@ -1,4 +1,4 @@
-﻿using ChasmaWebApi.Data.Objects;
+﻿using ChasmaWebApi.Data.Objects.Status;
 using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Messages;

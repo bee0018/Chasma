@@ -1,4 +1,4 @@
-﻿using ChasmaWebApi.Data.Objects;
+﻿using ChasmaWebApi.Data.Objects.Shell;
 
 namespace ChasmaWebApi.Core.Interfaces.Infrastructure
 {

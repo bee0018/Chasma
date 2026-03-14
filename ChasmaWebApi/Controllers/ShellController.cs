@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Shell;
 using ChasmaWebApi.Data.Requests.Shell;
 using ChasmaWebApi.Data.Responses.Shell;
 using Microsoft.AspNetCore.Mvc;

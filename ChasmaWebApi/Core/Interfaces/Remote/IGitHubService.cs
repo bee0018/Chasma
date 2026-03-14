@@ -1,4 +1,4 @@
-﻿using ChasmaWebApi.Data.Objects;
+﻿using ChasmaWebApi.Data.Objects.Remote;
 
 namespace ChasmaWebApi.Core.Interfaces.Remote
 {

@@ -1,4 +1,4 @@
-﻿using ChasmaWebApi.Data.Objects;
+﻿using ChasmaWebApi.Data.Objects.Shell;
 using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Requests.Shell

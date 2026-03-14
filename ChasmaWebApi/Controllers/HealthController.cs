@@ -1,5 +1,5 @@
 ﻿using ChasmaWebApi.Data.Messages;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Status;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers;

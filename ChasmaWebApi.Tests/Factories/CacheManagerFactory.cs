@@ -1,5 +1,5 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Git;
 using Moq;
 using System.Collections.Concurrent;
 

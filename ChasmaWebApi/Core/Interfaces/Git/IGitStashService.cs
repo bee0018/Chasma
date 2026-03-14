@@ -1,5 +1,5 @@
 ﻿using ChasmaWebApi.Data.Models;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Git;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Interfaces.Git

@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Index;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Git;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Services.Index

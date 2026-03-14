@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Data.Objects.Shell;
 using ChasmaWebApi.Util;
 using System.Diagnostics;
 

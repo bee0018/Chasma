@@ -3,8 +3,8 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Core.Services.Git;
 using ChasmaWebApi.Data.Models;
-using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Objects.DryRun;
+using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Util;
 using LibGit2Sharp;
 

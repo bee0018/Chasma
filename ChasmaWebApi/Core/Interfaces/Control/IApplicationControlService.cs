@@ -1,6 +1,8 @@
 ﻿using ChasmaWebApi.Data.Models;
-using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Objects.DryRun;
+using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Data.Objects.Remote;
+using ChasmaWebApi.Data.Objects.Shell;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Interfaces.Control

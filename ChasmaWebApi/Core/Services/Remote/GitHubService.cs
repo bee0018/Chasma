@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Remote;
 using LibGit2Sharp;
 using Octokit;
 using Branch = LibGit2Sharp.Branch;

@@ -2,7 +2,7 @@
 using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Models;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;

@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Objects;
+﻿namespace ChasmaWebApi.Data.Objects.Status;
 
 /// <summary>
 /// Enumeration representing the different status of a heartbeat check.

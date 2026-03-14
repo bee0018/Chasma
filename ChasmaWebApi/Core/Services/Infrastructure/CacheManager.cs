@@ -1,7 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Models;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Data.Objects.Remote;
 
 namespace ChasmaWebApi.Core.Services.Infrastructure;
 

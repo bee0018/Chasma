@@ -5,8 +5,10 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
 using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Data.Models;
-using ChasmaWebApi.Data.Objects;
 using ChasmaWebApi.Data.Objects.DryRun;
+using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Data.Objects.Remote;
+using ChasmaWebApi.Data.Objects.Shell;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Services.Control

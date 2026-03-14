@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Objects
+﻿namespace ChasmaWebApi.Data.Objects.Shell
 {
     /// <summary>
     /// Class representing a batch command entry.

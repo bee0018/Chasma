@@ -1,7 +1,8 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Models;
-using ChasmaWebApi.Data.Objects;
+using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Data.Objects.Remote;
 using Microsoft.EntityFrameworkCore;
 using Octokit;
 

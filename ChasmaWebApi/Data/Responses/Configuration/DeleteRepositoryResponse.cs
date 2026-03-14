@@ -1,4 +1,4 @@
-﻿using ChasmaWebApi.Data.Objects;
+﻿using ChasmaWebApi.Data.Objects.Git;
 
 namespace ChasmaWebApi.Data.Responses.Configuration
 {

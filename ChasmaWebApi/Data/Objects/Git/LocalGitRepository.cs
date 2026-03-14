@@ -1,6 +1,6 @@
 ﻿using LibGit2Sharp;
 
-namespace ChasmaWebApi.Data.Objects;
+namespace ChasmaWebApi.Data.Objects.Git;
 
 /// <summary>
 /// Class representing the properties of a local git repository on the local machine.

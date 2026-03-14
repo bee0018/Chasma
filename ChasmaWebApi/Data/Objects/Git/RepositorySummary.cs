@@ -1,4 +1,6 @@
-﻿namespace ChasmaWebApi.Data.Objects
+﻿using ChasmaWebApi.Data.Objects.Remote;
+
+namespace ChasmaWebApi.Data.Objects.Git
 {
     /// <summary>
     /// Class representing a summary of a repository.

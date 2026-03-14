@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Util;
 
-namespace ChasmaWebApi.Data.Objects
+namespace ChasmaWebApi.Data.Objects.Remote
 {
     /// <summary>
     /// Class representing the details of a GitHub pull request.

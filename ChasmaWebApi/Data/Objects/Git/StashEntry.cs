@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Objects
+﻿namespace ChasmaWebApi.Data.Objects.Git
 {
     /// <summary>
     /// Class representing a stash entry in a git repository.

@@ -1,4 +1,5 @@
-﻿using ChasmaWebApi.Data.Objects;
+﻿using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Data.Objects.Remote;
 
 namespace ChasmaWebApi.Data.Responses.Status
 {

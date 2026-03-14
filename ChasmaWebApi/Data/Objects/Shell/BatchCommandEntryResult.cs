@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Util;
 
-namespace ChasmaWebApi.Data.Objects
+namespace ChasmaWebApi.Data.Objects.Shell
 {
     /// <summary>
     /// Class representing the result of a batch command entry.

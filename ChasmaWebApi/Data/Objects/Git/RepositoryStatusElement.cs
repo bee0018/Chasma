@@ -1,7 +1,7 @@
 ﻿using ChasmaWebApi.Util;
 using LibGit2Sharp;
 
-namespace ChasmaWebApi.Data.Objects
+namespace ChasmaWebApi.Data.Objects.Git
 {
     /// <summary>
     /// Class representing a repository status element.
