@@ -1,6 +1,6 @@
 import React from "react";
 import {useNavigate} from "react-router-dom";
-import {LocalGitRepository} from "../API/ChasmaWebApiClient";
+import {ApplicationUser, LocalGitRepository, RemoteHostPlatform} from "../API/ChasmaWebApiClient";
 
 /** The properties of the Card component. */
 interface IProps {
@@ -15,6 +15,9 @@ interface IProps {
 
     /** The action to execute on a user right-clicks on the card. **/
     onContextMenu?: (e: React.MouseEvent) => void;
+
+    /** The logged-in user. **/
+    user : ApplicationUser | null;
 }
 
 /**
@@ -37,19 +40,27 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
                 <div className="repo-meta">
                     <span>ID: {props.repository.id}</span>
                     <span>Owner: {props.repository.owner}</span>
+                    <span>
+                        Host Platform: {props.repository.hostPlatform ? RemoteHostPlatform[props.repository.hostPlatform] : "Unknown"}
+                    </span>
                 </div>
             </div>
 
             <div className="repo-actions">
-                <button
-                    className="repo-action"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/workflowruns/${props.repository.name}/${props.repository.owner}`);
-                    }}
-                >
-                    Builds
-                </button>
+                {props.user?.permissions
+                    && props.user.permissions.isUsingGitHubApi
+                    && props.repository.hostPlatform === RemoteHostPlatform.GitHub
+                    && (
+                        <button
+                            className="repo-action"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/workflowruns/${props.repository.name}/${props.repository.owner}`);
+                            }}
+                        >
+                            Workflow Runs
+                        </button>
+                )}
 
                 <button
                     className="repo-delete"

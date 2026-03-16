@@ -1,18 +1,17 @@
 ﻿import { create } from "zustand";
-import {User} from "../components/types/CustomTypes";
-import {LocalGitRepository} from "../API/ChasmaWebApiClient";
+import {ApplicationUser, LocalGitRepository} from "../API/ChasmaWebApiClient";
 import {persist} from 'zustand/middleware'
 
 /** Interface defining the members of the cache state. **/
 interface CacheState {
     /** The logged-in user. **/
-    user: User | null;
+    user: ApplicationUser | null;
 
     /** The user's repositories. **/
     repositories: LocalGitRepository[];
 
     /** Sets the logged-in user. **/
-    setUser: (user: User | null) => void;
+    setUser: (user: ApplicationUser | undefined) => void;
 
     /** Sets the user's repositories. **/
     setRepositories: (repos: LocalGitRepository[] | undefined) => void;

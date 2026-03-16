@@ -66,7 +66,7 @@ const WorkflowRunsPage: React.FC = () => {
 
             setWorkflows(response.workflowRunResults)
             setNotification({
-                title: `Successfully retrieved ${response.repositoryName} workflows!`,
+                title: `Successfully retrieved ${response.repositoryName} workflows runs!`,
                 message: `Close this modal and view the workflow build contents.`,
                 isError: response.isErrorResponse,
             });

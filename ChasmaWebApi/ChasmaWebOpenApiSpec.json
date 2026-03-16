@@ -1795,8 +1795,51 @@
           },
           "isIgnored": {
             "type": "boolean"
+          },
+          "hostPlatform": {
+            "$ref": "#/components/schemas/RemoteHostPlatform"
           }
         }
+      },
+      "RemoteHostPlatform": {
+        "type": "integer",
+        "description": "",
+        "x-enum-names": [
+          "Unknown",
+          "GitHub",
+          "GitLab",
+          "Bitbucket"
+        ],
+        "x-enum-varnames": [
+          "Unknown",
+          "GitHub",
+          "GitLab",
+          "Bitbucket"
+        ],
+        "x-enumNames": [
+          "Unknown",
+          "GitHub",
+          "GitLab",
+          "Bitbucket"
+        ],
+        "x-enum-descriptions": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "x-enumDescriptions": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
       },
       "GetIgnoredRepositoriesMessage": {
         "allOf": [
@@ -2858,19 +2901,46 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "userName": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "email": {
-                "type": "string"
+              "user": {
+                "$ref": "#/components/schemas/ApplicationUser"
               }
             }
           }
         ]
+      },
+      "ApplicationUser": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ApplicationUserPermissions"
+          }
+        }
+      },
+      "ApplicationUserPermissions": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isUsingGitHubApi": {
+            "type": "boolean"
+          },
+          "isUsingGitLabApi": {
+            "type": "boolean"
+          },
+          "isUsingBitbucketApi": {
+            "type": "boolean"
+          }
+        }
       },
       "LoginRequest": {
         "allOf": [
@@ -2900,15 +2970,8 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "userName": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "email": {
-                "type": "string"
+              "user": {
+                "$ref": "#/components/schemas/ApplicationUser"
               }
             }
           }

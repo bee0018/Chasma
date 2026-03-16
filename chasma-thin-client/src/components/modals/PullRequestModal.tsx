@@ -1,5 +1,5 @@
 ﻿import React, {useEffect, useState} from "react";
-import {CreatePRRequest, GitBranchRequest} from "../../API/ChasmaWebApiClient";
+import {CreatePRRequest, GitBranchRequest, RemoteHostPlatform} from "../../API/ChasmaWebApiClient";
 import {branchClient, remoteClient} from "../../managers/ApiClientManager";
 
 /** Defines the properties of the pull request modal. **/
@@ -12,6 +12,9 @@ interface IPullRequestProps {
 
     /** The repository name. **/
     repoName: string | undefined;
+
+    /** The remote host platform. **/
+    remoteHostPlatform: RemoteHostPlatform | undefined;
 }
 
 /**

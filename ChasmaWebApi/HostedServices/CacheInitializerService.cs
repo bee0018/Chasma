@@ -88,6 +88,7 @@ namespace ChasmaWebApi.HostedServices
                     Owner = repoModel.Owner,
                     Url = repoModel.Url,
                     IsIgnored = repoModel.IsIgnored,
+                    HostPlatform = repoModel.HostPlatform,
                 };
                 cacheManager.Repositories.TryAdd(repository.Id, repository);
             }

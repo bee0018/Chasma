@@ -5,7 +5,7 @@ import {
     GitDiffRequest,
     GitHubPullRequest,
     GitPullRequest,
-    GitStatusRequest, PullSimulationEntry,
+    GitStatusRequest, PullSimulationEntry, RemoteHostPlatform,
     RepositoryStatusElement,
     SimulatedAddBranchResult,
     SimulatedGitPullResult,
@@ -128,6 +128,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
+
+    /** Gets the selected repository instance. **/
+    const selectedRepo = useCacheStore((state) => state.repositories.find(i => i.id === repoId));
 
     /** Gets or sets the context menu. **/
     const [contextMenu, setContextMenu] = useState<{
@@ -464,17 +467,47 @@ const RepositoryStatusPage: React.FC = () => {
                 }
                 {!isSafeMode && <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>}
                 <div className="tab" onClick={() => setIsAddingBranch(true)}>Add Branch ➕</div>
-                {!isSafeMode &&
-                    <>
-                        <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
-                        <div className="tab" onClick={() => setIsCreatingPullRequest(true)}>Create Pull Request📥</div>
-
-                    </>
-                }
                 <div className="tab" onClick={() => setIsMergingBranch(true)}>Merge 🔀</div>
                 {!isSafeMode &&
                     <>
-                        <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create Issue🐛</div>
+                        <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
+                        {user?.permissions
+                            && user.permissions.isUsingGitHubApi
+                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
+                            <div
+                                className="tab"
+                                style={{ marginTop: "20px" }}
+                                onClick={() => setIsCreatingPullRequest(true)}
+                            >
+                                Create Pull Request📥
+                            </div>
+                        }
+                        {user?.permissions
+                            && user.permissions.isUsingGitLabApi
+                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
+                            <div
+                                className="tab"
+                                style={{ marginTop: "20px" }}
+                                onClick={() => setIsCreatingPullRequest(true)}
+                            >
+                                Create Merge Request📥
+                            </div>
+                        }
+                        {user?.permissions
+                            && user.permissions.isUsingGitHubApi
+                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
+                            <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create GitHub Issue🐛</div>
+                        }
+                        {user?.permissions
+                            && user.permissions.isUsingGitLabApi
+                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
+                            <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create GitLab Issue🐛</div>
+                        }
+                        {user?.permissions
+                            && user.permissions.isUsingBitbucketApi
+                            && selectedRepo?.hostPlatform === RemoteHostPlatform.Bitbucket &&
+                            <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create Bitbucket Task🐛</div>
+                        }
                         <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsExecutingShellCommands(true)}>Custom Shell Commands🖥️</div>
                     </>
                 }
@@ -906,7 +939,8 @@ const RepositoryStatusPage: React.FC = () => {
                 <PullRequestModal
                     repositoryId={repoId}
                     repoName={repoName}
-                    onClose={() => setIsCreatingPullRequest(false)}  />
+                    onClose={() => setIsCreatingPullRequest(false)}
+                    remoteHostPlatform={selectedRepo?.hostPlatform} />
             }
             {isCreatingIssue &&
                 <CreateIssueModal

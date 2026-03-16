@@ -47,6 +47,18 @@ namespace ChasmaWebApi
         public int GitHubPullRequestScanIntervalSeconds { get; set; } = 45;
 
         /// <summary>
+        /// Gets or sets the GitLab API token.
+        /// </summary>
+        [XmlElement("gitlabApiToken")]
+        public string GitLabApiToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Bitbucket API token.
+        /// </summary>
+        [XmlElement("bitbucketApiToken")]
+        public string BitbucketApiToken { get; set; }
+
+        /// <summary>
         /// Gets the connection string in the format that is expected of SQLite3 database connections.
         /// </summary>
         /// <returns>The formatted database connection string.</returns>

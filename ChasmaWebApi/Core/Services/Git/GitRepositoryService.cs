@@ -23,11 +23,6 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         private readonly ICacheManager CacheManager;
 
-        /// <summary>
-        /// The Git branch service, which is responsible for handling branch related operations.
-        /// </summary>
-        private readonly IGitBranchService GitBranchService;
-
         #region Constructor
 
         /// <summary>
@@ -36,11 +31,10 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <param name="logger">The logger used to record diagnostic and operational messages for the service.</param>
         /// <param name="cacheManager">The cache manager used to store and retrieve cached data for repository operations.</param>
         /// <param name="branchService">The Git branch service used to perform branch-related operations.</param>
-        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager, IGitBranchService branchService)
+        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager)
         {
             Logger = logger;
             CacheManager = cacheManager;
-            GitBranchService = branchService;
         }
 
         #endregion
