@@ -2,10 +2,8 @@
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
-using ChasmaWebApi.Data.Requests.Configuration;
-using ChasmaWebApi.Data.Requests.Status;
-using ChasmaWebApi.Data.Responses.Configuration;
-using ChasmaWebApi.Data.Responses.Status;
+using ChasmaWebApi.Data.Requests.Remote;
+using ChasmaWebApi.Data.Responses.Remote;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -300,6 +298,62 @@ namespace ChasmaWebApi.Controllers
                 response.ErrorMessage = "Exception occurred when creating GitHub issue. Check server logs for more information.";
                 return BadRequest(response);
             }
+        }
+
+        /// <summary>
+        /// Gets the pipeline jobs for the specific repository.
+        /// </summary>
+        /// <param name="request">The request to get pipeline jobs.</param>
+        /// <returns>The response to getting the pipeline jobs.</returns>
+        [HttpPost]
+        [Route("getPipelineJobs")]
+        public ActionResult<GetPipelineJobsResponse> GetPipelineJobs([FromBody] GetPipelineJobsRequest request)
+        {
+            GetPipelineJobsResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Failed to get pipeline jobs because the request was null. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request is null. Cannot get pipeline builds.";
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Failed to get pipeline jobs because the repository identifier is empty. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier was empty. Cannot get pipeline builds.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                logger.LogError("Failed to get pipeline jobs because the repository's working directory cannot be found. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Working directory cannot be found for repository. Cannot get pipeline builds.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Failed to get pipeline jobs because the repository cannot be found. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository cannot be found in cache. Cannot get pipeline builds.";
+                return Ok(response);
+            }
+
+            bool resultsRetrieved = applicationControlService.TryGetPipelineJobResults(workingDirectory, repository, out List<WorkflowRunResult> buildResults, out string errorMessage);
+            if (!resultsRetrieved)
+            {
+                logger.LogError("Failed to get pipeline jobs {error}", errorMessage);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = errorMessage;
+                return Ok(response);
+            }
+
+            response.Results = buildResults;
+            return Ok(response);
         }
     }
 }

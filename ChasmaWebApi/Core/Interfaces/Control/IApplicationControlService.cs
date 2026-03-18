@@ -288,5 +288,15 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="entries">The repository entries.</param>
         /// <returns>The list of simulated merge results.</returns>
         List<SimulatedMergeResult> PerformMergeBranchDryRun(IEnumerable<MergeSimulationEntry> entries);
+
+        /// <summary>
+        /// Tries to get the pipeline build results.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="cachedRepo">The repository in cache.</param>
+        /// <param name="buildResults">The build results.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>The list of pipeline job results for the specified repository.</returns>
+        public bool TryGetPipelineJobResults(string workingDirectory, LocalGitRepository cachedRepo, out List<WorkflowRunResult> buildResults, out string errorMessage);
     }
 }

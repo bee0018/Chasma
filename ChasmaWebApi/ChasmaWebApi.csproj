@@ -19,6 +19,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.2" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageReference Include="NGitLab" Version="11.5.0" />
     <PackageReference Include="NSwag.AspNetCore" Version="14.5.0" />
     <PackageReference Include="NSwag.Core" Version="14.5.0" />
     <PackageReference Include="NSwag.MSBuild" Version="14.5.0">

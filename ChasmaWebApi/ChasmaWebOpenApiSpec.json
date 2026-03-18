@@ -383,6 +383,38 @@
         }
       }
     },
+    "/api/Remote/getPipelineJobs": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_GetPipelineJobs",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetPipelineJobsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPipelineJobsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryConfiguration/getLocalGitRepositories": {
       "get": {
         "tags": [
@@ -1750,6 +1782,35 @@
             }
           }
         ]
+      },
+      "GetPipelineJobsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "results": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "$ref": "#/components/schemas/WorkflowRunResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GetPipelineJobsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          }
+        }
       },
       "LocalRepositoriesInfoMessage": {
         "allOf": [

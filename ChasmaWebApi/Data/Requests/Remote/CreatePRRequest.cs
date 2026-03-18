@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Util;
 
-namespace ChasmaWebApi.Data.Requests.Configuration
+namespace ChasmaWebApi.Data.Requests.Remote
 {
     /// <summary>
     /// Class representing a request to create a pull request.

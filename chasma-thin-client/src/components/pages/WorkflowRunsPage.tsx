@@ -1,20 +1,26 @@
 import React, {useState} from "react";
 import NotificationModal from "../modals/NotificationModal";
 import {
+    GetPipelineJobsRequest,
     GetWorkflowResultsRequest,
+    RemoteHostPlatform,
     WorkflowRunResult
 } from "../../API/ChasmaWebApiClient";
 import "../../styles/App.css"
 import {useNavigate, useParams} from "react-router-dom";
 import {remoteClient} from "../../managers/ApiClientManager";
+import {useCacheStore} from "../../managers/CacheManager";
 
 /**
  * Initializes a new instance of the WorkflowRunsPage.
  * @constructor
  */
 const WorkflowRunsPage: React.FC = () => {
-    /** The repository name and owner from the url. **/
-    const {repoName, repoOwner} = useParams<{repoName: string, repoOwner: string}>();
+    /** The repository identifier from the url. **/
+    const {repoId} = useParams<{repoId: string}>();
+
+    /** Gets the selected repository. **/
+    const selectedRepo = useCacheStore(state => state.repositories.find(i => i.id === repoId));
 
     /** Gets or sets the notification **/
     const [notification, setNotification] = useState<{
@@ -42,17 +48,48 @@ const WorkflowRunsPage: React.FC = () => {
 
     /** Handles the event when the user requests to get the workflow statuses. **/
     async function handleGetWorkFlowStatuses() {
+        if (!selectedRepo?.hostPlatform) {
+            setNotification({
+                title: "Failed to retrieve build statuses!",
+                message: "The remote host platform is not found.",
+                isError: true,
+            });
+            return;
+        }
+
         setNotification({
-            title: "Retrieving workflow runs...",
+            title: "Retrieving build statuses...",
             message: "Please wait while your request is being processed.",
             isError: false,
             loading: true
         });
 
+        if (selectedRepo.hostPlatform === RemoteHostPlatform.GitHub) {
+            await handleGetGitHubWorkflowResults();
+        }
+        else if (selectedRepo.hostPlatform === RemoteHostPlatform.GitLab) {
+            await handleGetGitLabPipelineJobResults();
+        }
+        else if (selectedRepo.hostPlatform === RemoteHostPlatform.Bitbucket) {
+
+        }
+        else {
+            setNotification({
+                title: "Failed to retrieve build statuses!",
+                message: "The remote host platform is not supported.",
+                isError: true,
+            });
+        }
+    }
+
+    /**
+     * Handles the event when the user wants to get GitHub workflow run results.
+     */
+    const handleGetGitHubWorkflowResults = async () => {
         try {
             const request = new GetWorkflowResultsRequest();
-            request.repositoryName = repoName;
-            request.repositoryOwner = repoOwner;
+            request.repositoryName = selectedRepo?.name;
+            request.repositoryOwner = selectedRepo?.owner;
 
             const response = await remoteClient.getGitHubWorkflowResults(request);
             if (response.isErrorResponse) {
@@ -74,6 +111,40 @@ const WorkflowRunsPage: React.FC = () => {
             console.error(e);
             setNotification({
                 title: "Failed to retrieve workflows!",
+                message: "An internal server error has occurred. Review logs.",
+                isError: true,
+            });
+        }
+    }
+
+    /**
+     * Handles the event when the user wants to get GitLab pipeline job results.
+     */
+    const handleGetGitLabPipelineJobResults = async () => {
+        try {
+            const request = new GetPipelineJobsRequest();
+            request.repositoryId = selectedRepo?.id
+
+            const response = await remoteClient.getPipelineJobs(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Retrieval failed!",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+
+            setWorkflows(response.results)
+            setNotification({
+                title: `Successfully retrieved ${selectedRepo?.name} pipeline jobs!`,
+                message: `Close this modal and view the workflow build contents.`,
+                isError: response.isErrorResponse,
+            });
+        } catch (e) {
+            console.error(e);
+            setNotification({
+                title: "Failed to retrieve pipeline jobs!",
                 message: "An internal server error has occurred. Review logs.",
                 isError: true,
             });
@@ -105,7 +176,11 @@ const WorkflowRunsPage: React.FC = () => {
                     </thead>
                     <tbody>
                     {workflows.map((build, index) => (
-                        <tr key={index} className={build.buildConclusion === "success" ? "success" : "failure"} onClick={() => window.open(build.workflowUrl, "_blank")}>
+                        <tr
+                            key={index}
+                            className={build.buildConclusion === "success" ? "success" : "failure"}
+                            onClick={() => window.open(build.workflowUrl, "_blank")}
+                        >
                             <td>{build.buildConclusion === "success" ? "✔" : "✖"}</td>
                             <td>{build.branchName}</td>
                             <td>{build.runNumber}</td>
@@ -142,7 +217,7 @@ const WorkflowRunsPage: React.FC = () => {
                 </button>
             </div>
             <div className="workflow-page-header">
-                <h1>GitHub Builds Dashboard 📊</h1>
+                <h1>{selectedRepo?.hostPlatform && `${RemoteHostPlatform[selectedRepo.hostPlatform]}`} Builds Dashboard 📊</h1>
                 <p>Retrieve the most recent workflow run results below.</p>
             </div>
 

@@ -68,6 +68,7 @@ builder.Services.AddCors(options =>
     .AddSingleton<IRepositoryIndexService, RepositoryIndexService>()
     .AddSingleton<IShellExecutionService, ShellExecutionService>()
     .AddSingleton<IGitHubService, GitHubService>()
+    .AddSingleton<IGitLabService, GitLabService>()
     .AddSingleton<ISimulationService, SimulationService>()
     .AddEndpointsApiExplorer()
     .AddOpenApiDocument(config =>

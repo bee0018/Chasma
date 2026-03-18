@@ -59,11 +59,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 return false;
             }
 
-            Client = new GitHubClient(new ProductHeaderValue(repoName))
-            {
-                Credentials = new Credentials(token)
-            };
-
+            Client = RemoteHelper.GetGitHubClient(repoName, token);
             NewPullRequest newPullRequest = new(title, headBranch, baseBranch)
             {
                 Body = body
@@ -107,7 +103,7 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 NewIssue newIssue = new(title) { Body = body };
-                Client = new GitHubClient(new ProductHeaderValue(repoName)) { Credentials = new Credentials(token) };
+                Client = RemoteHelper.GetGitHubClient(repoName, token);
                 Task<Issue?> createIssueTask = SendCreateIssueRequest(Client, repoOwner, repoName, newIssue);
                 Issue? issue = createIssueTask.Result;
                 if (issue == null)
@@ -133,8 +129,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             errorMessage = string.Empty;
             workflowRunResults = new();
-            ProductHeaderValue productHeader = new(repoName);
-            Client = new(productHeader) { Credentials = new Credentials(token) };
+            Client = RemoteHelper.GetGitHubClient(repoName, token);
             Task<WorkflowRunsResponse?> workflowRunsResponseTask = GetWorkFlowRuns(Client, repoOwner, repoName);
             WorkflowRunsResponse workFlowRunsResponse = workflowRunsResponseTask.Result;
             if (workFlowRunsResponse == null)

@@ -6,6 +6,7 @@ const sections = [
     { id: "config", title: "Config File (XML)" },
     { id: "api-start", title: "Start / Restart Web API" },
     { id: "github-api", title: "GitHub API Integration" },
+    { id: "gitlab-api", title: "GitLab API Integration" },
     { id: "git-commands", title: "Common Git Commands" },
     { id: "context-menu", title: "Repository Context Menu" },
     { id: "faq", title: "FAQ" },

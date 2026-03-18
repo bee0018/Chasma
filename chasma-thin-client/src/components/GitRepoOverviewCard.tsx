@@ -55,13 +55,26 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
                             className="repo-action"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/workflowruns/${props.repository.name}/${props.repository.owner}`);
+                                navigate(`/builds/${props.repository.id}`);
                             }}
                         >
                             Workflow Runs
                         </button>
                 )}
-
+                {props.user?.permissions
+                    && props.user.permissions.isUsingGitLabApi
+                    && props.repository.hostPlatform === RemoteHostPlatform.GitLab
+                    && (
+                        <button
+                            className="repo-action"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/builds/${props.repository.id}`);
+                            }}
+                        >
+                            Pipeline Jobs
+                        </button>
+                    )}
                 <button
                     className="repo-delete"
                     onClick={(e) => {

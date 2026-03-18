@@ -1,7 +1,7 @@
 ﻿namespace ChasmaWebApi.Data.Objects.Remote;
 
 /// <summary>
-/// Class representing the GitHub workflow status results.
+/// Class representing the remote platform build status results.
 /// </summary>
 public class WorkflowRunResult
 {
