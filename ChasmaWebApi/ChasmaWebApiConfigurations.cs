@@ -53,6 +53,12 @@ namespace ChasmaWebApi
         public string GitLabApiToken { get; set; }
 
         /// <summary>
+        /// Gets or sets the self hosted GitLab url.
+        /// </summary>
+        [XmlElement("selfHostedGitLabUrl")]
+        public string SelfHostedGitLabUrl { get; set; }
+
+        /// <summary>
         /// Gets or sets the Bitbucket API token.
         /// </summary>
         [XmlElement("bitbucketApiToken")]

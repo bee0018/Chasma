@@ -415,6 +415,102 @@
         }
       }
     },
+    "/api/Remote/createGitLabIssue": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_CreateGitLabIssue",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGitLabIssueRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGitLabIssueResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Remote/getGitLabProjectMembers": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_GetGitLabProjectMembers",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetGitLabProjectMembersRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetGitLabProjectMembersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Remote": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_CreateMergeRequest",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMergeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMergeRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryConfiguration/getLocalGitRepositories": {
       "get": {
         "tags": [
@@ -1794,7 +1890,6 @@
             "properties": {
               "results": {
                 "type": "array",
-                "nullable": true,
                 "items": {
                   "$ref": "#/components/schemas/WorkflowRunResult"
                 }
@@ -1809,6 +1904,193 @@
         "properties": {
           "repositoryId": {
             "type": "string"
+          }
+        }
+      },
+      "CreateGitLabIssueResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "$ref": "#/components/schemas/GitLabIssueResult"
+              }
+            }
+          }
+        ]
+      },
+      "GitLabIssueResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "issueId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateGitLabIssueRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "mainAssignee": {
+            "$ref": "#/components/schemas/GitLabProjectMember"
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitLabProjectMember"
+            }
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "confidential": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GitLabProjectMember": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "assigneeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        }
+      },
+      "GetGitLabProjectMembersResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "projectMembers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GitLabProjectMember"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GetGitLabProjectMembersRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateMergeRequestResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mergeRequest": {
+                "$ref": "#/components/schemas/MergeRequestResult"
+              }
+            }
+          }
+        ]
+      },
+      "MergeRequestResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "url": {
+            "type": "string"
+          },
+          "timeStamp": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateMergeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "sourceBranch": {
+            "type": "string"
+          },
+          "targetBranch": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "targetProjectId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assignee": {
+            "$ref": "#/components/schemas/GitLabProjectMember"
+          },
+          "additionalAssignees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitLabProjectMember"
+            }
+          },
+          "reviewers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitLabProjectMember"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "removeSourceBranch": {
+            "type": "boolean"
+          },
+          "squash": {
+            "type": "boolean"
+          },
+          "allowCollaboration": {
+            "type": "boolean",
+            "nullable": true
           }
         }
       },

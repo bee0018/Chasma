@@ -11,4 +11,5 @@
 	<gitHubPullRequestScanIntervalSeconds>25</gitHubPullRequestScanIntervalSeconds>
 	<gitlabApiToken>token</gitlabApiToken>
 	<bitbucketApiToken>token</bitbucketApiToken>
+	<selfHostedGitLabUrl>token</selfHostedGitLabUrl>
 </configurations>

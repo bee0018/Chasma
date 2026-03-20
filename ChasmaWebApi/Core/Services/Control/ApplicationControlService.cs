@@ -258,9 +258,27 @@ namespace ChasmaWebApi.Core.Services.Control
         #region Remote Interactions - GitLab
 
         // <inheritdoc />
-        public bool TryGetPipelineJobResults(string workingDirectory, LocalGitRepository cachedRepo, out List<WorkflowRunResult> buildResults, out string errorMessage)
+        public bool TryGetPipelineJobResults(LocalGitRepository repository, out List<WorkflowRunResult> buildResults, out string errorMessage)
         {
-            return gitLabService.TryGetPipelineJobResults(workingDirectory, cachedRepo, out buildResults, out errorMessage);
+            return gitLabService.TryGetPipelineJobResults(repository, out buildResults, out errorMessage);
+        }
+
+        // <inheritdoc />
+        public bool TryCreateIssue(PreparedGitLabIssue issueCreation, out GitLabIssueResult issue, out string errorMessage)
+        {
+            return gitLabService.TryCreateIssue(issueCreation, out  issue, out errorMessage);
+        }
+
+        // <inheritdoc />
+        public bool TryGetMembers(LocalGitRepository repository, out List<GitLabProjectMember> members, out long projectId, out string errorMessage)
+        {
+            return gitLabService.TryGetUsersInProject(repository, out members, out projectId, out errorMessage);
+        }
+
+        // <inheritdoc />
+        public bool TryCreateMergeRequest(PreparedGitLabMergeRequest mergeRequest, out MergeRequestResult mergeResult, out string errorMessage)
+        {
+            return gitLabService.TryCreateMergeRequest(mergeRequest, out mergeResult, out errorMessage);
         }
 
         #endregion

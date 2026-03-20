@@ -1,7 +1,7 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Remote;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
-using LibGit2Sharp;
+using ChasmaWebApi.Util;
 using NGitLab;
 using NGitLab.Models;
 
@@ -39,18 +39,17 @@ namespace ChasmaWebApi.Core.Services.Remote
         }
 
         // <inheritdoc />
-        public bool TryGetPipelineJobResults(string workingDirectory, LocalGitRepository cachedRepo, out List<WorkflowRunResult> buildResults, out string errorMessage)
+        public bool TryGetPipelineJobResults(LocalGitRepository repository, out List<WorkflowRunResult> buildResults, out string errorMessage)
         {
             errorMessage = string.Empty;
             buildResults = new();
             try
             {
-                using Repository repo = new(workingDirectory);
-                Task<List<Job>?> pipelineTask = GetPipelineJobs(cachedRepo.Owner, cachedRepo.Name);
+                Task<List<Job>?> pipelineTask = GetPipelineJobs(repository.Owner, repository.Name);
                 List<Job>? pipelineJobs = pipelineTask.Result;
                 if (pipelineJobs == null)
                 {
-                    errorMessage = $"Failed to fetch pipeline jobs for {cachedRepo.Name}. Check server logs for more information.";
+                    errorMessage = $"Failed to fetch pipeline jobs for {repository.Name}. Check server logs for more information.";
                     return false;
                 }
 
@@ -83,13 +82,13 @@ namespace ChasmaWebApi.Core.Services.Remote
         }
 
         // <inheritdoc />
-        public bool TryCreateIssue(GitLabIssueCreation issueCreation, out GitLabIssueResult issue, out string errorMessage)
+        public bool TryCreateIssue(PreparedGitLabIssue issueCreation, out GitLabIssueResult issue, out string errorMessage)
         {
             errorMessage = string.Empty;
             issue = null;
             try
             {
-                Task<Issue> responseTask = SendCreateIssueRequest(issueCreation);
+                Task<Issue?> responseTask = SendCreateIssueRequest(issueCreation);
                 Issue gitLabIssue = responseTask.Result;
                 if (gitLabIssue == null)
                 {
@@ -113,15 +112,73 @@ namespace ChasmaWebApi.Core.Services.Remote
             }
         }
 
-        public bool TryGetUsersInProject()
+        // <inheritdoc />
+        public bool TryGetUsersInProject(LocalGitRepository repository, out List<GitLabProjectMember> projectMembers, out long projectId, out string errorMessage)
         {
+            errorMessage = string.Empty;
+            projectMembers = new();
+            projectId = -1;
             try
             {
+                Task<(List<Membership> Members, long ProjectId)?> responseTask = SendGetUsersInProjectRequest(repository.Owner, repository.Name);
+                (List<Membership> Members, long ProjectId)? membershipResult = responseTask.Result;
+                if (membershipResult == null)
+                {
+                    errorMessage = $"Failed to get members in {repository.Name}. Review server logs for more information.";
+                    logger.LogError("Could not get members in {repo}. Sending error response.", repository.Name);
+                    return false;
+                }
 
+                foreach (Membership member in membershipResult.Value.Members)
+                {
+                    GitLabProjectMember projectMember = new()
+                    {
+                        AssigneeId = member.Id,
+                        UserName = member.UserName,
+                        FullName = member.Name,
+                    };
+                    projectMembers.Add(projectMember);
+                }
+
+                projectId = membershipResult.Value.ProjectId;
+                return true;
             }
             catch (Exception e)
             {
-                logger.LogError("");
+                errorMessage = $"Error when trying to get members. Review server logs for more information.";
+                logger.LogError("Error when trying to get members in {repo} project. Error: {error}", repository.Name, e);
+                return false;
+            }
+        }
+
+        // <inheritdoc />
+        public bool TryCreateMergeRequest(PreparedGitLabMergeRequest preparedMergeRequest, out MergeRequestResult mergeResult, out string errorMessage)
+        {
+            mergeResult = null;
+            errorMessage = string.Empty;
+            try
+            {
+                Task<MergeRequest?> responseTask = SendCreateMergeRequest(preparedMergeRequest);
+                MergeRequest? gitLabMergeRequest = responseTask.Result;
+                if (gitLabMergeRequest == null)
+                {
+                    errorMessage = "Failed to create merge request. Review server logs for more information.";
+                    logger.LogError("Could not GitLab merge request. Sending error response.");
+                    return false;
+                }
+
+                mergeResult = new()
+                {
+                    Id = gitLabMergeRequest.Id,
+                    Url = gitLabMergeRequest.WebUrl,
+                    TimeStamp = gitLabMergeRequest.CreatedAt.ToLocalTime().ToString("g"),
+                };
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"Error when trying to create merge request. Review server logs for more information.";
+                logger.LogError("Error when trying to create GitLab merge request in {repo} project. Error: {error}", preparedMergeRequest.RepoName, e);
                 return false;
             }
         }
@@ -138,7 +195,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             try
             {
-                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
                 {
@@ -180,11 +237,11 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// <param name="owner">The owner of the repository.</param>
         /// <param name="repoName">The repository name.</param>
         /// <returns>The list of users in the project member listing.</returns>
-        private async Task<List<GitLabProjectMember>?> SendGetUsersInProjectRequest(string owner, string repoName)
+        private async Task<(List<Membership> Members, long ProjectId)?> SendGetUsersInProjectRequest(string owner, string repoName)
         {
             try
             {
-                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
                 {
@@ -194,18 +251,7 @@ namespace ChasmaWebApi.Core.Services.Remote
 
                 List<GitLabProjectMember> projectMembers = new();
                 List<Membership> members = Client.Members.OfProjectAsync(project.Id, true).ToList();
-                foreach (Membership member in members)
-                {
-                    GitLabProjectMember projectMember = new()
-                    {
-                        AssigneeId = member.Id,
-                        UserName = member.UserName,
-                        FullName = member.Name,
-                    };
-                    projectMembers.Add(projectMember);
-                }
-
-                return projectMembers;
+                return (members, project.Id);
             }
             catch (Exception e)
             {
@@ -219,22 +265,65 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// </summary>
         /// <param name="issue">The issue creation details.</param>
         /// <returns>The newly created issue from GitLab.</returns>
-        private async Task<Issue> SendCreateIssueRequest(GitLabIssueCreation issue)
+        private async Task<Issue?> SendCreateIssueRequest(PreparedGitLabIssue issue)
         {
-            Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken);
-            Project project = await Client.Projects.GetAsync($"{issue.RepoOwner}/{issue.RepoName}");
-            IssueCreate issueRequest = new()
+            try
             {
-                ProjectId = project.Id,
-                AssigneeId = issue.MainAssignee.AssigneeId,
-                AssigneeIds = issue.Contacts.Select(i => i.AssigneeId).ToArray(),
-                Title = issue.Title,
-                Description = issue.Description,
-                Confidential = issue.Confidential,
-                
-            };
-            Issue newIssue = await Client.Issues.CreateAsync(issueRequest);
-            return newIssue;
+                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                Project project = await Client.Projects.GetAsync($"{issue.RepoOwner}/{issue.RepoName}");
+                IssueCreate issueRequest = new()
+                {
+                    ProjectId = project.Id,
+                    AssigneeId = issue.MainAssignee.AssigneeId,
+                    AssigneeIds = issue.Contacts.Select(i => i.AssigneeId).ToArray(),
+                    Title = issue.Title,
+                    Description = issue.Description,
+                    Confidential = issue.Confidential,
+
+                };
+                Issue newIssue = await Client.Issues.CreateAsync(issueRequest);
+                return newIssue;
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Failed to create issue via the GitLab API: {error}", e);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Sends a request to the GitLab API to create a merge request with the specified details.
+        /// </summary>
+        /// <param name="preparedMergeRequest">The merge request outline template.</param>
+        /// <returns>The newly created merge request details from the GitLab API.</returns>
+        private async Task<MergeRequest?> SendCreateMergeRequest(PreparedGitLabMergeRequest preparedMergeRequest)
+        {
+            try
+            {
+                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                Project project = await Client.Projects.GetAsync($"{preparedMergeRequest.RepoOwner}/{preparedMergeRequest.RepoName}");
+                MergeRequestCreate mergeRequestToCreate = new()
+                {
+                    SourceBranch = preparedMergeRequest.SourceBranch,
+                    TargetBranch = preparedMergeRequest.TargetBranch,
+                    Title = preparedMergeRequest.Title,
+                    TargetProjectId = project.Id,
+                    AssigneeId = preparedMergeRequest.Assignee.AssigneeId,
+                    AssigneeIds = preparedMergeRequest.AdditonalAssignees.Select(i => i.AssigneeId).ToArray(),
+                    ReviewerIds = preparedMergeRequest.Reviewers.Select(i => i.AssigneeId).ToArray(),
+                    Description = preparedMergeRequest.Description,
+                    RemoveSourceBranch = preparedMergeRequest.RemoveSourceBranch,
+                    Squash = preparedMergeRequest.Squash,
+                    AllowCollaboration = preparedMergeRequest.AllowCollaboration,
+                };
+                MergeRequest mergeRequest = Client.MergeRequests.Create(mergeRequestToCreate);
+                return mergeRequest;
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Failed to create merge request via the GitLab API: {error}", e);
+                return null;
+            }
         }
 
         #endregion

@@ -1,10 +1,10 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
 using ChasmaWebApi.Data.Objects.Remote;
+using ChasmaWebApi.Util;
 using LibGit2Sharp;
 using Octokit;
 using Branch = LibGit2Sharp.Branch;
-using Credentials = Octokit.Credentials;
 using Repository = LibGit2Sharp.Repository;
 
 namespace ChasmaWebApi.Core.Services.Remote

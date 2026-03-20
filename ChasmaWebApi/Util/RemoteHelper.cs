@@ -1,7 +1,7 @@
 ﻿using NGitLab;
 using Octokit;
 
-namespace ChasmaWebApi.Core.Services.Remote
+namespace ChasmaWebApi.Util
 {
     /// <summary>
     /// Helper class used for aiding in operations with remote hosted platforms.
@@ -28,9 +28,15 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// Gets the GitLab API client.
         /// </summary>
         /// <param name="token">The GitLab API access token.</param>
+        /// <param name="selfHostedUrl">If provided, the self hosted URL of the GitLab instance.</param>
         /// <returns>The GitLab API client.</returns>
-        public static GitLabClient GetGitLabClient(string token)
+        public static GitLabClient GetGitLabClient(string token, string selfHostedUrl = null)
         {
+            if (!string.IsNullOrEmpty(selfHostedUrl))
+            {
+                return new GitLabClient(selfHostedUrl, token);
+            }
+
             return new GitLabClient("https://gitlab.com", token);
         }
     }

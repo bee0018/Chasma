@@ -2,8 +2,9 @@
 {
     /// <summary>
     /// Class representing the issue creation details.
+    /// Note: This will be what the user will fill out and then use this data to be used by the GitLab API.
     /// </summary>
-    public class GitLabIssueCreation
+    public class PreparedGitLabIssue
     {
         /// <summary>
         /// Gets or sets the repository owner.
