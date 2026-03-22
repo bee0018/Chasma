@@ -472,5 +472,55 @@ namespace ChasmaWebApi.Controllers
             response.CommitMessage = commitMessage;
             return Ok(response);
         }
+
+        /// <summary>
+        /// Applies the staging action to the specified repository and its corresponding files.
+        /// </summary>
+        /// <param name="request">The request to stage/unstage multiple file.</param>
+        /// <returns>The updated status elements as a result of the operation.</returns>
+        [HttpPost]
+        [Route("applyBulkStagingAction")]
+        public ActionResult<ApplyBulkStagingActionResponse> ApplyBulkStagingAction([FromBody] ApplyBulkStagingActionRequest request)
+        {
+            ApplyStagingActionResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Null git add request received when trying to apply bulk staging action. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Repository identifier must be populated when applying bulk staging action. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot process request because the repository key is not populated.";
+                return Ok(response);
+            }
+
+            List<string> fileNames = request.FileNames;
+            if (fileNames.Any(string.IsNullOrEmpty))
+            {
+                logger.LogError("Files name must be populated when applying bulk staging action. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot process request because the one of the file names are not populated.";
+                return Ok(response);
+            }
+
+            bool isStaging = request.IsStaging;
+            List<RepositoryStatusElement>? statusElements = applicationControlService.ApplyBulkStagingAction(repoId, fileNames, isStaging);
+            if (statusElements == null)
+            {
+                logger.LogError("Failed to apply staging actions for repo ID: {repoId}. Sending error response.", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to apply staging actions for repo ID: {repoId}. Check server logs for more information.";
+                return Ok(response);
+            }
+
+            response.StatusElements = statusElements;
+            return Ok(response);
+        }
     }
 }

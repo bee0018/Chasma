@@ -6,6 +6,10 @@ using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
 using LibGit2Sharp;
 using System.Diagnostics;
+using Branch = LibGit2Sharp.Branch;
+using Commit = LibGit2Sharp.Commit;
+using Repository = LibGit2Sharp.Repository;
+using Signature = LibGit2Sharp.Signature;
 
 namespace ChasmaWebApi.Core.Services.Git
 {
@@ -111,6 +115,39 @@ namespace ChasmaWebApi.Core.Services.Git
                 PullRequests = remotePullRequests,
             };
             return repositorySummary;
+        }
+
+        // <inheritdoc />
+        public List<RepositoryStatusElement>? ApplyBulkStagingAction(string repoId, IEnumerable<string> fileNames, bool stagingFile)
+        {
+            List<RepositoryStatusElement> statusElements = new();
+            if (!CacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                string paths = string.Join(", ", fileNames);
+                Logger.LogError("Invalid repository key {repoKey} provided to stage the files {paths}.", repoId, paths);
+                return statusElements;
+            }
+
+            using Repository repo = new(workingDirectory);
+            foreach (string fileName in fileNames)
+            {
+                string stagingAction;
+                if (stagingFile)
+                {
+                    stagingAction = "Staged";
+                    Commands.Stage(repo, fileName);
+                }
+                else
+                {
+                    stagingAction = "Unstaged";
+                    Commands.Unstage(repo, fileName);
+                }
+
+                Logger.LogInformation("{action} file {file}", stagingAction, fileName);
+            }
+
+            RepositorySummary summary = GetRepositoryStatus(repoId, string.Empty, string.Empty);
+            return summary?.StatusElements;
         }
 
         // <inheritdoc />

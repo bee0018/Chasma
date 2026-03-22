@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+    ApplyBulkStagingActionRequest,
     ApplyStagingActionRequest,
     GitDiffRequest,
     GitPullRequest,
@@ -124,6 +125,18 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
+
+    /** Gets or sets the selected files for staging. */
+    const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+
+    /** Gets or sets the last selected index for staging files. */
+    const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+
+    /** Gets or sets the list of staged files. */
+    const stagedList = statusElements?.filter(e => e.isStaged) || [];
+
+    /** Gets or sets the list of unstaged files. */
+    const unstagedList = statusElements?.filter(e => !e.isStaged) || [];
 
     /** Gets the selected repository instance. **/
     const selectedRepo = useCacheStore((state) => state.repositories.find(i => i.id === repoId));
@@ -376,6 +389,42 @@ const RepositoryStatusPage: React.FC = () => {
     }
 
     /**
+     * Handles the event when the user wants to handle bulk staging action.
+     * @param isStaging Flag indicating whether the user is staging/unstaging the files.
+     */
+    const handleBulkStagingActionRequest = async (isStaging: boolean) => {
+        const files = Array.from(selectedFiles);
+        if (files.length === 0) return;
+
+        try {
+            const request = new ApplyBulkStagingActionRequest();
+            request.repositoryId = repoId;
+            request.fileNames = files;
+            request.isStaging = isStaging;
+            const response = await statusClient.applyBulkStagingAction(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Bulk staging operation failed!",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+
+            setStatusElements(response.statusElements);
+            setSelectedFiles(new Set());
+            setSelectedFile(null);
+        } catch (e) {
+            console.error(e);
+            setNotification({
+                title: "Error performing bulk staging operation!",
+                message: "Internal server error.",
+                isError: true,
+            });
+        }
+    }
+
+    /**
      * Handles the event when the user clicks a file from the unstaged/staged changes.
      * @param file The file to be selected.
      * @param isStaged Flag indicating whether the file is in the staging area.
@@ -419,10 +468,61 @@ const RepositoryStatusPage: React.FC = () => {
         setSimulatedMergeResults([]);
     }
 
+    /**
+     * Handles the event when the user wants to bulk stage/unstage files.
+     * @param e The mouse event.
+     * @param file The file to stage.
+     * @param index The selected file index.
+     * @param list The list of files in the index.
+     * @param isStaged Flag indicating whether the user is staging/unstaging the file.
+     */
+    const handleMultiSelect = (e: React.MouseEvent, file: RepositoryStatusElement, index: number, list: RepositoryStatusElement[], isStaged: boolean) => {
+        const newSelection = new Set(selectedFiles);
+        if (e.shiftKey && lastSelectedIndex !== null) {
+            // SHIFT → range select
+            const start = Math.min(lastSelectedIndex, index);
+            const end = Math.max(lastSelectedIndex, index);
+            for (let i = start; i <= end; i++) {
+                newSelection.add(list[i].filePath!);
+            }
+        }
+        else if (e.ctrlKey || e.metaKey) {
+            // CTRL / CMD → toggle
+            if (newSelection.has(file.filePath!)) {
+                newSelection.delete(file.filePath!);
+            } else {
+                newSelection.add(file.filePath!);
+            }
+
+            setLastSelectedIndex(index);
+        }
+        else {
+            // Normal click → preserve existing behavior + selection
+            newSelection.clear();
+            newSelection.add(file.filePath!);
+            setLastSelectedIndex(index);
+            setSelectedFile(file);
+            handleGetGitDiffRequest(file, isStaged);
+        }
+
+        setSelectedFiles(newSelection);
+    };
+
     useEffect(() => {
         const closeMenu = () => setContextMenu(null);
         window.addEventListener("click", closeMenu);
         return () => window.removeEventListener("click", closeMenu);
+    }, []);
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setSelectedFiles(new Set());
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
     }, []);
 
     return (
@@ -629,7 +729,22 @@ const RepositoryStatusPage: React.FC = () => {
                                     )}
                                 </div>
                             </div>
-
+                            {selectedFiles.size > 1 && (
+                                        <div className="bulk-actions">
+                                            <button
+                                                className="stage-button stage"
+                                                onClick={() => handleBulkStagingActionRequest(true)}
+                                            >
+                                                Stage Selected ({selectedFiles.size})
+                                            </button>
+                                            <button
+                                                className="stage-button unstage"
+                                                onClick={() => handleBulkStagingActionRequest(false)}
+                                            >
+                                                Unstage Selected ({selectedFiles.size})
+                                            </button>
+                                        </div>
+                                    )}
                             {!isSafeMode &&
                                 <div className="panel-card">
                                     <h2 className="page-description">Staged Changes</h2>
@@ -645,9 +760,12 @@ const RepositoryStatusPage: React.FC = () => {
                                             {statusElements?.filter(e => e.isStaged).map((element, index) => (
                                                 <tr
                                                     key={index}
-                                                    className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
+                                                    className={`
+                                                        ${selectedFile?.filePath === element.filePath ? "selected" : ""}
+                                                        ${selectedFiles.has(element.filePath!) ? "multi-selected" : ""}
+                                                    `}>
                                                     <td
-                                                        onClick={() => handleSelectFile(element, true)}
+                                                        onClick={(e) => handleMultiSelect(e, element, index, stagedList, true)}
                                                         onContextMenu={e => handleContextMenu(e, element)}
                                                     >
                                                         {element.filePath}
@@ -686,9 +804,12 @@ const RepositoryStatusPage: React.FC = () => {
                                             {statusElements?.filter(e => !e.isStaged).map((element, index) => (
                                                 <tr
                                                     key={index}
-                                                    className={selectedFile?.filePath === element.filePath ? "selected" : ""}>
+                                                     className={`
+                                                        ${selectedFile?.filePath === element.filePath ? "selected" : ""}
+                                                        ${selectedFiles.has(element.filePath!) ? "multi-selected" : ""}
+                                                    `}>
                                                     <td
-                                                        onClick={() => handleSelectFile(element, false)}
+                                                        onClick={(e) => handleMultiSelect(e, element, index, unstagedList, false)}
                                                         onContextMenu={e => handleContextMenu(e, element)}
                                                     >
                                                         {element.filePath}

@@ -246,3 +246,17 @@
 .repo-summary-value {
     font-weight: 500;
 }
+
+.multi-selected {
+    background: rgba(34, 211, 238, 0.15);
+}
+
+.status-table tbody tr.multi-selected:hover {
+    background: rgba(34, 211, 238, 0.25);
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
