@@ -473,9 +473,9 @@ namespace ChasmaWebApi.HostedServices
             foreach (RemotePullRequest existingPullRequest in cacheManager.GitLabMergeRequests.Values)
             {
                 string owner = existingPullRequest.RepositoryOwner;
-                string repoOwner = existingPullRequest.RepositoryOwner;
+                string repoName = existingPullRequest.RepositoryName;
                 long iid = existingPullRequest.Number;
-                RemotePullRequest? pr = await GetMergeRequestByIidNumberAsync(owner, repoOwner, iid, cancellationToken);
+                RemotePullRequest? pr = await GetMergeRequestByIidNumberAsync(owner, repoName, iid, cancellationToken);
                 if (pr == null)
                 {
                     continue;
@@ -527,7 +527,7 @@ namespace ChasmaWebApi.HostedServices
                     RepositoryOwner = owner,
                     BranchName = mergeRequest.SourceBranch,
                     ActiveState = mergeRequest.State,
-                    MergeableState = mergeRequest.DetailedMergeStatus.StringValue,
+                    MergeableState = mergeRequest.MergeStatus,
                     CreatedAt = mergeRequest.CreatedAt.ToLocalTime().ToString("g"),
                     MergedAt = mergeRequest.MergedAt.HasValue ? mergeRequest.MergedAt.Value.ToLocalTime().ToString("g") : null,
                     Merged = mergeRequest.MergedAt.HasValue,

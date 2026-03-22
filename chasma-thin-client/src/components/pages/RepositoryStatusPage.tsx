@@ -605,8 +605,7 @@ const RepositoryStatusPage: React.FC = () => {
                                                     {pr.activeState === "open" ? "Active" : "Inactive"}
                                                 </span>
                                                 </div>
-                                                {pr.mergeableState &&
-                                                    <div className="repo-summary-item">
+                                                <div className="repo-summary-item">
                                                     <span className="repo-summary-label">Mergeable State:</span>
                                                     <span
                                                         className="repo-summary-value"
@@ -615,7 +614,7 @@ const RepositoryStatusPage: React.FC = () => {
                                                         {capitalizeFirst(pr.mergeableState)}
                                                     </span>
                                                 </div>
-                                                }
+
                                                 <div className="repo-summary-item">
                                                     <span className="repo-summary-label">Created at:</span>
                                                     <span className="repo-summary-value">{pr.createdAt}</span>
