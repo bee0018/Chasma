@@ -360,24 +360,28 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                     </p>
                 }
                 </header>
-                <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
-                    <Checkbox
-                        label={"Remove source banch"}
-                        onBoxChecked={setIsRemoveSourceBranch}
-                        checked={isRemoveSourceBranch}
-                        tooltip="Remove the source branch once it is successfully merged into the destination branch." />
-                    <Checkbox
-                        label={"Squash"}
-                        onBoxChecked={setIsSquashing}
-                        checked={isSquashing}
-                        tooltip="Squash all commits in the source branch when merging into the destination branch." />
-                    <Checkbox
-                        label={"Allow Collaboration"}
-                        onBoxChecked={setIsAllowingCollaboration}
-                        checked={isAllowingCollaboration}
-                        tooltip="Other people can push commits directly to your merge request's source branch." />
-                </div>
-                <br/>
+                {props.repository.hostPlatform === RemoteHostPlatform.GitLab &&
+                    <>
+                    <div style={{display: "flex", flexDirection: "column", gap: "8px"}}>
+                        <Checkbox
+                            label={"Remove source banch"}
+                            onBoxChecked={setIsRemoveSourceBranch}
+                            checked={isRemoveSourceBranch}
+                            tooltip="Remove the source branch once it is successfully merged into the destination branch." />
+                        <Checkbox
+                            label={"Squash"}
+                            onBoxChecked={setIsSquashing}
+                            checked={isSquashing}
+                            tooltip="Squash all commits in the source branch when merging into the destination branch." />
+                        <Checkbox
+                            label={"Allow Collaboration"}
+                            onBoxChecked={setIsAllowingCollaboration}
+                            checked={isAllowingCollaboration}
+                            tooltip="Other people can push commits directly to your merge request's source branch." />
+                    </div>
+                    <br/>
+                    </>
+                }
                 {branchesList && branchesList.length > 0 && (
                     <div>
                         <label style={{float: "left"}}>Choose working branch:</label>
