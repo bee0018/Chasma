@@ -28,5 +28,10 @@ public interface ICacheManager
     /// <summary>
     /// Gets the mapping of GitHub pull request numbers to pull request details.
     /// </summary>
-    ConcurrentDictionary<int, GitHubPullRequest> GitHubPullRequests { get; }
+    ConcurrentDictionary<long, RemotePullRequest> GitHubPullRequests { get; }
+
+    /// <summary>
+    /// Gets the mapping of GitLab merge request numbers to merge request details.
+    /// </summary>
+    ConcurrentDictionary<long, RemotePullRequest> GitLabMergeRequests { get; }
 }

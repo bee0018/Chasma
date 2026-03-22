@@ -1,4 +1,6 @@
-﻿namespace ChasmaWebApi.Data.Responses.Status
+﻿using ChasmaWebApi.Data.Objects.Application;
+
+namespace ChasmaWebApi.Data.Responses.Status
 {
     /// <summary>
     /// Class representing the components of a response to a login request.
@@ -6,18 +8,8 @@
     public class LoginResponse : ResponseBase
     {
         /// <summary>
-        /// Gets or sets the username of the logged in user.
+        /// Gets or sets the logged in user.
         /// </summary>
-        public string UserName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the user identifier.
-        /// </summary>
-        public int UserId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the email of the logged in user.
-        /// </summary>
-        public string Email { get; set; }
+        public ApplicationUser User { get; set; }
     }
 }

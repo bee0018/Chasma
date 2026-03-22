@@ -13,6 +13,7 @@ import HelpFrequentlyAskedQuestionsPage from "./components/pages/help/HelpFreque
 import HelpRepoContextMenuPage from "./components/pages/help/HelpRepoContextMenuPage";
 import HelpGitHubApiIntegrationsPage from "./components/pages/help/HelpGitHubApiIntegrationsPage";
 import HelpCommonGitCommandsPage from "./components/pages/help/HelpCommonGitCommandsPage";
+import HelpGitLabApiIntegrationPage from "./components/pages/help/HelpGitLabApiIntegrationPage";
 
 function App() {
     return <div>
@@ -27,10 +28,11 @@ function App() {
                     <Route path="faq" element={<HelpFrequentlyAskedQuestionsPage />} />
                     <Route path="context-menu" element={<HelpRepoContextMenuPage />} />
                     <Route path="github-api" element={<HelpGitHubApiIntegrationsPage />} />
+                    <Route path="gitlab-api" element={<HelpGitLabApiIntegrationPage />} />
                     <Route path="git-commands" element={<HelpCommonGitCommandsPage />} />
                 </Route>
                 <Route path="/status/:repoName/:repoId" element={<RepositoryStatusPage />} />
-                <Route path="/workflowruns/:repoName/:repoOwner" element={<WorkflowRunsPage />} />
+                <Route path="/builds/:repoId" element={<WorkflowRunsPage />} />
             </Routes>
         </BrowserRouter>
     </div>;

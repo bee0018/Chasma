@@ -1,6 +1,6 @@
 ﻿using ChasmaWebApi.Data.Objects.Remote;
 
-namespace ChasmaWebApi.Data.Responses.Status;
+namespace ChasmaWebApi.Data.Responses.Remote;
 
 /// <summary>
 /// Class representing the details of the GitHub Workflow runs.

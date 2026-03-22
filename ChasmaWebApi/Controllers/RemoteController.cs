@@ -2,10 +2,8 @@
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
-using ChasmaWebApi.Data.Requests.Configuration;
-using ChasmaWebApi.Data.Requests.Status;
-using ChasmaWebApi.Data.Responses.Configuration;
-using ChasmaWebApi.Data.Responses.Status;
+using ChasmaWebApi.Data.Requests.Remote;
+using ChasmaWebApi.Data.Responses.Remote;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -36,6 +34,13 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         private readonly ChasmaWebApiConfigurations webApiConfigurations;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RemoteController"/> class.
+        /// </summary>
+        /// <param name="log">The internal logger.</param>
+        /// <param name="controlService">The application orchestrator.</param>
+        /// <param name="apiConfig">The API configurations.</param>
+        /// <param name="apiCacheManager">The internal API cache manager.</param>
         public RemoteController(ILogger<RemoteController> log, IApplicationControlService controlService, ChasmaWebApiConfigurations apiConfig, ICacheManager apiCacheManager)
         {
             logger = log;
@@ -43,6 +48,8 @@ namespace ChasmaWebApi.Controllers
             webApiConfigurations = apiConfig;
             cacheManager = apiCacheManager;
         }
+
+        #region GitHub
 
         /// <summary>
         /// Gets the workflow results via the GitHub API.
@@ -301,5 +308,305 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
         }
+
+        #endregion
+
+        #region GitLab
+
+        /// <summary>
+        /// Gets the pipeline jobs for the specific repository.
+        /// </summary>
+        /// <param name="request">The request to get pipeline jobs.</param>
+        /// <returns>The response to getting the pipeline jobs.</returns>
+        [HttpPost]
+        [Route("getPipelineJobs")]
+        public ActionResult<GetPipelineJobsResponse> GetPipelineJobs([FromBody] GetPipelineJobsRequest request)
+        {
+            GetPipelineJobsResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Failed to get pipeline jobs because the request was null. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request is null. Cannot get pipeline builds.";
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Failed to get pipeline jobs because the repository identifier is empty. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier was empty. Cannot get pipeline builds.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Failed to get pipeline jobs because the repository cannot be found. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository cannot be found in cache. Cannot get pipeline builds.";
+                return Ok(response);
+            }
+
+            bool resultsRetrieved = applicationControlService.TryGetPipelineJobResults(repository, out List<WorkflowRunResult> buildResults, out string errorMessage);
+            if (!resultsRetrieved)
+            {
+                logger.LogError("Failed to get pipeline jobs {error}", errorMessage);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = errorMessage;
+                return Ok(response);
+            }
+
+            response.Results = buildResults;
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Creates an issue on GitLab in the specified repository.
+        /// </summary>
+        /// <param name="request">Request containing details to create a GitLab issue.</param>
+        /// <returns>GitLab issue response if successful.</returns>
+        [HttpPost]
+        [Route("createGitLabIssue")]
+        public ActionResult<CreateGitLabIssueResponse> CreateGitLabIssue([FromBody] CreateGitLabIssueRequest request)
+        {
+            string requestName = nameof(CreateGitLabIssueRequest);
+            CreateGitLabIssueResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Could not create GitLab issue because {request} was null", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(request.Title))
+            {
+                logger.LogError("Could not create GitLab issue because {request} title was null or empty", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Title must be populated.";
+                return Ok(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Could not create GitLab issue because {request}'s repository identifier null or empty.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository must be populated.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Could not create GitLab issue because repo identifier {id} does not have a matching repository in cache", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Title must be populated.";
+                return Ok(response);
+            }
+
+            PreparedGitLabIssue outline = new()
+            {
+                RepoOwner = repository.Owner,
+                RepoName = repository.Name,
+                MainAssignee = request.MainAssignee,
+                Contacts = request.Contacts,
+                Title = request.Title,
+                Description = request.Description,
+                Confidential = request.Confidential,
+            };
+            try
+            {
+                if (!applicationControlService.TryCreateIssue(outline, out GitLabIssueResult issue, out string errorMessage))
+                {
+                    logger.LogError("Failed to create GitLab issue for {repo} because: {error}", repository.Name, errorMessage);
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = errorMessage;
+                    return Ok(response);
+                }
+
+                logger.LogInformation("Successfully created GitLab issue for {repo} with number {number}", repository.Name, issue.IssueId);
+                response.Issue = issue;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Cannot create Gitlab issue because of the following exception: {message}", ex.Message);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Exception occurred when creating GitLab issue. Check server logs for more information.";
+                return Ok(response);
+            }
+        }
+
+        /// <summary>
+        /// Gets the members of the specified repository.
+        /// </summary>
+        /// <param name="request">The request to get members of a repository.</param>
+        /// <returns>The response containing project members of a repository.</returns>
+        [HttpPost]
+        [Route("getGitLabProjectMembers")]
+        public ActionResult<GetGitLabProjectMembersResponse> GetGitLabProjectMembers([FromBody] GetGitLabProjectMembersRequest request)
+        {
+            string requestName = nameof(GetGitLabProjectMembersRequest);
+            GetGitLabProjectMembersResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Could not get GitLab project members because {request} was null", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Could not get GitLab project members because {request}'s repository identifier null or empty", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository must be populated.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Could not get project members because the repo identifier {id} does not have a matching repository in cache", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository does not exist in cache.";
+                return Ok(response);
+            }
+
+            try
+            {
+                if (!applicationControlService.TryGetMembers(repository, out List<GitLabProjectMember> projectMembers, out long projectId, out string errorMessage))
+                {
+                    logger.LogError("Failed to get GitLab project members for {repo} because: {error}", repository.Name, errorMessage);
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = errorMessage;
+                    return Ok(response);
+                }
+
+                logger.LogInformation("Successfully retrieved members for {repo}.", repository.Name);
+                response.ProjectMembers = projectMembers;
+                response.ProjectId = projectId;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Could not get project members because of the following exception: {message}", ex.Message);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Exception occurred when getting project members. Check server logs for more information.";
+                return Ok(response);
+            }
+        }
+
+        /// <summary>
+        /// Creates a merge request via the GitLab API.
+        /// </summary>
+        /// <param name="request">Request to create a merge request.</param>
+        /// <returns>Response to creating a merge request from GitLab API.</returns>
+        public ActionResult<CreateMergeRequestResponse> CreateMergeRequest([FromBody] CreateMergeRequest request)
+        {
+            string requestName = nameof(CreateMergeRequest);
+            CreateMergeRequestResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Could not create GitLab merge request because {request} was null", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Could not create GitLab merge request because {request}'s repository identifier null or empty.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository must be populated.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Could not create GitLab merge request because the repository cannot be found. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository cannot be found in cache. Cannot creat merge request.";
+                return Ok(response);
+            }
+
+            string sourceBranch = request.SourceBranch;
+            if (string.IsNullOrEmpty(sourceBranch))
+            {
+                logger.LogError("Could not create GitLab merge request because {request}'s source branch null or empty.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Source branch must be populated.";
+                return Ok(response);
+            }
+
+            string targeBranch = request.TargetBranch;
+            if (string.IsNullOrEmpty(targeBranch))
+            {
+                logger.LogError("Could not create GitLab merge request because {request}'s target branch null or empty.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Target branch must be populated.";
+                return Ok(response);
+            }
+
+            string title = request.Title;
+            if (string.IsNullOrEmpty(title))
+            {
+                logger.LogError("Could not create GitLab merge request because {request}'s merge request title null or empty.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Merge request title must be populated.";
+                return Ok(response);
+            }
+
+            long? projectId = request.TargetProjectId;
+            if (projectId == null)
+            {
+                logger.LogError("Could not create GitLab merge request because {request}'s target project was null.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Project must be selected.";
+                return Ok(response);
+            }
+
+            try
+            {
+                PreparedGitLabMergeRequest preparedRequest = new()
+                {
+                    RepoOwner = repository.Owner,
+                    RepoName = repository.Name,
+                    SourceBranch = sourceBranch,
+                    TargetBranch = targeBranch,
+                    Title = title,
+                    TargetProjectId = projectId,
+                    Assignee = request.Assignee,
+                    AdditonalAssignees = request.AdditionalAssignees,
+                    Reviewers = request.Reviewers,
+                    Description = request.Description,
+                    RemoveSourceBranch = request.RemoveSourceBranch,
+                    Squash = request.Squash,
+                    AllowCollaboration = request.AllowCollaboration,
+                };
+                if (!applicationControlService.TryCreateMergeRequest(preparedRequest, out MergeRequestResult mergeResult, out string errorMessage))
+                {
+                    logger.LogError("Failed to create GitLab merge request because {error}. Sending error response.", errorMessage);
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = errorMessage;
+                    return Ok(response);
+                }
+
+                logger.LogInformation("Successfully created merge result with number: {number}", mergeResult.Id);
+                response.MergeRequest = mergeResult;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Exception creating GitLab merge request because {error}. Sending error response.", ex);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Error creating merge request. Review server logs for more information.";
+                return Ok(response);
+            }
+        }
+
+        #endregion
     }
 }

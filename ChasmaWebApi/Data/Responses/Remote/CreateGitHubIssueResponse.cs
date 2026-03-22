@@ -1,4 +1,4 @@
-﻿namespace ChasmaWebApi.Data.Responses.Configuration
+﻿namespace ChasmaWebApi.Data.Responses.Remote
 {
     /// <summary>
     /// Class representing the details of the GitHub issue.

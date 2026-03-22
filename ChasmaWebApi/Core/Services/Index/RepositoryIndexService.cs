@@ -1,6 +1,8 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Index;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Util;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Services.Index
@@ -86,6 +88,7 @@ namespace ChasmaWebApi.Core.Services.Index
                     continue;
                 }
 
+                RemoteHostPlatform platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
                 LocalGitRepository localRepo = new()
                 {
                     Id = repoCacheKey,
@@ -93,6 +96,7 @@ namespace ChasmaWebApi.Core.Services.Index
                     Name = repositoryName,
                     Owner = repositoryOwner,
                     Url = pushUrl,
+                    HostPlatform = platform,
                 };
 
                 // Multiple instances of the same repository are allowed, but they must have different identifiers and working directories.
@@ -230,6 +234,7 @@ namespace ChasmaWebApi.Core.Services.Index
                 return false;
             }
 
+            RemoteHostPlatform platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
             string repoCacheKey = Guid.NewGuid().ToString();
             localGitRepository = new()
             {
@@ -238,6 +243,7 @@ namespace ChasmaWebApi.Core.Services.Index
                 Name = repositoryName,
                 Owner = repositoryOwner,
                 Url = pushUrl,
+                HostPlatform = platform,
             };
             CacheManager.WorkingDirectories.TryAdd(localGitRepository.Id, repoPath);
             CacheManager.Repositories.TryAdd(localGitRepository.Id, localGitRepository);

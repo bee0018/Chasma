@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ChasmaWebApi.Data.Objects.Application;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ChasmaWebApi.Data.Models
@@ -45,5 +46,11 @@ namespace ChasmaWebApi.Data.Models
         /// </summary>
         [Column("is_ignored")]
         public bool IsIgnored { get; set; }
+
+        /// <summary>
+        /// Gets or sets the remote host platform.
+        /// </summary>
+        [Column("remote_host_platform")]
+        public RemoteHostPlatform HostPlatform { get; set; }
     }
 }

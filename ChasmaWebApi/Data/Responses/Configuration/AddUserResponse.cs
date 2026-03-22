@@ -1,4 +1,6 @@
-﻿namespace ChasmaWebApi.Data.Responses.Configuration
+﻿using ChasmaWebApi.Data.Objects.Application;
+
+namespace ChasmaWebApi.Data.Responses.Configuration
 {
     /// <summary>
     /// Class representing the components of a response to adding a user.
@@ -6,18 +8,8 @@
     public class AddUserResponse : ResponseBase
     {
         /// <summary>
-        /// Gets or sets the username of the newly added user.
+        /// Gets or sets the newly added user.
         /// </summary>
-        public string UserName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the identifier of the newly added user.
-        /// </summary>
-        public int UserId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the email of the newly added user.
-        /// </summary>
-        public string Email { get; set; }
+        public ApplicationUser User { get; set; }
     }
 }

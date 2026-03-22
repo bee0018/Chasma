@@ -215,7 +215,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             <div>
                 <div>
                     <h1>Manage Git. Effortlessly.</h1>
-                    <p>{`${user?.username}, manage any of the registered repositories found on your filesystem.`}</p>
+                    <p>{`${user?.userName}, manage any of the registered repositories found on your filesystem.`}</p>
                 </div>
 
                 {notification && (
@@ -237,7 +237,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                                 url={`/status/${repo.name}/${repo.id}`}
                                 onDelete={handleRepoDelete}
                                 onContextMenu={(e) => handleContextMenu(e, repo)}
-                            />
+                                user={user} />
                         ))
                     )}
 

@@ -1,5 +1,4 @@
-﻿using ChasmaWebApi.Data.Objects;
-using ChasmaWebApi.Util;
+﻿using ChasmaWebApi.Util;
 using System.Xml.Serialization;
 
 namespace ChasmaWebApi
@@ -33,7 +32,7 @@ namespace ChasmaWebApi
         /// </summary>
         [XmlElement("githubApiToken")]
         public string GitHubApiToken { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the maximum number of workflows to report to the client.
         /// </summary>
@@ -45,6 +44,30 @@ namespace ChasmaWebApi
         /// </summary>
         [XmlElement("gitHubPullRequestScanIntervalSeconds")]
         public int GitHubPullRequestScanIntervalSeconds { get; set; } = 45;
+
+        /// <summary>
+        /// Gets or sets the GitLab API token.
+        /// </summary>
+        [XmlElement("gitlabApiToken")]
+        public string GitLabApiToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets the self hosted GitLab url.
+        /// </summary>
+        [XmlElement("selfHostedGitLabUrl")]
+        public string SelfHostedGitLabUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the interval in seconds at which GitLab merge requests are scanned for updates.
+        /// </summary>
+        [XmlElement("gitLabMergeRequestScanIntervalSeconds")]
+        public int GitLabMergeRequestScanIntervalSeconds { get; set; } = 45;
+
+        /// <summary>
+        /// Gets or sets the Bitbucket API token.
+        /// </summary>
+        [XmlElement("bitbucketApiToken")]
+        public string BitbucketApiToken { get; set; }
 
         /// <summary>
         /// Gets the connection string in the format that is expected of SQLite3 database connections.

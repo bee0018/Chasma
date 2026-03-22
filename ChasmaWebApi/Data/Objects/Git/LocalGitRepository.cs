@@ -1,4 +1,4 @@
-﻿using LibGit2Sharp;
+﻿using ChasmaWebApi.Data.Objects.Application;
 
 namespace ChasmaWebApi.Data.Objects.Git;
 
@@ -36,4 +36,9 @@ public class LocalGitRepository
     /// Gets or sets a value indicating whether the repository is being ignored.
     /// </summary>
     public bool IsIgnored { get; set; }
+
+    /// <summary>
+    /// Gets or sets the remote host platform.
+    /// </summary>
+    public RemoteHostPlatform HostPlatform { get; set; }
 }

@@ -22,6 +22,10 @@ const HelpConfigXmlPage: React.FC = () => (
 \t<githubApiToken>token</githubApiToken>
 \t<workflowRunReportThreshold>30</workflowRunReportThreshold>
 \t<gitHubPullRequestScanIntervalSeconds>20</gitHubPullRequestScanIntervalSeconds>
+\t<gitlabApiToken>token</gitlabApiToken>
+\t<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
+\t<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
+\t<bitbucketApiToken>token</bitbucketApiToken>
 </configurations>`}
                     </pre>
         <h3 className="help-subtitle">Attributes</h3>
@@ -83,6 +87,26 @@ const HelpConfigXmlPage: React.FC = () => (
             </div>
             <p>Defines the interval in seconds at which GitHub pull requests are scanned for updates.</p>
             <p className="xml-meta">Default: <code>25</code></p>
+        </div>
+
+        <div className="xml-attr">
+            <div className="xml-attr-header">
+                <span className="xml-name">gitlabApiToken</span>
+                <span className="xml-type">string</span>
+                <span className="xml-optional">optional</span>
+            </div>
+            <p>Defines the GitLab API token that is used for access and performing operations with the NGitLab development package.</p>
+            <p className="xml-meta">Default: none</p>
+        </div>
+
+        <div className="xml-attr">
+            <div className="xml-attr-header">
+                <span className="xml-name">bitbucketApiToken</span>
+                <span className="xml-type">string</span>
+                <span className="xml-optional">optional</span>
+            </div>
+            <p>Defines the GitLab API token that is used for access and performing operations with the Atlassian.Net SDK development package.</p>
+            <p className="xml-meta">Default: none</p>
         </div>
     </section>
 );

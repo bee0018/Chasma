@@ -4,7 +4,6 @@ import ChasmaLogo from "../logos/ChasmaLogo";
 import NotificationModal from "../modals/NotificationModal";
 import {LoginRequest} from "../../API/ChasmaWebApiClient";
 import {useCacheStore} from "../../managers/CacheManager";
-import {User} from "../types/CustomTypes";
 import {userClient} from "../../managers/ApiClientManager";
 
 /**
@@ -61,12 +60,7 @@ const LoginPage: React.FC = () => {
                 return;
             }
 
-            const loggedInUser: User = {
-                userId: response.userId,
-                username: response.userName,
-                email: response.email,
-            }
-            useCacheStore.getState().setUser(loggedInUser);
+            useCacheStore.getState().setUser(response.user);
             navigate('/home');
         } catch (e) {
             console.error(e);

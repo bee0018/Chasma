@@ -3,7 +3,6 @@ import {Link, useNavigate} from 'react-router-dom';
 import ChasmaLogo from "../logos/ChasmaLogo";
 import {AddUserRequest} from "../../API/ChasmaWebApiClient";
 import NotificationModal from "../modals/NotificationModal";
-import {User} from "../types/CustomTypes";
 import {useCacheStore} from "../../managers/CacheManager";
 import {userClient} from "../../managers/ApiClientManager";
 
@@ -70,7 +69,7 @@ const RegisterPage: React.FC = () => {
             addUserRequest.password = password;
             addUserRequest.email = email;
             const response = await userClient.addUserAccount(addUserRequest);
-            if (response.isErrorResponse) {
+            if (response.isErrorResponse || response.user === undefined) {
                 setNotification({
                     title: "Could not add user!",
                     message: response.errorMessage,
@@ -81,15 +80,11 @@ const RegisterPage: React.FC = () => {
 
             setNotification({
                 title: `Successfully added to the system!`,
-                message: `Welcome to Chasma Git Manager, ${response.userName}.`,
+                message: `Welcome to Chasma Git Manager, ${response.user.userName}.`,
                 isError: response.isErrorResponse,
             });
-            const loggedInUser: User = {
-                userId: response.userId,
-                username: response.userName,
-                email: response.email,
-            }
-            useCacheStore.getState().setUser(loggedInUser);
+
+            useCacheStore.getState().setUser(response.user);
             navigate('/home');
         } catch (e) {
             console.error(e);
