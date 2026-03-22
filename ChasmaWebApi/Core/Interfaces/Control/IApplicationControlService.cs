@@ -288,5 +288,42 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="entries">The repository entries.</param>
         /// <returns>The list of simulated merge results.</returns>
         List<SimulatedMergeResult> PerformMergeBranchDryRun(IEnumerable<MergeSimulationEntry> entries);
+
+        /// <summary>
+        /// Tries to get the pipeline build results.
+        /// </summary>
+        /// <param name="cachedRepo">The repository in cache.</param>
+        /// <param name="buildResults">The build results.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the pipeline jobs were retrieved; false otherwise.</returns>
+        public bool TryGetPipelineJobResults(LocalGitRepository cachedRepo, out List<WorkflowRunResult> buildResults, out string errorMessage);
+
+        /// <summary>
+        /// Tries to create a GitLab issue for the specified repository.
+        /// </summary>
+        /// <param name="issueCreation">The issue creation details.</param>
+        /// <param name="issue">The newly created repository issue.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the GitLab issue was successfully created; false otherwise.</returns>
+        bool TryCreateIssue(PreparedGitLabIssue issueCreation, out GitLabIssueResult issue, out string errorMessage);
+
+        /// <summary>
+        /// Tries to get the members that have access to the repository.
+        /// </summary>
+        /// <param name="repository">The repository in cache.</param>
+        /// <param name="members">The members having access to the repository.</param>
+        /// <param name="projectId">The project identifier that the members belong to.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the members were retrieved; false otherwise.</returns>
+        bool TryGetMembers(LocalGitRepository repository, out List<GitLabProjectMember> members, out long projectId, out string errorMessage);
+
+        /// <summary>
+        /// Tries to create a merge request in the specified repository.
+        /// </summary>
+        /// <param name="mergeRequest">The merge request outline to create.</param>
+        /// <param name="mergeResult">The newly created merge request.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the merge request was created; false otherwise.</returns>
+        bool TryCreateMergeRequest(PreparedGitLabMergeRequest mergeRequest, out MergeRequestResult mergeResult, out string errorMessage);
     }
 }

@@ -54,6 +54,11 @@ namespace ChasmaWebApi.Core.Services.Control
         private readonly ISimulationService simulationService;
 
         /// <summary>
+        /// The GitLab service, responsible for interacting with the GitLab API.
+        /// </summary>
+        private readonly IGitLabService gitLabService;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationControlService"/> class with the specified dependencies.
         /// </summary>
         /// <param name="repoIndexService">The repository index service.</param>
@@ -62,7 +67,9 @@ namespace ChasmaWebApi.Core.Services.Control
         /// <param name="shellService">The shell service.</param>
         /// <param name="stashService">The stash management service.</param>
         /// <param name="gitHubRemoteService">The GitHub remote repository management service.</param>
-        public ApplicationControlService(IRepositoryIndexService repoIndexService, IGitRepositoryService gitRepoService, IGitBranchService branchService, IShellExecutionService shellService, IGitStashService stashService, IGitHubService gitHubRemoteService, ISimulationService simService)
+        /// <param name="simService">The git operation simulation service.</param>
+        /// <param name="gitlabService">The GitLab remote repository management service.</param>
+        public ApplicationControlService(IRepositoryIndexService repoIndexService, IGitRepositoryService gitRepoService, IGitBranchService branchService, IShellExecutionService shellService, IGitStashService stashService, IGitHubService gitHubRemoteService, ISimulationService simService, IGitLabService gitlabService)
         {
             repositoryIndexService = repoIndexService;
             gitRepositoryService = gitRepoService;
@@ -71,6 +78,7 @@ namespace ChasmaWebApi.Core.Services.Control
             gitStashService = stashService;
             gitHubService = gitHubRemoteService;
             simulationService = simService;
+            gitLabService = gitlabService;
         }
 
         #region Shell Interactions 
@@ -243,6 +251,34 @@ namespace ChasmaWebApi.Core.Services.Control
         public bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage)
         {
             return gitHubService.TryCreateIssue(repoName, repoOwner, title, body, token, out issueId, out issueUrl, out errorMessage);
+        }
+
+        #endregion
+
+        #region Remote Interactions - GitLab
+
+        // <inheritdoc />
+        public bool TryGetPipelineJobResults(LocalGitRepository repository, out List<WorkflowRunResult> buildResults, out string errorMessage)
+        {
+            return gitLabService.TryGetPipelineJobResults(repository, out buildResults, out errorMessage);
+        }
+
+        // <inheritdoc />
+        public bool TryCreateIssue(PreparedGitLabIssue issueCreation, out GitLabIssueResult issue, out string errorMessage)
+        {
+            return gitLabService.TryCreateIssue(issueCreation, out  issue, out errorMessage);
+        }
+
+        // <inheritdoc />
+        public bool TryGetMembers(LocalGitRepository repository, out List<GitLabProjectMember> members, out long projectId, out string errorMessage)
+        {
+            return gitLabService.TryGetUsersInProject(repository, out members, out projectId, out errorMessage);
+        }
+
+        // <inheritdoc />
+        public bool TryCreateMergeRequest(PreparedGitLabMergeRequest mergeRequest, out MergeRequestResult mergeResult, out string errorMessage)
+        {
+            return gitLabService.TryCreateMergeRequest(mergeRequest, out mergeResult, out errorMessage);
         }
 
         #endregion

@@ -104,7 +104,7 @@ const Dashboard: React.FC = () => {
             <aside className="sidebar">
                 <div className="sidebar-profile">
                     <span className="profile-icon">👤</span>
-                    <span className="username">{user?.username}</span>
+                    <span className="username">{user?.userName}</span>
                 </div>
                 <div
                     className={`tab ${activeTab === "home" ? "active" : ""}`}

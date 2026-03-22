@@ -1,10 +1,15 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
+using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
+using NGitLab;
+using NGitLab.Models;
 using Octokit;
+using Project = NGitLab.Models.Project;
 
 namespace ChasmaWebApi.HostedServices
 {
@@ -40,12 +45,22 @@ namespace ChasmaWebApi.HostedServices
         /// <summary>
         /// The GitHub API client.
         /// </summary>
-        private GitHubClient Client { get; set; }
+        private GitHubClient GitHubClient { get; set; }
+
+        /// <summary>
+        /// The GitLab API client.
+        /// </summary>
+        private GitLabClient GitLabClient { get; set; }
 
         /// <summary>
         /// The timer used to poll for GitHub pull request updates.
         /// </summary>
         private PeriodicTimer PullRequestPollTimer { get; set; }
+
+        /// <summary>
+        /// The timer used to poll for GitLab merge request updates.
+        /// </summary>
+        private PeriodicTimer MergeRequestPollTimer {  set; get; }
 
         // <inheritdoc/>
         public Task StartAsync(CancellationToken cancellationToken)
@@ -62,7 +77,9 @@ namespace ChasmaWebApi.HostedServices
             cacheManager.Repositories.Clear();
             cacheManager.Users.Clear();
             cacheManager.GitHubPullRequests.Clear();
+            cacheManager.GitLabMergeRequests.Clear();
             PullRequestPollTimer?.Dispose();
+            MergeRequestPollTimer?.Dispose();
             logger.LogInformation("Cache cleared successfully.");
             return Task.CompletedTask;
         }
@@ -88,6 +105,7 @@ namespace ChasmaWebApi.HostedServices
                     Owner = repoModel.Owner,
                     Url = repoModel.Url,
                     IsIgnored = repoModel.IsIgnored,
+                    HostPlatform = repoModel.HostPlatform,
                 };
                 cacheManager.Repositories.TryAdd(repository.Id, repository);
             }
@@ -134,16 +152,41 @@ namespace ChasmaWebApi.HostedServices
             if (string.IsNullOrEmpty(configurations.GitHubApiToken))
             {
                 logger.LogWarning("GitHub API token is not provided. Skipping GitHub network cache initialization.");
-                return;
+            }
+            else
+            {
+                await PopulateGitHubPullRequestCacheAsync(cancellationToken);
             }
 
+            if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+            {
+                logger.LogWarning("GitLab API token is not provided. Skipping GitHub network cache initialization.");
+            }
+            else
+            {
+                await GetGitLabMergeRequestsAsync(cancellationToken);
+            }
+        }
+
+        #region GitHub
+
+        /// <summary>
+        /// Populates the GitHub Pull Request cache.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The task of populating the GitHub pull request cache.</returns>
+        private async Task PopulateGitHubPullRequestCacheAsync(CancellationToken cancellationToken)
+        {
+            logger.LogInformation("Beginning Git network initialization using GitHub API.");
             try
             {
-                foreach (LocalGitRepository repository in cacheManager.Repositories.Values)
+                List<LocalGitRepository> gitHubRepositories = cacheManager.Repositories.Values
+                    .Where(i => i.HostPlatform == RemoteHostPlatform.GitHub)
+                    .ToList();
+                foreach (LocalGitRepository repository in gitHubRepositories)
                 {
                     string repoName = repository.Name;
-                    Client = CreateGitHubClient(repoName);
-                    List<GitHubPullRequest>? pullRequests = await GetPullRequestAsync(Client, repository.Owner, repository.Name);
+                    List<RemotePullRequest>? pullRequests = await GetGitHubPullRequestAsync(repository.Owner, repository.Name);
                     if (pullRequests == null)
                     {
                         logger.LogWarning("Skipping cache initialization for {name}.", repoName);
@@ -161,41 +204,26 @@ namespace ChasmaWebApi.HostedServices
             }
             catch (Exception e)
             {
-                logger.LogError("Error populating network cache: {error}", e);
+                logger.LogError("Error populating GitHub network cache: {error}", e);
             }
-        }
-
-        #region GitHub
-
-        /// <summary>
-        /// Creates a new GitHub API client for the specified repository.
-        /// </summary>
-        /// <param name="repoName">The repository name.</param>
-        /// <returns>The GitHub client for the specified repo.</returns>
-        private GitHubClient CreateGitHubClient(string repoName)
-        {
-            return new GitHubClient(new ProductHeaderValue(repoName))
-            {
-                Credentials = new Credentials(configurations.GitHubApiToken)
-            };
         }
 
         /// <summary>
         /// Gets all the open pull requests via the GitHub API.
         /// </summary>
-        /// <param name="client">The Ocktokit GitHub API client.</param>
         /// <param name="owner">The repository owner.</param>
         /// <param name="repoName">The repository owner.</param>
         /// <returns>Task containing the result of the API operation.</returns>
-        private async Task<List<GitHubPullRequest>?> GetPullRequestAsync(GitHubClient client, string owner, string repoName)
+        private async Task<List<RemotePullRequest>?> GetGitHubPullRequestAsync(string owner, string repoName)
         {
             try
             {
-                IReadOnlyList<PullRequest> pullRequests = await client.PullRequest.GetAllForRepository(owner, repoName);
-                List<GitHubPullRequest> gitHubPullRequests = [];
+                GitHubClient = RemoteHelper.GetGitHubClient(repoName, configurations.GitHubApiToken);
+                IReadOnlyList<PullRequest> pullRequests = await GitHubClient.PullRequest.GetAllForRepository(owner, repoName);
+                List<RemotePullRequest> gitHubPullRequests = [];
                 foreach (PullRequest pullRequest in pullRequests)
                 {
-                    GitHubPullRequest pr = new()
+                    RemotePullRequest pr = new()
                     {
                         Number = pullRequest.Number,
                         RepositoryName = pullRequest.Head.Repository.Name,
@@ -224,22 +252,28 @@ namespace ChasmaWebApi.HostedServices
         /// <summary>
         /// Gets the pull request by its number via the GitHub API.
         /// </summary>
-        /// <param name="client">The GitHub API client.</param>
         /// <param name="owner">The repository owner.</param>
         /// <param name="name">The repoository name.</param>
         /// <param name="prNumber">The GitHub pull request number.</param>
         /// <returns>The internal GitHub pull request.</returns>
-        private async Task<GitHubPullRequest?> GetPullRequestByPrNumberAsync(GitHubClient client, string owner, string name, int prNumber)
+        private async Task<RemotePullRequest?> GetPullRequestByPrNumberAsync(string owner, string name, long prNumber)
         {
             try
             {
-                PullRequest? pullRequest = await client.PullRequest.Get(owner, name, prNumber);
+                GitHubClient = RemoteHelper.GetGitHubClient(name, configurations.GitHubApiToken);
+                if (!int.TryParse(prNumber.ToString(), out int pullRequestNumber))
+                {
+                    logger.LogWarning("Cannot parse pull request number for {name}. Skipping.", name);
+                    return null;
+                }
+
+                PullRequest? pullRequest = await GitHubClient.PullRequest.Get(owner, name, pullRequestNumber);
                 if (pullRequest == null)
                 {
                     return null;
                 }
 
-                GitHubPullRequest pr = new()
+                RemotePullRequest pr = new()
                 {
                     Number = pullRequest.Number,
                     BranchName = pullRequest.Head.Ref,
@@ -256,7 +290,7 @@ namespace ChasmaWebApi.HostedServices
             }
             catch (Exception e)
             {
-                logger.LogWarning("Error when trying to get pull request #{prNumber}: {error}", prNumber, e);
+                logger.LogWarning("Error when trying to get pull request #{mergeRequestId}: {error}", prNumber, e);
                 return null;
             }
         }
@@ -295,16 +329,216 @@ namespace ChasmaWebApi.HostedServices
         /// </summary>
         private async Task RefreshPullRequestsAsync(CancellationToken cancellationToken)
         {
-            foreach (GitHubPullRequest existingPullRequest in cacheManager.GitHubPullRequests.Values)
+            foreach (RemotePullRequest existingPullRequest in cacheManager.GitHubPullRequests.Values)
             {
-                Client = CreateGitHubClient(existingPullRequest.RepositoryName);
-                GitHubPullRequest? pr = await GetPullRequestByPrNumberAsync(Client, existingPullRequest.RepositoryOwner, existingPullRequest.RepositoryName, existingPullRequest.Number);
+                RemotePullRequest? pr = await GetPullRequestByPrNumberAsync(existingPullRequest.RepositoryOwner, existingPullRequest.RepositoryName, existingPullRequest.Number);
                 if (pr == null)
                 {
                     continue;
                 }
 
                 cacheManager.GitHubPullRequests.AddOrUpdate(pr.Number, pr, (_, _) => pr);
+            }
+        }
+
+        #endregion
+
+        #region GitLab
+
+        /// <summary>
+        /// Gets the merge request asynchronously via GitLab API.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The task getting GitLab merge request data.</returns>
+        private async Task GetGitLabMergeRequestsAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                List<LocalGitRepository> gitLabRepositories = cacheManager.Repositories.Values
+                    .Where(i => i.HostPlatform == RemoteHostPlatform.GitLab)
+                    .ToList();
+                foreach (LocalGitRepository repository in gitLabRepositories)
+                {
+                    List<RemotePullRequest>? mergeRequests = await GetGitLabMergeRequestAsync(repository);
+                    if (mergeRequests == null)
+                    {
+                        logger.LogWarning("Skipping cache initialization for {name}.", repository.Name);
+                        continue;
+                    }
+
+                    mergeRequests.ForEach(mr =>
+                    {
+                        cacheManager.GitLabMergeRequests.TryAdd(mr.Number, mr);
+                    });
+                }
+
+                // Start polling ONLY after GitLab merge requests are populated
+                StartMergeRequestPolling(cancellationToken);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Error populating GitLab network cache: {error}", e);
+            }
+        }
+
+        /// <summary>
+        /// Gets all the open merge requests via the GitLab API.
+        /// </summary>
+        /// <param name="repository">The repository.</param>
+        /// <returns>Task containing the result of the API operation.</returns>
+        private async Task<List<RemotePullRequest>?> GetGitLabMergeRequestAsync(LocalGitRepository repository)
+        {
+            try
+            {
+                GitLabClient = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                string owner = repository.Owner;
+                string repoName = repository.Name;
+                Project project = await GitLabClient.Projects.GetAsync($"{owner}/{repoName}");
+                if (project == null)
+                {
+                    logger.LogError("Could not find project on GitLab with owner: {owner} and repo {repoName}", owner, repoName);
+                    return null;
+                }
+
+                IMergeRequestClient mergeRequestClient = GitLabClient.GetMergeRequest(project.Id);
+                if (mergeRequestClient == null)
+                {
+                    logger.LogError("Could not find merge request client on GitLab with owner: {owner} and repo {repoName}", owner, repoName);
+                    return null;
+                }
+
+                List<MergeRequest> mergeRequests = mergeRequestClient.AllInState(MergeRequestState.opened).ToList();
+                List<RemotePullRequest> gitLabMergeRequests = [];
+                foreach (MergeRequest mergeRequest in mergeRequests)
+                {
+                    RemotePullRequest mr = new()
+                    {
+                        Number = mergeRequest.Iid,
+                        RepositoryName = repoName,
+                        RepositoryOwner = owner,
+                        BranchName = mergeRequest.SourceBranch,
+                        ActiveState = mergeRequest.State,
+                        MergeableState = mergeRequest.DetailedMergeStatus.StringValue,
+                        CreatedAt = mergeRequest.CreatedAt.ToLocalTime().ToString("g"),
+                        MergedAt = mergeRequest.MergedAt.HasValue ? mergeRequest.MergedAt.Value.ToLocalTime().ToString("g") : null,
+                        Merged = mergeRequest.MergedAt.HasValue,
+                        HtmlUrl = mergeRequest.WebUrl
+                    };
+                    gitLabMergeRequests.Add(mr);
+                }
+
+                return gitLabMergeRequests;
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning("Error when trying to get list of open merge requests in {repoName}: {error}", repository.Name, e);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Starts the periodic polling of GitLab pull requests.
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// </summary>
+        private void StartMergeRequestPolling(CancellationToken cancellationToken)
+        {
+            int intervalSeconds = configurations.GitLabMergeRequestScanIntervalSeconds;
+            MergeRequestPollTimer = new PeriodicTimer(TimeSpan.FromSeconds(intervalSeconds));
+            _ = Task.Run(async () =>
+            {
+                while (await MergeRequestPollTimer.WaitForNextTickAsync(cancellationToken))
+                {
+                    try
+                    {
+                        await RefreshMergeRequestsAsync(cancellationToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError("Error while polling GitLab merge requests: {error}", ex);
+                    }
+                }
+            }, cancellationToken);
+        }
+
+        /// <summary>
+        /// Refreshes the GitLab merge request cache.
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// </summary>
+        private async Task RefreshMergeRequestsAsync(CancellationToken cancellationToken)
+        {
+            foreach (RemotePullRequest existingPullRequest in cacheManager.GitLabMergeRequests.Values)
+            {
+                string owner = existingPullRequest.RepositoryOwner;
+                string repoName = existingPullRequest.RepositoryName;
+                long iid = existingPullRequest.Number;
+                RemotePullRequest? pr = await GetMergeRequestByIidNumberAsync(owner, repoName, iid, cancellationToken);
+                if (pr == null)
+                {
+                    continue;
+                }
+
+                cacheManager.GitLabMergeRequests.AddOrUpdate(pr.Number, pr, (_, _) => pr);
+            }
+        }
+
+        /// <summary>
+        /// Gets the merge request by its internal identification via the GitLab API.
+        /// </summary>
+        /// <param name="owner">The repository owner.</param>
+        /// <param name="repoName">The repoository name.</param>
+        /// <param name="mergeRequestId">The GitLab merge request number.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The internal remote pull request.</returns>
+        private async Task<RemotePullRequest?> GetMergeRequestByIidNumberAsync(string owner, string repoName, long mergeRequestId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                GitLabClient = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                Project project = await GitLabClient.Projects.GetAsync($"{owner}/{repoName}", cancellationToken: cancellationToken);
+                if (project == null)
+                {
+                    logger.LogError("Could not find project on GitLab with owner: {owner} and repo {repoName}", owner, repoName);
+                    return null;
+                }
+
+                IMergeRequestClient mergeRequestClient = GitLabClient.GetMergeRequest(project.Id);
+                if (mergeRequestClient == null)
+                {
+                    logger.LogError("Could not find merge request client on GitLab with owner: {owner} and repo {repoName}", owner, repoName);
+                    return null;
+                }
+
+                SingleMergeRequestQuery query = new();
+                MergeRequest? mergeRequest = await mergeRequestClient.GetByIidAsync(mergeRequestId, query, cancellationToken);
+                if (mergeRequest == null)
+                {
+                    logger.LogError("Could not find merge request with internal identifier: {id}", mergeRequestId);
+                    return null;
+                }
+
+                RemotePullRequest mr = new()
+                {
+                    Number = mergeRequest.Iid,
+                    RepositoryName = repoName,
+                    RepositoryOwner = owner,
+                    BranchName = mergeRequest.SourceBranch,
+                    ActiveState = mergeRequest.State,
+                    MergeableState = mergeRequest.MergeStatus,
+                    CreatedAt = mergeRequest.CreatedAt.ToLocalTime().ToString("g"),
+                    MergedAt = mergeRequest.MergedAt.HasValue ? mergeRequest.MergedAt.Value.ToLocalTime().ToString("g") : null,
+                    Merged = mergeRequest.MergedAt.HasValue,
+                    HtmlUrl = mergeRequest.WebUrl
+                };
+                return mr;
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning("Error when trying to get pull request #{mergeRequestId}: {error}", mergeRequestId, e);
+                return null;
             }
         }
 

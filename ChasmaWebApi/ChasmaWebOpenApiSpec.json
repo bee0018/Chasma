@@ -383,6 +383,134 @@
         }
       }
     },
+    "/api/Remote/getPipelineJobs": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_GetPipelineJobs",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetPipelineJobsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPipelineJobsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Remote/createGitLabIssue": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_CreateGitLabIssue",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGitLabIssueRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGitLabIssueResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Remote/getGitLabProjectMembers": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_GetGitLabProjectMembers",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetGitLabProjectMembersRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetGitLabProjectMembersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Remote": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_CreateMergeRequest",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMergeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMergeRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryConfiguration/getLocalGitRepositories": {
       "get": {
         "tags": [
@@ -1751,6 +1879,221 @@
           }
         ]
       },
+      "GetPipelineJobsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WorkflowRunResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GetPipelineJobsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateGitLabIssueResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "$ref": "#/components/schemas/GitLabIssueResult"
+              }
+            }
+          }
+        ]
+      },
+      "GitLabIssueResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "issueId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateGitLabIssueRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "mainAssignee": {
+            "$ref": "#/components/schemas/GitLabProjectMember"
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitLabProjectMember"
+            }
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "confidential": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GitLabProjectMember": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "assigneeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        }
+      },
+      "GetGitLabProjectMembersResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "projectId": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "projectMembers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GitLabProjectMember"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GetGitLabProjectMembersRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateMergeRequestResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mergeRequest": {
+                "$ref": "#/components/schemas/MergeRequestResult"
+              }
+            }
+          }
+        ]
+      },
+      "MergeRequestResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "url": {
+            "type": "string"
+          },
+          "timeStamp": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateMergeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "sourceBranch": {
+            "type": "string"
+          },
+          "targetBranch": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "targetProjectId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assignee": {
+            "$ref": "#/components/schemas/GitLabProjectMember"
+          },
+          "additionalAssignees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitLabProjectMember"
+            }
+          },
+          "reviewers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitLabProjectMember"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "removeSourceBranch": {
+            "type": "boolean"
+          },
+          "squash": {
+            "type": "boolean"
+          },
+          "allowCollaboration": {
+            "type": "boolean",
+            "nullable": true
+          }
+        }
+      },
       "LocalRepositoriesInfoMessage": {
         "allOf": [
           {
@@ -1795,8 +2138,51 @@
           },
           "isIgnored": {
             "type": "boolean"
+          },
+          "hostPlatform": {
+            "$ref": "#/components/schemas/RemoteHostPlatform"
           }
         }
+      },
+      "RemoteHostPlatform": {
+        "type": "integer",
+        "description": "",
+        "x-enum-names": [
+          "Unknown",
+          "GitHub",
+          "GitLab",
+          "Bitbucket"
+        ],
+        "x-enum-varnames": [
+          "Unknown",
+          "GitHub",
+          "GitLab",
+          "Bitbucket"
+        ],
+        "x-enumNames": [
+          "Unknown",
+          "GitHub",
+          "GitLab",
+          "Bitbucket"
+        ],
+        "x-enum-descriptions": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "x-enumDescriptions": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
       },
       "GetIgnoredRepositoriesMessage": {
         "allOf": [
@@ -1988,7 +2374,7 @@
               "pullRequests": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/GitHubPullRequest"
+                  "$ref": "#/components/schemas/RemotePullRequest"
                 }
               }
             }
@@ -2127,7 +2513,7 @@
           -2147483648
         ]
       },
-      "GitHubPullRequest": {
+      "RemotePullRequest": {
         "allOf": [
           {
             "$ref": "#/components/schemas/ChasmaXmlBase"
@@ -2138,7 +2524,7 @@
             "properties": {
               "number": {
                 "type": "integer",
-                "format": "int32"
+                "format": "int64"
               },
               "repositoryName": {
                 "type": "string"
@@ -2858,19 +3244,46 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "userName": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "email": {
-                "type": "string"
+              "user": {
+                "$ref": "#/components/schemas/ApplicationUser"
               }
             }
           }
         ]
+      },
+      "ApplicationUser": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ApplicationUserPermissions"
+          }
+        }
+      },
+      "ApplicationUserPermissions": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isUsingGitHubApi": {
+            "type": "boolean"
+          },
+          "isUsingGitLabApi": {
+            "type": "boolean"
+          },
+          "isUsingBitbucketApi": {
+            "type": "boolean"
+          }
+        }
       },
       "LoginRequest": {
         "allOf": [
@@ -2900,15 +3313,8 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "userName": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "email": {
-                "type": "string"
+              "user": {
+                "$ref": "#/components/schemas/ApplicationUser"
               }
             }
           }

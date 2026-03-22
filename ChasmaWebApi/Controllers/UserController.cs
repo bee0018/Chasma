@@ -1,6 +1,7 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
@@ -33,16 +34,22 @@ namespace ChasmaWebApi.Controllers
         private readonly IPasswordUtility passwordUtility;
 
         /// <summary>
+        /// The internal web API configurations.
+        /// </summary>
+        private readonly ChasmaWebApiConfigurations apiConfiguration;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="UserController"/> class.
         /// </summary>
         /// <param name="dbContext">The application database context.</param>
         /// <param name="log">The injected internal logger.</param>
         /// <param name="passwordUtil">The injected password utility.</param>
-        public UserController(ApplicationDbContext dbContext, ILogger<UserController> log, IPasswordUtility passwordUtil)
+        public UserController(ApplicationDbContext dbContext, ILogger<UserController> log, IPasswordUtility passwordUtil, ChasmaWebApiConfigurations config)
         {
             applicationDbContext = dbContext;
             logger = log;
             passwordUtility = passwordUtil;
+            apiConfiguration = config;
         }
 
         /// <summary>
@@ -98,9 +105,20 @@ namespace ChasmaWebApi.Controllers
             }
 
             logger.LogInformation("User {username} logged in successfully", account.UserName);
-            response.UserName = account.UserName;
-            response.UserId = account.Id;
-            response.Email = account.Email;
+            ApplicationUserPermissions permissions = new()
+            {
+                IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
+                IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken),
+                IsUsingBitbucketApi = !string.IsNullOrEmpty(apiConfiguration.BitbucketApiToken),
+            };
+            ApplicationUser user = new()
+            {
+                UserId = account.Id,
+                UserName = account.UserName,
+                Email = account.Email,
+                Permissions = permissions,
+            };
+            response.User = user;
             return Ok(response);
         }
 
@@ -168,9 +186,20 @@ namespace ChasmaWebApi.Controllers
                 await applicationDbContext.UserAccounts.AddAsync(account);
                 int rowsAffected = await applicationDbContext.SaveChangesAsync();
                 logger.LogInformation("User {username} has been added to the system successfully", account.UserName);
-                response.UserName = account.UserName;
-                response.UserId = account.Id;
-                response.Email = account.Email;
+                ApplicationUserPermissions permissions = new()
+                {
+                    IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
+                    IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken),
+                    IsUsingBitbucketApi = !string.IsNullOrEmpty(apiConfiguration.BitbucketApiToken),
+                };
+                ApplicationUser user = new()
+                {
+                    UserId = account.Id,
+                    UserName = account.UserName,
+                    Email = account.Email,
+                    Permissions = permissions,
+                };
+                response.User = user;
                 return Ok(response);
             }
             catch (Exception ex)

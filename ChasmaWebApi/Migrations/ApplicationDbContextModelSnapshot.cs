@@ -22,6 +22,10 @@ namespace ChasmaWebApi.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("id");
 
+                    b.Property<int>("HostPlatform")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("remote_host_platform");
+
                     b.Property<bool>("IsIgnored")
                         .HasColumnType("INTEGER")
                         .HasColumnName("is_ignored");

@@ -33,6 +33,11 @@ namespace ChasmaWebApi.Tests.Controllers
         /// </summary>
         private readonly Mock<IPasswordUtility> passwordUtilityMock;
 
+        /// <summary>
+        /// The mocked web API configurations.
+        /// </summary>
+        private readonly Mock<ChasmaWebApiConfigurations> webApiConfigurationsMock;
+
         #region Constructor
 
         /// <summary>
@@ -42,6 +47,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             loggerMock = new Mock<ILogger<UserController>>();
             passwordUtilityMock = new Mock<IPasswordUtility>();
+            webApiConfigurationsMock = new Mock<ChasmaWebApiConfigurations>();
         }
 
         #endregion
@@ -52,7 +58,7 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestInitialize]
         public void TestInitialize()
         {
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
         }
 
         /// <summary>
@@ -122,7 +128,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
             LoginRequest request = new LoginRequest
             {
                 UserName = "user1",
@@ -144,7 +150,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
             LoginRequest request = new LoginRequest
             {
                 UserName = TestUserName,
@@ -166,7 +172,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
             passwordUtilityMock.Setup(utility => utility.VerifyPassword(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<string>())).Returns(true);
             LoginRequest request = new LoginRequest
             {
@@ -177,9 +183,9 @@ namespace ChasmaWebApi.Tests.Controllers
             LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsFalse(loginResponse.IsErrorResponse);
             Assert.AreEqual(null, loginResponse.ErrorMessage);
-            Assert.AreEqual(TestUserName, loginResponse.UserName);
-            Assert.AreEqual(TestUserEmail, loginResponse.Email);
-            Assert.IsTrue(loginResponse.UserId > 0);
+            Assert.AreEqual(TestUserName, loginResponse.User.UserName);
+            Assert.AreEqual(TestUserEmail, loginResponse.User.Email);
+            Assert.IsTrue(loginResponse.User.UserId > 0);
             TestDbContextFactory.DestroyDatabase(dbContext);
         }
 
@@ -254,7 +260,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
             AddUserRequest request = new AddUserRequest
             {
                 Name = TestUserFullName,
@@ -276,7 +282,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
             passwordUtilityMock.Setup(utility => utility.HashPassword(It.IsAny<string>())).Returns((null, null));
             AddUserRequest request = new AddUserRequest
             {
@@ -299,7 +305,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
             AddUserRequest request = new AddUserRequest
             {
                 Name = "name",
@@ -312,9 +318,9 @@ namespace ChasmaWebApi.Tests.Controllers
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsFalse(addUserResponse.IsErrorResponse);
             Assert.AreEqual(null, addUserResponse.ErrorMessage);
-            Assert.AreEqual(request.UserName, addUserResponse.UserName);
-            Assert.IsNotNull(addUserResponse.Email);
-            Assert.IsTrue(addUserResponse.UserId > 0);
+            Assert.AreEqual(request.UserName, addUserResponse.User.UserName);
+            Assert.IsNotNull(addUserResponse.User.UserName);
+            Assert.IsTrue(addUserResponse.User.UserId > 0);
             TestDbContextFactory.DestroyDatabase(dbContext);
         }
     }

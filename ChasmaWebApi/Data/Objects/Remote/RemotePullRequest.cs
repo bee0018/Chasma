@@ -3,15 +3,15 @@
 namespace ChasmaWebApi.Data.Objects.Remote
 {
     /// <summary>
-    /// Class representing the details of a GitHub pull request.
+    /// Class representing the details of a remote pull request.
     /// </summary>
-    public class GitHubPullRequest : ChasmaXmlBase
+    public class RemotePullRequest : ChasmaXmlBase
     {
         /// <summary>
         /// Gets or sets the pull request number.
-        /// Note: This is not the database ID, but the PR number in GitHub.
+        /// Note: This is not the database ID, but the PR number in remote Git client.
         /// </summary>
-        public int Number { get; set; }
+        public long Number { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the repository this pull request is in.

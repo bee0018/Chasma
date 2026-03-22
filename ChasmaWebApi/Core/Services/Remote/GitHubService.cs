@@ -1,10 +1,10 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
 using ChasmaWebApi.Data.Objects.Remote;
+using ChasmaWebApi.Util;
 using LibGit2Sharp;
 using Octokit;
 using Branch = LibGit2Sharp.Branch;
-using Credentials = Octokit.Credentials;
 using Repository = LibGit2Sharp.Repository;
 
 namespace ChasmaWebApi.Core.Services.Remote
@@ -59,11 +59,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 return false;
             }
 
-            Client = new GitHubClient(new ProductHeaderValue(repoName))
-            {
-                Credentials = new Credentials(token)
-            };
-
+            Client = RemoteHelper.GetGitHubClient(repoName, token);
             NewPullRequest newPullRequest = new(title, headBranch, baseBranch)
             {
                 Body = body
@@ -80,7 +76,7 @@ namespace ChasmaWebApi.Core.Services.Remote
             pullRequestId = createdPullRequest.Number;
             prUrl = createdPullRequest.HtmlUrl;
             timestamp = createdPullRequest.CreatedAt.ToLocalTime().ToString("g");
-            GitHubPullRequest pr = new()
+            RemotePullRequest pr = new()
             {
                 Number = createdPullRequest.Number,
                 RepositoryName = repoName,
@@ -107,7 +103,7 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 NewIssue newIssue = new(title) { Body = body };
-                Client = new GitHubClient(new ProductHeaderValue(repoName)) { Credentials = new Credentials(token) };
+                Client = RemoteHelper.GetGitHubClient(repoName, token);
                 Task<Issue?> createIssueTask = SendCreateIssueRequest(Client, repoOwner, repoName, newIssue);
                 Issue? issue = createIssueTask.Result;
                 if (issue == null)
@@ -133,8 +129,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             errorMessage = string.Empty;
             workflowRunResults = new();
-            ProductHeaderValue productHeader = new(repoName);
-            Client = new(productHeader) { Credentials = new Credentials(token) };
+            Client = RemoteHelper.GetGitHubClient(repoName, token);
             Task<WorkflowRunsResponse?> workflowRunsResponseTask = GetWorkFlowRuns(Client, repoOwner, repoName);
             WorkflowRunsResponse workFlowRunsResponse = workflowRunsResponseTask.Result;
             if (workFlowRunsResponse == null)

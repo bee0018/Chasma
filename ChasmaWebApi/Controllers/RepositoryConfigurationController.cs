@@ -128,6 +128,8 @@ public class RepositoryConfigurationController : ControllerBase
                 Name = repo.Name,
                 Owner = repo.Owner,
                 Url = repo.Url,
+                HostPlatform = repo.HostPlatform,
+                IsIgnored = false,
             };
             await applicationDbContext.Repositories.AddAsync(repositoryModel);
 
@@ -199,6 +201,7 @@ public class RepositoryConfigurationController : ControllerBase
             Name = localGitRepository.Name,
             Owner = localGitRepository.Owner,
             Url = localGitRepository.Url,
+            HostPlatform = localGitRepository.HostPlatform,
             IsIgnored = false,
         };
         await applicationDbContext.Repositories.AddAsync(repositoryModel);
