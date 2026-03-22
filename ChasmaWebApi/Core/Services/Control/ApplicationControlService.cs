@@ -162,6 +162,12 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
+        public List<RepositoryStatusElement>? ApplyBulkStagingAction(string repoId, IEnumerable<string> fileNames, bool stagingFile)
+        {
+            return gitRepositoryService.ApplyBulkStagingAction(repoId, fileNames, stagingFile);
+        }
+
+        // <inheritdoc />
         public List<RepositoryStatusElement>? ApplyStagingAction(string repoKey, string fileName, bool isStaging, string username, string token)
         {
             return gitRepositoryService.ApplyStagingAction(repoKey, fileName, isStaging, username, token);

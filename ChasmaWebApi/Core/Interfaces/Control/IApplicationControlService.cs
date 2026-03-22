@@ -114,6 +114,15 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token);
 
         /// <summary>
+        /// Applies the staging action to the specified files.
+        /// </summary>
+        /// <param name="repoId">The repository identifier.</param>
+        /// <param name="fileNames">The files to be staged.</param>
+        /// <param name="stagingFile">Flag indicating whether the files are being staged/unstaged.</param>
+        /// <returns>The updatd repository elements.</returns>
+        List<RepositoryStatusElement>? ApplyBulkStagingAction(string repoId, IEnumerable<string> fileNames, bool stagingFile);
+
+        /// <summary>
         /// Stages or unstages the file for the specified repository.
         /// </summary>
         /// <param name="repoKey">The repository key.</param>
