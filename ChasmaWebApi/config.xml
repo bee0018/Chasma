@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configurations xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <webApiUrl>https://localhost:44349/</webApiUrl>
-  <showDebugControllers>false</showDebugControllers>
-  <thinClientUrl>http://localhost:3000</thinClientUrl>
-  <githubApiToken>token</githubApiToken>
-  <workflowRunReportThreshold>30</workflowRunReportThreshold>
-	<gitHubPullRequestScanIntervalSeconds>45</gitHubPullRequestScanIntervalSeconds>
-	<gitHubPullRequestScanIntervalSeconds>20</gitHubPullRequestScanIntervalSeconds>
+	<webApiUrl>https://localhost:44349/</webApiUrl>
+	<showDebugControllers>false</showDebugControllers>
+	<thinClientUrl>http://localhost:3000</thinClientUrl>
+	<githubApiToken>token</githubApiToken>
 	<workflowRunReportThreshold>30</workflowRunReportThreshold>
-	<gitHubPullRequestScanIntervalSeconds>25</gitHubPullRequestScanIntervalSeconds>
+	<gitHubPullRequestScanIntervalSeconds>20</gitHubPullRequestScanIntervalSeconds>
 	<gitlabApiToken>token</gitlabApiToken>
+	<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
+	<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 	<bitbucketApiToken>token</bitbucketApiToken>
-	<selfHostedGitLabUrl>token</selfHostedGitLabUrl>
 </configurations>

@@ -3,9 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
     ApplyStagingActionRequest,
     GitDiffRequest,
-    GitHubPullRequest,
     GitPullRequest,
-    GitStatusRequest, PullSimulationEntry, RemoteHostPlatform,
+    GitStatusRequest,
+    PullSimulationEntry,
+    RemoteHostPlatform,
+    RemotePullRequest,
     RepositoryStatusElement,
     SimulatedAddBranchResult,
     SimulatedGitPullResult,
@@ -16,8 +18,6 @@ import NotificationModal from "../modals/NotificationModal";
 import CommitModal from "../modals/CommitModal";
 import PushModal from "../modals/PushModal";
 import CheckoutModal from "../modals/CheckoutModal";
-import PullRequestModal from "../modals/PullRequestModal";
-import CreateIssueModal from "../modals/CreateIssueModal";
 import DeleteBranchModal from "../modals/DeleteBranchModal";
 import ExecuteShellCommandsModal from "../modals/ExecuteShellCommandsModal";
 import {useCacheStore} from "../../managers/CacheManager";
@@ -31,6 +31,8 @@ import ResetModal from "../modals/ResetModal";
 import {dryRunClient, statusClient} from "../../managers/ApiClientManager";
 import Checkbox from "../Checkbox";
 import "../../styles/pages/batchOperationsPage.css"
+import RemoteIssuesPage from "./remote/RemoteIssuesPage";
+import RemotePullRequestPage from "./remote/RemotePullRequestPage";
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -62,12 +64,6 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user is checking out changes. **/
     const [isCheckingOut, setIsCheckingOut] = useState(false);
-
-    /** Gets or sets a flag indicating whether the user is creating a pull request. **/
-    const [isCreatingPullRequest, setIsCreatingPullRequest] = useState(false);
-
-    /** Gets or sets a flag indicating whether the user is creating an issue. **/
-    const [isCreatingIssue, setIsCreatingIssue] = useState(false);
 
     /** Gets or sets a flag indicating whether the user is deleting a branch. **/
     const [isDeletingBranch, setIsDeletingBranch] = useState(false);
@@ -106,7 +102,7 @@ const RepositoryStatusPage: React.FC = () => {
     const [isAddingStash, setIsAddingStash] = useState(false);
 
     /** Gets or sets the open pull request associated with the current branch. **/
-    const [openPullRequests, setOpenPullRequests] = useState<GitHubPullRequest[] | undefined>(undefined);
+    const [openPullRequests, setOpenPullRequests] = useState<RemotePullRequest[] | undefined>(undefined);
 
     /** Gets or sets a value indicating whether the user is adding a new branch. **/
     const [isAddingBranch, setIsAddingBranch] = useState(false);
@@ -452,20 +448,20 @@ const RepositoryStatusPage: React.FC = () => {
                 >
                     Pull ⬇️
                 </div>
-                {!isSafeMode && <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>}
-                {!isSafeMode && <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>}
-                {!isSafeMode && <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>}
                 {!isSafeMode &&
                     <>
+                    <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
+                    <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>
+                    <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>
                         <div
                             className={`tab ${activeTab === "stashes" ? "active" : ""}`}
                             onClick={() => handleTabClick("stashes")}
                         >
                             Stashes🗄️
                         </div>
+                        <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
                     </>
                 }
-                {!isSafeMode && <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>}
                 <div className="tab" onClick={() => setIsAddingBranch(true)}>Add Branch ➕</div>
                 <div className="tab" onClick={() => setIsMergingBranch(true)}>Merge 🔀</div>
                 {!isSafeMode &&
@@ -475,9 +471,9 @@ const RepositoryStatusPage: React.FC = () => {
                             && user.permissions.isUsingGitHubApi
                             && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
                             <div
-                                className="tab"
+                                className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
+                                onClick={() => handleTabClick("pullRequest")}
                                 style={{ marginTop: "20px" }}
-                                onClick={() => setIsCreatingPullRequest(true)}
                             >
                                 Create Pull Request📥
                             </div>
@@ -486,9 +482,9 @@ const RepositoryStatusPage: React.FC = () => {
                             && user.permissions.isUsingGitLabApi
                             && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
                             <div
-                                className="tab"
+                                className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
+                                onClick={() => handleTabClick("pullRequest")}
                                 style={{ marginTop: "20px" }}
-                                onClick={() => setIsCreatingPullRequest(true)}
                             >
                                 Create Merge Request📥
                             </div>
@@ -496,17 +492,29 @@ const RepositoryStatusPage: React.FC = () => {
                         {user?.permissions
                             && user.permissions.isUsingGitHubApi
                             && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
-                            <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create GitHub Issue🐛</div>
+                            <div
+                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
+                                onClick={() => handleTabClick("issues")}>
+                                    Create GitHub Issue🐛
+                            </div>
                         }
                         {user?.permissions
                             && user.permissions.isUsingGitLabApi
                             && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
-                            <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create GitLab Issue🐛</div>
+                            <div
+                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
+                                onClick={() => handleTabClick("issues")}>
+                                    Create GitLab Issue🐛
+                            </div>
                         }
                         {user?.permissions
                             && user.permissions.isUsingBitbucketApi
                             && selectedRepo?.hostPlatform === RemoteHostPlatform.Bitbucket &&
-                            <div className="tab" onClick={() => setIsCreatingIssue(true)}>Create Bitbucket Task🐛</div>
+                            <div
+                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
+                                onClick={() => handleTabClick("issues")}>
+                                    Create Bitbucket Task🐛
+                            </div>
                         }
                         <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsExecutingShellCommands(true)}>Custom Shell Commands🖥️</div>
                     </>
@@ -597,17 +605,17 @@ const RepositoryStatusPage: React.FC = () => {
                                                     {pr.activeState === "open" ? "Active" : "Inactive"}
                                                 </span>
                                                 </div>
-
-                                                <div className="repo-summary-item">
+                                                {pr.mergeableState &&
+                                                    <div className="repo-summary-item">
                                                     <span className="repo-summary-label">Mergeable State:</span>
                                                     <span
                                                         className="repo-summary-value"
                                                         style={{ color: pr.mergeableState === "clean" ? "lightblue" : "orange" }}
                                                     >
-                                                    {capitalizeFirst(pr.mergeableState)}
-                                                </span>
+                                                        {capitalizeFirst(pr.mergeableState)}
+                                                    </span>
                                                 </div>
-
+                                                }
                                                 <div className="repo-summary-item">
                                                     <span className="repo-summary-label">Created at:</span>
                                                     <span className="repo-summary-value">{pr.createdAt}</span>
@@ -935,19 +943,22 @@ const RepositoryStatusPage: React.FC = () => {
                     onClose={() => setIsCheckingOut(false)}
                     onSuccess={() => handleSelectFile(null, false)} />
             }
-            {isCreatingPullRequest &&
-                <PullRequestModal
-                    repositoryId={repoId}
-                    repoName={repoName}
-                    onClose={() => setIsCreatingPullRequest(false)}
-                    remoteHostPlatform={selectedRepo?.hostPlatform} />
-            }
-            {isCreatingIssue &&
-                <CreateIssueModal
-                    repositoryId={repoId}
-                    repoName={repoName}
-                    onClose={() => setIsCreatingIssue(false)} />
-            }
+            {activeTab === "issues" && selectedRepo && (
+                <div
+                    className="panel-card"
+                    style={{width: "100%"}}
+                >
+                    <RemoteIssuesPage repository={selectedRepo} />
+                </div>
+            )}
+            {activeTab === "pullRequest" && selectedRepo && (
+                <div
+                    className="panel-card"
+                    style={{width: "100%"}}
+                >
+                    <RemotePullRequestPage repository={selectedRepo} />
+                </div>
+            )}
             {isDeletingBranch &&
                 <DeleteBranchModal
                     repositoryId={repoId}
@@ -989,7 +1000,10 @@ const RepositoryStatusPage: React.FC = () => {
             />
             }
             {activeTab === "stashes" && (
-                <div className="panel-card">
+                <div
+                    className="panel-card"
+                    style={{width: "100%"}}
+                >
                     <RepositoryStashesPage repositoryId={repoId} />
                 </div>
             )}

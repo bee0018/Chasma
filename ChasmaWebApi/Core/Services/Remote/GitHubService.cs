@@ -76,7 +76,7 @@ namespace ChasmaWebApi.Core.Services.Remote
             pullRequestId = createdPullRequest.Number;
             prUrl = createdPullRequest.HtmlUrl;
             timestamp = createdPullRequest.CreatedAt.ToLocalTime().ToString("g");
-            GitHubPullRequest pr = new()
+            RemotePullRequest pr = new()
             {
                 Number = createdPullRequest.Number,
                 RepositoryName = repoName,

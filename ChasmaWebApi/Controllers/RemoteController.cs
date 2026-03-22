@@ -309,7 +309,6 @@ namespace ChasmaWebApi.Controllers
             }
         }
 
-
         #endregion
 
         #region GitLab

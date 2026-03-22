@@ -1,4 +1,5 @@
-﻿using NGitLab;
+﻿using ChasmaWebApi.Data.Objects.Application;
+using NGitLab;
 using Octokit;
 
 namespace ChasmaWebApi.Util
@@ -38,6 +39,32 @@ namespace ChasmaWebApi.Util
             }
 
             return new GitLabClient("https://gitlab.com", token);
+        }
+
+        /// <summary>
+        /// Determines the remote host platform of the repository.
+        /// </summary>
+        /// <param name="remoteUrl">The specified repository's url.</param>
+        /// <returns>The remote host platform.</returns>
+        public static RemoteHostPlatform GetRemoteHostPlatform(string remoteUrl)
+        {
+            string url = remoteUrl.ToLower();
+            if (url.Contains("github.com"))
+            {
+                return RemoteHostPlatform.GitHub;
+            }
+            else if (url.Contains("gitlab.com"))
+            {
+                return RemoteHostPlatform.GitLab;
+            }
+            else if (url.Contains("bitbucket.org"))
+            {
+                return RemoteHostPlatform.Bitbucket;
+            }
+            else
+            {
+                return RemoteHostPlatform.Unknown;
+            }
         }
     }
 }

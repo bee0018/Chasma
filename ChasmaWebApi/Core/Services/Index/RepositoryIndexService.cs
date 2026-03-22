@@ -2,6 +2,7 @@
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Util;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Services.Index
@@ -87,7 +88,7 @@ namespace ChasmaWebApi.Core.Services.Index
                     continue;
                 }
 
-                RemoteHostPlatform platform = GetRemoteHostPlatform(pushUrl);
+                RemoteHostPlatform platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
                 LocalGitRepository localRepo = new()
                 {
                     Id = repoCacheKey,
@@ -233,7 +234,7 @@ namespace ChasmaWebApi.Core.Services.Index
                 return false;
             }
 
-            RemoteHostPlatform platform = GetRemoteHostPlatform(pushUrl);
+            RemoteHostPlatform platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
             string repoCacheKey = Guid.NewGuid().ToString();
             localGitRepository = new()
             {
@@ -370,32 +371,6 @@ namespace ChasmaWebApi.Core.Services.Index
             }
 
             return repositoryOwner;
-        }
-
-        /// <summary>
-        /// Determines the remote host platform of the repository.
-        /// </summary>
-        /// <param name="remoteUrl">The specified repository's url.</param>
-        /// <returns>The remote host platform.</returns>
-        private static RemoteHostPlatform GetRemoteHostPlatform(string remoteUrl)
-        {
-            string url = remoteUrl.ToLower();
-            if (url.Contains("github.com"))
-            {
-                return RemoteHostPlatform.GitHub;
-            }
-            else if (url.Contains("gitlab.com"))
-            {
-                return RemoteHostPlatform.GitLab;
-            }
-            else if (url.Contains("bitbucket.org"))
-            {
-                return RemoteHostPlatform.Bitbucket;
-            }
-            else
-            {
-                return RemoteHostPlatform.Unknown;
-            }
         }
 
         #endregion

@@ -1,5 +1,7 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Git;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Data.Objects.Application;
+using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Util;
 using LibGit2Sharp;
 using System.Diagnostics;
@@ -22,11 +24,6 @@ namespace ChasmaWebApi.Core.Services.Git
         private readonly ICacheManager CacheManager;
 
         /// <summary>
-        /// The Git stash service, which is responsible for handling Git stash operations.
-        /// </summary>
-        private readonly IGitStashService GitStashService;
-
-        /// <summary>
         /// The lock object used for concurrency.
         /// </summary>
         private readonly object lockObject = new();
@@ -38,12 +35,10 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         /// <param name="logger">The logger to use for logging diagnostic and operational information within the service.</param>
         /// <param name="cacheManager">The cache manager to use for managing cached data to optimize performance of Git operations.</param>
-        /// <param name="stashService">The Git stash service to use for handling git stash operations.</param>
-        public GitBranchService(ILogger<GitBranchService> logger, ICacheManager cacheManager, IGitStashService stashService)
+        public GitBranchService(ILogger<GitBranchService> logger, ICacheManager cacheManager)
         {
             Logger = logger;
             CacheManager = cacheManager;
-            GitStashService = stashService;
         }
 
         #endregion
@@ -88,15 +83,7 @@ namespace ChasmaWebApi.Core.Services.Git
             Logger.LogInformation("Successfully deleted branch {branchName} from repository with id: {id}", branchName, repository);
 
             // Delete tracking of pull requests associated with this branch.
-            List<int> pullRequestNumbersToDelete = CacheManager.GitHubPullRequests.Values
-                .Where(i => i.BranchName == branchName)
-                .Select(i => i.Number)
-                .ToList();
-            foreach (int prNumber in pullRequestNumbersToDelete)
-            {
-                CacheManager.GitHubPullRequests.TryRemove(prNumber, out _);
-            }
-
+            StopTrackingRemotePullRequests(workingDirectory, branchName);
             return true;
         }
 
@@ -402,6 +389,51 @@ namespace ChasmaWebApi.Core.Services.Git
             {
                 process?.Close();
                 process?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Stops remote tracking pull requests for the specified branch.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="branchName">The name of the branch to stop tracking pull requests for.</param>
+        private void StopTrackingRemotePullRequests(string workingDirectory, string branchName)
+        {
+            if (!CacheManager.Repositories.TryGetValue(workingDirectory, out LocalGitRepository repository))
+            {
+                Logger.LogWarning("Could not find a repository with the identifier {directory} so {branch} pull request tracking could not be processed.", workingDirectory, branchName);
+                return;
+            }
+
+            if (repository.HostPlatform == RemoteHostPlatform.GitHub)
+            {
+                List<long> pullRequestNumbersToDelete = CacheManager.GitHubPullRequests.Values
+                    .Where(i => i.BranchName == branchName)
+                    .Select(i => i.Number)
+                    .ToList();
+                foreach (long prNumber in pullRequestNumbersToDelete)
+                {
+                    CacheManager.GitHubPullRequests.TryRemove(prNumber, out _);
+                }
+            }
+            else if (repository.HostPlatform == RemoteHostPlatform.GitLab)
+            {
+                List<long> mergeRequestIids = CacheManager.GitLabMergeRequests.Values
+                    .Where(i => i.BranchName == branchName)
+                    .Select(i => i.Number)
+                    .ToList();
+                foreach (long iid in mergeRequestIids)
+                {
+                    CacheManager.GitLabMergeRequests.TryRemove(iid, out _);
+                }
+            }
+            else if (repository.HostPlatform == RemoteHostPlatform.Bitbucket)
+            {
+
+            }
+            else
+            {
+                Logger.LogWarning("Could not stop tracking pull requests for {branch} because the remote host platform {platform} is not supported.", branchName, repository.HostPlatform);
             }
         }
 

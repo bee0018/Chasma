@@ -40,6 +40,6 @@ namespace ChasmaWebApi.Data.Objects.Git
         /// <summary>
         /// Gets or sets the list of GitHub pull requests associated with the repository on a specific branch.
         /// </summary>
-        public List<GitHubPullRequest> PullRequests { get; set; } = new();
+        public List<RemotePullRequest> PullRequests { get; set; } = new();
     }
 }

@@ -2374,7 +2374,7 @@
               "pullRequests": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/GitHubPullRequest"
+                  "$ref": "#/components/schemas/RemotePullRequest"
                 }
               }
             }
@@ -2513,7 +2513,7 @@
           -2147483648
         ]
       },
-      "GitHubPullRequest": {
+      "RemotePullRequest": {
         "allOf": [
           {
             "$ref": "#/components/schemas/ChasmaXmlBase"
@@ -2524,7 +2524,7 @@
             "properties": {
               "number": {
                 "type": "integer",
-                "format": "int32"
+                "format": "int64"
               },
               "repositoryName": {
                 "type": "string"

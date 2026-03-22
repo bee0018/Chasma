@@ -1,4 +1,5 @@
-﻿using ChasmaWebApi.Core.Interfaces.Remote;
+﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Core.Interfaces.Remote;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
@@ -23,6 +24,11 @@ namespace ChasmaWebApi.Core.Services.Remote
         private readonly ChasmaWebApiConfigurations configurations;
 
         /// <summary>
+        /// The internal cache manager.
+        /// </summary>
+        private readonly ICacheManager cacheManager;
+
+        /// <summary>
         /// Gets or sets the GitLab API client.
         /// </summary>
         private static GitLabClient Client { get; set; }
@@ -32,10 +38,12 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// </summary>
         /// <param name="log">The internal API logger.</param>
         /// <param name="config">The web API configurations.</param>
-        public GitLabService(ILogger<GitLabService> log, ChasmaWebApiConfigurations config)
+        /// <param name="apiCacheManager">The API cache manager.</param>
+        public GitLabService(ILogger<GitLabService> log, ChasmaWebApiConfigurations config, ICacheManager apiCacheManager)
         {
             logger = log;
             configurations = config;
+            cacheManager = apiCacheManager;
         }
 
         // <inheritdoc />
@@ -173,6 +181,21 @@ namespace ChasmaWebApi.Core.Services.Remote
                     Url = gitLabMergeRequest.WebUrl,
                     TimeStamp = gitLabMergeRequest.CreatedAt.ToLocalTime().ToString("g"),
                 };
+                RemotePullRequest mr = new()
+                {
+                    Number = gitLabMergeRequest.Iid,
+                    RepositoryName = preparedMergeRequest.RepoName,
+                    RepositoryOwner = preparedMergeRequest.RepoOwner,
+                    BranchName = gitLabMergeRequest.SourceBranch,
+                    ActiveState = gitLabMergeRequest.State,
+                    MergeableState = gitLabMergeRequest.DetailedMergeStatus.StringValue,
+                    CreatedAt = gitLabMergeRequest.CreatedAt.ToLocalTime().ToString("g"),
+                    MergedAt = gitLabMergeRequest.MergedAt.HasValue ? gitLabMergeRequest.MergedAt.Value.ToLocalTime().ToString("g") : null,
+                    Merged = gitLabMergeRequest.MergedAt.HasValue,
+                    HtmlUrl = gitLabMergeRequest.WebUrl
+                };
+                cacheManager.GitLabMergeRequests.TryAdd(mr.Number, mr);
+                logger.LogInformation("Created merge request {mergeId} in {repoName}.", mr.Number, preparedMergeRequest.RepoName);
                 return true;
             }
             catch (Exception e)
@@ -274,7 +297,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 IssueCreate issueRequest = new()
                 {
                     ProjectId = project.Id,
-                    AssigneeId = issue.MainAssignee.AssigneeId,
+                    AssigneeId = issue.MainAssignee?.AssigneeId,
                     AssigneeIds = issue.Contacts.Select(i => i.AssigneeId).ToArray(),
                     Title = issue.Title,
                     Description = issue.Description,
@@ -302,21 +325,21 @@ namespace ChasmaWebApi.Core.Services.Remote
             {
                 Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{preparedMergeRequest.RepoOwner}/{preparedMergeRequest.RepoName}");
+                IMergeRequestClient mergeRequestClient = Client.GetMergeRequest(project.Id);
                 MergeRequestCreate mergeRequestToCreate = new()
                 {
                     SourceBranch = preparedMergeRequest.SourceBranch,
                     TargetBranch = preparedMergeRequest.TargetBranch,
                     Title = preparedMergeRequest.Title,
-                    TargetProjectId = project.Id,
-                    AssigneeId = preparedMergeRequest.Assignee.AssigneeId,
+                    Description = preparedMergeRequest.Description,
+                    AssigneeId = preparedMergeRequest.Assignee?.AssigneeId,
                     AssigneeIds = preparedMergeRequest.AdditonalAssignees.Select(i => i.AssigneeId).ToArray(),
                     ReviewerIds = preparedMergeRequest.Reviewers.Select(i => i.AssigneeId).ToArray(),
-                    Description = preparedMergeRequest.Description,
                     RemoveSourceBranch = preparedMergeRequest.RemoveSourceBranch,
                     Squash = preparedMergeRequest.Squash,
                     AllowCollaboration = preparedMergeRequest.AllowCollaboration,
                 };
-                MergeRequest mergeRequest = Client.MergeRequests.Create(mergeRequestToCreate);
+                MergeRequest mergeRequest = mergeRequestClient.Create(mergeRequestToCreate);
                 return mergeRequest;
             }
             catch (Exception e)

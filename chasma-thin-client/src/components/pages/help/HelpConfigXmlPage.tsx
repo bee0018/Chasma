@@ -23,6 +23,8 @@ const HelpConfigXmlPage: React.FC = () => (
 \t<workflowRunReportThreshold>30</workflowRunReportThreshold>
 \t<gitHubPullRequestScanIntervalSeconds>20</gitHubPullRequestScanIntervalSeconds>
 \t<gitlabApiToken>token</gitlabApiToken>
+\t<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
+\t<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 \t<bitbucketApiToken>token</bitbucketApiToken>
 </configurations>`}
                     </pre>

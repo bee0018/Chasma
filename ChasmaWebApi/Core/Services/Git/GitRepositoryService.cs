@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Git;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
@@ -48,7 +49,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 return null;
             }
 
-            using Repository repo = new Repository(workingDirectory);
+            using Repository repo = new(workingDirectory);
             List<RepositoryStatusElement> statusElements = new();
             RepositoryStatus status = repo.RetrieveStatus();
             foreach (StatusEntry item in status)
@@ -87,7 +88,18 @@ namespace ChasmaWebApi.Core.Services.Git
             (string branchName, int aheadCount, int behindCount) = GetBranchDiversionCalculation(workingDirectory, username, token);
             string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
             string commitHash = GetCommitHash(repo.Head, Logger);
-            List<GitHubPullRequest> gitHubPullRequests = CacheManager.GitHubPullRequests.Values.Where(i => i.BranchName == branchName).ToList();
+            List<RemotePullRequest> remotePullRequests;
+            LibGit2Sharp.Remote? remoteOriginBranch = repo.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
+            if (remoteOriginBranch == null)
+            {
+                Logger.LogWarning("Failed to find remote orign branch in {repoPath}, remote pull requests cannot be tracked.", workingDirectory);
+                remotePullRequests = new();
+            }
+            else
+            {
+                remotePullRequests = GetRemotePullRequests(remoteOriginBranch.PushUrl, branchName);
+            }
+
             RepositorySummary repositorySummary = new()
             {
                 StatusElements = statusElements,
@@ -96,7 +108,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 BranchName = branchName,
                 RemoteUrl = remoteUrl,
                 CommitHash = commitHash,
-                PullRequests = gitHubPullRequests,
+                PullRequests = remotePullRequests,
             };
             return repositorySummary;
         }
@@ -494,6 +506,29 @@ namespace ChasmaWebApi.Core.Services.Git
 
             HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
             return (localBranchName, divergence.AheadBy ?? 0, divergence.BehindBy ?? 0);
+        }
+
+        /// <summary>
+        /// Gets the remote pull request information for the specified branch.
+        /// </summary>
+        /// <param name="pushUrl">The push URL of the repository.</param>
+        /// <param name="branchName">The name of the branch that has a pull request created for it.</param>
+        /// <returns>The list of pull request information for the specified branch.</returns>
+        private List<RemotePullRequest> GetRemotePullRequests(string pushUrl, string branchName)
+        {
+            RemoteHostPlatform hostPlatform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
+            if (hostPlatform == RemoteHostPlatform.GitHub)
+            {
+                return CacheManager.GitHubPullRequests.Values.Where(i => i.BranchName == branchName).ToList();
+            }
+
+            if (hostPlatform == RemoteHostPlatform.GitLab)
+            {
+                return CacheManager.GitLabMergeRequests.Values.Where(i => i.BranchName == branchName).ToList();
+            }
+
+            Logger.LogWarning("Could not get remote pull requests because the remote host platform {platform} is not supported.", hostPlatform);
+            return new();
         }
 
         #endregion
