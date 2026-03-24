@@ -62,8 +62,8 @@ const GlobalPullRequestsTab: React.FC = () => {
         <>
         <div className="workflow-page-container">
             <div className="workflow-page-header">
-                <h1>System-Wide Pull Requests</h1>
-                <p>Your centralized hub for tracking, reviewing, and merging pull requests with precision and control🧠</p>
+                <h1>System-Wide Open Pull Requests</h1>
+                <p>Your centralized hub for tracking, reviewing, and merging open pull requests with precision and control🧠</p>
             </div>
             <div className="command-mode-toggle">
                 <button
@@ -80,7 +80,7 @@ const GlobalPullRequestsTab: React.FC = () => {
                 </button>
             </div>
             <br/>
-            {viewMode === "global" && pullRequests.length === 0 && <p className="no-workflows">No pull requests retrieved yet.</p>}
+            {pullRequests.length === 0 && <p className="no-workflows">No pull requests retrieved yet.</p>}
             {viewMode === "global" && pullRequests.length > 0 &&
                 <div className="workflow-table-container">
                 <table className="workflow-table">
