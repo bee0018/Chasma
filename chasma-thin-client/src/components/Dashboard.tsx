@@ -9,6 +9,7 @@ import {AddGitRepositoryRequest} from "../API/ChasmaWebApiClient";
 import AddRepositoryModal from "./modals/AddRepositoryModal";
 import {configClient} from "../managers/ApiClientManager";
 import MultiDryRunSimulationTab from "./dashboardTabs/MultiDryRunSimulationTab";
+import GlobalPullRequestsTab from './dashboardTabs/GlobalPullRequestsTab';
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -137,6 +138,12 @@ const Dashboard: React.FC = () => {
                     🚫 Ignored Repos
                 </div>
                 <div
+                    className={`tab ${activeTab === "globalPrs" ? "active" : ""}`}
+                    onClick={() => handleTabClick("globalPrs")}
+                >
+                    🌍 Global PRs
+                </div>
+                <div
                     className={`tab ${activeTab === "apiStatus" ? "active" : ""}`}
                     onClick={() => handleTabClick("apiStatus")}
                 >
@@ -164,6 +171,11 @@ const Dashboard: React.FC = () => {
                 {activeTab === "dryRun" && (
                     <div className="panel-card">
                         <MultiDryRunSimulationTab />
+                    </div>
+                )}
+                {activeTab === "globalPrs" && (
+                    <div className="panel-card">
+                        <GlobalPullRequestsTab />
                     </div>
                 )}
                 {activeTab === "apiStatus" && (

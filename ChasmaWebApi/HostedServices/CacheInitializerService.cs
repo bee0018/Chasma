@@ -180,26 +180,8 @@ namespace ChasmaWebApi.HostedServices
             logger.LogInformation("Beginning Git network initialization using GitHub API.");
             try
             {
-                List<LocalGitRepository> gitHubRepositories = cacheManager.Repositories.Values
-                    .Where(i => i.HostPlatform == RemoteHostPlatform.GitHub)
-                    .ToList();
-                foreach (LocalGitRepository repository in gitHubRepositories)
-                {
-                    string repoName = repository.Name;
-                    List<RemotePullRequest>? pullRequests = await GetGitHubPullRequestAsync(repository.Owner, repository.Name);
-                    if (pullRequests == null)
-                    {
-                        logger.LogWarning("Skipping cache initialization for {name}.", repoName);
-                        continue;
-                    }
-
-                    pullRequests.ForEach(pr =>
-                    {
-                        cacheManager.GitHubPullRequests.TryAdd(pr.Number, pr);
-                    });
-                }
-
                 // Start polling ONLY after GitHub pull requests are populated
+                await FetchOpenGitHubPullRequestsAsync();
                 StartPullRequestPolling(cancellationToken);
             }
             catch (Exception e)
@@ -309,7 +291,8 @@ namespace ChasmaWebApi.HostedServices
                 {
                     try
                     {
-                        await RefreshPullRequestsAsync(cancellationToken);
+                        await RefreshPullRequestsAsync();
+                        await FetchOpenGitHubPullRequestsAsync();
                     }
                     catch (OperationCanceledException)
                     {
@@ -325,9 +308,8 @@ namespace ChasmaWebApi.HostedServices
 
         /// <summary>
         /// Refreshes the GitHub pull request cache.
-        /// <param name="cancellationToken">The cancellation token.</param>
         /// </summary>
-        private async Task RefreshPullRequestsAsync(CancellationToken cancellationToken)
+        private async Task RefreshPullRequestsAsync()
         {
             foreach (RemotePullRequest existingPullRequest in cacheManager.GitHubPullRequests.Values)
             {
@@ -337,7 +319,48 @@ namespace ChasmaWebApi.HostedServices
                     continue;
                 }
 
+                if (pr.Merged)
+                {
+                    cacheManager.GitHubPullRequests.TryRemove(pr.Number, out _);
+                    logger.LogInformation("Stop tracking pull request {prId} because it has been merged.", pr.Number);
+                    return;
+                }
+
+                StringEnum<ItemState> closedState = new(ItemState.Closed);
+                if (pr.ActiveState == closedState.StringValue)
+                {
+                    cacheManager.GitHubPullRequests.TryRemove(pr.Number, out _);
+                    logger.LogInformation("Stop tracking pull request {prId} because it has been closed.", pr.Number);
+                    return;
+                }
+
                 cacheManager.GitHubPullRequests.AddOrUpdate(pr.Number, pr, (_, _) => pr);
+            }
+        }
+
+        /// <summary>
+        /// Gets the open pull requests for each of the GitHub repositories in cache.
+        /// </summary>
+        /// <returns>The task performing this task operation.</returns>
+        private async Task FetchOpenGitHubPullRequestsAsync()
+        {
+            List<LocalGitRepository> gitHubRepositories = cacheManager.Repositories.Values
+                    .Where(i => i.HostPlatform == RemoteHostPlatform.GitHub)
+                    .ToList();
+            foreach (LocalGitRepository repository in gitHubRepositories)
+            {
+                string repoName = repository.Name;
+                List<RemotePullRequest>? pullRequests = await GetGitHubPullRequestAsync(repository.Owner, repository.Name);
+                if (pullRequests == null)
+                {
+                    logger.LogWarning("No pull requests could be found for {name}.", repoName);
+                    continue;
+                }
+
+                pullRequests.ForEach(pr =>
+                {
+                    cacheManager.GitHubPullRequests.TryAdd(pr.Number, pr);
+                });
             }
         }
 
@@ -354,25 +377,8 @@ namespace ChasmaWebApi.HostedServices
         {
             try
             {
-                List<LocalGitRepository> gitLabRepositories = cacheManager.Repositories.Values
-                    .Where(i => i.HostPlatform == RemoteHostPlatform.GitLab)
-                    .ToList();
-                foreach (LocalGitRepository repository in gitLabRepositories)
-                {
-                    List<RemotePullRequest>? mergeRequests = await GetGitLabMergeRequestAsync(repository);
-                    if (mergeRequests == null)
-                    {
-                        logger.LogWarning("Skipping cache initialization for {name}.", repository.Name);
-                        continue;
-                    }
-
-                    mergeRequests.ForEach(mr =>
-                    {
-                        cacheManager.GitLabMergeRequests.TryAdd(mr.Number, mr);
-                    });
-                }
-
                 // Start polling ONLY after GitLab merge requests are populated
+                await FetchOpenGitLabMergeRequestsAsync();
                 StartMergeRequestPolling(cancellationToken);
             }
             catch (Exception e)
@@ -418,7 +424,7 @@ namespace ChasmaWebApi.HostedServices
                         RepositoryOwner = owner,
                         BranchName = mergeRequest.SourceBranch,
                         ActiveState = mergeRequest.State,
-                        MergeableState = mergeRequest.DetailedMergeStatus.StringValue,
+                        MergeableState = mergeRequest.MergeStatus,
                         CreatedAt = mergeRequest.CreatedAt.ToLocalTime().ToString("g"),
                         MergedAt = mergeRequest.MergedAt.HasValue ? mergeRequest.MergedAt.Value.ToLocalTime().ToString("g") : null,
                         Merged = mergeRequest.MergedAt.HasValue,
@@ -451,6 +457,7 @@ namespace ChasmaWebApi.HostedServices
                     try
                     {
                         await RefreshMergeRequestsAsync(cancellationToken);
+                        await FetchOpenGitLabMergeRequestsAsync();
                     }
                     catch (OperationCanceledException)
                     {
@@ -475,13 +482,27 @@ namespace ChasmaWebApi.HostedServices
                 string owner = existingPullRequest.RepositoryOwner;
                 string repoName = existingPullRequest.RepositoryName;
                 long iid = existingPullRequest.Number;
-                RemotePullRequest? pr = await GetMergeRequestByIidNumberAsync(owner, repoName, iid, cancellationToken);
-                if (pr == null)
+                RemotePullRequest? mr = await GetMergeRequestByIidNumberAsync(owner, repoName, iid, cancellationToken);
+                if (mr == null)
                 {
                     continue;
                 }
 
-                cacheManager.GitLabMergeRequests.AddOrUpdate(pr.Number, pr, (_, _) => pr);
+                if (mr.Merged)
+                {
+                    cacheManager.GitLabMergeRequests.TryRemove(mr.Number, out _);
+                    logger.LogInformation("Stop tracking merge request {mrId} because it has been merged.", mr.Number);
+                    return;
+                }
+
+                if (mr.ActiveState == "closed")
+                {
+                    cacheManager.GitLabMergeRequests.TryRemove(mr.Number, out _);
+                    logger.LogInformation("Stop tracking merge request {mrId} because it has been closed.", mr.Number);
+                    return;
+                }
+
+                cacheManager.GitLabMergeRequests.AddOrUpdate(mr.Number, mr, (_, _) => mr);
             }
         }
 
@@ -539,6 +560,31 @@ namespace ChasmaWebApi.HostedServices
             {
                 logger.LogWarning("Error when trying to get pull request #{mergeRequestId}: {error}", mergeRequestId, e);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Fetches the open GitLab merge requests for each of the GitLab repositories.
+        /// </summary>
+        /// <returns>Task return the fetch operation task.</returns>
+        private async Task FetchOpenGitLabMergeRequestsAsync()
+        {
+            List<LocalGitRepository> gitLabRepositories = cacheManager.Repositories.Values
+                    .Where(i => i.HostPlatform == RemoteHostPlatform.GitLab)
+                    .ToList();
+            foreach (LocalGitRepository repository in gitLabRepositories)
+            {
+                List<RemotePullRequest>? mergeRequests = await GetGitLabMergeRequestAsync(repository);
+                if (mergeRequests == null)
+                {
+                    logger.LogWarning("No merge requests could be found for {name}.", repository.Name);
+                    continue;
+                }
+
+                mergeRequests.ForEach(mr =>
+                {
+                    cacheManager.GitLabMergeRequests.TryAdd(mr.Number, mr);
+                });
             }
         }
 
