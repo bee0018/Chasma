@@ -119,11 +119,9 @@ const HelpCommonGitCommandsPage: React.FC = () => {
     return (
         <section id="git-commands" className="panel-card">
             <h2>Common Git Commands</h2>
-
             <p className="help-intro">
                 Frequently used Git commands and what they do. Click a command to expand/collapse its description.
             </p>
-
             <input
                 type="text"
                 placeholder="Search commands..."
@@ -131,7 +129,6 @@ const HelpCommonGitCommandsPage: React.FC = () => {
                 onChange={e => setSearchQuery(e.target.value)}
                 className="input-field"
             />
-
             <div className="git-command-list">
                 {filteredCommands.length === 0 ? (
                     <p>No commands match your search.</p>
@@ -150,10 +147,9 @@ const HelpCommonGitCommandsPage: React.FC = () => {
                             >
                                 <code>{cmd.command}</code>
                                 <span style={{ fontSize: "0.85rem", color: "#999" }}>
-            {expandedIndexes.includes(index) ? "▾" : "▸"}
-          </span>
+                                    {expandedIndexes.includes(index) ? "▾" : "▸"}
+                                </span>
                             </div>
-
                             {/* Description + Copy Button */}
                             <div className="git-command-description">
                                 <p>{cmd.description}</p>
