@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Data.Messages;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Data.Requests.Remote;
@@ -47,6 +48,20 @@ namespace ChasmaWebApi.Controllers
             applicationControlService = controlService;
             webApiConfigurations = apiConfig;
             cacheManager = apiCacheManager;
+        }
+
+        /// <summary>
+        /// Gets the global pull requests that is tracked in the web API.
+        /// </summary>
+        /// <returns>The message containing all the tracked pull requests.</returns>
+        [HttpGet]
+        [Route("getGlobalPullRequestStatuses")]
+        public ActionResult<GetPullRequestStatusMessage> GetGlobalPullRequests()
+        {
+            logger.LogInformation("Received request to get global pull requests.");
+            List<RemotePullRequest> pullRequests = [..cacheManager.GitHubPullRequests.Values, ..cacheManager.GitLabMergeRequests.Values];
+            GetPullRequestStatusMessage message = new() { PullRequests = pullRequests };
+            return Ok(message);
         }
 
         #region GitHub

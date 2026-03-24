@@ -287,6 +287,26 @@
         }
       }
     },
+    "/api/Remote/getGlobalPullRequestStatuses": {
+      "get": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_GetGlobalPullRequests",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPullRequestStatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Remote/retrieveGitHubWorkflowRuns": {
       "post": {
         "tags": [
@@ -1737,6 +1757,70 @@
           1
         ]
       },
+      "GetPullRequestStatusMessage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "pullRequests": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RemotePullRequest"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "RemotePullRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "number": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "repositoryName": {
+                "type": "string"
+              },
+              "repositoryOwner": {
+                "type": "string"
+              },
+              "branchName": {
+                "type": "string"
+              },
+              "activeState": {
+                "type": "string"
+              },
+              "mergeableState": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string"
+              },
+              "mergedAt": {
+                "type": "string",
+                "nullable": true
+              },
+              "merged": {
+                "type": "boolean"
+              },
+              "htmlUrl": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
       "GitHubWorkflowRunResponse": {
         "allOf": [
           {
@@ -2543,51 +2627,6 @@
           16384,
           32768,
           -2147483648
-        ]
-      },
-      "RemotePullRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "number": {
-                "type": "integer",
-                "format": "int64"
-              },
-              "repositoryName": {
-                "type": "string"
-              },
-              "repositoryOwner": {
-                "type": "string"
-              },
-              "branchName": {
-                "type": "string"
-              },
-              "activeState": {
-                "type": "string"
-              },
-              "mergeableState": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": "string"
-              },
-              "mergedAt": {
-                "type": "string",
-                "nullable": true
-              },
-              "merged": {
-                "type": "boolean"
-              },
-              "htmlUrl": {
-                "type": "string"
-              }
-            }
-          }
         ]
       },
       "GitStatusRequest": {
