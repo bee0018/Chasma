@@ -141,7 +141,7 @@ const Dashboard: React.FC = () => {
                     className={`tab ${activeTab === "globalPrs" ? "active" : ""}`}
                     onClick={() => handleTabClick("globalPrs")}
                 >
-                    🌍 Global PRs
+                    🌍 Global
                 </div>
                 <div
                     className={`tab ${activeTab === "apiStatus" ? "active" : ""}`}
