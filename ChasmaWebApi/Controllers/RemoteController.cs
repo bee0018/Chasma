@@ -59,7 +59,7 @@ namespace ChasmaWebApi.Controllers
         public ActionResult<GetPullRequestStatusMessage> GetGlobalPullRequests()
         {
             logger.LogInformation("Received request to get global pull requests.");
-            List<RemotePullRequest> pullRequests = [..cacheManager.GitHubPullRequests.Values, ..cacheManager.GitLabMergeRequests.Values];
+            List<RemotePullRequest> pullRequests = [.. cacheManager.GitHubPullRequests.Values, .. cacheManager.GitLabMergeRequests.Values];
             GetPullRequestStatusMessage message = new() { PullRequests = pullRequests };
             return Ok(message);
         }

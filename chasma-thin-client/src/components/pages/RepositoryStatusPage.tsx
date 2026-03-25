@@ -20,7 +20,6 @@ import CommitModal from "../modals/CommitModal";
 import PushModal from "../modals/PushModal";
 import CheckoutModal from "../modals/CheckoutModal";
 import DeleteBranchModal from "../modals/DeleteBranchModal";
-import ExecuteShellCommandsModal from "../modals/ExecuteShellCommandsModal";
 import {useCacheStore} from "../../managers/CacheManager";
 import {capitalizeFirst} from "../../stringHelperUtil";
 import MergeModal from "../modals/MergeModal";
@@ -34,6 +33,7 @@ import Checkbox from "../Checkbox";
 import "../../styles/pages/batchOperationsPage.css"
 import RemoteIssuesPage from "./remote/RemoteIssuesPage";
 import RemotePullRequestPage from "./remote/RemotePullRequestPage";
+import ExecuteShellCommandsPage from "./statusComponents/ExecuteShellCommandsPage";
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -68,9 +68,6 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user is deleting a branch. **/
     const [isDeletingBranch, setIsDeletingBranch] = useState(false);
-
-    /** Gets or sets a flag indicating whether the user executing shell commands. **/
-    const [isExecutingShellCommands, setIsExecutingShellCommands] = useState(false);
 
     /** Gets or sets a flag indicating whether the user is merging branches. **/
     const [isMergingBranch, setIsMergingBranch] = useState(false);
@@ -616,7 +613,12 @@ const RepositoryStatusPage: React.FC = () => {
                                     Create Bitbucket Task🐛
                             </div>
                         }
-                        <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsExecutingShellCommands(true)}>Custom Shell Commands🖥️</div>
+                        <div
+                            className={`tab ${activeTab === "shell" ? "active" : ""}`}
+                            style={{ marginTop: "20px" }}
+                            onClick={() => handleTabClick("shell")}>
+                                Custom Shell Commands🖥️
+                        </div>
                     </>
                 }
             </aside>
@@ -1084,12 +1086,14 @@ const RepositoryStatusPage: React.FC = () => {
                     repositoryId={repoId}
                     onClose={() => setIsDeletingBranch(false)}  />
             }
-            {isExecutingShellCommands &&
-                <ExecuteShellCommandsModal
-                    repositoryId={repoId}
-                    onClose={() => setIsExecutingShellCommands(false)}
-                    onSuccess={() => handleSelectFile(null, false)} />
-            }
+            {activeTab === "shell" && (
+                <div
+                    className="panel-card"
+                    style={{width: "100%"}}
+                >
+                    <ExecuteShellCommandsPage repositoryId={repoId} />
+                </div>
+            )}
             {isMergingBranch &&
                 <MergeModal
                     onClose={() => setIsMergingBranch(false)}
