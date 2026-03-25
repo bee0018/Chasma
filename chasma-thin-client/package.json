@@ -45,6 +45,7 @@
     ]
   },
   "devDependencies": {
+    "baseline-browser-mapping": "^2.10.10",
     "copyfiles": "^2.4.1"
   }
 }
