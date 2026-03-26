@@ -132,7 +132,7 @@ namespace ChasmaWebApi.Tests.Controllers
             };
             string errorMessage = "Failed to get build results";
             List<WorkflowRunResult> workflowRuns = [];
-            controlServiceMock.Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), out workflowRuns, out errorMessage)).Returns(false);
+            controlServiceMock.Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), out workflowRuns, out errorMessage)).Returns(false);
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetGitHubWorkflowResults(request);
             GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
@@ -154,7 +154,7 @@ namespace ChasmaWebApi.Tests.Controllers
             string errorMessage = $"Error fetching workflow runs from {TestRepositoryName}. Check server logs for more information.";
             List<WorkflowRunResult> workflowRuns = [];
             controlServiceMock
-                .Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), out workflowRuns, out errorMessage))
+                .Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), out workflowRuns, out errorMessage))
                 .Throws(new Exception("Exception getting run results."));
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetGitHubWorkflowResults(request);
             GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
@@ -182,7 +182,7 @@ namespace ChasmaWebApi.Tests.Controllers
             string errorMessage = null;
             List<WorkflowRunResult> workflowRuns = [result];
             controlServiceMock
-                .Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), out workflowRuns, out errorMessage))
+                .Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), out workflowRuns, out errorMessage))
                 .Returns(true);
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetGitHubWorkflowResults(request);
             GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));

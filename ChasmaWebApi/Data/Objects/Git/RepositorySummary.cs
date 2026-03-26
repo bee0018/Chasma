@@ -38,8 +38,13 @@ namespace ChasmaWebApi.Data.Objects.Git
         public string CommitHash { get; set; }
 
         /// <summary>
-        /// Gets or sets the list of GitHub pull requests associated with the repository on a specific branch.
+        /// Gets or sets the list of pull requests associated with the repository on a specific branch.
         /// </summary>
         public List<RemotePullRequest> PullRequests { get; set; } = new();
+
+        /// <summary>
+        /// Gets or sets a value indicating when the branch was last updated.
+        /// </summary>
+        public string LastUpdated { get; set; }
     }
 }

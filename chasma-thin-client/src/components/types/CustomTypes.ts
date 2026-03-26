@@ -40,3 +40,6 @@ export type SimulationEntry = {
     baseBranchToMerge?: string;
     destinationBranchToMerge?: string;
 }
+
+/** The toggle options for select the global view mode. */
+export type GlobalViewMode = "prs" | "branchSync";

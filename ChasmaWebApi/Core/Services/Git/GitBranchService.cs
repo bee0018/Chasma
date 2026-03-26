@@ -147,6 +147,27 @@ namespace ChasmaWebApi.Core.Services.Git
             return TryMergeBranchManually(workingDirectory, destinationBranchName, sourceBranchName, out errorMessage);
         }
 
+        /// <summary>
+        /// Determines if the specified branch exists in the specified repository.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <param name="branchName">The branch to check for.</param>
+        /// <param name="logger">The logging instance.</param>
+        /// <returns>True if the branch exists; false otherwise.</returns>
+        public static bool DoesBranchExist(string workingDirectory, string branchName, ILogger logger)
+        {
+            try
+            {
+                using Repository repo = new(workingDirectory);
+                return repo.Branches.Select(i => i.FriendlyName).Contains(branchName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning("Error when trying to see if {branch} exists in directory {dir}: {error}", branchName, workingDirectory, ex);
+                return false;
+            }
+        }
+
         #region Private Methods
 
         /// <summary>

@@ -42,5 +42,10 @@ namespace ChasmaWebApi.Data.Responses.Status
         /// Gets or sets the list of GitHub pull requests associated with the repository on a specific branch.
         /// </summary>
         public List<RemotePullRequest> PullRequests { get; set; } = new();
+
+        /// <summary>
+        /// Gets or sets the last time this repository was updated.
+        /// </summary>
+        public string LastUpdated { get; set; }
     }
 }

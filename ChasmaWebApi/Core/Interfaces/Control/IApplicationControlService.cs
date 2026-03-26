@@ -238,12 +238,10 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="repoName">The repository name.</param>
         /// <param name="repoOwner">The repository owner.</param>
         /// <param name="token">The repository access token.</param>
-        /// <param name="buildCount">The threshold representing the max number of runs to retrieve.</param>
         /// <param name="workflowRunResults">The list of workflow run results.</param>
         /// <param name="errorMessage">The error message if there was a failure to retrieve runs.</param>
         /// <returns>True if the workflow runs were retrieved; false otherwise.</returns>
-        bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, int buildCount,
-            out List<WorkflowRunResult> workflowRunResults, out string errorMessage);
+        bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, out List<WorkflowRunResult> workflowRunResults, out string errorMessage);
 
         /// <summary>
         /// Tries to create a pull request in the specified repository.
@@ -334,5 +332,15 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the merge request was created; false otherwise.</returns>
         bool TryCreateMergeRequest(PreparedGitLabMergeRequest mergeRequest, out MergeRequestResult mergeResult, out string errorMessage);
+
+        /// <summary>
+        /// Gets the branch synchronization statuses based off the specified branch name.
+        /// </summary>
+        /// <param name="branchName">The branch to get status for.</param>
+        /// <param name="username">The user's username.</param>
+        /// <param name="repositories">The list of repositories to get branch sync statuses for.</param>
+        /// <param name="workingDirectories">The mapping of repository identifiers to its matching working directory.</param>
+        /// <returns>The list of branch sync statuses.</returns>
+        List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, string username, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories);
     }
 }

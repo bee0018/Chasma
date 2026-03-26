@@ -129,6 +129,9 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets the last selected index for staging files. */
     const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 
+    /** Gets or sets the time that this repository was last updated. */
+    const [lastUpdated, setLastUpdated] = useState<string | undefined>(undefined);
+
     /** Gets or sets the list of staged files. */
     const stagedList = statusElements?.filter(e => e.isStaged) || [];
 
@@ -196,6 +199,7 @@ const RepositoryStatusPage: React.FC = () => {
             setBranchUrl(response.remoteUrl);
             setCommitHash(response.commitHash);
             setOpenPullRequests(response.pullRequests);
+            setLastUpdated(response.lastUpdated);
         } catch (e) {
             console.error(e);
             setNotification({
@@ -641,6 +645,10 @@ const RepositoryStatusPage: React.FC = () => {
                                     <div className="repo-summary-item">
                                         <span className="repo-summary-label">Branch:</span>
                                         <span className="repo-summary-value">{branchName}</span>
+                                    </div>
+                                    <div className="repo-summary-item">
+                                        <span className="repo-summary-label">Last Updated:</span>
+                                        <span className="repo-summary-value">{lastUpdated}</span>
                                     </div>
                                     <div className="repo-summary-item">
                                         <span className="repo-summary-label">Current Commit:</span>

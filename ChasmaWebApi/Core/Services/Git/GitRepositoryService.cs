@@ -89,7 +89,7 @@ namespace ChasmaWebApi.Core.Services.Git
             }
 
             Logger.LogInformation("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
-            (string branchName, int aheadCount, int behindCount) = GetBranchDiversionCalculation(workingDirectory, username, token);
+            (string branchName, int aheadCount, int behindCount, string lastUpdated) = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, username, token, Logger);
             string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
             string commitHash = GetCommitHash(repo.Head, Logger);
             List<RemotePullRequest> remotePullRequests;
@@ -113,6 +113,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 RemoteUrl = remoteUrl,
                 CommitHash = commitHash,
                 PullRequests = remotePullRequests,
+                LastUpdated = lastUpdated,
             };
             return repositorySummary;
         }
@@ -347,6 +348,86 @@ namespace ChasmaWebApi.Core.Services.Git
             return true;
         }
 
+        /// <summary>
+        /// Gets the branch diversion calculation for the specified repository.
+        /// </summary>
+        /// <param name="workingDirectory">The specified repository working directory.</param>
+        /// <param name="branchName">The branch name.</param>
+        /// <param name="username">The username for authentication when fetching updates from remote.</param>
+        /// <param name="token">The token for authentication when fetching updates from remote.</param>
+        /// <param name="logger">The logging instance.</param>
+        /// <returns>The number of local branch name, commits ahead, behind, and last updated..</returns>
+        public static (string branchName, int aheadCount, int behindCount, string lastUpdated) GetBranchDiversionCalculation(string workingDirectory, string branchName, string username, string token, ILogger logger)
+        {
+            using Repository repo = new(workingDirectory);
+            Branch branch = repo.Branches.FirstOrDefault(i => i.FriendlyName == branchName);
+            if (branch == null)
+            {
+                logger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", repo.Info.WorkingDirectory);
+                return (string.Empty, 0, 0, string.Empty);
+            }
+
+            if (repo.Info.IsHeadDetached)
+            {
+                logger.LogWarning("Cannot get branch diversion calculation. The HEAD is in a detached state for repository at {path}.", repo.Info.WorkingDirectory);
+                return (string.Empty, 0, 0, string.Empty);
+            }
+
+            try
+            {
+                FetchOptions fetchOptions = new()
+                {
+                    CredentialsProvider = (url, user, credentials) =>
+                    new UsernamePasswordCredentials
+                    {
+                        Username = username,
+                        Password = token
+                    }
+                };
+                Commands.Fetch(repo, branch.RemoteName, [], fetchOptions, null);
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}. Attempting manual fetch.", branch.RemoteName, repo.Info.WorkingDirectory);
+                if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out string errorMessage))
+                {
+                    logger.LogError(errorMessage);
+                }
+            }
+
+            string localBranchName = branch.FriendlyName;
+            if (string.IsNullOrEmpty(localBranchName))
+            {
+                logger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", repo.Info.WorkingDirectory, localBranchName);
+                return (string.Empty, 0, 0, string.Empty);
+            }
+
+            if (branch.TrackedBranch == null)
+            {
+                logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
+                return (string.Empty, 0, 0, string.Empty);
+            }
+
+            string upstreamBranchName = branch.TrackedBranch.FriendlyName;
+            Branch localBranch = repo.Branches[localBranchName];
+            Branch upstreamBranch = repo.Branches[upstreamBranchName];
+            if (localBranch == null)
+            {
+                logger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
+                return (string.Empty, 0, 0, string.Empty);
+            }
+
+            if (upstreamBranch == null)
+            {
+                logger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
+                return (localBranchName, 0, 0, localBranchName);
+            }
+            
+            string lastUpdated = upstreamBranch.Tip.Committer.When.ToLocalTime().ToString("g");
+            HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
+            return (localBranchName, divergence.AheadBy ?? 0, divergence.BehindBy ?? 0, lastUpdated);
+        }
+
         #region Private Methods
 
         /// <summary>
@@ -466,83 +547,6 @@ namespace ChasmaWebApi.Core.Services.Git
             {
                 return "git diff --cached";
             }
-        }
-
-        /// <summary>
-        /// Gets the branch diversion calculation for the specified repository.
-        /// </summary>
-        /// <param name="workingDirectory">The specified repository working directory.</param>
-        /// <param name="username">The username for authentication when fetching updates from remote.</param>
-        /// <param name="token">The token for authentication when fetching updates from remote.</param>
-        /// <returns>The number of local branch name, commits ahead, and behind.</returns>
-        private (string branchName, int aheadCount, int behindCount) GetBranchDiversionCalculation(string workingDirectory, string username, string token)
-        {
-            using Repository repo = new(workingDirectory);
-            Branch branch = repo.Head;
-            if (branch == null)
-            {
-                Logger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", repo.Info.WorkingDirectory);
-                return ("", 0, 0);
-            }
-
-            if (repo.Info.IsHeadDetached)
-            {
-                Logger.LogWarning("Cannot get branch diversion calculation. The HEAD is in a detached state for repository at {path}.", repo.Info.WorkingDirectory);
-                return ("", 0, 0);
-            }
-
-            try
-            {
-                FetchOptions fetchOptions = new()
-                {
-                    CredentialsProvider = (url, user, credentials) =>
-                    new UsernamePasswordCredentials
-                    {
-                        Username = username,
-                        Password = token
-                    }
-                };
-                Commands.Fetch(repo, branch.RemoteName, [], fetchOptions, null);
-            }
-            catch (Exception e)
-            {
-                Logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}. Attempting manual fetch.", branch.RemoteName, repo.Info.WorkingDirectory);
-                if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out string errorMessage))
-                {
-                    Logger.LogError(errorMessage);
-                }
-            }
-
-            string localBranchName = branch.FriendlyName;
-            if (string.IsNullOrEmpty(localBranchName))
-            {
-                Logger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", repo.Info.WorkingDirectory, localBranchName);
-                return ("", 0, 0);
-            }
-
-            if (branch.TrackedBranch == null)
-            {
-                Logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
-                return (localBranchName, 0, 0);
-            }
-
-            string upstreamBranchName = branch.TrackedBranch.FriendlyName;
-            Branch localBranch = repo.Branches[localBranchName];
-            Branch upstreamBranch = repo.Branches[upstreamBranchName];
-            if (localBranch == null)
-            {
-                Logger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
-                return (localBranchName, 0, 0);
-            }
-
-            if (upstreamBranch == null)
-            {
-                Logger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
-                return (localBranchName, 0, 0);
-            }
-
-            HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
-            return (localBranchName, divergence.AheadBy ?? 0, divergence.BehindBy ?? 0);
         }
 
         /// <summary>

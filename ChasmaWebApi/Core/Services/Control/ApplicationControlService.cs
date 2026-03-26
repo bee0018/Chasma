@@ -4,7 +4,9 @@ using ChasmaWebApi.Core.Interfaces.Index;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
 using ChasmaWebApi.Core.Interfaces.Simulation;
+using ChasmaWebApi.Core.Services.Git;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
@@ -59,6 +61,16 @@ namespace ChasmaWebApi.Core.Services.Control
         private readonly IGitLabService gitLabService;
 
         /// <summary>
+        /// The logging instance for this class.
+        /// </summary>
+        private readonly ILogger<ApplicationControlService> logger;
+
+        /// <summary>
+        /// The API configurations.
+        /// </summary>
+        private readonly ChasmaWebApiConfigurations apiConfigurations;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationControlService"/> class with the specified dependencies.
         /// </summary>
         /// <param name="repoIndexService">The repository index service.</param>
@@ -69,7 +81,19 @@ namespace ChasmaWebApi.Core.Services.Control
         /// <param name="gitHubRemoteService">The GitHub remote repository management service.</param>
         /// <param name="simService">The git operation simulation service.</param>
         /// <param name="gitlabService">The GitLab remote repository management service.</param>
-        public ApplicationControlService(IRepositoryIndexService repoIndexService, IGitRepositoryService gitRepoService, IGitBranchService branchService, IShellExecutionService shellService, IGitStashService stashService, IGitHubService gitHubRemoteService, ISimulationService simService, IGitLabService gitlabService)
+        /// <param name="log">The internal logging instance.</param>
+        /// <param name="config">The internal API configurations.</param>
+        public ApplicationControlService(
+            IRepositoryIndexService repoIndexService,
+            IGitRepositoryService gitRepoService,
+            IGitBranchService branchService,
+            IShellExecutionService shellService,
+            IGitStashService stashService,
+            IGitHubService gitHubRemoteService,
+            ISimulationService simService,
+            IGitLabService gitlabService,
+            ILogger<ApplicationControlService> log,
+            ChasmaWebApiConfigurations config)
         {
             repositoryIndexService = repoIndexService;
             gitRepositoryService = gitRepoService;
@@ -79,6 +103,8 @@ namespace ChasmaWebApi.Core.Services.Control
             gitHubService = gitHubRemoteService;
             simulationService = simService;
             gitLabService = gitlabService;
+            logger = log;
+            apiConfigurations = config;
         }
 
         #region Shell Interactions 
@@ -203,6 +229,64 @@ namespace ChasmaWebApi.Core.Services.Control
             return gitRepositoryService.TryGetGitDiff(workingDirectory, filePath, isStaged, out diffContent, out errorMessage);
         }
 
+        // <inheritdoc />
+        public List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, string username, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories)
+        {
+            List<BranchSyncStatus> statuses = new();
+            foreach (LocalGitRepository repository in repositories)
+            {
+               // We know the key to exist so this is a safe operation.
+                string workingDirectory = workingDirectories[repository.Id];
+                string buildStatus = "N/A";
+                BranchSyncStatus branchSyncStatus = new();
+                if (!GitBranchService.DoesBranchExist(workingDirectory, branchName, logger))
+                {
+                    branchSyncStatus = new()
+                    {
+                        RepositoryName = repository.Name,
+                        BranchExists = false,
+                        Ahead = "-",
+                        Behind = "-",
+                        PullRequestOpen = false,
+                        BuildStatus = buildStatus,
+                        LastUpdated = "-",
+                    };
+                }
+                else
+                {
+                    RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
+                    string token = GetApiToken(remoteHostPlatform);
+                    (string branchName, int aheadCount, int behindCount, string lastUpdated) divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
+                    string repoName = repository.Name;
+                    string repoOwner = repository.Owner;
+                    if (remoteHostPlatform == RemoteHostPlatform.GitHub && gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> gitHubResults, out _))
+                    {
+                        buildStatus = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchName);
+                    }
+                    else if (remoteHostPlatform == RemoteHostPlatform.GitLab && gitLabService.TryGetPipelineJobResults(repository, out List<WorkflowRunResult> gitLabResults, out _))
+                    {
+                        buildStatus = GetBuildStatusFromRemoteBuildResults(gitLabResults, branchName);
+                    }
+
+                    RepositorySummary? summary = gitRepositoryService.GetRepositoryStatus(repository.Id, username, token);
+                    branchSyncStatus = new()
+                    {
+                        RepositoryName = repository.Name,
+                        BranchExists = true,
+                        Ahead = divergenceDetails.aheadCount.ToString(),
+                        Behind = divergenceDetails.behindCount.ToString(),
+                        PullRequestOpen = summary != null && summary.PullRequests.Any(i => i.BranchName == branchName && !i.Merged),
+                        BuildStatus = buildStatus,
+                        LastUpdated = divergenceDetails.lastUpdated,
+                    };
+                }
+                
+                statuses.Add(branchSyncStatus);
+            }
+
+            return statuses;
+        }
+
         #endregion
 
         #region Stash Functionality
@@ -242,9 +326,9 @@ namespace ChasmaWebApi.Core.Services.Control
         #region Remote Interactions - GitHub
 
         // <inheritdoc />
-        public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, int buildCount, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
+        public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
         {
-            return gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, buildCount, out workflowRunResults, out errorMessage);
+            return gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out workflowRunResults, out errorMessage);
         }
 
         // <inheritdoc />
@@ -307,6 +391,57 @@ namespace ChasmaWebApi.Core.Services.Control
         public List<SimulatedMergeResult> PerformMergeBranchDryRun(IEnumerable<MergeSimulationEntry> entries)
         {
             return simulationService.SimulateMergeBranch(entries);
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// Gets the remote host platform API token based on the repository type.
+        /// </summary>
+        /// <param name="remoteHostPlatform">The repository's remote host platform.</param>
+        /// <returns>The repository remote host platform API token.</returns>
+        private string GetApiToken(RemoteHostPlatform remoteHostPlatform)
+        {
+            return remoteHostPlatform switch
+            {
+                RemoteHostPlatform.GitHub => apiConfigurations.GitHubApiToken,
+                RemoteHostPlatform.GitLab => apiConfigurations.GitLabApiToken,
+                _ => string.Empty,
+            };
+        }
+
+        /// <summary>
+        /// Gets the build status from the remote builds from the remote host platform.
+        /// </summary>
+        /// <param name="builds">The list of build results.</param>
+        /// <param name="branchName">The branch name to search builds for.</param>
+        /// <returns>The build status for the most recent specified branch name.</returns>
+        private string GetBuildStatusFromRemoteBuildResults(IEnumerable<WorkflowRunResult> builds, string branchName)
+        {
+            bool buildsExistForBranch = false;
+            IOrderedEnumerable<WorkflowRunResult> orderedBuilds = builds.OrderByDescending(i => DateTimeOffset.Parse(i.UpdatedDate));
+            if (orderedBuilds.Any(i => i.BranchName == branchName))
+            {
+                buildsExistForBranch = true;
+            }
+
+            WorkflowRunResult mostRecentBuild = orderedBuilds.Take(apiConfigurations.WorkflowRunReportThreshold).FirstOrDefault(i => i.BranchName == branchName);
+            if (buildsExistForBranch && mostRecentBuild == null)
+            {
+                // A build exists for this branch in the lifetime of this repository, however, it is not recent in the reported number of builds that is being sent out.
+                return "Stale";
+            }
+
+            if (buildsExistForBranch && mostRecentBuild != null)
+            {
+                // This build is recent and up to date.
+                return mostRecentBuild.BuildStatus;
+            }
+
+            // Builds have not been configured for this branch.
+            return "-";
         }
 
         #endregion
