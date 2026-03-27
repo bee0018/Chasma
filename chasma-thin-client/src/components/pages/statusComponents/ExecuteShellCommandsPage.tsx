@@ -62,6 +62,13 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
        **/
        const handleExecuteShellCommandsRequest = useCallback(async (e: React.FormEvent) => {
            e.preventDefault();
+           const command = rows.length > 0 ? "commands" : "command";
+           setNotification({
+            title: `Executing shell ${command}...`,
+            message: "Please wait while your request is being processed. May take a few moments.",
+            isError: false,
+            loading: true
+        });
            const request = new ExecuteShellCommandRequest();
            request.repositoryId = props.repositoryId;
            request.commands = [];
@@ -86,6 +93,7 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
                        message: result.outputMessage,
                    }))
                );
+               setNotification(null);
            } catch (e) {
                console.error(e);
                setOutput([])
