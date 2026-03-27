@@ -976,6 +976,38 @@
         }
       }
     },
+    "/api/RepositoryStatus/getBranchSyncStatus": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_GetBranchSyncStatus",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetBranchSyncStatusRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetBranchSyncStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Shell/executeShellCommands": {
       "post": {
         "tags": [
@@ -2492,6 +2524,9 @@
                 "items": {
                   "$ref": "#/components/schemas/RemotePullRequest"
                 }
+              },
+              "lastUpdated": {
+                "type": "string"
               }
             }
           }
@@ -2941,6 +2976,72 @@
               },
               "isStaging": {
                 "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "GetBranchSyncStatusResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "branchSyncStatuses": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BranchSyncStatus"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "BranchSyncStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryName": {
+            "type": "string"
+          },
+          "branchExists": {
+            "type": "boolean"
+          },
+          "ahead": {
+            "type": "string"
+          },
+          "behind": {
+            "type": "string"
+          },
+          "pullRequestOpen": {
+            "type": "boolean"
+          },
+          "buildStatus": {
+            "type": "string"
+          },
+          "lastUpdated": {
+            "type": "string"
+          }
+        }
+      },
+      "GetBranchSyncStatusRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "branchName": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
               }
             }
           }

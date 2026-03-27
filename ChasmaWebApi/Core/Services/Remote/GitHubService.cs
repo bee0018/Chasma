@@ -125,7 +125,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         }
 
         // <inheritdoc/>
-        public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, int buildCount, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
+        public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
         {
             errorMessage = string.Empty;
             workflowRunResults = new();
@@ -138,7 +138,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 return false;
             }
 
-            List<WorkflowRun> runs = workFlowRunsResponse.WorkflowRuns.Take(buildCount).ToList();
+            List<WorkflowRun> runs = workFlowRunsResponse.WorkflowRuns.ToList();
             foreach (WorkflowRun run in runs)
             {
                 WorkflowRunResult buildResult = new()

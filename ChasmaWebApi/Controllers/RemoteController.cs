@@ -104,10 +104,9 @@ namespace ChasmaWebApi.Controllers
             string token = webApiConfigurations.GitHubApiToken;
             string repoOwner = request.RepositoryOwner;
             string repoName = request.RepositoryName;
-            int buildCount = webApiConfigurations.WorkflowRunReportThreshold;
             try
             {
-                bool runsRetrieved = applicationControlService.TryGetWorkflowRunResults(repoName, repoOwner, token, buildCount, out List<WorkflowRunResult> runResults, out string errorMessage);
+                bool runsRetrieved = applicationControlService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> runResults, out string errorMessage);
                 if (!runsRetrieved && !string.IsNullOrEmpty(errorMessage))
                 {
                     response.IsErrorResponse = true;
@@ -116,7 +115,8 @@ namespace ChasmaWebApi.Controllers
                 }
 
                 response.RepositoryName = repoName;
-                response.WorkflowRunResults.AddRange(runResults);
+                List<WorkflowRunResult> runs = runResults.Take(webApiConfigurations.WorkflowRunReportThreshold).ToList();
+                response.WorkflowRunResults.AddRange(runs);
                 logger.LogInformation("Retrieved latest {count} build runs from {repo}.", runResults.Count, repoName);
                 return Ok(response);
             }

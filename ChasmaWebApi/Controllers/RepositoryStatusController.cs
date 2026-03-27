@@ -108,6 +108,7 @@ namespace ChasmaWebApi.Controllers
             response.RemoteUrl = summary.RemoteUrl;
             response.CommitHash = summary.CommitHash;
             response.PullRequests = summary.PullRequests;
+            response.LastUpdated = summary.LastUpdated;
             return Ok(response);
         }
 
@@ -520,6 +521,50 @@ namespace ChasmaWebApi.Controllers
             }
 
             response.StatusElements = statusElements;
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Gets the branch synchronization status for the specified branch.
+        /// </summary>
+        /// <param name="request">The request to get the branch sync status.</param>
+        /// <returns>The response containing the branch sync status response.</returns>
+        [HttpPost]
+        [Route("getBranchSyncStatus")]
+        public ActionResult<GetBranchSyncStatusResponse> GetBranchSyncStatus([FromBody] GetBranchSyncStatusRequest request)
+        {
+            string requestName = nameof(GetBranchSyncStatusRequest);
+            logger.LogInformation("Received a {request}", requestName);
+            GetBranchSyncStatusResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("{request} received is null. Sending error response", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot get branch sync status.";
+                return BadRequest(response);
+            }
+
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            {
+                logger.LogError("Invalid {request}. Cannot get branch synchronization status because the user with {id} is unknown to the system. Sending error response.", requestName, userId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot get branch sync status because the user is unknown";
+                return Ok(response);
+            }
+
+            string branchName = request.BranchName;
+            if (string.IsNullOrEmpty(branchName))
+            {
+                logger.LogError("Invalid {request} because the branch name was empty. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot get branch sync status for an empty branch name.";
+                return Ok(response);
+            }
+
+            List<BranchSyncStatus> branchSyncStatuses = applicationControlService.GetBranchSyncStatuses(branchName, user.UserName, cacheManager.Repositories.Values, cacheManager.WorkingDirectories);
+            logger.LogInformation("Successfully retrieved branch sync status for branch: {branch}", branchName);
+            response.BranchSyncStatuses = branchSyncStatuses;
             return Ok(response);
         }
     }

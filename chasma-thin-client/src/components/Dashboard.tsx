@@ -9,7 +9,7 @@ import {AddGitRepositoryRequest} from "../API/ChasmaWebApiClient";
 import AddRepositoryModal from "./modals/AddRepositoryModal";
 import {configClient} from "../managers/ApiClientManager";
 import MultiDryRunSimulationTab from "./dashboardTabs/MultiDryRunSimulationTab";
-import GlobalPullRequestsTab from './dashboardTabs/GlobalPullRequestsTab';
+import GlobalRepositoryTab from './dashboardTabs/GlobalRepositoryTab';
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -175,7 +175,7 @@ const Dashboard: React.FC = () => {
                 )}
                 {activeTab === "globalPrs" && (
                     <div className="panel-card">
-                        <GlobalPullRequestsTab />
+                        <GlobalRepositoryTab />
                     </div>
                 )}
                 {activeTab === "apiStatus" && (
