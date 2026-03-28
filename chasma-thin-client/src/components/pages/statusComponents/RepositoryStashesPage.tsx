@@ -158,10 +158,6 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
             }
 
             setStashEntries(response.stashList)
-            if (response.stashList && response.stashList.length > 0) {
-                const firstEntry = response.stashList[0];
-                setSelectedStashEntry(firstEntry);
-            }
         }
         catch (e) {
             setNotification({
