@@ -11,5 +11,10 @@ namespace ChasmaWebApi.Data.Responses.Status
         /// Gets or sets the logged in user.
         /// </summary>
         public ApplicationUser User { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's authentication token.
+        /// </summary>
+        public string Token { get; set; }
     }
 }

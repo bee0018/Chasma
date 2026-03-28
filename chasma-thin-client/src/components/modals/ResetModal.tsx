@@ -2,6 +2,9 @@
 import Checkbox from "../Checkbox";
 import {GitResetRequest, ResetMode,} from "../../API/ChasmaWebApiClient";
 import {statusClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * The members of the Add stash modal.
@@ -38,6 +41,12 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
     /** Gets or sets the revision to reset back to. **/
     const [revParseSpec, setRevParseSpec] = React.useState<string>("");
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** Handles the event when the user wants to reset to the current changes. **/
     const handleGitResetRequest = async () => {
         setTitle("Attempting to reset changes...");
@@ -61,7 +70,8 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
         catch (e) {
             setTitle("Error resetting changes!");
             setErrorMessage("An error occurred when attempting to reset changes. Review console and internal server logs.");
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate, "Error resetting changes!", "An error occurred when attempting to reset changes. Review console and internal server logs.");
+            setNotification(errorNotification);
         }
     };
     return (

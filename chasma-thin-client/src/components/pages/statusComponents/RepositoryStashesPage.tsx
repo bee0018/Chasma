@@ -5,11 +5,13 @@ import {
     PatchEntry,
     StashEntry
 } from "../../../API/ChasmaWebApiClient";
-import NotificationModal from "../../modals/NotificationModal";
 import {parseUnifiedDiff} from "../../../managers/DiffViewerManager";
 import ApplyStashModal from "../../modals/ApplyStashModal";
 import DeleteStashModal from "../../modals/DeleteStashModal";
 import {stashClient} from "../../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../../managers/CacheManager";
+import { handleApiError } from "../../../managers/TransactionHandlerManager";
 
 /** Defines the properties of the Repository Stashes Page. **/
 interface IRepositoryStashesPageProps {
@@ -48,14 +50,6 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
     /** Gets or sets the raw diff of a specific file. **/
     const [rawDiff, setRawDiff] = useState<string>("");
 
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string;
-        message: string | undefined;
-        isError: boolean | undefined;
-        loading?: boolean;
-    } | null>(null);
-
     /** Gets or sets a value indicating whether the user is applying the stash. **/
     const [isApplyingStash, setIsApplyingStash] = useState<boolean>(false);
 
@@ -67,6 +61,12 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
 
     /** Gets or sets the remove stash index. **/
     const [removeStashIndex, setRemoveStashIndex] = useState<number | undefined>(undefined);
+
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /**
      * Handles the event when the user clicks a stash entry.
@@ -118,11 +118,8 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                 handleSelectedPatchEntry(firstPatchEntry);
             }
         } catch (e) {
-            setNotification({
-                title: "Error getting stash details!",
-                message: "Review internal server and console logs for more information.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Error getting stash details!", "Review internal server and console logs for more information.");
+            setNotification(errorNotification);
         }
     }
 
@@ -160,11 +157,8 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
             setStashEntries(response.stashList)
         }
         catch (e) {
-            setNotification({
-                title: "Error getting stash list!",
-                message: "Review internal server and console logs for more information.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Error getting stash list!", "Review internal server and console logs for more information.");
+            setNotification(errorNotification);
         }
     };
 
@@ -348,15 +342,6 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                     </div>
                 </div>
             </div>
-            {notification && (
-                <NotificationModal
-                    title={notification.title}
-                    message={notification.message}
-                    isError={notification.isError}
-                    loading={notification.loading}
-                    onClose={() => setNotification(null)}
-                />
-            )}
             {isApplyingStash &&
                 <ApplyStashModal
                     repositoryId={props.repositoryId}

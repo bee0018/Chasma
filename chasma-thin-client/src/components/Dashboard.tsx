@@ -3,13 +3,14 @@ import HomeTab from "./dashboardTabs/HomeTab";
 import ApiStatusTab from "./dashboardTabs/ApiStatusTab";
 import IncludeRepositoryModal from "./modals/IncludeRepositoryModal";
 import BatchOperationsTab from "./dashboardTabs/BatchOperationsTab";
-import NotificationModal from "./modals/NotificationModal";
 import {useCacheStore} from "../managers/CacheManager";
 import {AddGitRepositoryRequest} from "../API/ChasmaWebApiClient";
 import AddRepositoryModal from "./modals/AddRepositoryModal";
 import {configClient} from "../managers/ApiClientManager";
 import MultiDryRunSimulationTab from "./dashboardTabs/MultiDryRunSimulationTab";
 import GlobalRepositoryTab from './dashboardTabs/GlobalRepositoryTab';
+import { useNavigate } from 'react-router-dom';
+import { handleApiError } from '../managers/TransactionHandlerManager';
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -28,16 +29,14 @@ const Dashboard: React.FC = () => {
     /** Gets or sets the repository version. Serves as a trigger to update child components. **/
     const [reposVersion, setReposVersion] = useState(0);
 
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string,
-        message: string | undefined,
-        isError: boolean | undefined,
-        loading?: boolean
-    } | null>(null);
+   /** Sets the notification modal. */
+      const setNotification = useCacheStore(state => state.setNotification);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
+
+    /** The navigation function. **/
+    const navigate = useNavigate();
 
     /** Handles the trigger when the repositories are updated. **/
     const handleReposUpdated = () => {
@@ -91,12 +90,8 @@ const Dashboard: React.FC = () => {
             useCacheStore.getState().addLocalGitRepository(response.repository);
             handleReposUpdated();
         } catch (error) {
-            setNotification({
-                title: "Failed to add repository!",
-                message: "Review console logs for more information.",
-                isError: true,
-            });
-            console.error("Error when attempting to add repository", error);
+            const errorNotification = handleApiError(error, navigate, "Failed to add repository!", "Review console logs for more information.");
+            setNotification(errorNotification);
         }
     };
 
@@ -189,14 +184,6 @@ const Dashboard: React.FC = () => {
                 <IncludeRepositoryModal
                     onClose={() => setIsIncludingRepos(false)}
                     onRepositoriesUpdated={handleReposUpdated} />
-            )}
-            {notification && (
-                <NotificationModal
-                    title={notification.title}
-                    message={notification.message}
-                    isError={notification.isError}
-                    loading={notification.loading}
-                    onClose={() => setNotification(null)} />
             )}
             {isAddingRepo && (
                 <AddRepositoryModal

@@ -1,6 +1,9 @@
 import React, {useState} from "react";
 import {GitPushRequest} from "../../API/ChasmaWebApiClient";
 import {statusClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * Defines the properties/members of the push modal props.
@@ -32,6 +35,12 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
     /** Gets or sets a value indicating whether the push response was successful. **/
     const [successfullyPushed, setSuccessfullyPushed] = useState<boolean | undefined>(undefined);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /**
      * Handles the push changes request.
      */
@@ -57,6 +66,8 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
             setTitle("Could not push changes!");
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyPushed(false);
+            const errorNotification = handleApiError(e, navigate, "Could not push changes!", "Check console logs for more information.");
+            setNotification(errorNotification);
         }
     };
     return (

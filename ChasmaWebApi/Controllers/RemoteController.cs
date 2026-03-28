@@ -5,6 +5,7 @@ using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Data.Requests.Remote;
 using ChasmaWebApi.Data.Responses.Remote;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -12,6 +13,8 @@ namespace ChasmaWebApi.Controllers
     /// <summary>
     /// Class representing the controller used to interact with remote git repositories.
     /// </summary>
+    [Authorize]
+    [ApiController]
     [Route("api/[controller]")]
     public class RemoteController : ControllerBase
     {

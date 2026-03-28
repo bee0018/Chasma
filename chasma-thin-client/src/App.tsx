@@ -14,8 +14,16 @@ import HelpRepoContextMenuPage from "./components/pages/help/HelpRepoContextMenu
 import HelpGitHubApiIntegrationsPage from "./components/pages/help/HelpGitHubApiIntegrationsPage";
 import HelpCommonGitCommandsPage from "./components/pages/help/HelpCommonGitCommandsPage";
 import HelpGitLabApiIntegrationPage from "./components/pages/help/HelpGitLabApiIntegrationPage";
+import { useCacheStore } from './managers/CacheManager';
+import NotificationModal from './components/modals/NotificationModal';
 
 function App() {
+    /** The notification modal to display in the applicaiton. */
+    const notification = useCacheStore(state => state.notification);
+
+    /** Removes the notification from the view. */
+    const clearNotification = useCacheStore(state => state.clearNotification);
+
     return <div>
         <BrowserRouter>
             <Routes>
@@ -35,6 +43,15 @@ function App() {
                 <Route path="/builds/:repoId" element={<WorkflowRunsPage />} />
             </Routes>
         </BrowserRouter>
+        {notification && (
+            <NotificationModal
+                title={notification.title}
+                message={notification.message}
+                isError={notification.isError}
+                loading={notification.loading}
+                onClose={clearNotification}
+            />
+        )}
     </div>;
 }
 

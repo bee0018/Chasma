@@ -1,5 +1,4 @@
 import React, {useState} from "react";
-import NotificationModal from "../modals/NotificationModal";
 import {
     GetPipelineJobsRequest,
     GetWorkflowResultsRequest,
@@ -10,6 +9,7 @@ import "../../styles/App.css"
 import {useNavigate, useParams} from "react-router-dom";
 import {remoteClient} from "../../managers/ApiClientManager";
 import {useCacheStore} from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * Initializes a new instance of the WorkflowRunsPage.
@@ -22,14 +22,6 @@ const WorkflowRunsPage: React.FC = () => {
     /** Gets the selected repository. **/
     const selectedRepo = useCacheStore(state => state.repositories.find(i => i.id === repoId));
 
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string,
-        message: string | undefined,
-        isError: boolean | undefined,
-        loading?: boolean
-    } | null>(null);
-
     /** Gets or sets the GitHub workflow results. **/
     const [workflows, setWorkflows] = useState<WorkflowRunResult[] | undefined>(undefined);
 
@@ -39,12 +31,8 @@ const WorkflowRunsPage: React.FC = () => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-    /**
-     * Closes the modal once the user confirms the message
-     */
-    const closeModal = () => {
-        setNotification(null);
-    }
+    /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
 
     /** Handles the event when the user requests to get the workflow statuses. **/
     async function handleGetWorkFlowStatuses() {
@@ -108,12 +96,8 @@ const WorkflowRunsPage: React.FC = () => {
                 isError: response.isErrorResponse,
             });
         } catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Failed to retrieve workflows!",
-                message: "An internal server error has occurred. Review logs.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Failed to retrieve workflows!", "An internal server error has occurred. Review logs.");
+            setNotification(errorNotification);
         }
     }
 
@@ -142,12 +126,8 @@ const WorkflowRunsPage: React.FC = () => {
                 isError: response.isErrorResponse,
             });
         } catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Failed to retrieve pipeline jobs!",
-                message: "An internal server error has occurred. Review logs.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Failed to retrieve pipeline jobs!", "An internal server error has occurred. Review logs.");
+            setNotification(errorNotification);
         }
     }
 
@@ -258,14 +238,6 @@ const WorkflowRunsPage: React.FC = () => {
                     )) : <p className="no-workflows">No workflows retrieved yet.</p>}
                 </div>
             ) : renderTableView()}
-            {notification && (
-                <NotificationModal
-                    title={notification.title}
-                    message={notification.message}
-                    isError={notification.isError}
-                    loading={notification.loading}
-                    onClose={closeModal} />
-            )}
         </div>
     );
 }

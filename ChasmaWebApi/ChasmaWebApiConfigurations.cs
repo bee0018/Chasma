@@ -70,6 +70,12 @@ namespace ChasmaWebApi
         public string BitbucketApiToken { get; set; }
 
         /// <summary>
+        /// Gets or sets the JWT secret key.
+        /// </summary>
+        [XmlElement("jwtSecretKey")]
+        public string JwtSecretKey { get; set; }
+
+        /// <summary>
         /// Gets the connection string in the format that is expected of SQLite3 database connections.
         /// </summary>
         /// <returns>The formatted database connection string.</returns>

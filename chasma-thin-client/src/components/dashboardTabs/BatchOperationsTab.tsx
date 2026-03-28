@@ -4,13 +4,14 @@ import {
     BatchCommandEntryResult,
     ExecuteBatchShellCommandsRequest,
 } from "../../API/ChasmaWebApiClient";
-import NotificationModal from "../modals/NotificationModal";
 import {useCacheStore} from "../../managers/CacheManager";
 import Checkbox from "../Checkbox";
 import CustomBatchCommandRow from "./rows/CustomBatchCommandRow";
 import {CommandMode} from "../types/CustomTypes";
 import {isBlankOrUndefined} from "../../stringHelperUtil";
 import {shellClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * Initializes a new BatchOperationsTab class.
@@ -27,14 +28,6 @@ const BatchOperationsTab: React.FC = () => {
         success: boolean | undefined;
         message?: string | undefined;
     }[] | undefined>([]);
-
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string;
-        message: string | undefined;
-        isError: boolean | undefined;
-        loading?: boolean;
-    } | null>(null);
 
     /** Batch rows storing repository ID and commands **/
     const [customBatchRows, setCustomBatchRows] = useState<{
@@ -55,6 +48,12 @@ const BatchOperationsTab: React.FC = () => {
 
     /** Gets or sets a value indicating whether the user is selecting all repositories to execute commands. **/
     const [isSelectingAllRepositories, setIsSelectingAllRepositories] = useState<boolean>(false);
+
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** Adds a new repository row for batch operations. **/
     const addCustomBatchRow = () => {
@@ -196,20 +195,9 @@ const BatchOperationsTab: React.FC = () => {
                 isError: false,
             });
         } catch (e) {
-            setNotification({
-                title: "Error executing batch shell operation failed!",
-                message: "Review server logs for more information.",
-                isError: true,
-            });
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate, "Error executing batch shell operation failed!", "Review server logs for more information.");
+            setNotification(errorNotification);
         }
-    };
-
-    /**
-     * Closes the modal once the user confirms the message
-     */
-    const closeModal = () => {
-        setNotification(null);
     };
 
     useEffect(() => {
@@ -313,17 +301,6 @@ const BatchOperationsTab: React.FC = () => {
                         />
                     ))}
                 </section>
-
-                {notification && (
-                    <NotificationModal
-                        title={notification.title}
-                        message={notification.message}
-                        isError={notification.isError}
-                        loading={notification.loading}
-                        onClose={closeModal}
-                    />
-                )}
-
                 <div className="run-batch-section">
                     <button className="run-batch-button" onClick={executeBatchOperation}>
                         Run Batch Git Command

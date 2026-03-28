@@ -5,9 +5,10 @@ import {
     IgnoreRepositoryRequest,
     LocalGitRepository,
 } from "../../API/ChasmaWebApiClient";
-import NotificationModal from "../modals/NotificationModal";
 import {useCacheStore} from "../../managers/CacheManager";
 import {configClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * The properties of the Home Tab.
@@ -28,6 +29,12 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
     /** Gets the local git repositories. **/
     const localGitRepositories = useCacheStore((state) => state.repositories);
 
+    /** The use navigation utility. **/
+    const navigate = useNavigate();
+
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
+
     useEffect(() => {
         updateUserRepositoryConfiguration().catch(console.error);
     }, [props.reposVersion]);
@@ -41,7 +48,8 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             const message = await configClient.getLocalGitRepositories(userId);
             useCacheStore.getState().setRepositories(message.repositories);
         } catch (e) {
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate);
+            setNotification(errorNotification);
         }
     };
 
@@ -54,13 +62,8 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                 useCacheStore.getState().setRepositories(message.repositories);
             }
             catch (e) {
-                setNotification({
-                    title: "Git repository retrieval failed!",
-                    message: "Review server logs for more information.",
-                    isError: true,
-                });
-                useCacheStore.getState().setRepositories(undefined);
-                console.error(`Could not get git repositories from filesystem: ${e}`);
+                const errorNotification = handleApiError(e, navigate);
+                setNotification(errorNotification);
             }
         };
 
@@ -75,14 +78,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         window.addEventListener("click", closeMenu);
         return () => window.removeEventListener("click", closeMenu);
     }, []);
-
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string,
-        message: string | undefined,
-        isError: boolean | undefined,
-        loading?: boolean
-    } | null>(null);
 
     /** Gets or sets the context menu. **/
     const [contextMenu, setContextMenu] = useState<{
@@ -119,20 +114,9 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             useCacheStore.getState().setRepositories(response.currentRepositories);
         }
         catch (e) {
-            setNotification({
-                title: "Git repository retrieval failed!",
-                message: "Review server logs for more information.",
-                isError: true,
-            });
-            console.error(`Could not get git repositories from filesystem: ${e}`);
+            const errorNotification = handleApiError(e, navigate);
+            setNotification(errorNotification);
         }
-    }
-
-    /**
-     * Closes the modal once the user confirms the message
-     */
-    const closeModal = () => {
-        setNotification(null);
     }
 
     /**
@@ -155,17 +139,13 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             useCacheStore.getState().deleteRepository(repoId);
         } catch (e) {
             handleRepoDeletionError("Review server logs for more information.");
-            console.error(e);
         }
     };
 
     /** Handles the event when there is an error deleting a repository. **/
     const handleRepoDeletionError = (errorMessage: string | undefined) => {
-        setNotification({
-            title: "Could not delete repository!",
-            message: errorMessage,
-            isError: true,
-        });
+        const errorNotification = handleApiError(errorMessage, navigate, "Could not delete repository!", "Review server logs for more information.");
+        setNotification(errorNotification);
     }
 
     /**
@@ -191,12 +171,8 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             useCacheStore.getState().setRepositories(response.includedRepositories);
         }
         catch (e) {
-            setNotification({
-                title: `Repository ignore action failed!`,
-                message: "Review server logs for more information.",
-                isError: true,
-            });
-            console.error(`Could not ignore repositories on the filesystem: ${e}`);
+            const errorNotification = handleApiError(e, navigate, "Repository ignore action failed!", "Review server logs for more information.");
+            setNotification(errorNotification);
         }
     };
 
@@ -217,17 +193,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                     <h1>Manage Git. Effortlessly.</h1>
                     <p>{`${user?.userName}, manage any of the registered repositories found on your filesystem.`}</p>
                 </div>
-
-                {notification && (
-                    <NotificationModal
-                        title={notification.title}
-                        message={notification.message}
-                        isError={notification.isError}
-                        loading={notification.loading}
-                        onClose={closeModal}
-                    />
-                )}
-
                 <div>
                     {localGitRepositories && localGitRepositories.length > 0 && (
                         localGitRepositories.map((repo) => (

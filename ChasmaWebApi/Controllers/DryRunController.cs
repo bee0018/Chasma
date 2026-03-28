@@ -3,6 +3,7 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Requests.DryRun;
 using ChasmaWebApi.Data.Responses.DryRun;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -10,6 +11,8 @@ namespace ChasmaWebApi.Controllers
     /// <summary>
     /// Controller responsible for handling dry run operations, which are typically used for testing and validation purposes without making actual changes to the system.
     /// </summary>
+    [Authorize]
+    [ApiController]
     [Route("api/[controller]")]
     public class DryRunController : ControllerBase
     {

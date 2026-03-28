@@ -1,6 +1,9 @@
 ﻿import React from "react";
 import {DeleteStashRequest} from "../../API/ChasmaWebApiClient";
 import {stashClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * The members of the Add stash modal.
@@ -34,6 +37,12 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
     /** Gets or sets the modal title. **/
     const [title, setTitle] = React.useState<string>(`Delete Stash ${props.stashIndex}?`);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** Handles the event when the user wants to delete the specified stash. **/
     const handleDeleteStashRequest = async () => {
         setTitle("Attempting to delete the stash...");
@@ -56,7 +65,8 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
         catch (e) {
             setTitle("Error deleting stash!");
             setErrorMessage("An error occurred when attempting to stash changes. Review console and internal server logs.");
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate, "Error deleting stash!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
+            setNotification(errorNotification);
         }
     };
     return (

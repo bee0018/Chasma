@@ -3,7 +3,9 @@ import { ExecuteShellCommandRequest, ShellCommandResult } from "../../../API/Cha
 import { shellClient } from "../../../managers/ApiClientManager";
 import { isBlankOrUndefined } from "../../../stringHelperUtil";
 import { Row } from "../../types/CustomTypes";
-import NotificationModal from "../../modals/NotificationModal";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../../managers/CacheManager";
+import { handleApiError } from "../../../managers/TransactionHandlerManager";
 
 /** Interface defining the members of the ExecuteShellCommandsPage. */
 interface IExecuteShellCommandsPageProps {
@@ -21,14 +23,12 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
     
         /** Gets or sets the error message. **/
         const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-    
-        /** Gets or sets the notification **/
-            const [notification, setNotification] = useState<{
-                title: string,
-                message: string | undefined,
-                isError: boolean | undefined,
-                loading?: boolean
-            } | null>(null);
+
+        /** The navigation function. **/
+        const navigate = useNavigate();
+
+        /** Sets the notification modal. */
+        const setNotification = useCacheStore(state => state.setNotification);
     
         /** Gets or sets the command output after the commands have been executed. **/
         const [output, setOutput] = useState<{
@@ -95,9 +95,10 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
                );
                setNotification(null);
            } catch (e) {
-               console.error(e);
                setOutput([])
                setErrorMessage("Error executing shell commands. Check console logs for more information.")
+               const errorNotification = handleApiError(e, navigate, "Could not execute commands!", "Error executing shell commands. Check console logs for more information.");
+               setNotification(errorNotification);
            }}, [rows, props.repositoryId]);
     
         /** Resets the form to a pre-filled state. **/
@@ -211,14 +212,6 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
             </div>
         </div>
     </div>
-    {notification && (
-        <NotificationModal
-            title={notification.title}
-            message={notification.message}
-            isError={notification.isError}
-            loading={notification.loading}
-            onClose={() => setNotification(null)} />
-        )}
     </>
 )}
 

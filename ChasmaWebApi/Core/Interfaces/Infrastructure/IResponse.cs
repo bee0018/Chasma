@@ -14,4 +14,9 @@ public interface IResponse
     /// Gets the error message.
     /// </summary>
     string? ErrorMessage { get; }
+
+    /// <summary>
+    /// Gets the status code of the response.
+    /// </summary>
+    int StatusCode { get; }
 }

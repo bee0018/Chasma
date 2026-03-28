@@ -5,6 +5,7 @@ using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Status;
 using LibGit2Sharp;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -12,6 +13,8 @@ namespace ChasmaWebApi.Controllers
     /// <summary>
     /// Class representing git repository status routes.
     /// </summary>
+    [Authorize]
+    [ApiController]
     [Route("api/[controller]")]
     public class RepositoryStatusController : ControllerBase
     {

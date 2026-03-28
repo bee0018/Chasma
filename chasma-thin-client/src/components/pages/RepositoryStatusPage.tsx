@@ -15,7 +15,6 @@ import {
     SimulatedMergeResult,
     SimulateGitPullRequest,
 } from "../../API/ChasmaWebApiClient";
-import NotificationModal from "../modals/NotificationModal";
 import CommitModal from "../modals/CommitModal";
 import PushModal from "../modals/PushModal";
 import CheckoutModal from "../modals/CheckoutModal";
@@ -34,6 +33,7 @@ import "../../styles/pages/batchOperationsPage.css"
 import RemoteIssuesPage from "./remote/RemoteIssuesPage";
 import RemotePullRequestPage from "./remote/RemotePullRequestPage";
 import ExecuteShellCommandsPage from "./statusComponents/ExecuteShellCommandsPage";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -48,14 +48,6 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets the repository status elements. **/
     const [statusElements, setStatusElements] = useState<RepositoryStatusElement[] | undefined>(undefined);
-
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string;
-        message: string | undefined;
-        isError: boolean | undefined;
-        loading?: boolean;
-    } | null>(null);
 
     /** Gets or sets a flag indicating whether the user is editing the commit message. **/
     const [isEditingCommitMessage, setIsEditingCommitMessage] = useState(false);
@@ -141,6 +133,9 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets the selected repository instance. **/
     const selectedRepo = useCacheStore((state) => state.repositories.find(i => i.id === repoId));
 
+    /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** Gets or sets the context menu. **/
     const [contextMenu, setContextMenu] = useState<{
         mouseX: number;
@@ -155,13 +150,6 @@ const RepositoryStatusPage: React.FC = () => {
     const handleTabClick = (tab: string) => {
         setActiveTab(tab);
     };
-
-    /**
-     * Closes the modal once the user confirms the message
-     */
-    const closeModal = () => {
-        setNotification(null);
-    }
 
     /** Load git status every 2.5s **/
     useEffect(() => {
@@ -201,12 +189,8 @@ const RepositoryStatusPage: React.FC = () => {
             setOpenPullRequests(response.pullRequests);
             setLastUpdated(response.lastUpdated);
         } catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Failed to perform 'git status' operation!",
-                message: "An internal server error has occurred. Review logs.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Failed to perform 'git status' operation!", "An internal server error has occurred. Review logs.");
+            setNotification(errorNotification);
         }
     }
 
@@ -243,12 +227,8 @@ const RepositoryStatusPage: React.FC = () => {
                 await handleGetGitDiffRequest(file, stagingAction);
             }
         } catch (e) {
-            console.error(e);
-            setNotification({
-                title: `Failed to perform '${stagingAction ? "stage" : "unstage"}' operation!`,
-                message: "An internal server error has occurred. Review logs.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, `Failed to perform '${stagingAction ? "stage" : "unstage"}' operation!`, "An internal server error has occurred. Review logs.");
+            setNotification(errorNotification);
         }
     }
 
@@ -304,12 +284,8 @@ const RepositoryStatusPage: React.FC = () => {
                 isError: false,
             });
         } catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Could not pull changes!",
-                message: "An internal server error has occurred. Review logs.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Could not pull changes", "An internal server error has occurred. Review logs.");
+            setNotification(errorNotification);
         }
     };
 
@@ -356,12 +332,8 @@ const RepositoryStatusPage: React.FC = () => {
 
             setSimulatedPullResults(response.pullResults);
         } catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Could not simulate pull simulation!",
-                message: "An internal server error has occurred. Review logs.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Could not simulate pull simulation!", "An internal server error has occurred. Review logs.");
+            setNotification(errorNotification);
         }
     }
 
@@ -385,7 +357,8 @@ const RepositoryStatusPage: React.FC = () => {
             }
             setRawDiff(response.diffContent!);
         } catch (e) {
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate, "Failed to get diff!", "An internal server error has occurred. Open terminal and run 'git diff' on the selected file.");
+            setNotification(errorNotification);
         }
     }
 
@@ -416,12 +389,8 @@ const RepositoryStatusPage: React.FC = () => {
             setSelectedFiles(new Set());
             setSelectedFile(null);
         } catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Error performing bulk staging operation!",
-                message: "Internal server error.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Error performing bulk staging operation!", "Check console logs for more information.");
+            setNotification(errorNotification);
         }
     }
 
@@ -1043,16 +1012,6 @@ const RepositoryStatusPage: React.FC = () => {
                     </div>
                 </div>
             )}
-            {notification && (
-                <NotificationModal
-                    title={notification.title}
-                    message={notification.message}
-                    isError={notification.isError}
-                    loading={notification.loading}
-                    onClose={closeModal}
-                />
-            )}
-
             {isEditingCommitMessage &&
                 <CommitModal
                     repositoryId={repoId}

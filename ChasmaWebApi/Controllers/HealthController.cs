@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Data.Messages;
 using ChasmaWebApi.Data.Objects.Status;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers;
@@ -7,6 +8,8 @@ namespace ChasmaWebApi.Controllers;
 /// <summary>
 /// Controller representing the health monitor of the web API.
 /// </summary>
+[Authorize]
+[ApiController]
 [Route("api/[controller]")]
 public class HealthController : ControllerBase
 {

@@ -5,6 +5,7 @@ using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
 using ChasmaWebApi.Data.Responses.Status;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -12,6 +13,8 @@ namespace ChasmaWebApi.Controllers
     /// <summary>
     /// Class representing the branch controller for git branch related operations.
     /// </summary>
+    [Authorize]
+    [ApiController]
     [Route("api/[controller]")]
     public class BranchController : ControllerBase
     {
