@@ -1008,6 +1008,38 @@
         }
       }
     },
+    "/api/RepositoryStatus/applyPatchStaging": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_ApplyPatchStagingOperation",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyPatchStagingActionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyPatchStagingActionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Shell/executeShellCommands": {
       "post": {
         "tags": [
@@ -3046,6 +3078,46 @@
             }
           }
         ]
+      },
+      "ApplyPatchStagingActionResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "statusElements": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepositoryStatusElement"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ApplyPatchStagingActionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "file": {
+            "$ref": "#/components/schemas/RepositoryStatusElement"
+          },
+          "startLine": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "endLine": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "ExecuteShellCommandResponse": {
         "allOf": [

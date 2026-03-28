@@ -255,7 +255,7 @@ namespace ChasmaWebApi.Core.Services.Control
                 else
                 {
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
-                    string token = GetApiToken(remoteHostPlatform);
+                    string token = GetApiToken(remoteHostPlatform, apiConfigurations);
                     (string branchName, int aheadCount, int behindCount, string lastUpdated) divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
                     string repoName = repository.Name;
                     string repoOwner = repository.Owner;
@@ -285,6 +285,12 @@ namespace ChasmaWebApi.Core.Services.Control
             }
 
             return statuses;
+        }
+
+        // <inheritdoc />
+        public bool TryStagingPatch(string workingDirectory, RepositoryStatusElement file, int startLine, int endLine, out string errorMessage)
+        {
+            return gitRepositoryService.TryStagingPatch(workingDirectory, file, startLine, endLine, out errorMessage);
         }
 
         #endregion
@@ -395,14 +401,15 @@ namespace ChasmaWebApi.Core.Services.Control
 
         #endregion
 
-        #region Private Methods
+        #region Public Helper Methods
 
         /// <summary>
         /// Gets the remote host platform API token based on the repository type.
         /// </summary>
         /// <param name="remoteHostPlatform">The repository's remote host platform.</param>
+        /// <param name="apiConfigurations">The internal web API configurations.</param>
         /// <returns>The repository remote host platform API token.</returns>
-        private string GetApiToken(RemoteHostPlatform remoteHostPlatform)
+        public static string GetApiToken(RemoteHostPlatform remoteHostPlatform, ChasmaWebApiConfigurations apiConfigurations)
         {
             return remoteHostPlatform switch
             {
@@ -411,6 +418,11 @@ namespace ChasmaWebApi.Core.Services.Control
                 _ => string.Empty,
             };
         }
+
+        #endregion
+
+        #region Private Methods
+
 
         /// <summary>
         /// Gets the build status from the remote builds from the remote host platform.

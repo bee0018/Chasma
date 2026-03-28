@@ -87,5 +87,16 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="errorMessage">The error message if an error occurs.</param>
         /// <returns>True if the file was successfully diffed; false otherwise.</returns>
         bool TryGetGitDiff(string workingDirectory, string filePath, bool isStaged, out string diffContent, out string errorMessage);
+
+        /// <summary>
+        /// Tries to apply the staging operation for the patch.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <param name="file">The file to apply the staging operation on.</param>
+        /// <param name="startLine">The begin line to begin staging operation.</param>
+        /// <param name="endLine">The end line to begin staging operation.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if patch was successfully applied; false otherwise.</returns>
+        bool TryStagingPatch(string workingDirectory, RepositoryStatusElement file, int startLine, int endLine, out string errorMessage);
     }
 }

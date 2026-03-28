@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
     ApplyBulkStagingActionRequest,
+    ApplyPatchStagingActionRequest,
     ApplyStagingActionRequest,
     GitDiffRequest,
     GitPullRequest,
@@ -21,7 +22,7 @@ import PushModal from "../modals/PushModal";
 import CheckoutModal from "../modals/CheckoutModal";
 import DeleteBranchModal from "../modals/DeleteBranchModal";
 import {useCacheStore} from "../../managers/CacheManager";
-import {capitalizeFirst} from "../../stringHelperUtil";
+import {capitalizeFirst, isWholeNumber} from "../../stringHelperUtil";
 import MergeModal from "../modals/MergeModal";
 import RepositoryStashesPage from "./statusComponents/RepositoryStashesPage";
 import {parseUnifiedDiff} from "../../managers/DiffViewerManager";
@@ -132,6 +133,18 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets the time that this repository was last updated. */
     const [lastUpdated, setLastUpdated] = useState<string | undefined>(undefined);
 
+    /** Gets or sets a value indicating whether the user is performing a staging operation on a patch. */
+    const [isPatchStaging, setIsPatchStaging] = useState(false);
+
+    /** Gets or sets the start line to begin staging. */
+    const [startLine, setStartLine] = useState<number | undefined>(undefined);
+
+    /** Gets or sets the end line to finish staging. */
+    const [endLine, setEndLine] = useState<number | undefined>(undefined);
+
+    /** Gets or sets the number format error. */
+    const [numberFormatError, setNumberFormatError] = useState<string | undefined>(undefined);
+
     /** Gets or sets the list of staged files. */
     const stagedList = statusElements?.filter(e => e.isStaged) || [];
 
@@ -212,6 +225,20 @@ const RepositoryStatusPage: React.FC = () => {
 
     /**
      * Handles the request to apply the staging action to the selected file.
+     * This will decide whether to do patched staging or full staging.
+     * @param selectedFile The selected file.
+     */
+    async function handleStagingAction(selectedFile: RepositoryStatusElement) {
+        if (isPatchStaging) {
+            await handleApplyPatchStagingActionRequest(selectedFile);
+            return;
+        }
+
+        await handleApplyStagingActionRequest(selectedFile);
+    }
+
+    /**
+     * Handles the request to apply the staging action to the selected file.
      * @param selectedFile The selected file.
      */
     async function handleApplyStagingActionRequest(selectedFile: RepositoryStatusElement) {
@@ -233,6 +260,7 @@ const RepositoryStatusPage: React.FC = () => {
                 });
                 return;
             }
+
             setStatusElements(response.statusElements);
             const file = statusElements?.find(i => i.filePath === selectedFile?.filePath);
             if (!file) {
@@ -251,6 +279,101 @@ const RepositoryStatusPage: React.FC = () => {
             });
         }
     }
+
+    /**
+     * Handles the request to partially stage/unstage a file.
+     * @param selectedFile The selected file.
+     */
+    async function handleApplyPatchStagingActionRequest(selectedFile: RepositoryStatusElement) {
+        const isValid = validatePatchStagingRequest();
+        if (!isValid) {
+            return;
+        }
+
+        const stagingAction = !selectedFile.isStaged;
+        const request = new ApplyPatchStagingActionRequest();
+        request.startLine = startLine;
+        request.endLine = endLine;
+        request.file = selectedFile;
+        request.userId = user?.userId;
+        try {
+            const response = await statusClient.applyPatchStagingOperation(request);
+            const action = stagingAction ? "stage" : "unstage";
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: `Could not ${action}!`,
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+
+            setStatusElements(response.statusElements);
+            setStartLine(undefined);
+            setEndLine(undefined);
+            const file = statusElements?.find(i => i.filePath === selectedFile?.filePath);
+            if (!file) {
+                setSelectedFile(null);
+            } else {
+                file.isStaged = stagingAction;
+                setSelectedFile(file);
+                await handleGetGitDiffRequest(file, stagingAction);
+            }
+
+        } catch (error) {
+            console.error(error);
+            setNotification({
+                title: `Failed to perform partial '${stagingAction ? "stage" : "unstage"}' operation!`,
+                message: "An internal server error has occurred. Review logs.",
+                isError: true,
+            });
+        }        
+    }
+
+    /**
+     * Validates the user's input and displays any errors.
+     * @returns True if the request data is valid; false otherwise.
+     */
+    const validatePatchStagingRequest = () => {
+        const errorTitle = "Cannot perform staging action!"
+        if (!startLine) {
+            setNotification({
+                title: errorTitle,
+                message: "Start line must be populated.",
+                isError: true,
+            });
+            return false;
+        }
+
+        if (!endLine) {
+            setNotification({
+                title: errorTitle,
+                message: "End line must be populated.",
+                isError: true,
+            });
+            return false;
+        }
+
+        if (startLine > endLine) {
+            setNotification({
+                title: errorTitle,
+                message: "Start line must be before the end line.",
+                isError: true,
+            });
+            return false;
+        }
+
+        if (numberFormatError) {
+            setNotification({
+                title: errorTitle,
+                message: numberFormatError,
+                isError: true,
+            });
+            return false;
+        }
+
+        return true;
+    };
 
     /**
      * Handles the event when user attempts to go to the branch URL.
@@ -433,6 +556,9 @@ const RepositoryStatusPage: React.FC = () => {
     const handleSelectFile = (file: RepositoryStatusElement | null, isStaged: boolean) => {
         setSelectedFile(file);
         handleGetGitDiffRequest(file, isStaged);
+        setStartLine(undefined);
+        setEndLine(undefined);
+        setIsPatchStaging(false);
     };
 
     /** The parsed unified diff. */
@@ -508,6 +634,45 @@ const RepositoryStatusPage: React.FC = () => {
 
         setSelectedFiles(newSelection);
     };
+
+    /**
+     * Handles the input of the start/end indicies provided by the user.
+     * @param line The line number.
+     * @param isStartLine Flag indicating whether the line is the start line or the end.
+     * @returns The validation.
+     */
+    const handlePatchStagingInput = (line: string, isStartLine: boolean) => {
+        if (line === undefined || line === "") {
+            if (isStartLine) {
+                setStartLine(undefined);
+            }
+            else {
+                setEndLine(undefined);
+            }
+            return;
+        }
+
+        const linePosition = isStartLine ? "start" : "end";
+        const errorMessage = `The ${linePosition} line must be a valid whole number.`
+        if (!isWholeNumber(line)) {
+            setNumberFormatError(errorMessage);
+            return;
+        }
+
+        try {
+            const lineNumber = Number(line);
+            if (isStartLine) {
+                setStartLine(lineNumber);
+            }
+            else {
+                setEndLine(lineNumber);
+            }
+
+            setNumberFormatError(undefined);
+        } catch (error) {
+            setNumberFormatError(errorMessage);
+        }
+    }
 
     useEffect(() => {
         const closeMenu = () => setContextMenu(null);
@@ -785,7 +950,7 @@ const RepositoryStatusPage: React.FC = () => {
                                                             className="stage-button unstage"
                                                             onClick={e => {
                                                                 e.stopPropagation();
-                                                                handleApplyStagingActionRequest(element);
+                                                                handleStagingAction(element);
                                                             }}
                                                         >
                                                             -
@@ -829,7 +994,7 @@ const RepositoryStatusPage: React.FC = () => {
                                                             className="stage-button stage"
                                                             onClick={e => {
                                                                 e.stopPropagation();
-                                                                handleApplyStagingActionRequest(element);
+                                                                handleStagingAction(element);
                                                             }}
                                                         >
                                                             +
@@ -854,7 +1019,7 @@ const RepositoryStatusPage: React.FC = () => {
                                 onClick={() => setContextMenu(null)}
                             >
                                 <ul>
-                                    <li onClick={() => handleApplyStagingActionRequest(contextMenu?.statusElement)}>
+                                    <li onClick={() => handleStagingAction(contextMenu?.statusElement)}>
                                         {contextMenu.statusElement && contextMenu.statusElement.isStaged ? "Unstage" : "Stage"}
                                     </li>
                                     <li>
@@ -875,6 +1040,16 @@ const RepositoryStatusPage: React.FC = () => {
                                 {/* Right side: Diff viewer */}
                                 <div className="right-panel">
                                     <div className="diff-toolbar">
+                                        <Checkbox
+                                            label={"Choose Specific Lines"}
+                                            onBoxChecked={value => {
+                                                setIsPatchStaging(value);
+                                                setStartLine(undefined);
+                                                setEndLine(undefined);
+                                                setNumberFormatError(undefined);
+                                            }}
+                                            checked={isPatchStaging}
+                                            tooltip={"This will allow you to stage/unstage specific lines of your choosing."} />
                                         <button
                                             className="submit-button"
                                             onClick={() => setIsSplitView(!isSplitView)}
@@ -885,13 +1060,32 @@ const RepositoryStatusPage: React.FC = () => {
                                             <button
                                                 className="submit-button"
                                                 style={{ background: selectedFile?.isStaged ? "red" : "green" }}
-                                                onClick={() => handleApplyStagingActionRequest(selectedFile)}
+                                                onClick={() => handleStagingAction(selectedFile)}
                                             >
-                                                {selectedFile?.isStaged ? "Unstage" : "Stage"}
+                                                {selectedFile?.isStaged
+                                                    ? `Unstage ${isPatchStaging ? "Selected" : ""}`
+                                                    : `Stage ${isPatchStaging ? "Selected" : ""}`
+                                                }
                                             </button>
                                         )}
                                     </div>
-
+                                    {isPatchStaging &&
+                                        <>
+                                            <input
+                                                type="text"
+                                                placeholder="Choose Start Line"
+                                                value={startLine}
+                                                onChange={e => handlePatchStagingInput(e.target.value, true)}
+                                                className="input-field" />
+                                            <input
+                                                type="text"
+                                                placeholder="Choose End Line"
+                                                value={endLine}
+                                                onChange={e => handlePatchStagingInput(e.target.value, false)}
+                                                className="input-field" />
+                                        </>
+                                    }
+                                    {numberFormatError && <div className="password-error">{numberFormatError}</div>}
                                     {selectedFile ? (
                                         <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
                                             {!isSplitView && (

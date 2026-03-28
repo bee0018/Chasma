@@ -6,6 +6,8 @@ using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
 using LibGit2Sharp;
 using System.Diagnostics;
+using System.Text;
+using System.Text.RegularExpressions;
 using Branch = LibGit2Sharp.Branch;
 using Commit = LibGit2Sharp.Commit;
 using Repository = LibGit2Sharp.Repository;
@@ -348,6 +350,53 @@ namespace ChasmaWebApi.Core.Services.Git
             return true;
         }
 
+        // <inheritdoc />
+        public bool TryStagingPatch(string workingDirectory, RepositoryStatusElement file, int startLine, int endLine, out string errorMessage)
+        {
+            if (!TryGetGitDiff(workingDirectory, file.FilePath, file.IsStaged, out string diffContent, out errorMessage))
+            {
+                Logger.LogError("Staging patch failed: {error}", errorMessage);
+                return false;
+            }
+
+            string patchFile = string.Empty;
+            try
+            {
+                string filteredPatch = FilterPatchByLineRange(diffContent, startLine, endLine);
+                patchFile = WritePatchToTempFile(filteredPatch);
+                string command = $"git apply --cached --check \"{patchFile}\"";
+                if (!ShellUtility.TryExecuteShellCommand(command, workingDirectory, out errorMessage))
+                {
+                    Logger.LogError("Staging patch application check failed: {error}", errorMessage);
+                    return false;
+                }
+
+                command = file.IsStaged
+                    ? $"git apply --cached --check -R {patchFile}"
+                    : $"git apply --cached \"{patchFile}\"";
+                if (!ShellUtility.TryExecuteShellCommand(command, workingDirectory, out errorMessage))
+                {
+                    Logger.LogError("Staging patch application failed: {error}", errorMessage);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error when trying to applying stage patch operation: {error}", ex);
+                return false;
+            }
+            finally
+            {
+                // Clean up temporary file from patch creation.
+                if (File.Exists(patchFile))
+                {
+                    File.Delete(patchFile);
+                }
+            }
+        }
+
         /// <summary>
         /// Gets the branch diversion calculation for the specified repository.
         /// </summary>
@@ -570,6 +619,74 @@ namespace ChasmaWebApi.Core.Services.Git
 
             Logger.LogWarning("Could not get remote pull requests because the remote host platform {platform} is not supported.", hostPlatform);
             return new();
+        }
+
+        private static string FilterPatchByLineRange(string patch, int startLine, int endLine)
+        {
+            var result = new StringBuilder();
+            var lines = patch.Split('\n');
+
+            var currentHunk = new List<string>();
+            bool inHunk = false;
+            bool keepHunk = false;
+            int currentNewLine = 0;
+
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("@@"))
+                {
+                    // Flush previous hunk
+                    if (currentHunk.Count > 0 && keepHunk)
+                    {
+                        foreach (var h in currentHunk)
+                            result.AppendLine(h);
+                    }
+
+                    currentHunk.Clear();
+                    keepHunk = false;
+                    inHunk = true;
+
+                    currentHunk.Add(line);
+
+                    var match = Regex.Match(line, @"\+(\d+)");
+                    currentNewLine = match.Success ? int.Parse(match.Groups[1].Value) : 0;
+
+                    continue;
+                }
+
+                if (!inHunk)
+                {
+                    result.AppendLine(line); // file headers
+                    continue;
+                }
+
+                currentHunk.Add(line);
+
+                if (line.StartsWith("+") || line.StartsWith(" "))
+                {
+                    if (currentNewLine >= startLine && currentNewLine <= endLine)
+                    {
+                        keepHunk = true;
+                    }
+                    currentNewLine++;
+                }
+            }
+
+            // Flush last hunk
+            if (currentHunk.Count > 0 && keepHunk)
+            {
+                foreach (var h in currentHunk)
+                    result.AppendLine(h);
+            }
+
+            return result.ToString();
+        }
+
+        private static string WritePatchToTempFile(string patch)
+        {
+            string path = Path.Combine(Path.GetTempPath(), $"patch_{Guid.NewGuid()}.diff");
+            File.WriteAllText(path, patch);
+            return path;
         }
 
         #endregion

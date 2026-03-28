@@ -342,5 +342,16 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="workingDirectories">The mapping of repository identifiers to its matching working directory.</param>
         /// <returns>The list of branch sync statuses.</returns>
         List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, string username, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories);
+
+        /// <summary>
+        /// Tries to apply the staging operation for the patch.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <param name="file">The file to apply the staging operation on.</param>
+        /// <param name="startLine">The begin line to begin staging operation.</param>
+        /// <param name="endLine">The end line to begin staging operation.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if patch was successfully applied; false otherwise.</returns>
+        bool TryStagingPatch(string workingDirectory, RepositoryStatusElement file, int startLine, int endLine, out string errorMessage);
     }
 }

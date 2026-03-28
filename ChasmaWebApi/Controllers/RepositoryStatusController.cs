@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Core.Services.Control;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Requests.Status;
@@ -72,7 +73,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.RepositoryId))
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
             {
                 logger.LogError("Cannot process git status request because the repository identifier is null or empty.");
                 response.IsErrorResponse = true;
@@ -89,8 +91,15 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            string repoId = request.RepositoryId;
-            string token = webApiConfigurations.GitHubApiToken;
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("No repository found in cache with ID: {id}. Cannot get repository status. Sending error response.", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No repository found in cache. Cannot get repository status. Re-add repository.";
+                return Ok(response);
+            }
+
+            string token = ApplicationControlService.GetApiToken(repository.HostPlatform, webApiConfigurations);
             logger.LogInformation("Received request to run git status for repository ID: {repoId}", repoId);
             RepositorySummary summary = applicationControlService.GetRepositoryStatus(repoId, user.UserName, token);
             if (summary == null)
@@ -566,6 +575,103 @@ namespace ChasmaWebApi.Controllers
             logger.LogInformation("Successfully retrieved branch sync status for branch: {branch}", branchName);
             response.BranchSyncStatuses = branchSyncStatuses;
             return Ok(response);
+        }
+
+        /// <summary>
+        /// Applies the staging operation for the specified patch of data.
+        /// </summary>
+        /// <param name="request">The request to stage/unstage a patch.</param>
+        /// <returns>The response to the staging operation.</returns>
+        [HttpPost]
+        [Route("applyPatchStaging")]
+        public ActionResult<ApplyPatchStagingActionResponse> ApplyPatchStagingOperation([FromBody] ApplyPatchStagingActionRequest request)
+        {
+            string requestName = nameof(ApplyPatchStagingActionRequest);
+            ApplyPatchStagingActionResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("{request} is null. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot perform staging operation.";
+                return BadRequest(response);
+            }
+
+            RepositoryStatusElement file = request.File;
+            if (file == null)
+            {
+                logger.LogError("Invalid {request} because the selected file is null. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "No file selected. Cannot perform staging operation.";
+                return Ok(response);
+            }
+
+            string repoId = file.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid {request}. Repository identifier must be populated. Cannot perform staging operation.";
+                logger.LogError("Null or empty repository identifier received when trying to patch staging operation. Sending error response");
+                return Ok(response);
+            }
+
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                logger.LogError("No working directory was found for repo identifier {repoId} when trying to reset changes. Sending error response", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No working directory found. Cannot reset changes.";
+                return Ok(response);
+            }
+
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            {
+                logger.LogError("No user found in cache for user ID: {userId}. Cannot get repository status. Sending error response.", request.UserId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No user found in cache for user ID: {request.UserId}. Cannot get repository status.";
+                return Ok(response);
+            }
+
+            try
+            {
+                int startLine = request.StartLine;
+                int endLine = request.EndLine;
+                if (!applicationControlService.TryStagingPatch(workingDirectory, file, startLine, endLine, out string errorMessage))
+                {
+                    logger.LogError("Failed to performing staging operatio on stashed changes. Reason: {reason}", errorMessage);
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = errorMessage;
+                    return Ok(response);
+                }
+
+                if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+                {
+                    logger.LogError("No repository found in cache with ID: {id}. Cannot get repository status. Sending error response.", repoId);
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = $"No repository found in cache. Cannot get repository status. Re-add repository.";
+                    return Ok(response);
+                }
+
+                string token = ApplicationControlService.GetApiToken(repository.HostPlatform, webApiConfigurations);
+                logger.LogInformation("Received request to run git status for repository ID: {repoId}", repoId);
+                RepositorySummary summary = applicationControlService.GetRepositoryStatus(repoId, user.UserName, token);
+                if (summary == null)
+                {
+                    logger.LogError("Failed to get repository status for repo ID: {repoId}", repoId);
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = $"Failed to get repository status for repo ID: {repoId}";
+                    return Ok(response);
+                }
+
+                response.StatusElements = summary.StatusElements;
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Error when applying patch staging action for: {repoId}. Error: {error}", repoId, e);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed completing patch staging action. Review internal server logs.";
+                return Ok(response);
+            }
         }
     }
 }

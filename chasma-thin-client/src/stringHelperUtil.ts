@@ -36,3 +36,12 @@ export function capitalizeFirst(str: string | undefined): string {
     str = str.replaceAll("_", " ");
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+/**
+ * Determines in the string input is a whole number.
+ * @param value The number input.
+ * @returns True if the input is a whole number; false otherwise.
+ */
+export function isWholeNumber(value: string): boolean {
+  return /^-?\d+$/.test(value.trim());
+}
