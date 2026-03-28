@@ -34,6 +34,11 @@ namespace ChasmaWebApi.Controllers
         private readonly IPasswordUtility passwordUtility;
 
         /// <summary>
+        /// The internal cache manager.
+        /// </summary>
+        private readonly ICacheManager cacheManager;
+
+        /// <summary>
         /// The internal web API configurations.
         /// </summary>
         private readonly ChasmaWebApiConfigurations apiConfiguration;
@@ -44,11 +49,14 @@ namespace ChasmaWebApi.Controllers
         /// <param name="dbContext">The application database context.</param>
         /// <param name="log">The injected internal logger.</param>
         /// <param name="passwordUtil">The injected password utility.</param>
-        public UserController(ApplicationDbContext dbContext, ILogger<UserController> log, IPasswordUtility passwordUtil, ChasmaWebApiConfigurations config)
+        /// <param name="apiCacheManager">The internal API cache manager.</param>
+        /// <param name="config">The internal web API configurations.</param>
+        public UserController(ApplicationDbContext dbContext, ILogger<UserController> log, IPasswordUtility passwordUtil, ICacheManager apiCacheManager, ChasmaWebApiConfigurations config)
         {
             applicationDbContext = dbContext;
             logger = log;
             passwordUtility = passwordUtil;
+            cacheManager = apiCacheManager;
             apiConfiguration = config;
         }
 
@@ -186,6 +194,7 @@ namespace ChasmaWebApi.Controllers
                 await applicationDbContext.UserAccounts.AddAsync(account);
                 int rowsAffected = await applicationDbContext.SaveChangesAsync();
                 logger.LogInformation("User {username} has been added to the system successfully", account.UserName);
+                cacheManager.Users.TryAdd(account.Id, account);
                 ApplicationUserPermissions permissions = new()
                 {
                     IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
