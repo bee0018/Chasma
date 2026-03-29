@@ -316,6 +316,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
+            webApiConfigurationsMock.Object.JwtSecretKey = "hYc6XTf2I3F2aab74Sop59fDKzjsreHAOXGcEnez53P";
             Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
             AddUserRequest request = new AddUserRequest
             {

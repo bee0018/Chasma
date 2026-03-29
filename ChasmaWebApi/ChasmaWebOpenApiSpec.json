@@ -3538,6 +3538,9 @@
             "properties": {
               "user": {
                 "$ref": "#/components/schemas/ApplicationUser"
+              },
+              "token": {
+                "type": "string"
               }
             }
           }

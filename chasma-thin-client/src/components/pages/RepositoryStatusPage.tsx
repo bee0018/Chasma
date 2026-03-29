@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
     ApplyBulkStagingActionRequest,
@@ -34,6 +34,7 @@ import RemoteIssuesPage from "./remote/RemoteIssuesPage";
 import RemotePullRequestPage from "./remote/RemotePullRequestPage";
 import ExecuteShellCommandsPage from "./statusComponents/ExecuteShellCommandsPage";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import { Virtuoso } from "react-virtuoso";
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -135,6 +136,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Sets the notification modal. */
    const setNotification = useCacheStore(state => state.setNotification);
+
+   /** Gets or sets the value indicating whether the parsed diff is too big. */
+   const [parsedDiffTooBig, setParsedDiffTooBig] = useState(false);
 
     /** Gets or sets the context menu. **/
     const [contextMenu, setContextMenu] = useState<{
@@ -404,8 +408,37 @@ const RepositoryStatusPage: React.FC = () => {
         handleGetGitDiffRequest(file, isStaged);
     };
 
+    /** Defines the maximum raw diff size. 2MB. */
+    const MAX_RAW_DIFF_SIZE = 2_000_000; // 2MB, adjust as needed
+
     /** The parsed unified diff. */
-    const parsedDiff = parseUnifiedDiff(rawDiff);
+    const parsedDiff = useMemo(() => {
+        if (!rawDiff) {
+            return [];
+        }
+
+        if (rawDiff.length > MAX_RAW_DIFF_SIZE) {
+            console.warn("Diff too large, truncating for performance.");
+            return parseUnifiedDiff(rawDiff.slice(0, MAX_RAW_DIFF_SIZE));
+        }
+
+        return parseUnifiedDiff(rawDiff);
+    }, [rawDiff]);
+
+    /** Gets the maximum parsed lines to render. */
+    const MAX_PARSED_LINES = 5000;
+
+    /** Gets the safely parsed lines to display to prevent freezing. */
+    const safeParsedDiff = useMemo(() => {
+        if (parsedDiff.length > MAX_PARSED_LINES) {
+            console.warn("Parsed diff too long, showing only first 5000 lines.");
+            setParsedDiffTooBig(true);
+            return parsedDiff.slice(0, MAX_PARSED_LINES);
+        }
+
+        setParsedDiffTooBig(false);
+        return parsedDiff;
+    }, [parsedDiff]);
 
     /** Handles the event when the user right-clicks a file to open the context menu. **/
     const handleContextMenu = (event: React.MouseEvent, statusElement: RepositoryStatusElement) => {
@@ -843,6 +876,7 @@ const RepositoryStatusPage: React.FC = () => {
                             <>
                                 {/* Right side: Diff viewer */}
                                 <div className="right-panel">
+                                    {parsedDiffTooBig && <p style={{textAlign: "center", color: "yellow"}}>Parsed diff too long, showing only first 5000 lines.</p>}
                                     <div className="diff-toolbar">
                                         <button
                                             className="submit-button"
@@ -865,49 +899,96 @@ const RepositoryStatusPage: React.FC = () => {
                                         <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
                                             {!isSplitView && (
                                                 <div className="diff-panel">
-                                                    <div className="diff-panel-header">Unified Diff: {selectedFile.filePath}</div>
-                                                    {parsedDiff.map((line, i) => (
-                                                        <div
-                                                            key={i}
-                                                            className={`diff-line ${
-                                                                line.type === "add" ? "diff-added" : line.type === "remove" ? "diff-removed" : ""
-                                                            }`}
-                                                        >
-                                                            <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
-                                                            <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
-                                                            <span className="diff-code">{line.content}</span>
-                                                        </div>
-                                                    ))}
+                                                    <div className="diff-panel-header">
+                                                        Unified Diff: {selectedFile.filePath}
+                                                    </div>
+
+                                                    <Virtuoso
+                                                        style={{ height: "600px" }} // or make dynamic
+                                                        totalCount={safeParsedDiff.length}
+                                                        itemContent={(index: number) => {
+                                                            const line = safeParsedDiff[index];
+
+                                                            return (
+                                                                <div
+                                                                    className={`diff-line ${
+                                                                        line.type === "add"
+                                                                            ? "diff-added"
+                                                                            : line.type === "remove"
+                                                                            ? "diff-removed"
+                                                                            : ""
+                                                                    }`}
+                                                                >
+                                                                    <span className="diff-line-number">
+                                                                        {line.oldLineNumber ?? ""}
+                                                                    </span>
+                                                                    <span className="diff-line-number">
+                                                                        {line.newLineNumber ?? ""}
+                                                                    </span>
+                                                                    <span className="diff-code">{line.content}</span>
+                                                                </div>
+                                                            );
+                                                        }}
+                                                    />
                                                 </div>
                                             )}
                                             {isSplitView && (
-                                                <>
-                                                    <div className="diff-panel">
-                                                        <div className="diff-panel-header">Original: {selectedFile.filePath}</div>
-                                                        {parsedDiff.map((line, i) => (
-                                                            <div
-                                                                key={i}
-                                                                className={`diff-line ${line.type === "remove" ? "diff-removed" : ""}`}
-                                                            >
-                                                                <span className="diff-line-number">{line.oldLineNumber ?? ""}</span>
-                                                                <span className="diff-code">{line.type === "add" ? "" : line.content}</span>
-                                                            </div>
-                                                        ))}
+                                            <div style={{ display: "contents", gap: "10px" }}>
+                                                <div className="diff-panel" style={{ flex: 1 }}>
+                                                    <div className="diff-panel-header">
+                                                        Original: {selectedFile.filePath}
                                                     </div>
-                                                    <div className="diff-panel">
-                                                        <div className="diff-panel-header">Modified: {selectedFile.filePath}</div>
-                                                        {parsedDiff.map((line, i) => (
-                                                            <div
-                                                                key={i}
-                                                                className={`diff-line ${line.type === "add" ? "diff-added" : ""}`}
-                                                            >
-                                                                <span className="diff-line-number">{line.newLineNumber ?? ""}</span>
-                                                                <span className="diff-code">{line.type === "remove" ? "" : line.content}</span>
-                                                            </div>
-                                                        ))}
+                                                    <Virtuoso
+                                                        style={{ height: "600px" }}
+                                                        totalCount={safeParsedDiff.length}
+                                                        itemContent={(index: number) => {
+                                                            const line = safeParsedDiff[index];
+                                                            return (
+                                                                <div
+                                                                    className={`diff-line ${
+                                                                        line.type === "remove" ? "diff-removed" : ""
+                                                                    }`}
+                                                                >
+                                                                    <span className="diff-line-number">
+                                                                        {line.oldLineNumber ?? ""}
+                                                                    </span>
+                                                                    <span className="diff-code">
+                                                                        {line.type === "add" ? "" : line.content}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="diff-panel" style={{ flex: 1 }}>
+                                                    <div className="diff-panel-header">
+                                                        Modified: {selectedFile.filePath}
                                                     </div>
-                                                </>
-                                            )}
+
+                                                    <Virtuoso
+                                                        style={{ height: "600px" }}
+                                                        totalCount={safeParsedDiff.length}
+                                                        itemContent={(index: number) => {
+                                                            const line = safeParsedDiff[index];
+                                                            return (
+                                                                <div
+                                                                    className={`diff-line ${
+                                                                        line.type === "add" ? "diff-added" : ""
+                                                                    }`}
+                                                                >
+                                                                    <span className="diff-line-number">
+                                                                        {line.newLineNumber ?? ""}
+                                                                    </span>
+                                                                    <span className="diff-code">
+                                                                        {line.type === "remove" ? "" : line.content}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                         </div>
                                     ) : (
                                         <div className="empty-table">Select a file to view diff</div>
