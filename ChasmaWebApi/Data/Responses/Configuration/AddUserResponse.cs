@@ -11,5 +11,10 @@ namespace ChasmaWebApi.Data.Responses.Configuration
         /// Gets or sets the newly added user.
         /// </summary>
         public ApplicationUser User { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's authentication token.
+        /// </summary>
+        public string Token { get; set; }
     }
 }

@@ -73,6 +73,7 @@ const RegisterPage: React.FC = () => {
             });
 
             useCacheStore.getState().setUser(response.user);
+            useCacheStore.getState().setToken(response.token);
             navigate('/home');
         } catch (error) {
             const errorNotification = handleApiError(error, navigate, "Error adding user!", "Review server logs for more information.");

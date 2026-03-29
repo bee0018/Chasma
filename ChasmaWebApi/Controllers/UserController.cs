@@ -233,6 +233,22 @@ namespace ChasmaWebApi.Controllers
                     Permissions = permissions,
                 };
                 response.User = user;
+
+                List<Claim> claims =
+                    [
+                        new(ClaimTypes.Name, account.UserName),
+                        new(ClaimTypes.NameIdentifier, account.Id.ToString())
+                    ];
+                SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(apiConfiguration.JwtSecretKey));
+                SigningCredentials credentials = new(key, SecurityAlgorithms.HmacSha256);
+                JwtSecurityToken token = new(
+                    issuer: "ChasmaWebApi",
+                    audience: "ChasmaThinClient",
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddMinutes(30),
+                    signingCredentials: credentials);
+                string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+                response.Token = tokenString;
                 return Ok(response);
             }
             catch (Exception ex)
