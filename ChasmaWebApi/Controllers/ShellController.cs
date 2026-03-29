@@ -3,6 +3,7 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.Shell;
 using ChasmaWebApi.Data.Requests.Shell;
 using ChasmaWebApi.Data.Responses.Shell;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChasmaWebApi.Controllers
@@ -16,6 +17,8 @@ namespace ChasmaWebApi.Controllers
     /// <param name="internalLogger">The internal API logger.</param>
     /// <param name="controlService">The internal application orchestrator.</param>
     /// <param name="internalCacheManager">The internal API cache manager.</param>
+    [Authorize]
+    [ApiController]
     [Route("api/[controller]")]
     public class ShellController(ILogger<ShellController> internalLogger, IApplicationControlService controlService, ICacheManager internalCacheManager) : ControllerBase
     {

@@ -1,24 +1,17 @@
 import { useEffect, useState } from "react";
-import NotificationModal from "../modals/NotificationModal";
 import { BranchSyncStatus, GetBranchSyncStatusRequest, RemotePullRequest } from "../../API/ChasmaWebApiClient";
 import { remoteClient, statusClient } from "../../managers/ApiClientManager";
 import { capitalizeFirst } from "../../stringHelperUtil";
 import { GlobalViewMode } from "../types/CustomTypes";
 import { useCacheStore } from "../../managers/CacheManager";
+import { useNavigate } from "react-router-dom";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * Initializes a new instance of the GlobalPullRequestTab component
  * @constructor
  */
 const GlobalRepositoryTab: React.FC = () => {
-    /** Gets or sets the notification **/
-        const [notification, setNotification] = useState<{
-            title: string,
-            message: string | undefined,
-            isError: boolean | undefined,
-            loading?: boolean
-        } | null>(null);
-
     /** Gets or sets the global pull requests. */
     const [pullRequests, setPullRequests] = useState<RemotePullRequest[]>([]);
 
@@ -37,17 +30,16 @@ const GlobalRepositoryTab: React.FC = () => {
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** The filtered branches by search query. **/
     const filteredBranches = pullRequests.filter(pr =>
         pr.branchName!.toLowerCase().includes(prSearchQuery.toLowerCase())
     );
-
-    /**
-     * Closes the modal once the user confirms the message
-     */
-    const closeModal = () => {
-        setNotification(null);
-    }
 
     /**
      * Retrieves the tracked pull requests from the backend API.
@@ -60,11 +52,8 @@ const GlobalRepositoryTab: React.FC = () => {
             }
         }
         catch (e) {
-            setNotification({
-                title: "Could not retrieve pull requests!",
-                message: "Check internal server logs for more information.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Could not retrieve pull requests!", "Check internal server logs for more information.");
+            setNotification(errorNotification);
         }
     };
 
@@ -100,12 +89,8 @@ const GlobalRepositoryTab: React.FC = () => {
         }
         catch (e)
         {
-            console.error(e);
-            setNotification({
-                title: "Error getting branch sync status!",
-                message: "Review console logs for more information.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Error getting branch sync status!", "Review console logs for more information.");
+            setNotification(errorNotification);
         }
     };
 
@@ -294,14 +279,6 @@ const GlobalRepositoryTab: React.FC = () => {
                 </>
             }
         </div>
-        {notification && (
-                <NotificationModal
-                    title={notification.title}
-                    message={notification.message}
-                    isError={notification.isError}
-                    loading={notification.loading}
-                    onClose={closeModal} />
-            )}
         </>
     );
 };

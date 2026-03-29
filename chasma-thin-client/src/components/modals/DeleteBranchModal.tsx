@@ -4,6 +4,9 @@
 } from "../../API/ChasmaWebApiClient";
 import React, {useEffect} from "react";
 import {branchClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * The members of the delete branch modal.
@@ -36,6 +39,12 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
     /** Gets or sets the branch name. **/
     const [branchName, setBranchName] = React.useState<string>("");
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** Fetches the branches associated with this repository. **/
     async function fetchAssociatedBranches() {
         const request = new GitBranchRequest();
@@ -48,8 +57,9 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
             }
         }
         catch (e) {
-            console.error(e);
             setErrorMessage("Error occurred while fetching branches. Check console logs.");
+            const errorNotification = handleApiError(e, navigate, "Error occurred while fetching branches!", "Check console logs for more information.");
+            setNotification(errorNotification);
         }
     }
 
@@ -73,10 +83,11 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
             setSuccessfullyDeleted(true);
         }
         catch (e) {
-            console.error(e);
             setTitle("Error deleting branch!")
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyDeleted(false);
+            const errorNotification = handleApiError(e, navigate, "Error deleting branch!", "Check console logs for more information.");
+            setNotification(errorNotification);
         }
         finally {
             await fetchAssociatedBranches();

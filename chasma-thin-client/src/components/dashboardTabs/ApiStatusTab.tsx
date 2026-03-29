@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { HeartbeatStatus } from "../../API/ChasmaWebApiClient";
 import {healthClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * Initializes a new ApiStatusTab.
@@ -12,6 +15,12 @@ const ApiStatusTab: React.FC = () => {
 
     /** Gets or sets the latest heartbeat time. **/
     const [latestHeartbeatTime, setLatestHeartbeatTime] = useState<Date | undefined>(undefined);
+
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
 
     /**
      * Gets the heartbeat status class.
@@ -35,7 +44,8 @@ const ApiStatusTab: React.FC = () => {
                 const response = await healthClient.getHeartbeat();
                 setHeartbeat(response.status);
             } catch (error) {
-                console.error("Failed to receive heartbeat:", error);
+                const errorNotification = handleApiError(error, navigate, "Failed to receive heartbeat!", "Review server logs for more information.");
+                setNotification(errorNotification);
                 setHeartbeat(HeartbeatStatus.Error);
             } finally {
                 setLatestHeartbeatTime(new Date());

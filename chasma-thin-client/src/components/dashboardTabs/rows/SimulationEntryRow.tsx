@@ -4,6 +4,8 @@ import {GitBranchRequest, LocalGitRepository} from "../../../API/ChasmaWebApiCli
 import {GitSimulationCase, SimulationEntry} from "../../types/CustomTypes";
 import {branchClient} from "../../../managers/ApiClientManager";
 import {isBlankOrUndefined} from "../../../stringHelperUtil";
+import { handleApiError } from "../../../managers/TransactionHandlerManager";
+import { useNavigate } from "react-router-dom";
 
 /** Interface for the members on the simulation row. **/
 interface ISimulationEntryRow {
@@ -49,6 +51,12 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
 
     /** Gets or sets the working branch name. **/
     const [baseBranchName, setBaseBranchName] = useState<string | undefined>(undefined);
+
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
 
     /**
      * Handles the event when the repository selection changes.
@@ -150,7 +158,8 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
             }
         }
         catch (e) {
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate);
+            setNotification(errorNotification);
         }
     }
 

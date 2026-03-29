@@ -6,8 +6,13 @@ using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
 using ChasmaWebApi.Data.Responses.Status;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ChasmaWebApi.Controllers
 {
@@ -15,6 +20,7 @@ namespace ChasmaWebApi.Controllers
     /// Class representing the user controller for database CRUD operations.
     /// </summary>
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
@@ -65,6 +71,7 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         /// <param name="request">The request to log the user in.</param>
         /// <returns>A login response.</returns>
+        [AllowAnonymous]
         [HttpPost]
         [Route("login")]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
@@ -73,9 +80,9 @@ namespace ChasmaWebApi.Controllers
             if (request == null)
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Request was null. Cannot login user.";
-                logger.LogError("LoginRequest received is null. Sending error response");
-                return BadRequest(response);
+                response.ErrorMessage = "Invalid username or password.";
+                logger.LogWarning("Failed login request from user.");
+                return Unauthorized(response);
             }
 
             if (string.IsNullOrEmpty(request.UserName))
@@ -89,26 +96,26 @@ namespace ChasmaWebApi.Controllers
             if (string.IsNullOrEmpty(request.Password))
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Password is empty. Cannot login user.";
-                logger.LogError("Password is empty. Sending error response");
-                return BadRequest(response);
+                response.ErrorMessage = "Invalid username or password.";
+                logger.LogWarning("Failed login attempt for user {username}", request.UserName);
+                return Unauthorized(response);
             }
 
             UserAccountModel? account = await applicationDbContext.UserAccounts.FirstOrDefaultAsync(u => u.UserName == request.UserName);
             if (account == null)
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "User not found.";
-                logger.LogError("User {username} not found. Sending error response", request.UserName);
-                return Ok(response);
+                response.ErrorMessage = "Invalid username or password.";
+                logger.LogWarning("Failed login attempt for user {username}", request.UserName);
+                return Unauthorized(response);
             }
 
             bool isPasswordValid = passwordUtility.VerifyPassword(request.Password, account.Salt, account.Password);
             if (!isPasswordValid)
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Invalid password.";
-                logger.LogError("Invalid password for user {username}. Sending error response", request.UserName);
+                response.ErrorMessage = "Invalid username or password.";
+                logger.LogWarning("Failed login attempt for user {username}", request.UserName);
                 return Ok(response);
             }
 
@@ -127,6 +134,22 @@ namespace ChasmaWebApi.Controllers
                 Permissions = permissions,
             };
             response.User = user;
+
+            List<Claim> claims =
+            [
+                new(ClaimTypes.Name, account.UserName),
+                new(ClaimTypes.NameIdentifier, account.Id.ToString())
+            ];
+            SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(apiConfiguration.JwtSecretKey));
+            SigningCredentials credentials = new(key, SecurityAlgorithms.HmacSha256);
+            JwtSecurityToken token = new(
+                issuer: "ChasmaWebApi",
+                audience: "ChasmaThinClient",
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(30),
+                signingCredentials: credentials);
+            string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+            response.Token = tokenString;
             return Ok(response);
         }
 
@@ -143,7 +166,7 @@ namespace ChasmaWebApi.Controllers
             if (request == null)
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Request was null. Cannot add user.";
+                response.ErrorMessage = "Invalid username or password.";
                 logger.LogError("AddUserRequest received is null. Sending error response");
                 return BadRequest(response);
             }
@@ -151,7 +174,7 @@ namespace ChasmaWebApi.Controllers
             if (string.IsNullOrEmpty(request.Name))
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Name is empty. Cannot add user.";
+                response.ErrorMessage = "Invalid username or password.";
                 logger.LogError("Name is empty. Sending error response");
                 return BadRequest(response);
             }
@@ -159,7 +182,7 @@ namespace ChasmaWebApi.Controllers
             if (string.IsNullOrEmpty(request.UserName))
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Username is empty. Cannot add user.";
+                response.ErrorMessage = "Invalid username or password.";
                 logger.LogError("Username is empty. Sending error response");
                 return BadRequest(response);
             }
@@ -167,7 +190,7 @@ namespace ChasmaWebApi.Controllers
             if (string.IsNullOrEmpty(request.Password))
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Password is empty. Cannot add user.";
+                response.ErrorMessage = "Invalid username or password.";
                 logger.LogError("Password is empty. Sending error response");
                 return BadRequest(response);
             }
@@ -175,7 +198,7 @@ namespace ChasmaWebApi.Controllers
             if (await applicationDbContext.UserAccounts.AnyAsync(u => u.UserName == request.UserName))
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Username already exists. Cannot add user.";
+                response.ErrorMessage = "Invalid username or password.";
                 logger.LogError("Username {username} already exists. Sending error response", request.UserName);
                 return Ok(response);
             }

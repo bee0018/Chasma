@@ -7,6 +7,9 @@ import {
 } from "../../API/ChasmaWebApiClient";
 import Checkbox from "../Checkbox";
 import {branchClient, dryRunClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /** The properties to handle commit messages. **/
 interface IAddBranchModalProps {
@@ -50,6 +53,12 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
     /** Gets or sets a value indicating whether to check out the branch after successful creation. **/
     const [isCheckingOutBranch, setIsCheckingOutBranch] = useState<boolean>(false);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /**
      * Handles the event when the user wants to add branches.
      */
@@ -87,8 +96,9 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
         catch (e) {
             setTitle("Error creating branch!")
             setErrorMessage("Check console logs for more information.");
-            console.error(e);
             setSuccessfullyAdded(false);
+            const errorNotification = handleApiError(e, navigate, "Error creating branch!", "Check console logs for more information.");
+            setNotification(errorNotification);
         }
         finally {
             setAddBranchRequestSent(false);
@@ -125,8 +135,9 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
         catch (e) {
             setTitle("Error creating branch!")
             setErrorMessage("Check console logs for more information.");
-            console.error(e);
             setSuccessfullyAdded(false);
+            const errorNotification = handleApiError(e, navigate, "Error creating branch!", "Check console logs for more information.");
+            setNotification(errorNotification);
         }
         finally {
             setAddBranchRequestSent(false);

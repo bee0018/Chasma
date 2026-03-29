@@ -2,9 +2,9 @@ import React, {useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import ChasmaLogo from "../logos/ChasmaLogo";
 import {AddUserRequest} from "../../API/ChasmaWebApiClient";
-import NotificationModal from "../modals/NotificationModal";
 import {useCacheStore} from "../../managers/CacheManager";
 import {userClient} from "../../managers/ApiClientManager";
+import { handleApiError } from '../../managers/TransactionHandlerManager';
 
 /**
  * Initializes a new instance of the Register Page class.
@@ -35,23 +35,11 @@ const RegisterPage: React.FC = () => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string,
-        message: string | undefined,
-        isError: boolean | undefined,
-        loading?: boolean
-    } | null>(null);
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
 
     /** Flag indicating whether the passwords match. **/
     const passwordsMatch = password === confirmPassword;
-
-    /**
-     * Closes the modal once the user confirms the message
-     */
-    const closeModal = () => {
-        setNotification(null);
-    }
 
     /** Handles the request to register a new user with the system. **/
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -86,13 +74,9 @@ const RegisterPage: React.FC = () => {
 
             useCacheStore.getState().setUser(response.user);
             navigate('/home');
-        } catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Could not add user!",
-                message: "An internal server error has occurred. Review logs.",
-                isError: true,
-            });
+        } catch (error) {
+            const errorNotification = handleApiError(error, navigate, "Error adding user!", "Review server logs for more information.");
+            setNotification(errorNotification);
         }
     }
 
@@ -205,14 +189,6 @@ const RegisterPage: React.FC = () => {
                     </Link>
                 </p>
             </div>
-            {notification && (
-                <NotificationModal
-                    title={notification.title}
-                    message={notification.message}
-                    isError={notification.isError}
-                    loading={notification.loading}
-                    onClose={closeModal} />
-            )}
         </div>
     );
 }

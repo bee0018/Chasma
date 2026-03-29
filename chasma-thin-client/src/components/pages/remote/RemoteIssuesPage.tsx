@@ -9,7 +9,9 @@
 import React, {useEffect, useState} from "react";
 import {remoteClient} from "../../../managers/ApiClientManager";
 import Checkbox from "../../Checkbox";
-import NotificationModal from "../../modals/NotificationModal";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../../managers/CacheManager";
+import { handleApiError } from "../../../managers/TransactionHandlerManager";
 
 /** The members of the page to create issues. **/
 interface RemoteIssuesPageProps {
@@ -56,13 +58,11 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
     /** Gets or sets a value indicating whether the user is creating a confidential issue. **/
     const [isConfidential, setIsConfidential] = useState(false);
 
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string;
-        message: string | undefined;
-        isError: boolean | undefined;
-        loading?: boolean;
-    } | null>(null);
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
 
     /** Handles the event when the user wants to create a task/story for the specified repository. **/
     const handleIssueCreationRequest = async () => {
@@ -108,15 +108,11 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
 
             performSuccessAction(response.issueUrl, response.issueId);
         } catch (e) {
-            console.error(e);
             setTitle("Error Creating Issue");
             setSuccessfullyCreatedIssue(false);
             setErrorMessage("An internal server error occurred. Please try again after correcting fields.");
-            setNotification({
-                title: "Error Creating Issue!",
-                message: "Review the console logs for more information.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Error Creating Issue!", "An internal server error occurred. Please try again after correcting fields.");
+            setNotification(errorNotification);
         }
     };
 
@@ -150,12 +146,8 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
             performSuccessAction(response.issue.url, response.issue.issueId);
         }
         catch (e) {
-            setNotification({
-                title: "Error creating issue!",
-                message: "Review the console logs for more information.",
-                isError: true,
-            });
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate, "Error creating issue!", "Review the console logs for more information.");
+            setNotification(errorNotification);
         }
     }
 
@@ -254,12 +246,8 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
             }
         }
         catch (e) {
-            setNotification({
-                title: "Error fetching GitLab project members.!",
-                message: "Review the console logs for more information.",
-                isError: true,
-            });
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate, "Error fetching GitLab project members!", "Review the console logs for more information.");
+            setNotification(errorNotification);
         }
     };
 
@@ -394,14 +382,6 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
                         Create Issue
                 </button>
             </div>
-            {notification &&
-                <NotificationModal
-                    title={notification.title}
-                    message={notification.message}
-                    isError={notification.isError}
-                    loading={notification.loading}
-                    onClose={() => setNotification(null)} />
-            }
         </>
     )
 }

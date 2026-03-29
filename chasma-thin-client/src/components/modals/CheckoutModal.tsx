@@ -1,6 +1,9 @@
 ﻿import {GitBranchRequest, GitCheckoutRequest} from "../../API/ChasmaWebApiClient";
 import React, {useEffect, useState} from "react";
 import {branchClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * The members of the checkout modal.
@@ -40,6 +43,12 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
     /** Gets or sets a value indicating whether the checkout request was sent. **/
     const [checkoutRequestSent, setCheckoutRequestSent] = useState<boolean>(false);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** Handles the event when the user requests to check out changes. **/
     const handleCheckoutChangesRequest = async () => {
         const request = new GitCheckoutRequest();
@@ -59,9 +68,10 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
             props.onSuccess();
         }
         catch (e) {
-            console.error(e);
             setTitle("Could not check out branch!")
             setErrorMessage("Check console logs for more information.");
+            const errorNotification = handleApiError(e, navigate, "Could not check out branch!", "Check console logs for more information.");
+            setNotification(errorNotification);
         }
         finally {
             setCheckoutRequestSent(true);
@@ -95,9 +105,10 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
             setErrorMessage(undefined);
         }
         catch (e) {
-            console.error(e);
             setTitle("Cannot get branches!")
             setErrorMessage("Error occurred while fetching branches. Check console logs.");
+            const errorNotification = handleApiError(e, navigate, "Cannot get branches!", "Error occurred while fetching branches. Check console logs.");
+            setNotification(errorNotification);
         }
     }
 

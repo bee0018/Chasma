@@ -15,6 +15,8 @@ using ChasmaWebApi.Data;
 using ChasmaWebApi.HostedServices;
 using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 string configFilePath = Path.Combine(AppContext.BaseDirectory, "config.xml");
 ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
@@ -58,6 +60,23 @@ builder.Services.AddCors(options =>
                 .AllowAnyHeader();
         });
     })
+    .AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.TokenValidationParameters = new()
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "ChasmaWebApi",
+            ValidAudience = "ChasmaThinClient",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(webApiConfigurations.JwtSecretKey))
+        };
+    });
+
+
+builder.Services
     .AddSingleton(webApiConfigurations)
     .AddSingleton<IPasswordUtility, PasswordUtility>()
     .AddSingleton<ICacheManager, CacheManager>()
@@ -81,9 +100,10 @@ builder.Services.AddCors(options =>
 
 WebApplication app = builder.Build();
 app.UseCors(thinClientCorPolicy)
+    .UseRouting()
+    .UseAuthentication()
     .UseAuthorization()
     .UseOpenApi()
-    .UseRouting()
     .UseStaticFiles()
     .UseDefaultFiles()
     .UseHsts()

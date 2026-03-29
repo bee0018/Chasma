@@ -9,8 +9,10 @@ import {
 } from "../../../API/ChasmaWebApiClient";
 import React, {useEffect, useState} from "react";
 import {branchClient, remoteClient} from "../../../managers/ApiClientManager";
-import NotificationModal from "../../modals/NotificationModal";
 import Checkbox from "../../Checkbox";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../../managers/CacheManager";
+import { handleApiError } from "../../../managers/TransactionHandlerManager";
 
 /** The members of the page to create issues. **/
 interface RemotePullRequestPageProps {
@@ -75,13 +77,11 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
         /** Gets or sets a value indicating whether the merge request allows collaboration. */
         const [isAllowingCollaboration, setIsAllowingCollaboration] = useState(false);
 
-        /** Gets or sets the notification **/
-        const [notification, setNotification] = useState<{
-            title: string;
-            message: string | undefined;
-            isError: boolean | undefined;
-            loading?: boolean;
-        } | null>(null);
+        /** The navigation function. **/
+        const navigate = useNavigate();
+
+        /** Sets the notification modal. */
+        const setNotification = useCacheStore(state => state.setNotification);
 
         /**
          * Handles the event when a user intends to create a pull request.
@@ -136,10 +136,11 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                 setNotification(null);
             }
             catch (e) {
-                console.error(e);
                 setErrorMessage("Error occurred while creating Pull Request. Check error logs.");
                 setTitle("Error creating Pull Request");
                 setSuccessfullyCreated(false);
+                const errorNotification = handleApiError(e, navigate, "Error creating Pull Request!", "Error occurred while creating Pull Request. Check error logs.");
+                setNotification(errorNotification);
             }
         };
 
@@ -180,15 +181,11 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                 setNotification(null); 
             }
             catch (e) {
-                console.error(e);
                 setErrorMessage("Error occurred while creating Pull Request. Check error logs.");
                 setTitle("Error creating Pull Request");
                 setSuccessfullyCreated(false);
-                setNotification({
-                    title: "Error creating merge request!",
-                    message: "Investigate server logs for more information.",
-                    isError: true,
-                });
+                const errorNotification = handleApiError(e, navigate, "Error creating Pull Request!", "Error occurred while creating Pull Request. Check error logs.");
+                setNotification(errorNotification);
             }
         };
     
@@ -213,8 +210,9 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                 setNotification(null);
             }
             catch (e) {
-                console.error(e);
                 setErrorMessage("Error occurred while fetching branches. Check console logs.");
+                const errorNotification = handleApiError(e, navigate, "Error fetching associated branches!", "Error occurred while fetching branches. Check console logs.");
+                setNotification(errorNotification);
             }
         }
 
@@ -244,12 +242,8 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
             setProjectId(response.projectId);
         }
         catch (e) {
-            setNotification({
-                title: "Error fetching GitLab project members.!",
-                message: "Review the console logs for more information.",
-                isError: true,
-            });
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate, "Error fetching GitLab project members!", "Review the console logs for more information.");
+            setNotification(errorNotification);
         }
     };
 
@@ -538,14 +532,6 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                         Clear
                     </button>
                 </div>
-                {notification && (
-                    <NotificationModal
-                        title={notification.title}
-                        message={notification.message}
-                        isError={notification.isError}
-                        loading={notification.loading}
-                        onClose={() => setNotification(null)} />
-                )}
             </div>
         </>
     )

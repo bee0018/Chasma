@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import ChasmaLogo from "../logos/ChasmaLogo";
-import NotificationModal from "../modals/NotificationModal";
 import {LoginRequest} from "../../API/ChasmaWebApiClient";
 import {useCacheStore} from "../../managers/CacheManager";
 import {userClient} from "../../managers/ApiClientManager";
+import { handleApiError } from '../../managers/TransactionHandlerManager';
 
 /**
  * Creates a new instance of the Login Page class.
@@ -20,20 +20,8 @@ const LoginPage: React.FC = () => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string,
-        message: string | undefined,
-        isError: boolean | undefined,
-        loading?: boolean
-    } | null>(null);
-
-    /**
-     * Closes the modal once the user confirms the message
-     */
-    const closeModal = () => {
-        setNotification(null);
-    }
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /**
      * Handles the request to log in a user to the system.
@@ -61,14 +49,12 @@ const LoginPage: React.FC = () => {
             }
 
             useCacheStore.getState().setUser(response.user);
+            useCacheStore.getState().setToken(response.token);
             navigate('/home');
+            setNotification(null);
         } catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Could not log in!",
-                message: "An internal server error has occurred. Review logs.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Could not log in!", "An internal server error has occurred. Review logs.");
+            setNotification(errorNotification);
         }
     }
 
@@ -105,14 +91,6 @@ const LoginPage: React.FC = () => {
                     <Link to="/register">Register here</Link>
                 </p>
             </div>
-            {notification && (
-                <NotificationModal
-                    title={notification.title}
-                    message={notification.message}
-                    isError={notification.isError}
-                    loading={notification.loading}
-                    onClose={closeModal} />
-            )}
         </div>
     );
 }

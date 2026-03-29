@@ -7,6 +7,9 @@ import {
     SimulatedMergeResult
 } from "../../API/ChasmaWebApiClient";
 import {branchClient, dryRunClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /** Defines the properties of the merge branches modal. **/
 interface IMergeModal {
@@ -50,6 +53,12 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
     /** Gets or sets the remote branches to merge. **/
     const [branchesList, setBranchesList] = React.useState<string[] | undefined>([]);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /**
      * Handles the event when the user wants to merge changes.
      */
@@ -86,10 +95,11 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
             setSuccessfullyMerged(true);
         }
         catch (e) {
-            console.error(e);
             setErrorMessage("Error occurred while attempting to merge changes. Check error logs.");
             setTitle("Error finishing merge!");
             setSuccessfullyMerged(false);
+            const errorNotification = handleApiError(e, navigate, "Error finishing merge!", "Error occurred while attempting to merge changes. Check error logs.");
+            setNotification(errorNotification);
         }
         finally {
             await fetchAssociatedBranches();
@@ -125,10 +135,11 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
             }
         }
         catch (e) {
-            console.error(e);
             setErrorMessage("Error occurred while attempting to simulate merging changes. Check error logs.");
             setTitle("Error simulating merge operation");
             setSuccessfullyMerged(false);
+            const errorNotification = handleApiError(e, navigate, "Error simulating merge operation!", "Error occurred while attempting to simulate merging changes. Check error logs.");
+            setNotification(errorNotification);
         }
     }
 
@@ -151,8 +162,9 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
             }
         }
         catch (e) {
-            console.error(e);
             setErrorMessage("Error occurred while fetching branches. Check console logs.");
+            const errorNotification = handleApiError(e, navigate, "Could not fetch branches!", "Error occurred while fetching branches. Check console logs.");
+            setNotification(errorNotification);
         }
     }
 

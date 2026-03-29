@@ -5,6 +5,9 @@ import {
     StashApplyModifiers,
 } from "../../API/ChasmaWebApiClient";
 import {stashClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * The members of the Add stash modal.
@@ -41,6 +44,12 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
     /** Gets or sets the apply stash option. **/
     const [applyStashOption, setApplyStashOption] = React.useState<StashApplyModifiers>(StashApplyModifiers.Default);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** Handles the event when the user wants to apply the stash to the current changes. **/
     const handleApplyStashRequest = async () => {
         setTitle("Attempting to apply stash...");
@@ -64,7 +73,8 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
         catch (e) {
             setTitle("Error applying stash!");
             setErrorMessage("An error occurred when attempting to stash changes. Review console and internal server logs.");
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate, "Error applying stash!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
+            setNotification(errorNotification);
         }
     };
     return (

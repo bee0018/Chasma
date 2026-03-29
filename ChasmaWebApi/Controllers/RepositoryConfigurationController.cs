@@ -6,6 +6,7 @@ using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Responses.Configuration;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,8 @@ namespace ChasmaWebApi.Controllers;
 /// <summary>
 /// Class containing the repository configuration CRUD routes.
 /// </summary>
+[Authorize]
+[ApiController]
 [Route("api/[controller]")]
 public class RepositoryConfigurationController : ControllerBase
 {

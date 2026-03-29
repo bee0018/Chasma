@@ -13,4 +13,9 @@ public class ResponseBase : ChasmaXmlBase, IResponse
     
     // <inheritdoc/>
     public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the status code of the response.
+    /// </summary>
+    public int StatusCode { get; set; }
 }

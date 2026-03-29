@@ -1,6 +1,9 @@
 import React, {useState} from "react";
 import {GitCommitRequest} from "../../API/ChasmaWebApiClient";
 import {statusClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { useCacheStore } from "../../managers/CacheManager";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /** The properties to handle commit messages. **/
 interface ICommitModalProps {
@@ -41,6 +44,12 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
     /** Gets or sets a value indicating whether the commit request was sent. **/
     const [commitRequestSent, setCommitRequestSent] = useState<boolean>(false);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** Handles the request to commit local changes. **/
     async function handleCommitChangesRequest() {
         setTitle("Attempting to commit changes...");
@@ -66,8 +75,9 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
         catch (e) {
             setTitle("Error committing changes!")
             setErrorMessage("Check console logs for more information.");
-            console.error(e);
             setSuccessfullyCommitted(false);
+            const errorNotification = handleApiError(e, navigate, "Error committing changes!", "Check console logs for more information.");
+            setNotification(errorNotification);
         }
         finally {
             setCommitRequestSent(true);

@@ -10,12 +10,13 @@ import {
     SimulatedMergeResult,
     SimulateGitPullRequest,
 } from "../../API/ChasmaWebApiClient";
-import NotificationModal from "../modals/NotificationModal";
 import {useCacheStore} from "../../managers/CacheManager";
 import Checkbox from "../Checkbox";
 import {GitSimulationCase, SimulationEntry} from "../types/CustomTypes";
 import {dryRunClient} from "../../managers/ApiClientManager";
 import SimulationEntryRow from "./rows/SimulationEntryRow";
+import { useNavigate } from "react-router-dom";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * Initializes a new MultiDryRunSimulationTab class.
@@ -28,13 +29,11 @@ const MultiDryRunSimulationTab: React.FC = () => {
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
-    /** Gets or sets the notification **/
-    const [notification, setNotification] = useState<{
-        title: string;
-        message: string | undefined;
-        isError: boolean | undefined;
-        loading?: boolean;
-    } | null>(null);
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
 
     /** Gets or sets the simulation entries to conduct simulations on. **/
     const [simulationEntries, setSimulationEntries] = useState<SimulationEntry[]>([]);
@@ -167,12 +166,8 @@ const MultiDryRunSimulationTab: React.FC = () => {
             return true;
         }
         catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Error performing pull simulation!",
-                message: "Review console logs for more information.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Error performing pull simulation!", "Review server logs for more information.");
+            setNotification(errorNotification);
             return false;
         }
     }
@@ -204,12 +199,8 @@ const MultiDryRunSimulationTab: React.FC = () => {
             return true;
         }
         catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Error performing add branch simulation!",
-                message: "Review console logs for more information.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Error performing add branch simulation!", "Review server logs for more information.");
+            setNotification(errorNotification);
             return false;
         }
     }
@@ -241,22 +232,11 @@ const MultiDryRunSimulationTab: React.FC = () => {
             return true;
         }
         catch (e) {
-            console.error(e);
-            setNotification({
-                title: "Error performing merge simulation!",
-                message: "Review console logs for more information.",
-                isError: true,
-            });
+            const errorNotification = handleApiError(e, navigate, "Error performing merge simulation!", "Review server logs for more information.");
+            setNotification(errorNotification);
             return false;
         }
     }
-
-    /**
-     * Closes the modal once the user confirms the message
-     */
-    const closeModal = () => {
-        setNotification(null);
-    };
 
     useEffect(() => {
         if (isSelectingAllRepositories) {
@@ -311,17 +291,6 @@ const MultiDryRunSimulationTab: React.FC = () => {
                                     />
                                 ))}
                             </section>
-
-                            {notification && (
-                                <NotificationModal
-                                    title={notification.title}
-                                    message={notification.message}
-                                    isError={notification.isError}
-                                    loading={notification.loading}
-                                    onClose={closeModal}
-                                />
-                            )}
-
                             <div className="run-batch-section">
                                 <button
                                     className="run-batch-button"

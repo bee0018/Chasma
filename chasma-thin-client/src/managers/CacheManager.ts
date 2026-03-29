@@ -2,6 +2,13 @@
 import {ApplicationUser, LocalGitRepository} from "../API/ChasmaWebApiClient";
 import {persist} from 'zustand/middleware'
 
+interface Notification {
+    title: string;
+    message?: string;
+    isError?: boolean;
+    loading?: boolean;
+}
+
 /** Interface defining the members of the cache state. **/
 interface CacheState {
     /** The logged-in user. **/
@@ -10,11 +17,21 @@ interface CacheState {
     /** The user's repositories. **/
     repositories: LocalGitRepository[];
 
+    token: string | undefined;
+
+    notification: Notification | null;
+
     /** Sets the logged-in user. **/
     setUser: (user: ApplicationUser | undefined) => void;
 
     /** Sets the user's repositories. **/
     setRepositories: (repos: LocalGitRepository[] | undefined) => void;
+
+    /** Sets the authenticated token. */
+    setToken: (token: string | undefined) => void;
+
+    setNotification: (notification: Notification | null) => void;
+    clearNotification: () => void;
 
     /** Deletes the repository with the specified repository identifier. **/
     deleteRepository: (repoId: string | undefined) => void;
@@ -34,8 +51,13 @@ export const useCacheStore = create<CacheState>()(
         (set) => ({
             user: null,
             repositories: [],
+            token: undefined,
+            notification: null,
             setUser: (user) => set({ user }),
             setRepositories: (repositories) => set({ repositories }),
+            setToken: (token) => set({ token }),
+            setNotification: (notification) => set({ notification }),
+            clearNotification: () => set({ notification: null }),
             deleteRepository: (repoId: string | undefined) => set((state) => ({
                 repositories: [...state.repositories.filter(i => i.id !== repoId)],
             })),
@@ -43,7 +65,7 @@ export const useCacheStore = create<CacheState>()(
                 set((state) => ({
                     repositories: [...state.repositories, repo],
                 })),
-            clearCache: () => set({ user: null, repositories: [] }),
+            clearCache: () => set({ user: null, repositories: [], token: undefined, notification: null }),
         }),
         {
             name: "cache-store",

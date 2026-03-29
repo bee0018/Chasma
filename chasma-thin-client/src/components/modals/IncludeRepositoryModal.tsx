@@ -2,6 +2,8 @@
 import React, {useEffect} from "react";
 import {useCacheStore} from "../../managers/CacheManager";
 import {configClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * The members of the delete branch modal.
@@ -34,6 +36,12 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** Fetches the ignored repositories associated with this repository. **/
     async function fetchIgnoredRepositories() {
         try {
@@ -44,8 +52,9 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
                 setRepositoryFullId(message.ignoredRepositories[0]);
             }
         } catch (e) {
-            console.error(e);
             setErrorMessage("Error occurred while fetching branches. Check console logs.");
+            const errorNotification = handleApiError(e, navigate, "Could not ignore repository!", "Error occurred while fetching branches. Check console logs.");
+            setNotification(errorNotification);
         }
     }
 
@@ -79,7 +88,8 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
             props.onRepositoriesUpdated();
         } catch (e) {
             setErrorMessage("Error including repository. Check console logs.");
-            console.error(`Could not include repositories on the filesystem: ${e}`);
+            const errorNotification = handleApiError(e, navigate, "Error including repository!", "Error including repository. Check console logs.");
+            setNotification(errorNotification);
         }
         finally {
             await fetchIgnoredRepositories()

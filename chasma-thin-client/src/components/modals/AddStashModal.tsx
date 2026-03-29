@@ -6,6 +6,8 @@ import {
 } from "../../API/ChasmaWebApiClient";
 import {useCacheStore} from "../../managers/CacheManager";
 import {stashClient} from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
+import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * The members of the Add stash modal.
@@ -42,6 +44,12 @@ const AddStashModal: React.FC<IAddStashModalProps> = (props: IAddStashModalProps
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
+    /** The navigation function. **/
+    const navigate = useNavigate();
+
+   /** Sets the notification modal. */
+   const setNotification = useCacheStore(state => state.setNotification);
+
     /** Handles the event when the user wants to stash current changes. **/
     const handleAddStashRequest = async () => {
         setTitle("Attempting to add stash...");
@@ -65,7 +73,8 @@ const AddStashModal: React.FC<IAddStashModalProps> = (props: IAddStashModalProps
         catch (e) {
             setTitle("Error adding stash request");
             setErrorMessage("An error occurred when attempting to stash changes. Review console and internal server logs.");
-            console.error(e);
+            const errorNotification = handleApiError(e, navigate, "Error adding stash request!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
+            setNotification(errorNotification);
         }
     };
     return (
