@@ -143,6 +143,12 @@ namespace ChasmaWebApi.Core.Services.Control
             return repositoryIndexService.TryDeleteRepository(repositoryId, userId, out localGitRepositories, out errorMessage);
         }
 
+        // <inheritdoc />
+        public bool TryDeleteFile(RepositoryStatusElement selectedFile, out string errorMessage)
+        {
+            return repositoryIndexService.TryRemoveFile(selectedFile, out errorMessage);
+        }
+
         #endregion
 
         #region Branch Configuration
@@ -285,6 +291,12 @@ namespace ChasmaWebApi.Core.Services.Control
             }
 
             return statuses;
+        }
+
+        // <inheritdoc />
+        public bool TryRestoringFile(RepositoryStatusElement selectedFile, out string errorMessage)
+        {
+            return gitRepositoryService.TryGitRestore(selectedFile, out errorMessage);
         }
 
         #endregion

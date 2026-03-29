@@ -342,5 +342,21 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="workingDirectories">The mapping of repository identifiers to its matching working directory.</param>
         /// <returns>The list of branch sync statuses.</returns>
         List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, string username, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories);
+
+        /// <summary>
+        /// Tries to restore the specified file in the repository, discarding any unstaged changes to the file.
+        /// </summary>
+        /// <param name="selectedFile">The file to restore changes on.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the file is restored; false otherwise.</returns>
+        bool TryRestoringFile(RepositoryStatusElement selectedFile, out string errorMessage);
+
+        /// <summary>
+        /// Tries to remove the file from the repository index and stage the deletion for the next commit.
+        /// </summary>
+        /// <param name="selectedFile">The file to delete.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the file is removed; false otherwise.</returns>
+        bool TryDeleteFile(RepositoryStatusElement selectedFile, out string errorMessage);
     }
 }

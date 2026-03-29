@@ -570,5 +570,45 @@ namespace ChasmaWebApi.Controllers
             response.BranchSyncStatuses = branchSyncStatuses;
             return Ok(response);
         }
+
+        /// <summary>
+        /// Restores the specified file to the last committed state, discarding any local changes.
+        /// </summary>
+        /// <param name="request">The request to restore a file.</param>
+        /// <returns>The response to restoring a file.</returns>
+        [HttpPost]
+        [Route("restoreFile")]
+        public ActionResult<GitRestoreResponse> RestoreFile([FromBody] GitRestoreRequest request)
+        {
+            GitRestoreResponse response = new();
+            string requestName = nameof(GitRestoreRequest);
+            if (request == null)
+            {
+                logger.LogError("Null {request} received. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            RepositoryStatusElement selectedFile = request.SelectedFile;
+            if (selectedFile == null)
+            {
+                logger.LogError("Selected file in {request} is null. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Selected file must be populated.";
+                return Ok(response);
+            }
+
+            if (!applicationControlService.TryRestoringFile(selectedFile, out string errorMessage))
+            {
+                logger.LogError("Failed to restore file: {filePath} in repo: {repoId} because {error}. Sending error response.", selectedFile.FilePath, selectedFile.RepositoryId, errorMessage);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = errorMessage;
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully restored file: {filePath} in repo: {repoId}", selectedFile.FilePath, selectedFile.RepositoryId);
+            return Ok(response);
+        }
     }
 }

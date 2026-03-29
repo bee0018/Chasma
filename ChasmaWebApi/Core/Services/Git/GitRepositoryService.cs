@@ -348,6 +348,26 @@ namespace ChasmaWebApi.Core.Services.Git
             return true;
         }
 
+        // <inheritdoc />
+        public bool TryGitRestore(RepositoryStatusElement selectedFile, out string errorMessage)
+        {
+            if (!CacheManager.WorkingDirectories.TryGetValue(selectedFile.RepositoryId, out string workingDirectory))
+            {
+                errorMessage = "Invalid repository key provided to restore the file.";
+                Logger.LogError("Could not restore changes and now sending error response. Reason: {error}", errorMessage);
+                return false;
+            }
+
+            if (selectedFile.IsStaged && !ShellUtility.TryExecuteShellCommand($"git restore --staged {selectedFile.FilePath}", workingDirectory, out errorMessage))
+            {
+                errorMessage = $"Failed to unstage file: {errorMessage}";
+                Logger.LogError("Could not unstage changes when trying to restore file and now sending error response. Reason: {error}", errorMessage);
+                return false;
+            }
+
+            return ShellUtility.TryExecuteShellCommand($"git restore {selectedFile.FilePath}", workingDirectory, out errorMessage);
+        }
+
         /// <summary>
         /// Gets the branch diversion calculation for the specified repository.
         /// </summary>

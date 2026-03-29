@@ -34,5 +34,13 @@ namespace ChasmaWebApi.Core.Interfaces.Index
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the repository was added to the system; false otherwise.</returns>
         bool TryAddGitRepository(string repoPath, int userId, out LocalGitRepository localGitRepository, out string errorMessage);
+
+        /// <summary>
+        /// Tries to remove the file from the repository index and stage the deletion for the next commit.
+        /// </summary>
+        /// <param name="selectedFile">The file to delete.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the file is removed; false otherwise.</returns>
+        bool TryRemoveFile(RepositoryStatusElement selectedFile, out string errorMessage);
     }
 }

@@ -87,5 +87,13 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="errorMessage">The error message if an error occurs.</param>
         /// <returns>True if the file was successfully diffed; false otherwise.</returns>
         bool TryGetGitDiff(string workingDirectory, string filePath, bool isStaged, out string diffContent, out string errorMessage);
+
+        /// <summary>
+        /// Tries to restore the specified file in the repository, discarding any unstaged changes to the file.
+        /// </summary>
+        /// <param name="selectedFile">The file to restore changes on.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the file is restored; false otherwise.</returns>
+        bool TryGitRestore(RepositoryStatusElement selectedFile, out string errorMessage);
     }
 }

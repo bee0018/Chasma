@@ -5,6 +5,8 @@ import {
     ApplyStagingActionRequest,
     GitDiffRequest,
     GitPullRequest,
+    GitRestoreRequest,
+    GitRmRequest,
     GitStatusRequest,
     PullSimulationEntry,
     RemoteHostPlatform,
@@ -27,7 +29,7 @@ import {parseUnifiedDiff} from "../../managers/DiffViewerManager";
 import AddStashModal from "../modals/AddStashModal";
 import AddBranchModal from "../modals/AddBranchModal";
 import ResetModal from "../modals/ResetModal";
-import {dryRunClient, statusClient} from "../../managers/ApiClientManager";
+import {configClient, dryRunClient, statusClient} from "../../managers/ApiClientManager";
 import Checkbox from "../Checkbox";
 import "../../styles/pages/batchOperationsPage.css"
 import RemoteIssuesPage from "./remote/RemoteIssuesPage";
@@ -121,6 +123,12 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a value indicating whether the bulk staging request is ready to be sent. */
     const [disableBulkStagingRequestSending, setDisableBulkStagingRequestSending] = useState(false);
+
+    /** Gets or sets a value indicating whether the git restore request is ready to be sent. */
+    const [disableRestoreRequestSending, setDisableRestoreRequestSending] = useState(false);
+
+    /** Gets or sets a value indicating whether the git rm request is ready to be sent. */
+    const [disableDeleteFileSending, setDisableDeleteFileSending] = useState(false);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
@@ -431,6 +439,68 @@ const RepositoryStatusPage: React.FC = () => {
             setNotification(errorNotification);
         }
     }
+
+    /**
+     * Restores the selected file to its original revision.
+     * @param selectedFile The file to restore.
+     */
+    const handleGitRestoreRequest = async (selectedFile: RepositoryStatusElement) => {
+        if (disableRestoreRequestSending) return;
+
+        setDisableRestoreRequestSending(true);
+        try {
+            const request = new GitRestoreRequest();
+            request.selectedFile = selectedFile;
+            const response = await statusClient.restoreFile(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "'git restore' operation failed!",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                setDisableRestoreRequestSending(false);
+                return;
+            }
+
+            setDisableRestoreRequestSending(false);
+            setSelectedFile(null);
+        } catch (error) {
+            setDisableRestoreRequestSending(false);
+            const errorNotification = handleApiError(error, navigate, "Error performing 'git restore'!", "Check console logs for more information.");
+            setNotification(errorNotification);
+        }
+    };
+
+    /**
+     * Deletes the file from the filesystem.
+     * @param selectedFile The file to delete.
+     */
+    const handleGitRmRequest = async (selectedFile: RepositoryStatusElement) => {
+        if (disableDeleteFileSending) return;
+
+        setDisableDeleteFileSending(true);
+        try {
+            const request = new GitRmRequest();
+            request.selectedFile = selectedFile;
+            const response = await configClient.removeFile(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "'git rm' operation failed!",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                setDisableDeleteFileSending(false);
+                return;
+            }
+
+            setDisableDeleteFileSending(false);
+            setSelectedFile(null);
+        } catch (error) {
+            setDisableDeleteFileSending(false);
+            const errorNotification = handleApiError(error, navigate, "Error performing 'git rm'!", "Check console logs for more information.");
+            setNotification(errorNotification);
+        }
+    };
 
     /**
      * Handles the event when the user clicks a file from the unstaged/staged changes.
@@ -890,14 +960,14 @@ const RepositoryStatusPage: React.FC = () => {
                                 onClick={() => setContextMenu(null)}
                             >
                                 <ul>
-                                    <li onClick={() => handleApplyStagingActionRequest(contextMenu?.statusElement)}>
+                                    <li onClick={() => handleApplyStagingActionRequest(contextMenu.statusElement)}>
                                         {contextMenu.statusElement && contextMenu.statusElement.isStaged ? "Unstage" : "Stage"}
                                     </li>
-                                    <li>
-                                        Ignore
+                                    <li onClick={() => handleGitRestoreRequest(contextMenu?.statusElement)}>
+                                        Restore
                                     </li>
-                                    <li>
-                                        Remove
+                                    <li onClick={() => handleGitRmRequest(contextMenu.statusElement)}>
+                                        Delete
                                     </li>
                                     <li onClick={() => setIsAddingStash(true)}>
                                         View Stash Options

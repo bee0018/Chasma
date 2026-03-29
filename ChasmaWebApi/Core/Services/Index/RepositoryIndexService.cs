@@ -160,6 +160,38 @@ namespace ChasmaWebApi.Core.Services.Index
         }
 
         // <inheritdoc/>
+        public bool TryRemoveFile(RepositoryStatusElement selectedFile, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            if (!CacheManager.WorkingDirectories.TryGetValue(selectedFile.RepositoryId, out string workingDirectory))
+            {
+                errorMessage = $"Failed to find working directory for repository with id {selectedFile.RepositoryId} in cache.";
+                Logger.LogError("Failed to remove selected file and now sending error response because: {error}", errorMessage);
+                return false;
+            }
+
+            try
+            {
+                using Repository repository = new(workingDirectory);
+                if (selectedFile.IsStaged && !ShellUtility.TryExecuteShellCommand($"git restore --staged {selectedFile.FilePath}", workingDirectory, out errorMessage))
+                {
+                    errorMessage = $"Failed to unstage file: {errorMessage}";
+                    Logger.LogError("Could not unstage changes when trying to delete file and now sending error response. Reason: {error}", errorMessage);
+                    return false;
+                }
+
+                Commands.Remove(repository, selectedFile.FilePath);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"An error occurred while trying to delete the file {selectedFile.FilePath}: {e.Message}";
+                Logger.LogError("An error occurred while trying to delete the file {filePath}: {error}. Sending error response.", selectedFile.FilePath, e);
+                return false;
+            }
+        }
+
+        // <inheritdoc/>
         public bool TryAddGitRepository(string repoPath, int userId, out LocalGitRepository localGitRepository, out string errorMessage)
         {
             localGitRepository = null;

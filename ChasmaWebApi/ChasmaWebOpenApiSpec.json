@@ -720,6 +720,38 @@
         }
       }
     },
+    "/api/RepositoryConfiguration/removeFile": {
+      "delete": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_RemoveFile",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitRmRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRmResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryStatus/gitStatus": {
       "post": {
         "tags": [
@@ -1001,6 +1033,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetBranchSyncStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryStatus/restoreFile": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_RestoreFile",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitRestoreRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRestoreResponse"
                 }
               }
             }
@@ -2491,46 +2555,28 @@
           }
         ]
       },
-      "GitStatusResponse": {
+      "GitRmResponse": {
         "allOf": [
           {
             "$ref": "#/components/schemas/ResponseBase"
           },
           {
             "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "GitRmRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
             "additionalProperties": false,
             "properties": {
-              "statusElements": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/RepositoryStatusElement"
-                }
-              },
-              "commitsAhead": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "commitsBehind": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "branchName": {
-                "type": "string"
-              },
-              "remoteUrl": {
-                "type": "string"
-              },
-              "commitHash": {
-                "type": "string"
-              },
-              "pullRequests": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/RemotePullRequest"
-                }
-              },
-              "lastUpdated": {
-                "type": "string"
+              "selectedFile": {
+                "$ref": "#/components/schemas/RepositoryStatusElement"
               }
             }
           }
@@ -2666,6 +2712,51 @@
           16384,
           32768,
           -2147483648
+        ]
+      },
+      "GitStatusResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "statusElements": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepositoryStatusElement"
+                }
+              },
+              "commitsAhead": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "commitsBehind": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "branchName": {
+                "type": "string"
+              },
+              "remoteUrl": {
+                "type": "string"
+              },
+              "commitHash": {
+                "type": "string"
+              },
+              "pullRequests": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RemotePullRequest"
+                }
+              },
+              "lastUpdated": {
+                "type": "string"
+              }
+            }
+          }
         ]
       },
       "GitStatusRequest": {
@@ -3046,6 +3137,33 @@
               "userId": {
                 "type": "integer",
                 "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "GitRestoreResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "GitRestoreRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "selectedFile": {
+                "$ref": "#/components/schemas/RepositoryStatusElement"
               }
             }
           }

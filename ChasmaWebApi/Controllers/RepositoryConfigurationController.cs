@@ -344,4 +344,45 @@ public class RepositoryConfigurationController : ControllerBase
             .ToList();
         return Ok(response);
     }
+
+    /// <summary>
+    /// Deletes the specified file from the repository it belongs to.
+    /// </summary>
+    /// <param name="request">The request to remove a file.</param>
+    /// <returns>The response to delete a file.</returns>
+    [HttpDelete]
+    [Route("removeFile")]
+    public ActionResult<GitRmResponse> RemoveFile([FromBody] GitRmRequest request)
+    {
+        GitRmResponse response = new();
+        string requestName = nameof(GitRmRequest);
+        if (request == null)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Null request was received. Cannot remove file.";
+            logger.LogError("Invalid {request} received to remove file from repository.", requestName);
+            return BadRequest(response);
+        }
+
+        RepositoryStatusElement selectedFile = request.SelectedFile;
+        if (selectedFile == null)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Selected file is required.";
+            logger.LogError("Invalid {request} received to remove file from repository because the selected file was null.", requestName);
+            return Ok(response);
+        }
+
+        logger.LogInformation("Attempting to remove file {fileName} from repository with key {repoKey}.", selectedFile.FilePath, selectedFile.RepositoryId);
+        if (!applicationControlService.TryDeleteFile(selectedFile, out string errorMessage))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = errorMessage;
+            logger.LogError("Failed to remove file {fileName} from repository with key {repoKey}. Error: {errorMessage}", selectedFile.FilePath, selectedFile.RepositoryId, errorMessage);
+            return Ok(response);
+        }
+
+        logger.LogInformation("Successfully removed file {fileName} from repository with key {repoKey}.", selectedFile.FilePath, selectedFile.RepositoryId);
+        return Ok(response);
+    }
 }
