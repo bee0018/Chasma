@@ -113,15 +113,19 @@ $cmdExe = "$env:SystemRoot\System32\cmd.exe"
 $serveCommand = "/c cd /d `"$serveDir`" && npx serve -s build -l $frontendPort >> `"$logFile`" 2>&1"
 Start-Process -FilePath $cmdExe -ArgumentList $serveCommand -WindowStyle Hidden
 
-Write-Host "Creating desktop shortcut..."
+Write-Host "Creating desktop shortcut to launch frontend server..."
 $desktopPath = [Environment]::GetFolderPath("Desktop")
-$shortcutPath = Join-Path $desktopPath "GitCtrl.url"
+$wshShell = New-Object -ComObject WScript.Shell
+$shortcutPath = Join-Path $desktopPath "GitCtrl.lnk"
 if (Test-Path $shortcutPath) { Remove-Item $shortcutPath -Force }
 
-@"
-[InternetShortcut]
-URL=$frontendUrl
-"@ | Set-Content $shortcutPath -Encoding ASCII
+$shortcut = $wshShell.CreateShortcut($shortcutPath)
+$shortcut.TargetPath = "$env:SystemRoot\System32\cmd.exe"
+$shortcut.Arguments = "/c cd /d `"$serveDir`" && npx serve -s build -l $frontendPort & start $frontendUrl"
+$shortcut.WorkingDirectory = $serveDir
+$shortcut.WindowStyle = 7  # 7 = minimized
+$shortcut.IconLocation = "$serveDir\build\favicon.ico"
+$shortcut.Save()
 
 Start-Process $frontendUrl
 Write-Host "Installation complete. Frontend running in background at $frontendUrl."
