@@ -85,6 +85,10 @@ namespace ChasmaWebApi.Tests.Controllers
             {
                 innerObjectResult = actionResult.Result as BadRequestObjectResult;
             }
+            else if (actionResultType == typeof(UnauthorizedObjectResult))
+            {
+                innerObjectResult = actionResult.Result as UnauthorizedObjectResult;
+            }
             else
             {
                 throw new ArgumentException("The object type specified is not implemented.");

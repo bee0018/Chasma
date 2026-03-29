@@ -1,6 +1,7 @@
 ﻿using ChasmaWebApi.Controllers;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
+using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
@@ -9,6 +10,7 @@ using ChasmaWebApi.Tests.Factories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Collections.Concurrent;
 
 namespace ChasmaWebApi.Tests.Controllers
 {
@@ -34,6 +36,11 @@ namespace ChasmaWebApi.Tests.Controllers
         private readonly Mock<IPasswordUtility> passwordUtilityMock;
 
         /// <summary>
+        /// The mocked cache manager for API testing.
+        /// </summary>
+        private readonly Mock<ICacheManager> cacheManagerMock;
+
+        /// <summary>
         /// The mocked web API configurations.
         /// </summary>
         private readonly Mock<ChasmaWebApiConfigurations> webApiConfigurationsMock;
@@ -48,6 +55,7 @@ namespace ChasmaWebApi.Tests.Controllers
             loggerMock = new Mock<ILogger<UserController>>();
             passwordUtilityMock = new Mock<IPasswordUtility>();
             webApiConfigurationsMock = new Mock<ChasmaWebApiConfigurations>();
+            cacheManagerMock = new Mock<ICacheManager>();
         }
 
         #endregion
@@ -58,7 +66,8 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestInitialize]
         public void TestInitialize()
         {
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
+            cacheManagerMock.Setup(i => i.Users).Returns(new ConcurrentDictionary<int, UserAccountModel>());
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
         }
 
         /// <summary>
@@ -69,6 +78,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             passwordUtilityMock.Reset();
             loggerMock.Reset();
+            cacheManagerMock.Reset();
         }
 
         /// <summary>
@@ -79,9 +89,9 @@ namespace ChasmaWebApi.Tests.Controllers
         public void TestLoginFailsWithNullLoginRequest()
         {
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(null);
-            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(UnauthorizedObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
-            Assert.AreEqual("Request was null. Cannot login user.", loginResponse.ErrorMessage);
+            Assert.AreEqual("Invalid username or password.", loginResponse.ErrorMessage);
         }
 
         /// <summary>
@@ -114,9 +124,9 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = string.Empty
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(UnauthorizedObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
-            Assert.AreEqual("Password is empty. Cannot login user.", loginResponse.ErrorMessage);
+            Assert.AreEqual("Invalid username or password.", loginResponse.ErrorMessage);
         }
 
         /// <summary>
@@ -128,16 +138,16 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
             LoginRequest request = new LoginRequest
             {
                 UserName = "user1",
                 Password = "password1"
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(UnauthorizedObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
-            Assert.AreEqual("User not found.", loginResponse.ErrorMessage);
+            Assert.AreEqual("Invalid username or password.", loginResponse.ErrorMessage);
             TestDbContextFactory.DestroyDatabase(dbContext);
         }
 
@@ -150,7 +160,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
             LoginRequest request = new LoginRequest
             {
                 UserName = TestUserName,
@@ -159,7 +169,7 @@ namespace ChasmaWebApi.Tests.Controllers
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
             LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
-            Assert.AreEqual("Invalid password.", loginResponse.ErrorMessage);
+            Assert.AreEqual("Invalid username or password.", loginResponse.ErrorMessage);
             TestDbContextFactory.DestroyDatabase(dbContext);
         }
 
@@ -172,8 +182,9 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
             passwordUtilityMock.Setup(utility => utility.VerifyPassword(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<string>())).Returns(true);
+            webApiConfigurationsMock.Object.JwtSecretKey = "hYc6XTf2I3F2aab74Sop59fDKzjsreHAOXGcEnez53P";
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
             LoginRequest request = new LoginRequest
             {
                 UserName = TestUserName,
@@ -198,7 +209,7 @@ namespace ChasmaWebApi.Tests.Controllers
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(null);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
-            Assert.AreEqual("Request was null. Cannot add user.", addUserResponse.ErrorMessage);
+            Assert.AreEqual("Invalid username or password.", addUserResponse.ErrorMessage);
         }
 
         /// <summary>
@@ -214,7 +225,7 @@ namespace ChasmaWebApi.Tests.Controllers
             Task <ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
-            Assert.AreEqual("Name is empty. Cannot add user.", addUserResponse.ErrorMessage);
+            Assert.AreEqual("Invalid username or password.", addUserResponse.ErrorMessage);
         }
 
         /// <summary>
@@ -231,7 +242,7 @@ namespace ChasmaWebApi.Tests.Controllers
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
-            Assert.AreEqual("Username is empty. Cannot add user.", addUserResponse.ErrorMessage);
+            Assert.AreEqual("Invalid username or password.", addUserResponse.ErrorMessage);
         }
 
         /// <summary>
@@ -249,7 +260,7 @@ namespace ChasmaWebApi.Tests.Controllers
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
-            Assert.AreEqual("Password is empty. Cannot add user.", addUserResponse.ErrorMessage);
+            Assert.AreEqual("Invalid username or password.", addUserResponse.ErrorMessage);
         }
 
         /// <summary>
@@ -260,7 +271,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
             AddUserRequest request = new AddUserRequest
             {
                 Name = TestUserFullName,
@@ -270,7 +281,7 @@ namespace ChasmaWebApi.Tests.Controllers
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
-            Assert.AreEqual("Username already exists. Cannot add user.", addUserResponse.ErrorMessage);
+            Assert.AreEqual("Invalid username or password.", addUserResponse.ErrorMessage);
             TestDbContextFactory.DestroyDatabase(dbContext);
         }
 
@@ -282,7 +293,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
             passwordUtilityMock.Setup(utility => utility.HashPassword(It.IsAny<string>())).Returns((null, null));
             AddUserRequest request = new AddUserRequest
             {
@@ -305,7 +316,7 @@ namespace ChasmaWebApi.Tests.Controllers
         {
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
-            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, webApiConfigurationsMock.Object);
+            Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
             AddUserRequest request = new AddUserRequest
             {
                 Name = "name",

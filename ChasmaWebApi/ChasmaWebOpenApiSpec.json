@@ -1325,6 +1325,10 @@
               "errorMessage": {
                 "type": "string",
                 "nullable": true
+              },
+              "statusCode": {
+                "type": "integer",
+                "format": "int32"
               }
             }
           }
