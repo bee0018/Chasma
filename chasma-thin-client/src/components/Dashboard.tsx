@@ -29,8 +29,11 @@ const Dashboard: React.FC = () => {
     /** Gets or sets the repository version. Serves as a trigger to update child components. **/
     const [reposVersion, setReposVersion] = useState(0);
 
+    /** Gets or sets a value indicating whether the request is ready to be sent. */
+    const [disableSendButton, setDisableSendButton] = useState(false);
+
    /** Sets the notification modal. */
-      const setNotification = useCacheStore(state => state.setNotification);
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
@@ -53,6 +56,9 @@ const Dashboard: React.FC = () => {
      * @param repoPath The repository path.
      */
     const handleAddLocalRepository = async (repoPath: string) => {
+        if (disableSendButton) return;
+        
+        setDisableSendButton(true);
         setNotification({
             title: "Adding local git repository from logical drive...",
             message: "Please wait while your request is being processed. May take a while depending on how large your filesystem is.",
@@ -70,6 +76,7 @@ const Dashboard: React.FC = () => {
                     message: response.errorMessage,
                     isError: true,
                 });
+                setDisableSendButton(false);
                 return;
             }
 
@@ -79,6 +86,7 @@ const Dashboard: React.FC = () => {
                     message: "Received empty repository from the internal server.",
                     isError: true,
                 });
+                setDisableSendButton(false);
                 return;
             }
 
@@ -87,9 +95,11 @@ const Dashboard: React.FC = () => {
                 message: `Close the modal to start managing ${response.repository.name}!`,
                 isError: false,
             });
+            setDisableSendButton(false);
             useCacheStore.getState().addLocalGitRepository(response.repository);
             handleReposUpdated();
         } catch (error) {
+            setDisableSendButton(false);
             const errorNotification = handleApiError(error, navigate, "Failed to add repository!", "Review console logs for more information.");
             setNotification(errorNotification);
         }

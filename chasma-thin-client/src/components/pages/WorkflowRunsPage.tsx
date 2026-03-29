@@ -28,6 +28,9 @@ const WorkflowRunsPage: React.FC = () => {
     /** View mode: "card" or "table" **/
     const [viewMode, setViewMode] = useState<"card" | "table">("card");
 
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -36,12 +39,14 @@ const WorkflowRunsPage: React.FC = () => {
 
     /** Handles the event when the user requests to get the workflow statuses. **/
     async function handleGetWorkFlowStatuses() {
+        setDisableSendButton(true);
         if (!selectedRepo?.hostPlatform) {
             setNotification({
                 title: "Failed to retrieve build statuses!",
                 message: "The remote host platform is not found.",
                 isError: true,
             });
+            setDisableSendButton(false);
             return;
         }
 
@@ -68,6 +73,8 @@ const WorkflowRunsPage: React.FC = () => {
                 isError: true,
             });
         }
+
+        setDisableSendButton(false);
     }
 
     /**
@@ -191,6 +198,7 @@ const WorkflowRunsPage: React.FC = () => {
                 <button
                     className="retrieve-button"
                     type="submit"
+                    disabled={disabledSendButton}
                     onClick={handleGetWorkFlowStatuses}
                 >
                     Retrieve Workflows

@@ -32,6 +32,9 @@ const RegisterPage: React.FC = () => {
     /** Gets or sets a value indicating whether to show the confirmed password field value. **/
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    /** Gets or sets a value indicating whether the request is ready to be sent. */
+    const [disableSendButton, setDisableSendButton] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -43,7 +46,12 @@ const RegisterPage: React.FC = () => {
 
     /** Handles the request to register a new user with the system. **/
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+        if (disableSendButton) {
+            return;
+        }
+
         e.preventDefault();
+        setDisableSendButton(true);
         setNotification({
             title: "Adding user to the system...",
             message: "Please wait while your request is being processed.",
@@ -63,6 +71,7 @@ const RegisterPage: React.FC = () => {
                     message: response.errorMessage,
                     isError: true,
                 });
+                setDisableSendButton(false);
                 return;
             }
 
@@ -71,11 +80,12 @@ const RegisterPage: React.FC = () => {
                 message: `Welcome to Chasma Git Manager, ${response.user.userName}.`,
                 isError: response.isErrorResponse,
             });
-
+            setDisableSendButton(false);
             useCacheStore.getState().setUser(response.user);
             useCacheStore.getState().setToken(response.token);
             navigate('/home');
         } catch (error) {
+            setDisableSendButton(false);
             const errorNotification = handleApiError(error, navigate, "Error adding user!", "Review server logs for more information.");
             setNotification(errorNotification);
         }

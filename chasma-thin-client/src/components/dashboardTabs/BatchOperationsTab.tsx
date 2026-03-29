@@ -49,6 +49,9 @@ const BatchOperationsTab: React.FC = () => {
     /** Gets or sets a value indicating whether the user is selecting all repositories to execute commands. **/
     const [isSelectingAllRepositories, setIsSelectingAllRepositories] = useState<boolean>(false);
 
+    /** Gets or sets a value indicating whether the request is ready to be sent. */
+    const [disableSendButton, setDisableSendButton] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -135,6 +138,7 @@ const BatchOperationsTab: React.FC = () => {
      * Executes a batch git operation for all repositories.
      */
     const executeBatchOperation = async () => {
+        setDisableSendButton(true);
         setNotification({
             title: "Executing batch operation...",
             message: "Running git command on all selected repositories.",
@@ -178,6 +182,7 @@ const BatchOperationsTab: React.FC = () => {
                     message: "Review server logs for more information.",
                     isError: true,
                 });
+                setDisableSendButton(false);
                 return;
             }
 
@@ -194,9 +199,11 @@ const BatchOperationsTab: React.FC = () => {
                 message: "Review the output window for details.",
                 isError: false,
             });
+            setDisableSendButton(false);
         } catch (e) {
             const errorNotification = handleApiError(e, navigate, "Error executing batch shell operation failed!", "Review server logs for more information.");
             setNotification(errorNotification);
+            setDisableSendButton(false);
         }
     };
 
@@ -302,8 +309,11 @@ const BatchOperationsTab: React.FC = () => {
                     ))}
                 </section>
                 <div className="run-batch-section">
-                    <button className="run-batch-button" onClick={executeBatchOperation}>
-                        Run Batch Git Command
+                    <button
+                        className="run-batch-button"
+                        disabled={disableSendButton}
+                        onClick={executeBatchOperation}>
+                            Run Batch Git Command
                     </button>
                 </div>
 

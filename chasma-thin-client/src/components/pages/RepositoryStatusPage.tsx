@@ -113,6 +113,15 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets the simulated merge results. **/
     const [simulatedMergeResults, setSimulatedMergeResults] = useState<SimulatedMergeResult[]>([]);
 
+    /** Gets or sets a value indicating whether the staging action request is ready to be sent. */
+    const [disableStageActionSending, setDisableStageActionSending] = useState(false);
+
+    /** Gets or sets a value indicating whether the git diff request is ready to be sent. */
+    const [disableDiffRequestSending, setDisableDiffRequestSending] = useState(false);
+
+    /** Gets or sets a value indicating whether the bulk staging request is ready to be sent. */
+    const [disableBulkStagingRequestSending, setDisableBulkStagingRequestSending] = useState(false);
+
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
@@ -203,6 +212,11 @@ const RepositoryStatusPage: React.FC = () => {
      * @param selectedFile The selected file.
      */
     async function handleApplyStagingActionRequest(selectedFile: RepositoryStatusElement) {
+        if (disableStageActionSending) {
+            return;
+        }
+
+        setDisableStageActionSending(true);
         const stagingAction = !selectedFile.isStaged
         const request = new ApplyStagingActionRequest();
         request.repoKey = selectedFile.repositoryId;
@@ -219,8 +233,10 @@ const RepositoryStatusPage: React.FC = () => {
                     message: response.errorMessage,
                     isError: true,
                 });
+                setDisableStageActionSending(false);
                 return;
             }
+
             setStatusElements(response.statusElements);
             const file = statusElements?.find(i => i.filePath === selectedFile?.filePath);
             if (!file) {
@@ -230,9 +246,12 @@ const RepositoryStatusPage: React.FC = () => {
                 setSelectedFile(file);
                 await handleGetGitDiffRequest(file, stagingAction);
             }
+
+            setDisableStageActionSending(false);
         } catch (e) {
             const errorNotification = handleApiError(e, navigate, `Failed to perform '${stagingAction ? "stage" : "unstage"}' operation!`, "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
+            setDisableStageActionSending(false);
         }
     }
 
@@ -347,7 +366,9 @@ const RepositoryStatusPage: React.FC = () => {
      * @param isStaged Flag indicating whether the file is in the staging area.
      */
     async function handleGetGitDiffRequest(file: RepositoryStatusElement | null, isStaged: boolean | undefined) {
-        if (!repoId || file === null) return;
+        if (!repoId || file === null || disableDiffRequestSending) return;
+
+        setDisableDiffRequestSending(true);
         const request = new GitDiffRequest();
         request.repositoryId = repoId;
         request.filePath = file.filePath;
@@ -357,10 +378,14 @@ const RepositoryStatusPage: React.FC = () => {
             if (response.isErrorResponse) {
                 console.error(response.errorMessage);
                 setRawDiff("");
+                setDisableDiffRequestSending(false);
                 return;
             }
+
+            setDisableDiffRequestSending(false);
             setRawDiff(response.diffContent!);
         } catch (e) {
+            setDisableDiffRequestSending(false);
             const errorNotification = handleApiError(e, navigate, "Failed to get diff!", "An internal server error has occurred. Open terminal and run 'git diff' on the selected file.");
             setNotification(errorNotification);
         }
@@ -371,8 +396,14 @@ const RepositoryStatusPage: React.FC = () => {
      * @param isStaging Flag indicating whether the user is staging/unstaging the files.
      */
     const handleBulkStagingActionRequest = async (isStaging: boolean) => {
+        if (disableBulkStagingRequestSending) return;
+
+        setDisableBulkStagingRequestSending(true);
         const files = Array.from(selectedFiles);
-        if (files.length === 0) return;
+        if (files.length === 0) {
+            setDisableBulkStagingRequestSending(false);
+            return;
+        }
 
         try {
             const request = new ApplyBulkStagingActionRequest();
@@ -386,13 +417,16 @@ const RepositoryStatusPage: React.FC = () => {
                     message: response.errorMessage,
                     isError: true,
                 });
+                setDisableBulkStagingRequestSending(false);
                 return;
             }
 
+            setDisableBulkStagingRequestSending(false);
             setStatusElements(response.statusElements);
             setSelectedFiles(new Set());
             setSelectedFile(null);
         } catch (e) {
+            setDisableBulkStagingRequestSending(false);
             const errorNotification = handleApiError(e, navigate, "Error performing bulk staging operation!", "Check console logs for more information.");
             setNotification(errorNotification);
         }

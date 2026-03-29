@@ -35,6 +35,9 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
     /** Gets or sets a value indicating whether the push response was successful. **/
     const [successfullyPushed, setSuccessfullyPushed] = useState<boolean | undefined>(undefined);
 
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -45,6 +48,7 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
      * Handles the push changes request.
      */
     const handlePushChangesRequest = async () => {
+        setDisableSendButton(true);
         setTitle("Attempting to push changes. May take a few moments...");
         const request = new GitPushRequest();
         request.repositoryId = props.repositoryId;
@@ -54,18 +58,21 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
                 setTitle("Could not push changes!");
                 setErrorMessage(response.errorMessage);
                 setSuccessfullyPushed(false);
+                setDisableSendButton(false);
                 return;
             }
 
             setTitle("Successfully Pushed!");
             setErrorMessage(undefined);
             setSuccessfullyPushed(true);
+            setDisableSendButton(false);
             props.onSuccess();
         }
         catch (e) {
             setTitle("Could not push changes!");
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyPushed(false);
+            setDisableSendButton(false);
             const errorNotification = handleApiError(e, navigate, "Could not push changes!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
@@ -126,6 +133,7 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
                     <div className="modal-actions">
                         <button
                             className="modal-button primary"
+                            disabled={disabledSendButton}
                             hidden={successfullyPushed}
                             onClick={handlePushChangesRequest}
                         >

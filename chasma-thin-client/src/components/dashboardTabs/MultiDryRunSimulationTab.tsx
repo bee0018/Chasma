@@ -50,6 +50,9 @@ const MultiDryRunSimulationTab: React.FC = () => {
     /** Gets or sets the simulated merge results. **/
     const [simulatedMergeResults, setSimulatedMergeResults] = useState<SimulatedMergeResult[]>([]);
 
+    /** Gets or sets a value indicating whether the request is ready to be sent. */
+    const [disableSendButton, setDisableSendButton] = useState(false);
+
     /**
      * Adds a new simulation entry to edit.
      */
@@ -93,6 +96,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
      * Simulates the simulation dry run and sets the results.
      */
     const handleSimulationDryRun = async () => {
+        setDisableSendButton(true);
         const runPhrase = simulationEntries.length > 1 ? "runs" : "run";
         setNotification({
             title: `Perform simulation ${runPhrase}...`,
@@ -137,6 +141,8 @@ const MultiDryRunSimulationTab: React.FC = () => {
                 isError: false,
             });
         }
+
+        setDisableSendButton(false);
     }
 
     /**
@@ -294,6 +300,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
                             <div className="run-batch-section">
                                 <button
                                     className="run-batch-button"
+                                    disabled={disableSendButton}
                                     onClick={handleSimulationDryRun}
                                 >
                                     Simulate

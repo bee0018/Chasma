@@ -17,6 +17,9 @@ const LoginPage: React.FC = () => {
     /** Gets or sets the password of the user. **/
     const [password, setPassword] = useState('');
 
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -27,7 +30,12 @@ const LoginPage: React.FC = () => {
      * Handles the request to log in a user to the system.
      */
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+        if (disabledSendButton) {
+            return;
+        }
+        
         e.preventDefault();
+        setDisableSendButton(true);
         setNotification({
             title: "Logging into the system...",
             message: "Please wait while your request is being processed.",
@@ -45,14 +53,17 @@ const LoginPage: React.FC = () => {
                     message: response.errorMessage,
                     isError: true,
                 });
+                setDisableSendButton(false);
                 return;
             }
 
             useCacheStore.getState().setUser(response.user);
             useCacheStore.getState().setToken(response.token);
+            setDisableSendButton(false);
             navigate('/home');
             setNotification(null);
         } catch (e) {
+            setDisableSendButton(false);
             const errorNotification = handleApiError(e, navigate, "Could not log in!", "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
         }
