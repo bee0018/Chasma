@@ -158,6 +158,7 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         /// <param name="request">The request containg the account to be added to the database.</param>
         /// <returns>Result signifying if the operation was successful or not.</returns>
+        [AllowAnonymous]
         [HttpPost]
         [Route("addUserAccount")]
         public async Task<ActionResult<AddUserResponse>> AddUserAccount([FromBody] AddUserRequest request)
