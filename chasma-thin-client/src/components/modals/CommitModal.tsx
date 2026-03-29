@@ -44,6 +44,9 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
     /** Gets or sets a value indicating whether the commit request was sent. **/
     const [commitRequestSent, setCommitRequestSent] = useState<boolean>(false);
 
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -53,6 +56,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
     /** Handles the request to commit local changes. **/
     async function handleCommitChangesRequest() {
         setTitle("Attempting to commit changes...");
+        setDisableSendButton(true);
         try {
             const request = new GitCommitRequest();
             request.repositoryId = props.repositoryId;
@@ -82,6 +86,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
         finally {
             setCommitRequestSent(true);
             setCommitMessage(undefined);
+            setDisableSendButton(false);
         }
     }
 
@@ -147,6 +152,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
                         {!commitRequestSent &&
                             <button
                                 className="modal-button primary"
+                                disabled={disabledSendButton}
                                 onClick={handleCommitChangesRequest}
                             >
                                 Commit

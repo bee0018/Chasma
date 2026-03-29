@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
 import Checkbox from "../Checkbox";
 import {
     ApplyStashRequest,
@@ -44,6 +44,9 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
     /** Gets or sets the apply stash option. **/
     const [applyStashOption, setApplyStashOption] = React.useState<StashApplyModifiers>(StashApplyModifiers.Default);
 
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -52,6 +55,7 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
 
     /** Handles the event when the user wants to apply the stash to the current changes. **/
     const handleApplyStashRequest = async () => {
+        setDisableSendButton(true);
         setTitle("Attempting to apply stash...");
         try {
             const request = new ApplyStashRequest();
@@ -62,16 +66,19 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
             if (response.isErrorResponse) {
                 setTitle(`Error applying stash ${props.stashIndex}`);
                 setErrorMessage(response.errorMessage);
+                setDisableSendButton(false);
                 return;
             }
 
             setSuccessfullyAppliedStashed(true);
             setErrorMessage(undefined);
             setTitle("Successfully applied stash!");
+            setDisableSendButton(false);
             props.onSuccess()
         }
         catch (e) {
             setTitle("Error applying stash!");
+            setDisableSendButton(false);
             setErrorMessage("An error occurred when attempting to stash changes. Review console and internal server logs.");
             const errorNotification = handleApiError(e, navigate, "Error applying stash!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
             setNotification(errorNotification);
@@ -147,6 +154,7 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
                     <div className="modal-actions">
                         <button className="modal-button primary"
                                 hidden={successfullyAppliedStashed}
+                                disabled={disabledSendButton}
                                 onClick={handleApplyStashRequest}
                         >
                             Apply

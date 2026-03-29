@@ -59,16 +59,22 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
    /** Sets the notification modal. */
    const setNotification = useCacheStore(state => state.setNotification);
 
+   /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
+
     /**
      * Handles the event when the user wants to merge changes.
      */
     const handleMergeOperation = () => {
+        setDisableSendButton(true);
         if (props.isSafeMode) {
             handleMergeDryRun();
+            setDisableSendButton(false);
             return;
         }
 
         handleMergeBranches();
+        setDisableSendButton(false);
     }
 
     /**
@@ -252,6 +258,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
                     <div className="modal-actions">
                         <button className="modal-button primary"
                                 hidden={successfullyMerged}
+                                disabled={disabledSendButton}
                                 onClick={handleMergeOperation}
                         >
                             {props.isSafeMode ? "Simulate ": ""}Merge

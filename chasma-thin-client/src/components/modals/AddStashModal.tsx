@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
 import Checkbox from "../Checkbox";
 import {
     AddStashRequest,
@@ -27,19 +27,22 @@ interface IAddStashModalProps {
  */
 const AddStashModal: React.FC<IAddStashModalProps> = (props: IAddStashModalProps) => {
     /** Gets or sets the error message. **/
-    const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     /** Gets or sets a value indicating whether the changes were successfully stashed. **/
-    const [successfullyStashed, setSuccessfullyStashed] = React.useState<boolean | undefined>(undefined);
+    const [successfullyStashed, setSuccessfullyStashed] = useState<boolean | undefined>(undefined);
 
     /** Gets or sets the modal title. **/
-    const [title, setTitle] = React.useState<string>("Stash Options");
+    const [title, setTitle] = useState<string>("Stash Options");
 
     /** Gets or sets the stash option. **/
-    const [stashOption, setStashOption] = React.useState<StashModifiers>(StashModifiers.Default);
+    const [stashOption, setStashOption] = useState<StashModifiers>(StashModifiers.Default);
 
     /** Gets or sets the stash message the user has input. **/
-    const [stashMessage, setStashMessage] = React.useState<string | undefined>(undefined);
+    const [stashMessage, setStashMessage] = useState<string | undefined>(undefined);
+
+    /** Gets or sets a value indicating whether the request is ready to be sent. */
+    const [disableSendButton, setDisableSendButton] = useState(false);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
@@ -52,6 +55,7 @@ const AddStashModal: React.FC<IAddStashModalProps> = (props: IAddStashModalProps
 
     /** Handles the event when the user wants to stash current changes. **/
     const handleAddStashRequest = async () => {
+        setDisableSendButton(true);
         setTitle("Attempting to add stash...");
         try {
             const request = new AddStashRequest();
@@ -63,18 +67,21 @@ const AddStashModal: React.FC<IAddStashModalProps> = (props: IAddStashModalProps
             if (response.isErrorResponse) {
                 setTitle("Error stashing changes");
                 setErrorMessage(response.errorMessage);
+                setDisableSendButton(false);
                 return;
             }
 
             setSuccessfullyStashed(true);
             setErrorMessage(undefined);
             setTitle("Successfully added stash!");
+            setDisableSendButton(false);
         }
         catch (e) {
             setTitle("Error adding stash request");
             setErrorMessage("An error occurred when attempting to stash changes. Review console and internal server logs.");
             const errorNotification = handleApiError(e, navigate, "Error adding stash request!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
             setNotification(errorNotification);
+            setDisableSendButton(false);
         }
     };
     return (
@@ -163,6 +170,7 @@ const AddStashModal: React.FC<IAddStashModalProps> = (props: IAddStashModalProps
                     <div className="modal-actions">
                         <button className="modal-button primary"
                                 hidden={successfullyStashed}
+                                disabled={disableSendButton}
                                 onClick={handleAddStashRequest}
                         >
                             Stash

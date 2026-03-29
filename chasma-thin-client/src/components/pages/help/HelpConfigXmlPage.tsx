@@ -128,6 +128,16 @@ const HelpConfigXmlPage: React.FC = () => (
             <p>Defines the GitLab API token that is used for access and performing operations with the Atlassian.Net SDK development package.</p>
             <p className="xml-meta">Default: none</p>
         </div>
+
+        <div className="xml-attr">
+            <div className="xml-attr-header">
+                <span className="xml-name">jwtSecretKey</span>
+                <span className="xml-type">string</span>
+                <span className="xml-required">required</span>
+            </div>
+            <p>Cryptographic string or key pair used to sign and verify JSON Web Tokens, ensuring the token's authenticity and integrity.</p>
+            <p className="xml-meta">Default: none</p>
+        </div>
     </section>
 );
 

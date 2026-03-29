@@ -27,6 +27,9 @@ const GlobalRepositoryTab: React.FC = () => {
     /** Gets or sets the global branch statuses. */
     const [branchStatuses, setBranchStatuses] = useState<BranchSyncStatus[]>([]);
 
+    /** Gets or sets a value indicating whether the request is ready to be sent. */
+    const [disableSendButton, setDisableSendButton] = useState(false);
+
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
@@ -61,6 +64,7 @@ const GlobalRepositoryTab: React.FC = () => {
      * Handles the event when the user wants to get the branch sync status.
      */
     const handleBranchSyncRequest = async () => {
+        setDisableSendButton(true);
         setNotification({
             title: `Getting branch sync status for ${branchSyncSearchQuery}`,
             message: "Please wait while your request is being processed. May take a few moments depending on retrieving build information.",
@@ -78,6 +82,7 @@ const GlobalRepositoryTab: React.FC = () => {
                     message: response.errorMessage,
                     isError: true,
                 });
+                setDisableSendButton(false);
                 return;
             }
 
@@ -86,11 +91,13 @@ const GlobalRepositoryTab: React.FC = () => {
            }
 
            setNotification(null);
+           setDisableSendButton(false);
         }
         catch (e)
         {
             const errorNotification = handleApiError(e, navigate, "Error getting branch sync status!", "Review console logs for more information.");
             setNotification(errorNotification);
+            setDisableSendButton(false);
         }
     };
 
@@ -227,6 +234,7 @@ const GlobalRepositoryTab: React.FC = () => {
                             className="input-field" />
                         <button
                             className="submit-button"
+                            disabled={disableSendButton}
                             onClick={handleBranchSyncRequest}
                             type="submit">
                                 Search

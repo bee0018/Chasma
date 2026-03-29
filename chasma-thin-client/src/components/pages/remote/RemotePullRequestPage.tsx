@@ -77,6 +77,9 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
         /** Gets or sets a value indicating whether the merge request allows collaboration. */
         const [isAllowingCollaboration, setIsAllowingCollaboration] = useState(false);
 
+        /** Gets or sets the flag indicating whether to disable the send button. */
+        const [disabledSendButton, setDisableSendButton] = useState(false);
+
         /** The navigation function. **/
         const navigate = useNavigate();
 
@@ -87,6 +90,7 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
          * Handles the event when a user intends to create a pull request.
          */
         const handleRemotePullRequestOperation = async () => {
+            setDisableSendButton(true);
             setNotification({
                 title: "Attempting to create pull request...",
                 message: "Please wait while your request is being processed.",
@@ -94,12 +98,15 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                 loading: true
             });
             if (props.repository.hostPlatform === RemoteHostPlatform.GitHub) {
+                setDisableSendButton(false);
                 await handleCreatePrRequest();
             }
             else if (props.repository.hostPlatform === RemoteHostPlatform.GitLab) {
+                setDisableSendButton(false);
                 await handleCreateGitlabMergeRequest();
             }
             else {
+                setDisableSendButton(false);
                 setNotification({
                     title: "Failed to complete operation!",
                     message: `The host platform: ${RemoteHostPlatform[props.repository.hostPlatform!]} is not supported!`,
@@ -522,6 +529,7 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                 <div className="modal-actions">
                     <button className="modal-button primary"
                             hidden={successfullyCreated}
+                            disabled={disabledSendButton}
                             onClick={handleRemotePullRequestOperation}
                     >
                         Create 

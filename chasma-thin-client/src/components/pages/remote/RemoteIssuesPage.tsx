@@ -58,6 +58,9 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
     /** Gets or sets a value indicating whether the user is creating a confidential issue. **/
     const [isConfidential, setIsConfidential] = useState(false);
 
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -66,6 +69,7 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
 
     /** Handles the event when the user wants to create a task/story for the specified repository. **/
     const handleIssueCreationRequest = async () => {
+        setDisableSendButton(true);
         setNotification({
             title: "Attempting to create issue...",
             message: "Please wait while your request is being processed.",
@@ -74,13 +78,16 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
         });
         if (props.repository.hostPlatform === RemoteHostPlatform.GitHub) {
             await handleCreateGitHubIssueRequest();
+            setDisableSendButton(false);
             return;
         }
         else if (props.repository.hostPlatform === RemoteHostPlatform.GitLab) {
             await handleCreateGitLabIssueRequest();
+            setDisableSendButton(false);
             return;
         }
         else {
+            setDisableSendButton(false);
             setNotification({
                 title: "Could not create Issue!",
                 message: `The host platform: ${RemoteHostPlatform[props.repository.hostPlatform!]} is not supported!`,
@@ -378,6 +385,7 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
                 <button
                     type="submit"
                     className="submit-button"
+                    disabled={disabledSendButton}
                     onClick={handleIssueCreationRequest}>
                         Create Issue
                 </button>

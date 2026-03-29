@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
 import Checkbox from "../Checkbox";
 import {GitResetRequest, ResetMode,} from "../../API/ChasmaWebApiClient";
 import {statusClient} from "../../managers/ApiClientManager";
@@ -24,22 +24,25 @@ interface IResetModalProps {
  */
 const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
     /** Gets or sets the error message. **/
-    const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     /** Gets or sets the revision that the repository was reset to. **/
-    const [currentRevision, setCurrentRevision] = React.useState<string | undefined>(undefined);
+    const [currentRevision, setCurrentRevision] = useState<string | undefined>(undefined);
 
     /** Gets or sets a value indicating whether the changes were successfully reset. **/
-    const [successfullyReset, setSuccessfullyReset] = React.useState<boolean | undefined>(undefined);
+    const [successfullyReset, setSuccessfullyReset] = useState<boolean | undefined>(undefined);
 
     /** Gets or sets the modal title. **/
-    const [title, setTitle] = React.useState<string>("Reset Changes");
+    const [title, setTitle] = useState<string>("Reset Changes");
 
     /** Gets or sets the reset mode option. **/
-    const [resetMode, setResetMode] = React.useState<ResetMode>(ResetMode.Soft);
+    const [resetMode, setResetMode] = useState<ResetMode>(ResetMode.Soft);
 
     /** Gets or sets the revision to reset back to. **/
-    const [revParseSpec, setRevParseSpec] = React.useState<string>("");
+    const [revParseSpec, setRevParseSpec] = useState<string>("");
+
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
 
     /** The navigation function. **/
     const navigate = useNavigate();
@@ -49,6 +52,7 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
 
     /** Handles the event when the user wants to reset to the current changes. **/
     const handleGitResetRequest = async () => {
+        setDisableSendButton(true);
         setTitle("Attempting to reset changes...");
         try {
             const request = new GitResetRequest();
@@ -59,6 +63,7 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
             if (response.isErrorResponse) {
                 setTitle("Error resetting changes");
                 setErrorMessage(response.errorMessage);
+                setDisableSendButton(false);
                 return;
             }
 
@@ -66,10 +71,12 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
             setErrorMessage(undefined);
             setTitle("Successfully reset changes!");
             setCurrentRevision(response.commitMessage);
+            setDisableSendButton(false);
         }
         catch (e) {
             setTitle("Error resetting changes!");
             setErrorMessage("An error occurred when attempting to reset changes. Review console and internal server logs.");
+            setDisableSendButton(false);
             const errorNotification = handleApiError(e, navigate, "Error resetting changes!", "An error occurred when attempting to reset changes. Review console and internal server logs.");
             setNotification(errorNotification);
         }
@@ -159,6 +166,7 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
                     <div className="modal-actions">
                         <button className="modal-button primary"
                                 hidden={successfullyReset}
+                                disabled={disabledSendButton}
                                 onClick={handleGitResetRequest}
                         >
                             Reset

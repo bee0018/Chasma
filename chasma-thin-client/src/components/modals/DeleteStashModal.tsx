@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
 import {DeleteStashRequest} from "../../API/ChasmaWebApiClient";
 import {stashClient} from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
@@ -29,13 +29,16 @@ interface IDeleteStashModalProps {
  */
 const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashModalProps) => {
     /** Gets or sets the error message. **/
-    const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     /** Gets or sets a value indicating whether the changes were successfully deleted. **/
-    const [successfullyDeletedStashed, setSuccessfullyDeletedStashed] = React.useState<boolean | undefined>(undefined);
+    const [successfullyDeletedStashed, setSuccessfullyDeletedStashed] = useState<boolean | undefined>(undefined);
 
     /** Gets or sets the modal title. **/
-    const [title, setTitle] = React.useState<string>(`Delete Stash ${props.stashIndex}?`);
+    const [title, setTitle] = useState<string>(`Delete Stash ${props.stashIndex}?`);
+
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
 
     /** The navigation function. **/
     const navigate = useNavigate();
@@ -45,6 +48,7 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
 
     /** Handles the event when the user wants to delete the specified stash. **/
     const handleDeleteStashRequest = async () => {
+        setDisableSendButton(true);
         setTitle("Attempting to delete the stash...");
         try {
             const request = new DeleteStashRequest();
@@ -54,17 +58,20 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
             if (response.isErrorResponse) {
                 setTitle(`Error deleting stash ${props.stashIndex}`);
                 setErrorMessage(response.errorMessage);
+                setDisableSendButton(false);
                 return;
             }
 
             setSuccessfullyDeletedStashed(true);
             setErrorMessage(undefined);
             setTitle("Successfully deleted!");
+            setDisableSendButton(false);
             props.onSuccess()
         }
         catch (e) {
             setTitle("Error deleting stash!");
             setErrorMessage("An error occurred when attempting to stash changes. Review console and internal server logs.");
+            setDisableSendButton(false);
             const errorNotification = handleApiError(e, navigate, "Error deleting stash!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
             setNotification(errorNotification);
         }
@@ -124,6 +131,7 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     <div className="modal-actions">
                         <button className="modal-button primary"
+                                disabled={disabledSendButton}
                                 hidden={successfullyDeletedStashed}
                                 onClick={handleDeleteStashRequest}
                         >

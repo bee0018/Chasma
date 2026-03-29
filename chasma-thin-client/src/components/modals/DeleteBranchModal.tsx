@@ -2,7 +2,7 @@
     DeleteBranchRequest,
     GitBranchRequest,
 } from "../../API/ChasmaWebApiClient";
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {branchClient} from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
@@ -25,19 +25,22 @@ interface IDeleteBranchModalProps {
  */
 const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBranchModalProps) => {
     /** Gets or sets the error message. **/
-    const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     /** Gets or sets a value indicating whether the branch was successfully deleted. **/
-    const [successfullyDeleted, setSuccessfullyDeleted] = React.useState<boolean | undefined>(undefined);
+    const [successfullyDeleted, setSuccessfullyDeleted] = useState<boolean | undefined>(undefined);
 
     /** Gets or sets the modal title. **/
-    const [title, setTitle] = React.useState<string>("Select branch to delete: ");
+    const [title, setTitle] = useState<string>("Select branch to delete: ");
 
     /** Gets or sets the remote branches to checkout. **/
-    const [branchesList, setBranchesList] = React.useState<string[] | undefined>([]);
+    const [branchesList, setBranchesList] = useState<string[] | undefined>([]);
 
     /** Gets or sets the branch name. **/
-    const [branchName, setBranchName] = React.useState<string>("");
+    const [branchName, setBranchName] = useState<string>("");
+
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
 
     /** The navigation function. **/
     const navigate = useNavigate();
@@ -65,6 +68,7 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
 
     /** Handles the event when the user requests to delete a branch. **/
     const handleDeleteBranchRequest = async () => {
+        setDisableSendButton(true);
         setTitle("Attempting to delete branch...")
         const request = new DeleteBranchRequest();
         request.repositoryId = props.repositoryId;
@@ -91,6 +95,7 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
         }
         finally {
             await fetchAssociatedBranches();
+            setDisableSendButton(false);
         }
     };
 
@@ -163,8 +168,10 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
                     )}
                     <br/>
                     <div className="modal-actions">
-                        <button className="modal-button primary"
-                                onClick={handleDeleteBranchRequest}
+                        <button
+                            className="modal-button primary"
+                            disabled={disabledSendButton}
+                            onClick={handleDeleteBranchRequest}
                         >
                             Delete
                         </button>

@@ -24,6 +24,9 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
         /** Gets or sets the error message. **/
         const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
+        /** Gets or sets the flag indicating whether to disable the send button. */
+        const [disabledSendButton, setDisableSendButton] = useState(false);
+
         /** The navigation function. **/
         const navigate = useNavigate();
 
@@ -62,6 +65,7 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
        **/
        const handleExecuteShellCommandsRequest = useCallback(async (e: React.FormEvent) => {
            e.preventDefault();
+           setDisableSendButton(true);
            const command = rows.length > 0 ? "commands" : "command";
            setNotification({
             title: `Executing shell ${command}...`,
@@ -83,6 +87,7 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
                if (response.isErrorResponse) {
                    setErrorMessage(response.errorMessage);
                    setOutput([]);
+                   setDisableSendButton(false);
                    return;
                }
     
@@ -93,10 +98,12 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
                        message: result.outputMessage,
                    }))
                );
+               setDisableSendButton(false);
                setNotification(null);
            } catch (e) {
                setOutput([])
                setErrorMessage("Error executing shell commands. Check console logs for more information.")
+               setDisableSendButton(false);
                const errorNotification = handleApiError(e, navigate, "Could not execute commands!", "Error executing shell commands. Check console logs for more information.");
                setNotification(errorNotification);
            }}, [rows, props.repositoryId]);
@@ -168,6 +175,7 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
                     </div>
                     <div className="modal-actions">
                         <button className="modal-button primary"
+                                disabled={disabledSendButton}
                                 onClick={handleExecuteShellCommandsRequest}
                         >
                             Execute Commands

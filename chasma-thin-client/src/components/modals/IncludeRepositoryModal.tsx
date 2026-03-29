@@ -1,5 +1,5 @@
 ﻿import {IgnoreRepositoryRequest} from "../../API/ChasmaWebApiClient";
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {useCacheStore} from "../../managers/CacheManager";
 import {configClient} from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
@@ -23,15 +23,18 @@ interface IIncludeRepositoryModalProps {
  */
 const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: IIncludeRepositoryModalProps) => {
     /** Gets or sets the error message. **/
-    const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     /** Gets or sets the repositories to include. **/
-    const [ignoredRepositoryList, setIgnoredRepositoryList] = React.useState<(string[] | undefined)>([]);
+    const [ignoredRepositoryList, setIgnoredRepositoryList] = useState<(string[] | undefined)>([]);
 
     /** Gets or sets the repository name.
      * Note: Each element will be in the format: repo name: repo identifier
      **/
-    const [repositoryFullId, setRepositoryFullId] = React.useState<string>();
+    const [repositoryFullId, setRepositoryFullId] = useState<string>();
+
+    /** Gets or sets the flag indicating whether to disable the send button. */
+    const [disabledSendButton, setDisableSendButton] = useState(false);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
@@ -62,9 +65,11 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
      * Handles the event when the user requests to include a repository for managing.
      */
     const handleIncludeRepositoryAction = async () => {
+        setDisableSendButton(true);
         const repoParts = repositoryFullId?.split(":");
         if (!repoParts) {
             setErrorMessage("Could not include repository. Could not get repository information.");
+            setDisableSendButton(false);
             return;
         }
 
@@ -77,7 +82,8 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
             request.isIgnored = false;
             const response = await configClient.ignoreRepository(request);
             if (response.isErrorResponse) {
-                setErrorMessage(response.errorMessage)
+                setErrorMessage(response.errorMessage);
+                setDisableSendButton(false);
                 return;
             }
 
@@ -93,6 +99,7 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
         }
         finally {
             await fetchIgnoredRepositories()
+            setDisableSendButton(false);
         }
     };
 
@@ -147,6 +154,7 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
                     <div className="modal-actions">
                         <button
                             className="modal-button primary"
+                            disabled={disabledSendButton}
                             onClick={handleIncludeRepositoryAction}
                         >
                             Include

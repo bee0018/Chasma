@@ -35,6 +35,9 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
     /** Sets the notification modal. */
     const setNotification = useCacheStore(state => state.setNotification);
 
+    /** Gets or sets a value indicating whether the request is ready to be sent. */
+    const [disableSendButton, setDisableSendButton] = useState(false);
+
     useEffect(() => {
         updateUserRepositoryConfiguration().catch(console.error);
     }, [props.reposVersion]);
@@ -88,6 +91,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
 
     /** Sends a request to the add the local git repositories on the filesystem. **/
     async function handleAddLocalGitRepositories() {
+        setDisableSendButton(true);
         setNotification({
             title: "Adding local git repositories from logical drives...",
             message: "Please wait while your request is being processed. May take a while depending on how large your filesystem is.",
@@ -104,18 +108,22 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                     message: response.errorMessage,
                     isError: true,
                 });
+                setDisableSendButton(false);
                 return;
             }
+
             setNotification({
                 title: "Git repository retrieval finished!",
                 message: "Close the modal to find the repositories found on your system.",
                 isError: false,
             });
             useCacheStore.getState().setRepositories(response.currentRepositories);
+            setDisableSendButton(false);
         }
         catch (e) {
             const errorNotification = handleApiError(e, navigate);
             setNotification(errorNotification);
+            setDisableSendButton(false);
         }
     }
 
@@ -232,6 +240,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                 <button
                     className="submit-button"
                     type="submit"
+                    disabled={disableSendButton}
                     onClick={handleAddLocalGitRepositories}
                 >
                     Add Git Repos from Local Machine
