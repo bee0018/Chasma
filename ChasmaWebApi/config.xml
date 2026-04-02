@@ -11,4 +11,5 @@
 	<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 	<bitbucketApiToken>token</bitbucketApiToken>
 	<jwtSecretKey>secretKey</jwtSecretKey>
+	<bindingPort>6000</bindingPort>
 </configurations>
