@@ -234,7 +234,7 @@ namespace ChasmaWebApi.Core.Services.Git
             catch (Exception e)
             {
                 Logger.LogWarning("Failed to push changes automatically, trying manual push.");
-                if (!ShellUtility.TryExecuteShellCommand("git push", filePath, out string pushError))
+                if (!ShellUtility.TryExecuteShellCommand("git push --no-verify", filePath, out string pushError))
                 {
                     errorMessage = $"Failed to push changes to remote for branch {branch.FriendlyName}: {pushError}";
                     Logger.LogError(e, pushError);
