@@ -10,4 +10,5 @@
 	<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
 	<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 	<bitbucketApiToken>token</bitbucketApiToken>
+	<jwtSecretKey>secretKey</jwtSecretKey>
 </configurations>

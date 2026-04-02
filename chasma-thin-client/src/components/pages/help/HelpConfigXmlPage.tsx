@@ -26,6 +26,7 @@ const HelpConfigXmlPage: React.FC = () => (
 \t<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
 \t<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 \t<bitbucketApiToken>token</bitbucketApiToken>
+\t<jwtSecretKey>secretKey</jwtSecretKey>
 </configurations>`}
                     </pre>
         <h3 className="help-subtitle">Attributes</h3>
