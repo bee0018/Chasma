@@ -22,7 +22,7 @@ string configFilePath = Path.Combine(AppContext.BaseDirectory, "config.xml");
 ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
 builder.Host.UseWindowsService();
-builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(5000));
+builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort, listen => listen.UseHttps()));
 
 builder.Logging
     .ClearProviders()

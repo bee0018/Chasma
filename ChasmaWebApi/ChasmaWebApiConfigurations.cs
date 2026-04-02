@@ -76,6 +76,12 @@ namespace ChasmaWebApi
         public string JwtSecretKey { get; set; }
 
         /// <summary>
+        /// Gets or sets where the port to listens on all IPs using IPv6 [::], or IPv4 0.0.0.0 if IPv6 is not supported.
+        /// </summary>
+        [XmlElement("bindingPort")]
+        public int BindingPort { get; set; }
+
+        /// <summary>
         /// Gets the connection string in the format that is expected of SQLite3 database connections.
         /// </summary>
         /// <returns>The formatted database connection string.</returns>
