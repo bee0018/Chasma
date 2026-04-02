@@ -93,6 +93,11 @@ const RegisterPage: React.FC = () => {
 
     return (
         <div className="login-page">
+            <button
+                className="help-button"
+                onClick={() => window.open("help", "_blank")}>
+                    Help
+            </button>
             <div className="login-card">
                 <div className="login-logo">
                     <ChasmaLogo/>

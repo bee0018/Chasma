@@ -99,15 +99,15 @@ builder.Services
     .AddHostedService<CacheInitializerService>();
 
 WebApplication app = builder.Build();
-app.UseCors(thinClientCorPolicy)
+app.UseHsts()
+    .UseHttpsRedirection()
+    .UseStaticFiles()
+    .UseDefaultFiles()
     .UseRouting()
+    .UseCors(thinClientCorPolicy)
     .UseAuthentication()
     .UseAuthorization()
     .UseOpenApi()
-    .UseStaticFiles()
-    .UseDefaultFiles()
-    .UseHsts()
-    .UseHttpsRedirection()
     .UseSwaggerUi();
 if (app.Environment.IsDevelopment())
 {

@@ -71,6 +71,11 @@ const LoginPage: React.FC = () => {
 
     return (
         <div className="login-page">
+            <button
+                className="help-button"
+                onClick={() => window.open("help", "_blank")}>
+                    Help
+            </button>
             <div className="login-card">
                 <div className="login-logo">
                     <ChasmaLogo />
@@ -93,8 +98,11 @@ const LoginPage: React.FC = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
-                    <button type="submit" className="submit-button">
-                        Login
+                    <button
+                        type="submit"
+                        className="submit-button"
+                        disabled={disabledSendButton}>
+                            Login
                     </button>
                 </form>
                 <p className="login-footer">
