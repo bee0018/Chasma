@@ -27,6 +27,7 @@ const HelpConfigXmlPage: React.FC = () => (
 \t<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 \t<bitbucketApiToken>token</bitbucketApiToken>
 \t<jwtSecretKey>secretKey</jwtSecretKey>
+\t<bindingPort>6000</bindingPort>
 </configurations>`}
                     </pre>
         <h3 className="help-subtitle">Attributes</h3>
@@ -138,6 +139,16 @@ const HelpConfigXmlPage: React.FC = () => (
             </div>
             <p>Cryptographic string or key pair used to sign and verify JSON Web Tokens, ensuring the token's authenticity and integrity.</p>
             <p className="xml-meta">Default: none</p>
+        </div>
+
+        <div className="xml-attr">
+            <div className="xml-attr-header">
+                <span className="xml-name">bindingPort</span>
+                <span className="xml-type">integer</span>
+                <span className="xml-required">required</span>
+            </div>
+            <p>Defines the port where the backend API will listen to requests on.</p>
+            <p className="xml-meta">Default: 6000</p>
         </div>
     </section>
 );
