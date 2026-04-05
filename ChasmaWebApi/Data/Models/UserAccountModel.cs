@@ -46,5 +46,18 @@ namespace ChasmaWebApi.Data.Models
         /// </summary>
         [Column("salt")]
         public required byte[] Salt { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's refresh token.
+        /// Note: This is the token used for extending user access.
+        /// </summary>
+        [Column("refreshToken")]
+        public string RefreshToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets the expiration date of the refresh token.
+        /// </summary>
+        [Column("refreshTokenExpiration")]
+        public DateTime RefreshTokenExpiration { get; set; }
     }
 }

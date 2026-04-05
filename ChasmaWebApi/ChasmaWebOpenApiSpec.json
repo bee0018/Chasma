@@ -1359,6 +1359,38 @@
           }
         }
       }
+    },
+    "/api/User/refresh": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_Refresh",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3587,6 +3619,9 @@
               },
               "token": {
                 "type": "string"
+              },
+              "refreshToken": {
+                "type": "string"
               }
             }
           }
@@ -3659,6 +3694,9 @@
               },
               "token": {
                 "type": "string"
+              },
+              "refreshToken": {
+                "type": "string"
               }
             }
           }
@@ -3681,6 +3719,41 @@
             "type": "string"
           }
         }
+      },
+      "RefreshResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "refreshToken": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "RefreshRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "refreshToken": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       }
     }
   }

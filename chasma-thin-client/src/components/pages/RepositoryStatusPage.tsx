@@ -118,9 +118,6 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets a value indicating whether the staging action request is ready to be sent. */
     const [disableStageActionSending, setDisableStageActionSending] = useState(false);
 
-    /** Gets or sets a value indicating whether the git diff request is ready to be sent. */
-    const [disableDiffRequestSending, setDisableDiffRequestSending] = useState(false);
-
     /** Gets or sets a value indicating whether the bulk staging request is ready to be sent. */
     const [disableBulkStagingRequestSending, setDisableBulkStagingRequestSending] = useState(false);
 
@@ -374,9 +371,8 @@ const RepositoryStatusPage: React.FC = () => {
      * @param isStaged Flag indicating whether the file is in the staging area.
      */
     async function handleGetGitDiffRequest(file: RepositoryStatusElement | null, isStaged: boolean | undefined) {
-        if (!repoId || file === null || disableDiffRequestSending) return;
+        if (!repoId || file === null) return;
 
-        setDisableDiffRequestSending(true);
         const request = new GitDiffRequest();
         request.repositoryId = repoId;
         request.filePath = file.filePath;
@@ -386,14 +382,11 @@ const RepositoryStatusPage: React.FC = () => {
             if (response.isErrorResponse) {
                 console.error(response.errorMessage);
                 setRawDiff("");
-                setDisableDiffRequestSending(false);
                 return;
             }
 
-            setDisableDiffRequestSending(false);
             setRawDiff(response.diffContent!);
         } catch (e) {
-            setDisableDiffRequestSending(false);
             const errorNotification = handleApiError(e, navigate, "Failed to get diff!", "An internal server error has occurred. Open terminal and run 'git diff' on the selected file.");
             setNotification(errorNotification);
         }

@@ -83,6 +83,7 @@ const RegisterPage: React.FC = () => {
             setDisableSendButton(false);
             useCacheStore.getState().setUser(response.user);
             useCacheStore.getState().setToken(response.token);
+            useCacheStore.getState().setToken(response.refreshToken);
             navigate('/home');
         } catch (error) {
             setDisableSendButton(false);

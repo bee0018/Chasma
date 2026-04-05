@@ -17,8 +17,13 @@ interface CacheState {
     /** The user's repositories. **/
     repositories: LocalGitRepository[];
 
+    /** The user access token. */
     token: string | undefined;
 
+    /** The user's refresh token. */
+    refreshToken: string | undefined;
+
+    /** The notification to display on the application. */
     notification: Notification | null;
 
     /** Sets the logged-in user. **/
@@ -30,7 +35,13 @@ interface CacheState {
     /** Sets the authenticated token. */
     setToken: (token: string | undefined) => void;
 
+    /** Sets the refresh token. */
+    setRefreshToken: (refreshToken: string | undefined) => void;
+
+    /** Sets the notification of the app. */
     setNotification: (notification: Notification | null) => void;
+
+    /** Dismisses the notificaiton from the app. */
     clearNotification: () => void;
 
     /** Deletes the repository with the specified repository identifier. **/
@@ -52,10 +63,12 @@ export const useCacheStore = create<CacheState>()(
             user: null,
             repositories: [],
             token: undefined,
+            refreshToken: undefined,
             notification: null,
             setUser: (user) => set({ user }),
             setRepositories: (repositories) => set({ repositories }),
             setToken: (token) => set({ token }),
+            setRefreshToken: (refreshToken) => set({ refreshToken }),
             setNotification: (notification) => set({ notification }),
             clearNotification: () => set({ notification: null }),
             deleteRepository: (repoId: string | undefined) => set((state) => ({
@@ -65,7 +78,7 @@ export const useCacheStore = create<CacheState>()(
                 set((state) => ({
                     repositories: [...state.repositories, repo],
                 })),
-            clearCache: () => set({ user: null, repositories: [], token: undefined, notification: null }),
+            clearCache: () => set({ user: null, repositories: [], token: undefined, refreshToken: undefined, notification: null }),
         }),
         {
             name: "cache-store",

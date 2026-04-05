@@ -106,7 +106,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 UserName = string.Empty,
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(UnauthorizedObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
             Assert.AreEqual("Username is empty. Cannot login user.", loginResponse.ErrorMessage);
         }
@@ -167,7 +167,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Password = "password1"
             };
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
-            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
+            LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(UnauthorizedObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
             Assert.AreEqual("Invalid username or password.", loginResponse.ErrorMessage);
             TestDbContextFactory.DestroyDatabase(dbContext);

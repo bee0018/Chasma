@@ -38,6 +38,8 @@ namespace ChasmaWebApi.Tests.Factories
                 Password = password,
                 Email = email,
                 Salt = [],
+                RefreshToken = Guid.NewGuid().ToString(),
+                RefreshTokenExpiration = DateTime.UtcNow.AddDays(7)
             };
             context.UserAccounts.Add(testUser);
 
