@@ -11,6 +11,7 @@ import MultiDryRunSimulationTab from "./dashboardTabs/MultiDryRunSimulationTab";
 import GlobalRepositoryTab from './dashboardTabs/GlobalRepositoryTab';
 import { useNavigate } from 'react-router-dom';
 import { handleApiError } from '../managers/TransactionHandlerManager';
+import LogoutModal from './modals/LogoutModal';
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -31,6 +32,9 @@ const Dashboard: React.FC = () => {
 
     /** Gets or sets a value indicating whether the request is ready to be sent. */
     const [disableSendButton, setDisableSendButton] = useState(false);
+
+    /** Gets or sets a value indicating whether the user is logging out. **/
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
    /** Sets the notification modal. */
     const setNotification = useCacheStore(state => state.setNotification);
@@ -105,6 +109,17 @@ const Dashboard: React.FC = () => {
         }
     };
 
+    /** Logs the user out of the system. */
+    function logoutUser() {
+        useCacheStore.getState().clearCache();
+        window.location.href = "/";
+         setNotification({
+            title: "User logged out successfully.",
+            message: "",
+            isError: false,
+        });
+    }
+
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
@@ -155,10 +170,15 @@ const Dashboard: React.FC = () => {
                     🔌 API Status
                 </div>
                 <div
-                    className="sidebar-help"
+                    className="tab"
                     onClick={() => window.open("\help", "_blank")}>
                     <span className="profile-icon">💡</span>
                     <span className="username">Help</span>
+                </div>
+                <div
+                    className="sidebar-help"
+                    onClick={() => setIsLoggingOut(true)}>
+                    <span className="username">⏻ Logout</span>
                 </div>
             </aside>
 
@@ -199,6 +219,11 @@ const Dashboard: React.FC = () => {
                 <AddRepositoryModal
                     onClose={() => setIsAddingRepo(false)}
                     onRepositorySelected={handleAddLocalRepository} />
+            )}
+            {isLoggingOut && (
+                <LogoutModal
+                    onClose={() => setIsLoggingOut(false)}
+                    onSuccess={logoutUser} />
             )}
         </div>
     );

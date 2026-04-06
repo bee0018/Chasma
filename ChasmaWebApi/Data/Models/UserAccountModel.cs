@@ -52,7 +52,7 @@ namespace ChasmaWebApi.Data.Models
         /// Note: This is the token used for extending user access.
         /// </summary>
         [Column("refreshToken")]
-        public string RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
 
         /// <summary>
         /// Gets or sets the expiration date of the refresh token.
