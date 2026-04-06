@@ -16,5 +16,10 @@ namespace ChasmaWebApi.Data.Responses.Configuration
         /// Gets or sets the user's authentication token.
         /// </summary>
         public string Token { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's refresh token.
+        /// </summary>
+        public string RefreshToken { get; set; }
     }
 }

@@ -57,8 +57,18 @@ const LoginPage: React.FC = () => {
                 return;
             }
 
+            if (!response.refreshToken) {
+                setNotification({
+                    title: "Login error",
+                    message: "No refresh token received.",
+                    isError: true,
+                });
+                return;
+            }
+
             useCacheStore.getState().setUser(response.user);
             useCacheStore.getState().setToken(response.token);
+            useCacheStore.getState().setRefreshToken(response.refreshToken);
             setDisableSendButton(false);
             navigate('/home');
             setNotification(null);
