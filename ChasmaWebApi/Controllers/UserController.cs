@@ -293,6 +293,41 @@ namespace ChasmaWebApi.Controllers
         }
 
         /// <summary>
+        /// Logs out the specified user by invalidating their refresh token.
+        /// </summary>
+        /// <param name="request">The logout request containing the user identifier. Cannot be null.</param>
+        /// <returns>Response that indicates whether the logout was successful.</returns>
+        [HttpPost]
+        [Route("logout")]
+        public async Task<ActionResult<LogoutResponse>> Logout([FromBody] LogoutRequest request)
+        {
+            LogoutResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Null logout request recieved. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid logout request received.";
+                return Unauthorized(response);
+            }
+
+            int userId = request.UserId;
+            UserAccountModel? user = applicationDbContext.UserAccounts.FirstOrDefault(i => i.Id == userId);
+            if (user == null)
+            {
+                logger.LogError("Failed to logout user. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid logout request received.";
+                return Unauthorized(response);
+            }
+
+            user.RefreshToken = null;
+            user.RefreshTokenExpiration = DateTime.UtcNow;
+            await applicationDbContext.SaveChangesAsync();
+            logger.LogInformation("User {username} logged out successfully. Tokens invalidated.", user.UserName);
+            return Ok(response);
+        }
+
+        /// <summary>
         /// Generates the access token for the user.
         /// </summary>
         /// <param name="account">The user to provide the access token for.</param>
