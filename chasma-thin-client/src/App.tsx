@@ -74,40 +74,47 @@ function App() {
      */
     const REFRESH_BEFORE_EXPIRY = 2 * 60 * 1000;
     useEffect(() => {
-    const interval = setInterval(async () => {
-        const token = useCacheStore.getState().token;
-        if (!token)  {
-            return;
-        }
-
-        const now = Date.now();
-        const tokenExpiration = getTokenExpiration(token);
-        const isUserActive = (now - lastActivity.current) < ACTIVITY_THRESHOLD;
-        const isExpiringSoon = (tokenExpiration - now) < REFRESH_BEFORE_EXPIRY;
-        if (isUserActive && isExpiringSoon) {
-            try {
-                const request = new RefreshRequest();
-                request.refreshToken = useCacheStore.getState().refreshToken;
-                if (!request.refreshToken) {
-                    logoutUser();
-                    return;
-                }
-
-                const response = await userClient.refresh(request);
-                if (response.isErrorResponse) {
-                    logoutUser();
-                    return;
-                }
-
-                useCacheStore.getState().setToken(response.token);
-                useCacheStore.getState().setRefreshToken(response.refreshToken);
-            } catch {
-                logoutUser();
+    const timeout = setTimeout(() => {
+        const interval = setInterval(async () => {
+            const token = useCacheStore.getState().token;
+            if (!token || !useCacheStore.getState().refreshToken) {
+                return;
             }
-        }
-    }, 30000); // every 30 seconds
 
-    return () => clearInterval(interval);
+            const now = Date.now();
+            const tokenExpiration = getTokenExpiration(token);
+            const isUserActive = (now - lastActivity.current) < ACTIVITY_THRESHOLD;
+            const isExpiringSoon = (tokenExpiration - now) < REFRESH_BEFORE_EXPIRY;
+
+            if (isUserActive && isExpiringSoon) {
+                try {
+                    const request = new RefreshRequest();
+                    request.refreshToken = useCacheStore.getState().refreshToken;
+
+                    if (!request.refreshToken) {
+                        logoutUser();
+                        return;
+                    }
+
+                    const response = await userClient.refresh(request);
+
+                    if (response.isErrorResponse) {
+                        logoutUser();
+                        return;
+                    }
+
+                    useCacheStore.getState().setToken(response.token);
+                    useCacheStore.getState().setRefreshToken(response.refreshToken);
+                } catch {
+                    logoutUser();
+                }
+            }
+        }, 30000); // every 30 seconds
+
+        return () => clearInterval(interval);
+    }, 5000); // wait 5 seconds after mount/login
+
+    return () => clearTimeout(timeout);
 }, []);
 
     useEffect(() => {

@@ -78,12 +78,12 @@ const RegisterPage: React.FC = () => {
             setNotification({
                 title: `Successfully added to the system!`,
                 message: `Welcome to Chasma Git Manager, ${response.user.userName}.`,
-                isError: response.isErrorResponse,
+                isError: false,
             });
             setDisableSendButton(false);
             useCacheStore.getState().setUser(response.user);
             useCacheStore.getState().setToken(response.token);
-            useCacheStore.getState().setToken(response.refreshToken);
+            useCacheStore.getState().setRefreshToken(response.refreshToken);
             navigate('/home');
         } catch (error) {
             setDisableSendButton(false);
