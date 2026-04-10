@@ -16,13 +16,14 @@ using ChasmaWebApi.HostedServices;
 using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
 using System.Text;
 
 string configFilePath = Path.Combine(AppContext.BaseDirectory, "config.xml");
 ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
-builder.Host.UseWindowsService();
-builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort, listen => listen.UseHttps()));
+builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort));
+builder.WebHost.UseWebRoot("wwwroot");
 
 builder.Logging
     .ClearProviders()
@@ -50,16 +51,7 @@ builder.Services.AddControllers()
         }
     });
 
-const string thinClientCorPolicy = "AllowThinClientOriginAndHeaders";
-builder.Services.AddCors(options =>
-    {
-        options.AddPolicy(thinClientCorPolicy, policy =>
-        {
-            policy.WithOrigins(webApiConfigurations.ThinClientUrl)
-                .AllowAnyMethod()
-                .AllowAnyHeader();
-        });
-    })
+builder.Services
     .AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
@@ -99,20 +91,34 @@ builder.Services
     .AddHostedService<CacheInitializerService>();
 
 WebApplication app = builder.Build();
-app.UseHsts()
-    .UseHttpsRedirection()
+app.UseDefaultFiles()
     .UseStaticFiles()
-    .UseDefaultFiles()
     .UseRouting()
-    .UseCors(thinClientCorPolicy)
     .UseAuthentication()
     .UseAuthorization()
-    .UseOpenApi()
-    .UseSwaggerUi();
+    .UseOpenApi();
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
+    app.UseDeveloperExceptionPage()
+    .UseSwaggerUi();
 }
 
 app.MapControllers();
+app.MapFallbackToFile("index.html");
+
+// Open the default browser after a short delay to ensure the server is up and running.
+await Task.Run(() =>
+{
+    try
+    {
+        Thread.Sleep(1000);
+        ProcessStartInfo startInfo = new()
+        {
+            FileName = $"http://localhost:{webApiConfigurations.BindingPort}",
+            UseShellExecute = true
+        };
+        Process.Start(startInfo);
+    }
+    catch { }
+});
 app.Run();
