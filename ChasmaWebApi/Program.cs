@@ -17,10 +17,22 @@ using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
+using System.Net.Sockets;
 using System.Text;
 
 string configFilePath = Path.Combine(AppContext.BaseDirectory, "config.xml");
 ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
+if (IsPortInUse(webApiConfigurations.BindingPort))
+{
+    ProcessStartInfo startInfo = new()
+    {
+        FileName = $"http://localhost:{webApiConfigurations.BindingPort}",
+        UseShellExecute = true
+    };
+    Process.Start(startInfo);
+    return;
+}
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
 builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort));
 builder.WebHost.UseWebRoot("wwwroot");
@@ -102,6 +114,12 @@ builder.Services
     .AddHostedService<CacheInitializerService>();
 
 WebApplication app = builder.Build();
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    ApplicationDbContext databaseContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await databaseContext.Database.MigrateAsync();
+}
+
 app.UseDefaultFiles()
     .UseStaticFiles()
     .UseRouting()
@@ -134,3 +152,22 @@ await Task.Run(() =>
     catch { }
 });
 app.Run();
+
+/// <summary>
+/// Determines if the port is already in use.
+/// </summary>
+/// <param name="port">The port to run on.</param>
+static bool IsPortInUse(int port)
+{
+    try
+    {
+        TcpListener listener = new(System.Net.IPAddress.Loopback, port);
+        listener.Start();
+        listener.Stop();
+        return false;
+    }
+    catch (SocketException)
+    {
+        return true;
+    }
+}

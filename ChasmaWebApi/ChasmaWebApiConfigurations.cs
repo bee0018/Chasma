@@ -87,7 +87,13 @@ namespace ChasmaWebApi
         /// <returns>The formatted database connection string.</returns>
         public string GetDatabaseConnectionString()
         {
-            return $"Data Source=Chasma.db";
+            string folder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                "Chasma"
+            );
+            Directory.CreateDirectory(folder);
+            string dbPath = Path.Combine(folder, "Chasma.db");
+            return $"Data Source={dbPath}";
         }
     }
 }

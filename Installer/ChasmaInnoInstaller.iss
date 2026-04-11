@@ -39,7 +39,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=C:\Users\bryce\Desktop
 OutputBaseFilename=chasma-setup
-SetupIconFile=C:\Users\bryce\Documents\ChasmaApp\wwwroot\favicon.ico
+SetupIconFile=publish\wwwroot\favicon.ico
 SolidCompression=yes
 WizardStyle=modern dynamic
 
@@ -52,6 +52,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
 
+[Dirs]
+Name: "{commonappdata}\Chasma"; Permissions: users-full
+
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
@@ -63,3 +66,6 @@ Filename: "sc.exe"; Parameters: "start ChasmaWebApi"; Flags: runhidden
 [UninstallRun]
 Filename: "sc.exe"; Parameters: "stop ChasmaWebApi"; Flags: runhidden
 Filename: "sc.exe"; Parameters: "delete ChasmaWebApi"; Flags: runhidden
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{commonappdata}\Chasma"
