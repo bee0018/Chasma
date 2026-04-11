@@ -69,7 +69,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(devCorsPolicy, policy =>
     {
         policy
-            .WithOrigins("http://localhost:3000")
+            .WithOrigins(webApiConfigurations.ThinClientUrl)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -122,9 +122,13 @@ using (IServiceScope scope = app.Services.CreateScope())
 
 app.UseDefaultFiles()
     .UseStaticFiles()
-    .UseRouting()
-    .UseCors(devCorsPolicy)
-    .UseAuthentication()
+    .UseRouting();
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors(devCorsPolicy);
+}
+
+app.UseAuthentication()
     .UseAuthorization()
     .UseOpenApi();
 if (app.Environment.IsDevelopment())
