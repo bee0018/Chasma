@@ -56,32 +56,24 @@
 		<RemoveDir Directories="$(OutputPath)wwwroot" />
 	</Target>
 
-	<Target Name="BuildClientApp" AfterTargets="Build">
-
+	<Target Name="BuildClientApp" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
 		<Message Text="Building React frontend..." Importance="high" />
-
 		<Exec WorkingDirectory="..\chasma-thin-client\" Command="npm run build" />
-
 		<ItemGroup>
 			<SpaFiles Include="$(SpaSource)**\*" />
 		</ItemGroup>
-
 		<Copy
 		  SourceFiles="@(SpaFiles)"
 		  DestinationFolder="$(OutputPath)wwwroot\%(RecursiveDir)" />
-
 	</Target>
 
 	<Target Name="CopyClientOnPublish" AfterTargets="Publish">
-
 		<ItemGroup>
 			<SpaFiles Include="$(SpaSource)**\*" />
 		</ItemGroup>
-
 		<Copy
 		  SourceFiles="@(SpaFiles)"
 		  DestinationFolder="$(PublishDir)wwwroot\%(RecursiveDir)" />
-
 	</Target>
 
 	<Target Name="VerifySpaBuildExists" BeforeTargets="BuildClientApp">

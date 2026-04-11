@@ -51,6 +51,17 @@ builder.Services.AddControllers()
         }
     });
 
+string devCorsPolicy = "DevCors";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(devCorsPolicy, policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services
     .AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
@@ -94,6 +105,7 @@ WebApplication app = builder.Build();
 app.UseDefaultFiles()
     .UseStaticFiles()
     .UseRouting()
+    .UseCors(devCorsPolicy)
     .UseAuthentication()
     .UseAuthorization()
     .UseOpenApi();

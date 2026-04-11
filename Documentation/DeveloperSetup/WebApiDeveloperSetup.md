@@ -80,3 +80,17 @@ namespace ChasmaWebApi.Data.Models
 
 5. In the Package Manager Console, input the following to update/add the tables: `Update-Database`
 6. Run the API by pressing `F5` in Visual Studio. It is preferred to run with IIS Express. This will allow for the frontend to talk to the backend.
+
+### Running the code locally
+
+1. `cd` into `ChasmaWebApi` and run the following:
+```
+dotnet run
+```
+2. You can safely ignore the page that it starts up to. This is because the web API serves the frontend. In a developer environment, you would run the services
+separately.
+3. Open another terminal and `cd` into `chasma-thin-client`. Run the following command:
+```
+npm run start
+```
+4. The backend has been configured to accept requests from the localhost:3000
