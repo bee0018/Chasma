@@ -16,13 +16,26 @@ using ChasmaWebApi.HostedServices;
 using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
+using System.Net.Sockets;
 using System.Text;
 
 string configFilePath = Path.Combine(AppContext.BaseDirectory, "config.xml");
 ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
+if (IsPortInUse(webApiConfigurations.BindingPort))
+{
+    ProcessStartInfo startInfo = new()
+    {
+        FileName = $"http://localhost:{webApiConfigurations.BindingPort}",
+        UseShellExecute = true
+    };
+    Process.Start(startInfo);
+    return;
+}
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder();
-builder.Host.UseWindowsService();
-builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort, listen => listen.UseHttps()));
+builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort));
+builder.WebHost.UseWebRoot("wwwroot");
 
 builder.Logging
     .ClearProviders()
@@ -50,16 +63,18 @@ builder.Services.AddControllers()
         }
     });
 
-const string thinClientCorPolicy = "AllowThinClientOriginAndHeaders";
+string devCorsPolicy = "DevCors";
 builder.Services.AddCors(options =>
+{
+    options.AddPolicy(devCorsPolicy, policy =>
     {
-        options.AddPolicy(thinClientCorPolicy, policy =>
-        {
-            policy.WithOrigins(webApiConfigurations.ThinClientUrl)
-                .AllowAnyMethod()
-                .AllowAnyHeader();
-        });
-    })
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+builder.Services
     .AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
@@ -99,20 +114,60 @@ builder.Services
     .AddHostedService<CacheInitializerService>();
 
 WebApplication app = builder.Build();
-app.UseHsts()
-    .UseHttpsRedirection()
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    ApplicationDbContext databaseContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await databaseContext.Database.MigrateAsync();
+}
+
+app.UseDefaultFiles()
     .UseStaticFiles()
-    .UseDefaultFiles()
     .UseRouting()
-    .UseCors(thinClientCorPolicy)
+    .UseCors(devCorsPolicy)
     .UseAuthentication()
     .UseAuthorization()
-    .UseOpenApi()
-    .UseSwaggerUi();
+    .UseOpenApi();
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
+    app.UseDeveloperExceptionPage()
+    .UseSwaggerUi();
 }
 
 app.MapControllers();
+app.MapFallbackToFile("index.html");
+
+// Open the default browser after a short delay to ensure the server is up and running.
+await Task.Run(() =>
+{
+    try
+    {
+        Thread.Sleep(1000);
+        ProcessStartInfo startInfo = new()
+        {
+            FileName = $"http://localhost:{webApiConfigurations.BindingPort}",
+            UseShellExecute = true
+        };
+        Process.Start(startInfo);
+    }
+    catch { }
+});
 app.Run();
+
+/// <summary>
+/// Determines if the port is already in use.
+/// </summary>
+/// <param name="port">The port to run on.</param>
+static bool IsPortInUse(int port)
+{
+    try
+    {
+        TcpListener listener = new(System.Net.IPAddress.Loopback, port);
+        listener.Start();
+        listener.Stop();
+        return false;
+    }
+    catch (SocketException)
+    {
+        return true;
+    }
+}

@@ -63,10 +63,9 @@ namespace ChasmaWebApi.HostedServices
         private PeriodicTimer MergeRequestPollTimer {  set; get; }
 
         // <inheritdoc/>
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _ = Task.Run(() => InitializeInternalCacheAsync(cancellationToken), cancellationToken);
-            return Task.CompletedTask;
+            await InitializeInternalCacheAsync(cancellationToken);
         }
 
         // <inheritdoc/>
@@ -93,7 +92,6 @@ namespace ChasmaWebApi.HostedServices
             logger.LogInformation("Initializing the cache with the database information.");
             using IServiceScope scope = serviceScopeFactory.CreateScope();
             ApplicationDbContext applicationDbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            await applicationDbContext.Database.MigrateAsync(cancellationToken);
             List<RepositoryModel> repositories = await applicationDbContext.Repositories.ToListAsync(cancellationToken);
             foreach (RepositoryModel repoModel in repositories)
             {
@@ -139,7 +137,10 @@ namespace ChasmaWebApi.HostedServices
             }
 
             logger.LogInformation("Finished updating the cache with the database data.");
-            _ = Task.Run(() => InitializeNetworkCacheAsync(cancellationToken), cancellationToken);
+            _ = Task.Run(async () =>
+            {
+                await InitializeNetworkCacheAsync(cancellationToken);
+            }, cancellationToken);
         }
 
         /// <summary>

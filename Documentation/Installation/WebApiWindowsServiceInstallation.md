@@ -2,7 +2,7 @@
 1. `cd` into the Chasma root.
 2. Enter the following command:
 ```
-dotnet publish "<your_path>\ChasmaWebApi.csproj" -c Release -r "win-x64" --self-contained true /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true -o "<your_path>\Chasma\Installer\Artifacts"
+dotnet publish -c Release -r win-x64 --self-contained true -o "<your_path>\Chasma\Installer\publish"
 ```
 3. Zip the `Installer` folder.
 4. Go to the `Chasma` [releases page.](https://github.com/bee0018/Chasma/releases)

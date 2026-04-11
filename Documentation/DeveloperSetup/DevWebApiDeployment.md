@@ -1,12 +1,17 @@
-# Developer Deployment Instructions
+# Run Chasma Application from Dev Environment
 
-1. Open an elevated (Administrator) Powershell
-2. 'cd' into the root of the `Chasma` repository
-3. 'cd' into `Deployment'
-4. Run the `'installWebApiWindowsService.ps1` script:
+1. Open your `launchSettings.json` in Visual Studio.
+2. Locate your HTTP run configuration and configure it to the port where you want to run it.
+3. Go to `config.xml` and update the element `<bindingPort>` to be the same port.
+4. `cd` into `chasma-thin-client` and run  `npm run build`.
+5. Copy the build contents into `Chasma\ChasmaWebApi\wwwroot`
+6. Run the application. The backend will start AND serve the frontend application as well.
+
+
+# Production Deployment
+
+1. Publish a self contained project from the `ChasmaWebApi` using the command:
 ```
-.\installWebApiWindowsService.ps1 -projectPath "<your computer path>\ChasmaWebApi.csproj" -publishDir "C:\Services\Chasma"
+dotnet publish -c Release -r win-x64 --self-contained true -o "path_of_your_choosing"
 ```
-5. Click `Yes` to clean the developer certificate.
-6. Click `Yes` to install new developer certificate.
-7. Input `Y` and then you will brought to the Swagger web page.
+2. Run the executable: `ChasmaWebApi.exe`

@@ -9,6 +9,10 @@
     <DockerfileContext>.</DockerfileContext>
   </PropertyGroup>
 
+	<PropertyGroup>
+		<SpaSource>..\chasma-thin-client\build\</SpaSource>
+	</PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.25" />
@@ -48,9 +52,33 @@
     </None>
   </ItemGroup>
 
-	<Target Name="GenerateOpenApiClients" AfterTargets="Build">
-		<Message Text="Running NSwag to generate clients..." Importance="high" />
-		<Exec Command="$(NSwagExe_Net80) run nswag.json" />
+	<Target Name="CleanSpaOutput" BeforeTargets="BuildClientApp">
+		<RemoveDir Directories="$(OutputPath)wwwroot" />
 	</Target>
 
+	<Target Name="BuildClientApp" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+		<Message Text="Building React frontend..." Importance="high" />
+		<Exec WorkingDirectory="..\chasma-thin-client\" Command="npm run build" />
+		<ItemGroup>
+			<SpaFiles Include="$(SpaSource)**\*" />
+		</ItemGroup>
+		<Copy
+		  SourceFiles="@(SpaFiles)"
+		  DestinationFolder="$(OutputPath)wwwroot\%(RecursiveDir)" />
+	</Target>
+
+	<Target Name="CopyClientOnPublish" AfterTargets="Publish">
+		<ItemGroup>
+			<SpaFiles Include="$(SpaSource)**\*" />
+		</ItemGroup>
+		<Copy
+		  SourceFiles="@(SpaFiles)"
+		  DestinationFolder="$(PublishDir)wwwroot\%(RecursiveDir)" />
+	</Target>
+
+	<Target Name="VerifySpaBuildExists" BeforeTargets="BuildClientApp">
+		<Error Condition="!Exists('$(SpaSource)index.html')"
+			   Text="React build is missing. Run 'npm run build' in chasma-thin-client first." />
+	</Target>
+	
 </Project>
