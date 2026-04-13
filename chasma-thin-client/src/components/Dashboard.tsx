@@ -176,6 +176,11 @@ const Dashboard: React.FC = () => {
                     <span className="username">Help</span>
                 </div>
                 <div
+                    className="tab"
+                    onClick={() => window.open("setup", "_blank")}>
+                    ⚙️ Configure
+                </div>
+                <div
                     className="sidebar-help"
                     onClick={() => setIsLoggingOut(true)}>
                     <span className="username">⏻ Logout</span>

@@ -1,4 +1,5 @@
 ﻿import {
+    ApplicationConfigurationClient,
     BranchClient,
     DryRunClient,
     HealthClient,
@@ -49,3 +50,6 @@ export const stashClient = new StashClient(apiBaseUrl, { fetch: fetchWithAuth })
 
 /** The branch management client for the web API. **/
 export const branchClient = new BranchClient(apiBaseUrl, { fetch: fetchWithAuth });
+
+/** The application configuration client for the web API. */
+export const appConfigClient = new ApplicationConfigurationClient(apiBaseUrl, { fetch: fetchWithAuth });

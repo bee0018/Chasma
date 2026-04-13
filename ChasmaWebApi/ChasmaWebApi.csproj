@@ -52,6 +52,15 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+	<Target Name="GenerateOpenApiClients" AfterTargets="Build">
+		<Message Text="Running NSwag to generate clients..." Importance="high" />
+		<Exec Command="$(NSwagExe_Net80) run nswag.json" ConsoleToMSBuild="true" />
+	</Target>
+
 	<Target Name="CleanSpaOutput" BeforeTargets="BuildClientApp">
 		<RemoveDir Directories="$(OutputPath)wwwroot" />
 	</Target>
@@ -62,23 +71,14 @@
 		<ItemGroup>
 			<SpaFiles Include="$(SpaSource)**\*" />
 		</ItemGroup>
-		<Copy
-		  SourceFiles="@(SpaFiles)"
-		  DestinationFolder="$(OutputPath)wwwroot\%(RecursiveDir)" />
+		<Copy SourceFiles="@(SpaFiles)" DestinationFolder="$(OutputPath)wwwroot\%(RecursiveDir)" />
 	</Target>
 
 	<Target Name="CopyClientOnPublish" AfterTargets="Publish">
 		<ItemGroup>
 			<SpaFiles Include="$(SpaSource)**\*" />
 		</ItemGroup>
-		<Copy
-		  SourceFiles="@(SpaFiles)"
-		  DestinationFolder="$(PublishDir)wwwroot\%(RecursiveDir)" />
+		<Copy SourceFiles="@(SpaFiles)" DestinationFolder="$(PublishDir)wwwroot\%(RecursiveDir)" />
 	</Target>
 
-	<Target Name="VerifySpaBuildExists" BeforeTargets="BuildClientApp">
-		<Error Condition="!Exists('$(SpaSource)index.html')"
-			   Text="React build is missing. Run 'npm run build' in chasma-thin-client first." />
-	</Target>
-	
 </Project>

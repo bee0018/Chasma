@@ -86,6 +86,14 @@ namespace ChasmaWebApi.Controllers
                 return Unauthorized(response);
             }
 
+            if (string.IsNullOrEmpty(apiConfiguration.JwtSecretKey) || apiConfiguration.JwtSecretKey.Length < 16)
+            {
+                logger.LogWarning("Login attempt blocked - system not configured.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "System is not configured. Please complete setup first.";
+                return Ok(response);
+            }
+
             if (string.IsNullOrEmpty(request.UserName))
             {
                 response.IsErrorResponse = true;
@@ -161,6 +169,14 @@ namespace ChasmaWebApi.Controllers
                 response.ErrorMessage = "Invalid username or password.";
                 logger.LogError("AddUserRequest received is null. Sending error response");
                 return BadRequest(response);
+            }
+
+            if (string.IsNullOrEmpty(apiConfiguration.JwtSecretKey) || apiConfiguration.JwtSecretKey.Length < 16)
+            {
+                logger.LogWarning("Login attempt blocked - system not configured.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "System is not configured. Please complete setup first.";
+                return Ok(response);
             }
 
             if (string.IsNullOrEmpty(request.Name))

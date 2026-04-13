@@ -105,6 +105,14 @@ namespace ChasmaWebApi.Controllers
 
             logger.LogInformation("Attempting to get workflow data for the last {threshold} builds for {repoName}.", webApiConfigurations.WorkflowRunReportThreshold, request.RepositoryName);
             string token = webApiConfigurations.GitHubApiToken;
+            if (string.IsNullOrEmpty(token))
+            {
+                logger.LogError("GitHub API token is not configured. Cannot retrieve workflow run results. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "GitHub API token is not configured. Cannot retrieve workflow run results.";
+                return Ok(response);
+            }
+
             string repoOwner = request.RepositoryOwner;
             string repoName = request.RepositoryName;
             try
@@ -118,7 +126,7 @@ namespace ChasmaWebApi.Controllers
                 }
 
                 response.RepositoryName = repoName;
-                List<WorkflowRunResult> runs = runResults.Take(webApiConfigurations.WorkflowRunReportThreshold).ToList();
+                List<WorkflowRunResult> runs = runResults.Take(webApiConfigurations.WorkflowRunReportThreshold ?? 30).ToList();
                 response.WorkflowRunResults.AddRange(runs);
                 logger.LogInformation("Retrieved latest {count} build runs from {repo}.", runResults.Count, repoName);
                 return Ok(response);

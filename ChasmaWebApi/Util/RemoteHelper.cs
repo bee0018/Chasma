@@ -31,7 +31,7 @@ namespace ChasmaWebApi.Util
         /// <param name="token">The GitLab API access token.</param>
         /// <param name="selfHostedUrl">If provided, the self hosted URL of the GitLab instance.</param>
         /// <returns>The GitLab API client.</returns>
-        public static GitLabClient GetGitLabClient(string token, string selfHostedUrl = null)
+        public static GitLabClient GetGitLabClient(string token, string? selfHostedUrl = null)
         {
             if (!string.IsNullOrEmpty(selfHostedUrl))
             {

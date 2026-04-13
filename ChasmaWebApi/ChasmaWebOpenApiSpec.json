@@ -11,6 +11,58 @@
     }
   ],
   "paths": {
+    "/api/ApplicationConfiguration/systemReady": {
+      "get": {
+        "tags": [
+          "ApplicationConfiguration"
+        ],
+        "operationId": "ApplicationConfiguration_GetSystemReady",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSystemReadyMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ApplicationConfiguration/modifyConfig": {
+      "post": {
+        "tags": [
+          "ApplicationConfiguration"
+        ],
+        "operationId": "ApplicationConfiguration_ModifyConfig",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModifyApiConfigRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModifyApiConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Branch/addBranch": {
       "post": {
         "tags": [
@@ -1427,7 +1479,30 @@
   },
   "components": {
     "schemas": {
-      "AddNewBranchResponse": {
+      "GetSystemReadyMessage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "isReady": {
+                "type": "boolean"
+              },
+              "invalidElements": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ChasmaXmlBase": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ModifyApiConfigResponse": {
         "allOf": [
           {
             "$ref": "#/components/schemas/ResponseBase"
@@ -1462,9 +1537,89 @@
           }
         ]
       },
-      "ChasmaXmlBase": {
-        "type": "object",
-        "additionalProperties": false
+      "ModifyApiConfigRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "apiConfiguration": {
+                "$ref": "#/components/schemas/ChasmaWebApiConfigurations"
+              }
+            }
+          }
+        ]
+      },
+      "ChasmaWebApiConfigurations": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "webApiUrl": {
+                "type": "string"
+              },
+              "thinClientUrl": {
+                "type": "string"
+              },
+              "gitHubApiToken": {
+                "type": "string",
+                "nullable": true
+              },
+              "workflowRunReportThreshold": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "gitHubPullRequestScanIntervalSeconds": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "gitLabApiToken": {
+                "type": "string",
+                "nullable": true
+              },
+              "selfHostedGitLabUrl": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitLabMergeRequestScanIntervalSeconds": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "bitbucketApiToken": {
+                "type": "string",
+                "nullable": true
+              },
+              "jwtSecretKey": {
+                "type": "string"
+              },
+              "bindingPort": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "AddNewBranchResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
       },
       "AddNewBranchRequest": {
         "allOf": [

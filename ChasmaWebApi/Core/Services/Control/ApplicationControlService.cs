@@ -11,7 +11,9 @@ using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Data.Objects.Shell;
+using ChasmaWebApi.Util;
 using LibGit2Sharp;
+using System.Text;
 
 namespace ChasmaWebApi.Core.Services.Control
 {
@@ -106,6 +108,30 @@ namespace ChasmaWebApi.Core.Services.Control
             logger = log;
             apiConfigurations = config;
         }
+
+        #region Infrastructure
+
+        // <inheritdoc />
+        public bool TryUpdateApiConfiguration(ChasmaWebApiConfigurations newConfig, bool isDevelopmentMode, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
+            string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
+            string configFilePath = isDevelopmentMode
+                ? defaultConfigPath
+                : Path.Combine(appDataDirectory, "config.xml");
+            if (!File.Exists(configFilePath))
+            {
+                errorMessage = "Configuration file not found. Unable to update API configuration.";
+                return false;
+            }
+
+            string xmlText = ChasmaXmlBase.GenerateXml(newConfig);
+            File.WriteAllText(configFilePath, xmlText, Encoding.UTF8);
+            return true;
+        }
+
+        #endregion
 
         #region Shell Interactions 
 
@@ -439,7 +465,7 @@ namespace ChasmaWebApi.Core.Services.Control
                 buildsExistForBranch = true;
             }
 
-            WorkflowRunResult mostRecentBuild = orderedBuilds.Take(apiConfigurations.WorkflowRunReportThreshold).FirstOrDefault(i => i.BranchName == branchName);
+            WorkflowRunResult mostRecentBuild = orderedBuilds.Take(apiConfigurations.WorkflowRunReportThreshold ?? 30).FirstOrDefault(i => i.BranchName == branchName);
             if (buildsExistForBranch && mostRecentBuild == null)
             {
                 // A build exists for this branch in the lifetime of this repository, however, it is not recent in the reported number of builds that is being sent out.

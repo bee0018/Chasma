@@ -20,7 +20,21 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 
-string configFilePath = Path.Combine(AppContext.BaseDirectory, "config.xml");
+WebApplicationBuilder builder = WebApplication.CreateBuilder();
+string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
+string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
+bool isDevelopment = builder.Environment.IsDevelopment();
+string configFilePath = isDevelopment
+    ? defaultConfigPath
+    : Path.Combine(appDataDirectory, "config.xml");
+if (!File.Exists(configFilePath) && !isDevelopment)
+{
+    // If the config file doesn't exist, copy the default one to the app data directory.
+    // This ensures that the application has a config file to read from and write to, while also allowing for user modifications in production.
+    Directory.CreateDirectory(appDataDirectory);
+    File.Copy(defaultConfigPath, configFilePath);
+}
+
 ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
 if (IsPortInUse(webApiConfigurations.BindingPort))
 {
@@ -33,7 +47,6 @@ if (IsPortInUse(webApiConfigurations.BindingPort))
     return;
 }
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder();
 builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort));
 builder.WebHost.UseWebRoot("wwwroot");
 
@@ -46,23 +59,7 @@ if (OperatingSystem.IsWindows())
     builder.Logging.AddEventLog();
 }
 
-builder.Services.AddControllers()
-    .ConfigureApplicationPartManager(manager =>
-    {
-        if (webApiConfigurations.ShowDebugControllers) return;
-        
-        // Exclude the debug controllers in a production setting.
-        List<ExcludeControllerFeatureProvider> controllersToExclude =
-        [
-            // Example of excluded controller: new(typeof(DebugController))
-        ];
-
-        foreach (ExcludeControllerFeatureProvider debugController in controllersToExclude)
-        {
-            manager.FeatureProviders.Add(debugController);
-        }
-    });
-
+builder.Services.AddControllers();
 string devCorsPolicy = "DevCors";
 builder.Services.AddCors(options =>
 {
@@ -78,6 +75,9 @@ builder.Services
     .AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
+        string jwtKey = !string.IsNullOrEmpty(webApiConfigurations.JwtSecretKey) && webApiConfigurations.JwtSecretKey.Length >= 16
+            ? webApiConfigurations.JwtSecretKey
+            : ChasmaWebApiConfigurations.DefaultJwtSecretKey;
         options.TokenValidationParameters = new()
         {
             ValidateIssuer = true,
@@ -86,7 +86,7 @@ builder.Services
             ValidateIssuerSigningKey = true,
             ValidIssuer = "ChasmaWebApi",
             ValidAudience = "ChasmaThinClient",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(webApiConfigurations.JwtSecretKey))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
