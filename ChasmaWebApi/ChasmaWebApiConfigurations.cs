@@ -9,65 +9,61 @@ namespace ChasmaWebApi
     [XmlRoot("configurations")]
     public class ChasmaWebApiConfigurations : ChasmaXmlBase
     {
+        #region XML Elements
+
         /// <summary>
         /// Gets or sets the Chasma web API url.
         /// </summary>
         [XmlElement("webApiUrl")]
-        public required string WebApiUrl { get; set; }
-        
-        /// <summary>
-        /// Gets or sets a value indicating whether to show the debug API controllers.
-        /// </summary>
-        [XmlElement("showDebugControllers")]
-        public required bool ShowDebugControllers { get; set; }
-        
+        public string WebApiUrl { get; set; }
+
         /// <summary>
         /// Gets or sets the URL of the thin client.
         /// </summary>
         [XmlElement("thinClientUrl")]
-        public required string ThinClientUrl { get; set; }
-        
+        public string ThinClientUrl { get; set; }
+
         /// <summary>
         /// Gets or sets the GitHub API token.
         /// </summary>
         [XmlElement("githubApiToken")]
-        public string GitHubApiToken { get; set; }
+        public string? GitHubApiToken { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum number of workflows to report to the client.
         /// </summary>
         [XmlElement("workflowRunReportThreshold")]
-        public int WorkflowRunReportThreshold { get; set; } = 30;
+        public int? WorkflowRunReportThreshold { get; set; }
 
         /// <summary>
         /// Gets or sets the interval in seconds at which GitHub pull requests are scanned for updates.
         /// </summary>
         [XmlElement("gitHubPullRequestScanIntervalSeconds")]
-        public int GitHubPullRequestScanIntervalSeconds { get; set; } = 45;
+        public int? GitHubPullRequestScanIntervalSeconds { get; set; }
 
         /// <summary>
         /// Gets or sets the GitLab API token.
         /// </summary>
         [XmlElement("gitlabApiToken")]
-        public string GitLabApiToken { get; set; }
+        public string? GitLabApiToken { get; set; }
 
         /// <summary>
         /// Gets or sets the self hosted GitLab url.
         /// </summary>
         [XmlElement("selfHostedGitLabUrl")]
-        public string SelfHostedGitLabUrl { get; set; }
+        public string? SelfHostedGitLabUrl { get; set; }
 
         /// <summary>
         /// Gets or sets the interval in seconds at which GitLab merge requests are scanned for updates.
         /// </summary>
         [XmlElement("gitLabMergeRequestScanIntervalSeconds")]
-        public int GitLabMergeRequestScanIntervalSeconds { get; set; } = 45;
+        public int? GitLabMergeRequestScanIntervalSeconds { get; set; }
 
         /// <summary>
         /// Gets or sets the Bitbucket API token.
         /// </summary>
         [XmlElement("bitbucketApiToken")]
-        public string BitbucketApiToken { get; set; }
+        public string? BitbucketApiToken { get; set; }
 
         /// <summary>
         /// Gets or sets the JWT secret key.
@@ -80,6 +76,13 @@ namespace ChasmaWebApi
         /// </summary>
         [XmlElement("bindingPort")]
         public int BindingPort { get; set; }
+
+        #endregion
+
+        /// <summary>
+        /// The default JWT secret key.
+        /// </summary>
+        public const string DefaultJwtSecretKey = "TEMP_DEV_KEY_1234567890";
 
         /// <summary>
         /// Gets the connection string in the format that is expected of SQLite3 database connections.

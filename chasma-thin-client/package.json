@@ -24,7 +24,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && copyfiles -f .env build",
+    "build": "rimraf build && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "baseline-browser-mapping": "^2.10.10",
-    "copyfiles": "^2.4.1"
+    "copyfiles": "^2.4.1",
+    "rimraf": "^6.1.3"
   }
 }

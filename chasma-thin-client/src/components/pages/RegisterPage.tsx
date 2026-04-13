@@ -99,6 +99,11 @@ const RegisterPage: React.FC = () => {
                 onClick={() => window.open("help", "_blank")}>
                     Help
             </button>
+             <button
+                className="config-button"
+                onClick={() => navigate("/setup")}>
+                    Configure
+            </button>
             <div className="login-card">
                 <div className="login-logo">
                     <ChasmaLogo/>
@@ -201,7 +206,7 @@ const RegisterPage: React.FC = () => {
                 </form>
                 <p style={{marginTop: '15px', color: '#aaa', textAlign: 'center'}}>
                     Already have an account?{' '}
-                    <Link to="/" style={{color: '#00bfff', textDecoration: 'none'}}>
+                    <Link to="/login" style={{color: '#00bfff', textDecoration: 'none'}}>
                         Login here
                     </Link>
                 </p>

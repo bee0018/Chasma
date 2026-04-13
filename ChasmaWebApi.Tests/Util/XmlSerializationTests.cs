@@ -19,7 +19,6 @@ namespace ChasmaWebApi.Tests.Util
             ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
             Assert.IsNotNull(webApiConfigurations);
             Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.WebApiUrl));
-            Assert.IsFalse(webApiConfigurations.ShowDebugControllers);
             Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.ThinClientUrl));
             Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.GitHubApiToken));
             Assert.IsFalse(webApiConfigurations.WorkflowRunReportThreshold <= 0);
@@ -37,7 +36,6 @@ namespace ChasmaWebApi.Tests.Util
             Assert.IsNotNull(generatedConfig);
             Assert.AreEqual(config.WebApiUrl, generatedConfig.WebApiUrl);
             Assert.AreEqual(config.GitHubApiToken, generatedConfig.GitHubApiToken);
-            Assert.AreEqual(config.ShowDebugControllers, generatedConfig.ShowDebugControllers);
             Assert.AreEqual(config.ThinClientUrl, generatedConfig.ThinClientUrl);
             Assert.AreEqual(config.WorkflowRunReportThreshold, generatedConfig.WorkflowRunReportThreshold);
         }
@@ -52,7 +50,6 @@ namespace ChasmaWebApi.Tests.Util
             {
                 WebApiUrl = "webApiUrl",
                 GitHubApiToken = "token",
-                ShowDebugControllers = true,
                 ThinClientUrl = "thinClientUrl",
                 WorkflowRunReportThreshold = 20,
             };

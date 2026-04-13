@@ -17,7 +17,6 @@ const HelpConfigXmlPage: React.FC = () => (
 {`<?xml version="1.0" encoding="utf-8"?>
 <configurations xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 \t<webApiUrl>https://localhost:44349/</webApiUrl>
-\t<showDebugControllers>false</showDebugControllers>
 \t<thinClientUrl>http://localhost:3000</thinClientUrl>
 \t<githubApiToken>token</githubApiToken>
 \t<workflowRunReportThreshold>30</workflowRunReportThreshold>
@@ -39,16 +38,6 @@ const HelpConfigXmlPage: React.FC = () => (
             </div>
             <p>Defines the URL where the backend Web API will be running and listening for requests.</p>
             <p className="xml-meta">Default: <code>https://localhost:5000/</code></p>
-        </div>
-
-        <div className="xml-attr">
-            <div className="xml-attr-header">
-                <span className="xml-name">showDebugControllers</span>
-                <span className="xml-type">boolean</span>
-                <span className="xml-required">required</span>
-            </div>
-            <p>A value indicating whether to show the debug controllers on the Web API Swagger Page.</p>
-            <p className="xml-meta">Default: <code>true</code></p>
         </div>
 
         <div className="xml-attr">

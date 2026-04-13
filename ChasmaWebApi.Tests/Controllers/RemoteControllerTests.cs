@@ -130,7 +130,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryName = TestRepositoryName,
                 RepositoryOwner = TestUserName
             };
-            string errorMessage = "Failed to get build results";
+            string errorMessage = "GitHub API token is not configured. Cannot retrieve workflow run results.";
             List<WorkflowRunResult> workflowRuns = [];
             controlServiceMock.Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), out workflowRuns, out errorMessage)).Returns(false);
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetGitHubWorkflowResults(request);
@@ -151,13 +151,13 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryName = TestRepositoryName,
                 RepositoryOwner = TestUserName
             };
-            string errorMessage = $"Error fetching workflow runs from {TestRepositoryName}. Check server logs for more information.";
+            string errorMessage = $"GitHub API token is not configured. Cannot retrieve workflow run results.";
             List<WorkflowRunResult> workflowRuns = [];
             controlServiceMock
                 .Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), out workflowRuns, out errorMessage))
                 .Throws(new Exception("Exception getting run results."));
             ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetGitHubWorkflowResults(request);
-            GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(BadRequestObjectResult));
+            GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsTrue(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);
         }
@@ -184,7 +184,8 @@ namespace ChasmaWebApi.Tests.Controllers
             controlServiceMock
                 .Setup(i => i.TryGetWorkflowRunResults(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), out workflowRuns, out errorMessage))
                 .Returns(true);
-            ActionResult<GitHubWorkflowRunResponse> actionResult = Controller.GetGitHubWorkflowResults(request);
+            webApiConfigurationsMock.Object.GitHubApiToken = "token";
+            ActionResult <GitHubWorkflowRunResponse> actionResult = Controller.GetGitHubWorkflowResults(request);
             GitHubWorkflowRunResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
             Assert.IsFalse(response.IsErrorResponse);
             Assert.AreEqual(errorMessage, response.ErrorMessage);

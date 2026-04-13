@@ -86,6 +86,11 @@ const LoginPage: React.FC = () => {
                 onClick={() => window.open("help", "_blank")}>
                     Help
             </button>
+            <button
+                className="config-button"
+                onClick={() => navigate("/setup")}>
+                    Configure
+            </button>
             <div className="login-card">
                 <div className="login-logo">
                     <ChasmaLogo />

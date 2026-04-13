@@ -101,10 +101,11 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestMethod]
         public void TestLoginFailsWithEmptyUsername()
         {
-            LoginRequest request = new LoginRequest
+            LoginRequest request = new()
             {
                 UserName = string.Empty,
             };
+            webApiConfigurationsMock.Object.JwtSecretKey = "03KSNiqqdmg2vihZwbsRtfXyVQzB+c+xf6a8GXWHd63UO/5ui/A3CYNhy+/kEOr+VuzcAN0kt9qWAdkHBASXbw==";
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
             LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(UnauthorizedObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
@@ -118,11 +119,12 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestMethod]
         public void TestLoginFailsWithEmptyPassword()
         {
-            LoginRequest request = new LoginRequest
+            LoginRequest request = new()
             {
                 UserName = "user1",
                 Password = string.Empty
             };
+            webApiConfigurationsMock.Object.JwtSecretKey = "03KSNiqqdmg2vihZwbsRtfXyVQzB+c+xf6a8GXWHd63UO/5ui/A3CYNhy+/kEOr+VuzcAN0kt9qWAdkHBASXbw==";
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
             LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(UnauthorizedObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
@@ -139,11 +141,12 @@ namespace ChasmaWebApi.Tests.Controllers
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
             Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
-            LoginRequest request = new LoginRequest
+            LoginRequest request = new()
             {
                 UserName = "user1",
                 Password = "password1"
             };
+            webApiConfigurationsMock.Object.JwtSecretKey = "03KSNiqqdmg2vihZwbsRtfXyVQzB+c+xf6a8GXWHd63UO/5ui/A3CYNhy+/kEOr+VuzcAN0kt9qWAdkHBASXbw==";
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
             LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(UnauthorizedObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
@@ -161,11 +164,12 @@ namespace ChasmaWebApi.Tests.Controllers
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
             Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
-            LoginRequest request = new LoginRequest
+            LoginRequest request = new()
             {
                 UserName = TestUserName,
                 Password = "password1"
             };
+            webApiConfigurationsMock.Object.JwtSecretKey = "03KSNiqqdmg2vihZwbsRtfXyVQzB+c+xf6a8GXWHd63UO/5ui/A3CYNhy+/kEOr+VuzcAN0kt9qWAdkHBASXbw==";
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
             LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(UnauthorizedObjectResult));
             Assert.IsTrue(loginResponse.IsErrorResponse);
@@ -222,7 +226,8 @@ namespace ChasmaWebApi.Tests.Controllers
             {
                 Name = string.Empty,
             };
-            Task <ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
+            webApiConfigurationsMock.Object.JwtSecretKey = "03KSNiqqdmg2vihZwbsRtfXyVQzB+c+xf6a8GXWHd63UO/5ui/A3CYNhy+/kEOr+VuzcAN0kt9qWAdkHBASXbw==";
+            Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
             Assert.AreEqual("Invalid username or password.", addUserResponse.ErrorMessage);
@@ -239,6 +244,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Name = "user",
                 UserName = string.Empty,
             };
+            webApiConfigurationsMock.Object.JwtSecretKey = "03KSNiqqdmg2vihZwbsRtfXyVQzB+c+xf6a8GXWHd63UO/5ui/A3CYNhy+/kEOr+VuzcAN0kt9qWAdkHBASXbw==";
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
@@ -257,6 +263,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 UserName = "username",
                 Password = string.Empty
             };
+            webApiConfigurationsMock.Object.JwtSecretKey = "03KSNiqqdmg2vihZwbsRtfXyVQzB+c+xf6a8GXWHd63UO/5ui/A3CYNhy+/kEOr+VuzcAN0kt9qWAdkHBASXbw==";
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(BadRequestObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
@@ -272,12 +279,13 @@ namespace ChasmaWebApi.Tests.Controllers
             dbContext = TestDbContextFactory.CreateApplicationDbContext();
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
             Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
-            AddUserRequest request = new AddUserRequest
+            AddUserRequest request = new()
             {
                 Name = TestUserFullName,
                 UserName = TestUserName,
                 Password = TestUserPassword,
             };
+            webApiConfigurationsMock.Object.JwtSecretKey = "03KSNiqqdmg2vihZwbsRtfXyVQzB+c+xf6a8GXWHd63UO/5ui/A3CYNhy+/kEOr+VuzcAN0kt9qWAdkHBASXbw==";
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);
@@ -295,12 +303,13 @@ namespace ChasmaWebApi.Tests.Controllers
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
             Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
             passwordUtilityMock.Setup(utility => utility.HashPassword(It.IsAny<string>())).Returns((null, null));
-            AddUserRequest request = new AddUserRequest
+            AddUserRequest request = new()
             {
                 Name = "name",
                 UserName = "username",
                 Password = "password"
             };
+            webApiConfigurationsMock.Object.JwtSecretKey = "03KSNiqqdmg2vihZwbsRtfXyVQzB+c+xf6a8GXWHd63UO/5ui/A3CYNhy+/kEOr+VuzcAN0kt9qWAdkHBASXbw==";
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsTrue(addUserResponse.IsErrorResponse);

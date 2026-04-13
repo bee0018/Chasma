@@ -18,6 +18,8 @@ import NotificationModal from './components/modals/NotificationModal';
 import { userClient } from './managers/ApiClientManager';
 import { RefreshRequest } from './API/ChasmaWebApiClient';
 import { useEffect, useRef } from 'react';
+import AppSetupPage from './components/pages/AppSetupPage';
+import StartupGate from './components/pages/gates/StartupGate';
 
 function App() {
     /** The notification modal to display in the application. */
@@ -134,7 +136,9 @@ function App() {
     return <div>
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<LoginPage />} />
+                <Route path="/" element={<StartupGate />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/setup" element={<AppSetupPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/home" element={<Dashboard />} />
                 <Route path="/help" element={<HelpPage />}>

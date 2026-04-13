@@ -199,6 +199,12 @@ namespace ChasmaWebApi.HostedServices
         /// <returns>Task containing the result of the API operation.</returns>
         private async Task<List<RemotePullRequest>?> GetGitHubPullRequestAsync(string owner, string repoName)
         {
+            if (string.IsNullOrEmpty(configurations.GitHubApiToken))
+            {
+                logger.LogWarning("GitHub API token is not provided. Cannot fetch pull requests for {repoName}.", repoName);
+                return null;
+            }
+
             try
             {
                 GitHubClient = RemoteHelper.GetGitHubClient(repoName, configurations.GitHubApiToken);
@@ -241,6 +247,12 @@ namespace ChasmaWebApi.HostedServices
         /// <returns>The internal GitHub pull request.</returns>
         private async Task<RemotePullRequest?> GetPullRequestByPrNumberAsync(string owner, string name, long prNumber)
         {
+            if (string.IsNullOrEmpty(configurations.GitHubApiToken))
+            {
+                logger.LogWarning("GitHub API token is not provided. Cannot fetch pull requests for {repoName}.", name);
+                return null;
+            }
+
             try
             {
                 GitHubClient = RemoteHelper.GetGitHubClient(name, configurations.GitHubApiToken);
@@ -284,7 +296,7 @@ namespace ChasmaWebApi.HostedServices
         /// </summary>
         private void StartPullRequestPolling(CancellationToken cancellationToken)
         {
-            int intervalSeconds = configurations.GitHubPullRequestScanIntervalSeconds;
+            int intervalSeconds = configurations.GitHubPullRequestScanIntervalSeconds ?? 45;
             PullRequestPollTimer = new PeriodicTimer(TimeSpan.FromSeconds(intervalSeconds));
             _ = Task.Run(async () =>
             {
@@ -395,6 +407,12 @@ namespace ChasmaWebApi.HostedServices
         /// <returns>Task containing the result of the API operation.</returns>
         private async Task<List<RemotePullRequest>?> GetGitLabMergeRequestAsync(LocalGitRepository repository)
         {
+            if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+            {
+                logger.LogWarning("GitLab API token is not provided. Cannot fetch merge requests for {repoName}.", repository.Name);
+                return null;
+            }
+
             try
             {
                 GitLabClient = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
@@ -449,7 +467,7 @@ namespace ChasmaWebApi.HostedServices
         /// </summary>
         private void StartMergeRequestPolling(CancellationToken cancellationToken)
         {
-            int intervalSeconds = configurations.GitLabMergeRequestScanIntervalSeconds;
+            int intervalSeconds = configurations.GitLabMergeRequestScanIntervalSeconds ?? 45;
             MergeRequestPollTimer = new PeriodicTimer(TimeSpan.FromSeconds(intervalSeconds));
             _ = Task.Run(async () =>
             {
@@ -517,6 +535,12 @@ namespace ChasmaWebApi.HostedServices
         /// <returns>The internal remote pull request.</returns>
         private async Task<RemotePullRequest?> GetMergeRequestByIidNumberAsync(string owner, string repoName, long mergeRequestId, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+            {
+                logger.LogWarning("GitLab API token is not provided. Cannot fetch merge requests for {repoName}.", repoName);
+                return null;
+            }
+            
             try
             {
                 GitLabClient = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
