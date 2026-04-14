@@ -303,6 +303,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
 
                     {/* Right side: Diff viewer */}
                     <div className="right-panel">
+                        {parsedDiffTooBig && <p style={{textAlign: "center", color: "yellow"}}>Parsed diff too long, showing only first 5000 lines.</p>}
                         <div className="diff-toolbar">
                             <button
                                 className="submit-button"
