@@ -18,7 +18,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Diagnostics;
-using System.Net.Sockets;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Text;
 
 string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
@@ -190,15 +191,7 @@ finally
 /// <param name="port">The port to run on.</param>
 static bool IsPortInUse(int port)
 {
-    try
-    {
-        TcpListener listener = new(System.Net.IPAddress.Loopback, port);
-        listener.Start();
-        listener.Stop();
-        return false;
-    }
-    catch (SocketException)
-    {
-        return true;
-    }
+    IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
+    IPEndPoint[] listeners = ipProperties.GetActiveTcpListeners();
+    return listeners.Any(i => i.Port == port);
 }
