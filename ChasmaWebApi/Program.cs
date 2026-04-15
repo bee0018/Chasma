@@ -108,7 +108,6 @@ try
             };
         });
 
-
     builder.Services
         .AddSingleton(webApiConfigurations)
         .AddSingleton<IPasswordUtility, PasswordUtility>()
@@ -192,6 +191,7 @@ finally
 static bool IsPortInUse(int port)
 {
     IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
-    IPEndPoint[] listeners = ipProperties.GetActiveTcpListeners();
-    return listeners.Any(i => i.Port == port);
+    IPEndPoint[] tcpListeners = ipProperties.GetActiveTcpListeners();
+    IPEndPoint[] udpListeners = ipProperties.GetActiveUdpListeners();
+    return tcpListeners.Any(i => i.Port == port) || udpListeners.Any(i => i.Port == port);
 }
