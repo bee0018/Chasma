@@ -632,12 +632,12 @@ const RepositoryStatusPage: React.FC = () => {
                     <span className="profile-icon">📁</span>
                     <span>{repoName}</span>
                 </div>
-                <div className="tab" style={{ marginTop: "20px" }} onClick={() => navigate("/home")}>Dashboard 👈</div>
+                <div className="tab" style={{ marginTop: "20px" }} onClick={() => navigate("/home")}>Home 🏠</div>
                 <div
                     className={`tab ${activeTab === "home" ? "active" : ""}`}
                     onClick={() => handleTabClick("home")}
                 >
-                    Home 🏠
+                    Repo Status 📊
                 </div>
                 <div
                     className="tab"
