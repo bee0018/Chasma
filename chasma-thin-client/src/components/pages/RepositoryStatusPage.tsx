@@ -4,18 +4,15 @@ import {
     ApplyBulkStagingActionRequest,
     ApplyStagingActionRequest,
     GitDiffRequest,
-    GitPullRequest,
     GitRestoreRequest,
     GitRmRequest,
     GitStatusRequest,
-    PullSimulationEntry,
     RemoteHostPlatform,
     RemotePullRequest,
     RepositoryStatusElement,
     SimulatedAddBranchResult,
     SimulatedGitPullResult,
     SimulatedMergeResult,
-    SimulateGitPullRequest,
 } from "../../API/ChasmaWebApiClient";
 import CommitModal from "../modals/CommitModal";
 import PushModal from "../modals/PushModal";
@@ -29,7 +26,7 @@ import {parseUnifiedDiff} from "../../managers/DiffViewerManager";
 import AddStashModal from "../modals/AddStashModal";
 import AddBranchModal from "../modals/AddBranchModal";
 import ResetModal from "../modals/ResetModal";
-import {configClient, dryRunClient, statusClient} from "../../managers/ApiClientManager";
+import {configClient, statusClient} from "../../managers/ApiClientManager";
 import Checkbox from "../Checkbox";
 import "../../styles/pages/batchOperationsPage.css"
 import RemoteIssuesPage from "./remote/RemoteIssuesPage";
@@ -37,6 +34,7 @@ import RemotePullRequestPage from "./remote/RemotePullRequestPage";
 import ExecuteShellCommandsPage from "./statusComponents/ExecuteShellCommandsPage";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { Virtuoso } from "react-virtuoso";
+import PullModal from "../modals/PullModal";
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -57,6 +55,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets or sets a flag indicating whether the user is pushing changes. **/
     const [isPushingChanges, setIsPushingChanges] = useState(false);
+
+    /** Gets or sets a flag indicating whether the user is pulling changes. **/
+    const [isPullingChanges, setIsPullingChanges] = useState(false);
 
     /** Gets or sets a flag indicating whether the user is checking out changes. **/
     const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -267,103 +268,6 @@ const RepositoryStatusPage: React.FC = () => {
         if (!branchUrl) return;
         window.open(branchUrl, "_blank");
     };
-
-    /**
-     * Handles the event when the user wants to pull changes.
-     */
-    const handlePullRequestOperation = () => {
-        if (isSafeMode) {
-            handleGitPullRequestDryRun();
-            return;
-        }
-
-        handlePullRequest();
-    }
-
-    /**
-     * Handles the event when the user wants to pull latest changes.
-     */
-    const handlePullRequest = async () => {
-        setNotification({
-            title: "Pulling changes...",
-            message: "Please wait while your request is being processed.",
-            isError: false,
-            loading: true
-        });
-
-        const request = new GitPullRequest();
-        request.repositoryId = repoId!;
-        request.email = user?.email;
-        request.userId = user?.userId;
-        try {
-            const response = await statusClient.pullChanges(request);
-            if (response.isErrorResponse) {
-                setNotification({
-                    title: "Could not pull changes!",
-                    message: response.errorMessage,
-                    isError: true,
-                });
-                return;
-            }
-
-            setNotification({
-                title: "Successfully pull changes!",
-                message: "Close to dismiss.",
-                isError: false,
-            });
-        } catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Could not pull changes", "An internal server error has occurred. Review logs.");
-            setNotification(errorNotification);
-        }
-    };
-
-    /**
-     * Handles the event when the user wants to simulate pulling changes.
-     */
-    const handleGitPullRequestDryRun = async () => {
-        setNotification({
-            title: "Performing pull simulation...",
-            message: "Please wait while your dry run is being processed..",
-            isError: false,
-            loading: true
-        });
-
-        const request = new SimulateGitPullRequest();
-        const entry = new PullSimulationEntry();
-        entry.repositoryId = repoId;
-        request.entries = [entry];
-        try {
-            const response = await dryRunClient.simulateGitPull(request);
-            if (response.isErrorResponse) {
-                setNotification({
-                    title: "Failed to perform pull simulation!",
-                    message: response.errorMessage,
-                    isError: true,
-                });
-                return;
-            }
-
-            if (!response.pullResults) {
-                setNotification({
-                    title: "Failed to perform pull simulation!",
-                    message: "There were no simulation results. Check server logs for more information.",
-                    isError: true,
-                });
-                return;
-            }
-
-            setNotification({
-                title: "Successfully performed pull simulation!",
-                message: "Close to dismiss.",
-                isError: false,
-            });
-
-            setSimulatedPullResults(response.pullResults);
-        } catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Could not simulate pull simulation!", "An internal server error has occurred. Review logs.");
-            setNotification(errorNotification);
-        }
-    }
 
     /**
      * Handles the event when the user wants to get the diff of a file.
@@ -641,10 +545,7 @@ const RepositoryStatusPage: React.FC = () => {
                 </div>
                 <div
                     className="tab"
-                     onClick={() => {
-                         cleanUpSimulationResults();
-                         handlePullRequestOperation();
-                     }}
+                     onClick={() => setIsPullingChanges(true)}
                 >
                     Pull ⬇️
                 </div>
@@ -1280,6 +1181,17 @@ const RepositoryStatusPage: React.FC = () => {
             <ResetModal
                 repositoryId={repoId}
                 onClose={() => setIsResettingChanges(false)} />
+            }
+            {isPullingChanges &&
+            <PullModal
+                onClose={() => setIsPullingChanges(false)}
+                onSimulationSuccess={results => {
+                    cleanUpSimulationResults();
+                    setSimulatedPullResults(results)
+                }}
+                repositoryId={repoId}
+                isSafeMode={isSafeMode}
+                user={user} />
             }
         </div>
     );
