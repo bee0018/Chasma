@@ -291,7 +291,11 @@ namespace ChasmaWebApi.Core.Services.Control
                     (string branchName, int aheadCount, int behindCount, string lastUpdated) divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
                     string repoName = repository.Name;
                     string repoOwner = repository.Owner;
-                    if (remoteHostPlatform == RemoteHostPlatform.GitHub && gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> gitHubResults, out _))
+                    if (string.IsNullOrEmpty(token))
+                    {
+                        logger.LogWarning("No API token found for repository {RepoName} with remote host platform {RemoteHostPlatform}. Unable to fetch build status from remote host platform.", repoName, remoteHostPlatform);
+                    }
+                    else if (remoteHostPlatform == RemoteHostPlatform.GitHub && gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> gitHubResults, out _))
                     {
                         buildStatus = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchName);
                     }
