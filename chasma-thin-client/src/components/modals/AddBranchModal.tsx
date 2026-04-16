@@ -219,14 +219,12 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
                                 {props.isSafeMode ? "Simulating " : ""}Add Branch
                             </button>
                         }
-                        {successfullyAdded &&
-                            <button
+                        <button
                                 className="modal-button secondary"
                                 onClick={props.onClose}
                             >
                                 Close
-                            </button>
-                        }
+                        </button>
                     </div>
                 </div>
             </div>
