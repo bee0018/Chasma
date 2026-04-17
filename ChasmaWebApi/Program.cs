@@ -20,6 +20,7 @@ using Serilog;
 using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Text;
 
 string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
@@ -54,7 +55,7 @@ try
     }
 
     ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
-    if (IsPortInUse(webApiConfigurations.BindingPort))
+    if (IsPortInUse(webApiConfigurations.BindingPort) && await IsOurApiRunning(webApiConfigurations.BindingPort))
     {
         ProcessStartInfo startInfo = new()
         {
@@ -65,7 +66,17 @@ try
         return;
     }
 
-    builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort));
+    try
+    {
+        builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort));
+    }
+    catch
+    {
+        int port = GetFreePort();
+        Log.Warning("Falling back to port {Port}", port);
+        builder.WebHost.ConfigureKestrel(o => o.ListenAnyIP(port));
+    }
+
     builder.WebHost.UseWebRoot("wwwroot");
 
     builder.Host.UseSerilog();
@@ -183,6 +194,7 @@ finally
     Log.CloseAndFlush();
 }
 
+#region Helper Methods
 
 /// <summary>
 /// Determines if the port is already in use.
@@ -195,3 +207,28 @@ static bool IsPortInUse(int port)
     IPEndPoint[] udpListeners = ipProperties.GetActiveUdpListeners();
     return tcpListeners.Any(i => i.Port == port) || udpListeners.Any(i => i.Port == port);
 }
+
+static int GetFreePort()
+{
+    var listener = new TcpListener(IPAddress.Loopback, 0);
+    listener.Start();
+    int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+    listener.Stop();
+    return port;
+}
+
+static async Task<bool> IsOurApiRunning(int port)
+{
+    try
+    {
+        using var client = new HttpClient();
+        var response = await client.GetAsync($"http://localhost:{port}/api/Health/heartbeat"); // or version endpoint
+        return response.IsSuccessStatusCode;
+    }
+    catch
+    {
+        return false;
+    }
+}
+
+#endregion
