@@ -53,7 +53,7 @@ const HelpGitLabApiIntegrationPage: React.FC = () => (
                         <strong>Generate a New Token</strong>
                         <p><strong>Scopes / Permissions</strong>: Choose what the token can do:</p>
                         <ul>
-                            <li><code>Fine-grained token</code>Limit scope to specific groups and projects and fine-grained permissions to resources.</li>
+                            <li><code>Fine-grained token</code>(Recommended) Limit scope to specific groups and projects and fine-grained permissions to resources.</li>
                             <li><code>Legacy token</code>Scoped to all groups and projects with broad permissions to resources.</li>
                             <li>Only select what you actually need for security.</li>
                         </ul>
