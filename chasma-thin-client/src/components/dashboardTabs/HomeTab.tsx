@@ -91,6 +91,16 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
 
     /** Sends a request to the add the local git repositories on the filesystem. **/
     async function handleAddLocalGitRepositories() {
+        if (disableSendButton) {
+            setNotification({
+                title: "Currently adding local git repositories to the system.",
+                message: "Please await repository additions while your request is being processed. May take a while depending on how large your filesystem is.",
+                isError: false,
+                loading: true
+            });
+            return;
+        }
+
         setDisableSendButton(true);
         setNotification({
             title: "Adding local git repositories from logical drives...",
@@ -240,7 +250,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                 <button
                     className="submit-button"
                     type="submit"
-                    disabled={disableSendButton}
                     onClick={handleAddLocalGitRepositories}
                 >
                     Add Git Repos from Local Machine
