@@ -2,6 +2,7 @@
 using ChasmaWebApi.Data.Messages.Application;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Responses.Configuration;
+using ChasmaWebApi.Util;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -58,7 +59,7 @@ namespace ChasmaWebApi.Controllers
         [AllowAnonymous]
         public ActionResult<GetSystemReadyMessage> GetSystemReady()
         {
-            List<string> invalidElements = GetInvalidXmlElements(apiConfiguration);
+            List<string> invalidElements = GetInvalidRequiredXmlElements(apiConfiguration);
             GetSystemReadyMessage response = new()
             {
                 IsReady = invalidElements.Count == 0,
@@ -95,7 +96,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            List<string> invalidElements = GetInvalidXmlElements(newConfig);
+            List<string> invalidElements = GetInvalidRequiredXmlElements(newConfig);
             if (invalidElements.Count > 0)
             {
                 logger.LogError("Received an invalid ApiConfiguration in the {request}. Invalid elements: {invalidElements}. Sending error response.", requestName, string.Join(", ", invalidElements));
@@ -105,18 +106,23 @@ namespace ChasmaWebApi.Controllers
             }
 
             bool isDevelopment = webHostEnvironment.IsDevelopment();
-            if (applicationControlService.TryUpdateApiConfiguration(newConfig, isDevelopment, out string errorMessage))
+            string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
+            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
+            string configFilePath = isDevelopment
+                ? defaultConfigPath
+                : Path.Combine(appDataDirectory, "config.xml");
+            ChasmaWebApiConfigurations currentConfig = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
+            if (currentConfig == null)
             {
-                logger.LogInformation("Successfully processed {request}. Sending success response.", requestName);
+                logger.LogError("Failed to read the current API configuration from {configFilePath} during {request}. Sending error response.", configFilePath, requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Failed to read the current API configuration.";
                 return Ok(response);
             }
-            else
-            {
-                logger.LogError("Failed to update API configuration via {request}. Error: {errorMessage}. Sending error response.", requestName, errorMessage);
-                response.IsErrorResponse = true;
-                response.ErrorMessage = $"Failed to update configuration: {errorMessage}";
-                return Ok(response);
-            };
+
+            applicationControlService.UpdateApiConfiguration(configFilePath, newConfig, currentConfig);
+            logger.LogInformation("Successfully processed {request}. Sending success response.", requestName);
+            return Ok(response);
         }
 
         #region Private Methods
@@ -126,7 +132,7 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         /// <param name="config">The API configurations.</param>
         /// <returns>The list of invalid elements.</returns>
-        private static List<string> GetInvalidXmlElements(ChasmaWebApiConfigurations config)
+        private static List<string> GetInvalidRequiredXmlElements(ChasmaWebApiConfigurations config)
         {
             List<string> invalidElements = [];
             if (!IsValidUrl(config.WebApiUrl))

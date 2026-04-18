@@ -4,7 +4,6 @@ import { isBlankOrUndefined } from "../../stringHelperUtil";
 import Checkbox from "../Checkbox";
 import { ChasmaWebApiConfigurations, ModifyApiConfigRequest } from "../../API/ChasmaWebApiClient";
 import { appConfigClient } from "../../managers/ApiClientManager";
-import { handleApiError } from "../../managers/TransactionHandlerManager";
 
 /**
  * Initializes a new instance of the parent AppSetupPage class.
@@ -296,6 +295,12 @@ export const AppSetupPage: React.FC = () => {
                         onChange={(e) => setWebApiUrl(e.target.value)}
                         required />
                     </div>
+                    <button
+                        className="stage-button stage"
+                        onClick={() => setWebApiUrl("http://localhost:5000")}
+                    >
+                        Apply Default
+                    </button>
 
                     <div className="xml-attr">
                         <div className="xml-attr-header">
@@ -312,6 +317,12 @@ export const AppSetupPage: React.FC = () => {
                             onChange={(e) => setThinClientUrl(e.target.value)}
                             required />
                     </div>
+                    <button
+                        className="stage-button stage"
+                        onClick={() => setThinClientUrl("http://localhost:5000")}
+                    >
+                        Apply Default
+                    </button>
 
                     <div className="xml-attr">
                         <div className="xml-attr-header">
@@ -321,15 +332,24 @@ export const AppSetupPage: React.FC = () => {
                         </div>
                         <p>Cryptographic string or key pair used to sign and verify JSON Web Tokens, ensuring the token's authenticity and integrity.</p>
                     <input
-                            type="text"
-                            className="input-field"
-                            placeholder="JWT Secret Key"
-                            value={jwtSecretKey}
-                            onChange={(e) => {
-                                setJwtSecretKey(e.target.value);
-                                validateJwt(e.target.value);
-                            }}
-                            required />
+                        type="text"
+                        className="input-field"
+                        placeholder="JWT Secret Key"
+                        value={jwtSecretKey}
+                        onChange={(e) => {
+                            setJwtSecretKey(e.target.value);
+                            validateJwt(e.target.value);
+                        }}
+                        required />
+                    <button
+                        className="stage-button stage"
+                        onClick={() => {
+                            setJwtSecretKey(generateRefreshToken());
+                            setJwtIsValid(true);
+                        }}
+                    >
+                        Apply Default
+                    </button>
                     {!jwtIsValid && (
                         <div className="password-error">
                             JWT Secret Key must be greater or equal to 16 characters.
@@ -345,15 +365,24 @@ export const AppSetupPage: React.FC = () => {
                         </div>
                         <p>Defines the port where the backend API will listen to requests on.</p>
                         <input
-                                type="text"
-                                className="input-field"
-                                placeholder="Binding Port"
-                                value={bindingPort}
-                                onChange={(e) => {
-                                    setBindingPort(e.target.value);
-                                    validateBindingPort(e.target.value);
-                                }}
-                                required />
+                            type="text"
+                            className="input-field"
+                            placeholder="Binding Port"
+                            value={bindingPort}
+                            onChange={(e) => {
+                                setBindingPort(e.target.value);
+                                validateBindingPort(e.target.value);
+                            }}
+                            required />
+                        <button
+                            className="stage-button stage"
+                            onClick={() => {
+                                setBindingPort("5000");
+                                setPortIsValid(true);
+                            }}
+                        >
+                            Apply Default
+                        </button>
                         {!portIsValid && (
                             <div className="password-error">
                                 Port must be between 0 - 65535.

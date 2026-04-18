@@ -360,12 +360,11 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         bool TryDeleteFile(RepositoryStatusElement selectedFile, out string errorMessage);
 
         /// <summary>
-        /// Tries to update the API configurations with the specified new configurations.
+        /// Updates the API configurations with the specified new configurations.
         /// </summary>
+        /// <param name="configFilePath">The file path to the API configuration XML file.</param>
         /// <param name="newConfig">The new API configuration.</param>
-        /// <param name="isDevelopmentMode">Flag indicating whether the system is in development mode.</param>
-        /// <param name="errorMessage">The error message.</param>
-        /// <returns>True if the API configuration was successfully updated; false otherwise.</returns>
-        bool TryUpdateApiConfiguration(ChasmaWebApiConfigurations newConfig, bool isDevelopmentMode, out string errorMessage);
+        /// <param name="currentConfig">The current API configuration.</param>
+        void UpdateApiConfiguration(string configFilePath, ChasmaWebApiConfigurations newConfig, ChasmaWebApiConfigurations currentConfig);
     }
 }
