@@ -35,6 +35,9 @@ const RegisterPage: React.FC = () => {
     /** Gets or sets a value indicating whether the request is ready to be sent. */
     const [disableSendButton, setDisableSendButton] = useState(false);
 
+    /** Gets or sets a value indicating whether the password is valid. */
+    const [passwordIsValid, setPasswordIsValid] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -43,6 +46,30 @@ const RegisterPage: React.FC = () => {
 
     /** Flag indicating whether the passwords match. **/
     const passwordsMatch = password === confirmPassword;
+
+    /**
+     * Validates the password that has been entered by the user.
+     * @param enteredPassword The password the user has entered.
+     */
+    const validatePassword = (enteredPassword: string): void => {
+        let hasLower = false;
+        let hasUpper = false;
+        let hasDigit = false;
+        let hasSymbol = false;
+
+        for (const char of enteredPassword) {
+            if (char >= 'a' && char <= 'z') hasLower = true;
+            else if (char >= 'A' && char <= 'Z') hasUpper = true;
+            else if (char >= '0' && char <= '9') hasDigit = true;
+            else if (!/[a-zA-Z0-9]/.test(char)) hasSymbol = true;
+            if (hasLower && hasUpper && hasDigit && hasSymbol && enteredPassword.length >= 10) {
+                setPasswordIsValid(true);
+                return;
+            }
+        }
+        
+        setPasswordIsValid(false);
+    };
 
     /** Handles the request to register a new user with the system. **/
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -140,7 +167,10 @@ const RegisterPage: React.FC = () => {
                             className="input-field"
                             placeholder="Password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                validatePassword(e.target.value);
+                            }}
                             required
                         />
                         <button
@@ -159,6 +189,23 @@ const RegisterPage: React.FC = () => {
                             )}
                         </button>
                     </div>
+                    {!passwordIsValid && password && (
+                        <div className="password-error">
+                        <p>Password needs to meet the following requirements:</p>
+                        <ul>
+                            <li>At least 1 lowercase character</li>
+                            <li>At least 1 uppercase character</li>
+                            <li>At least 1 symbol</li>
+                            <li>At least 1 digit</li>
+                            <li>At least 10 or more characters</li>
+                        </ul>
+                        </div>
+                    )}
+                    {passwordIsValid && password && (
+                        <div className="password-success">
+                            Password meets requirements!
+                        </div>
+                    )}
 
                     <div className="password-wrapper">
                         <input
@@ -199,7 +246,7 @@ const RegisterPage: React.FC = () => {
                     <button
                         type="submit"
                         className="submit-button"
-                        disabled={!passwordsMatch}
+                        disabled={!passwordsMatch || !passwordIsValid}
                     >
                         Register
                     </button>

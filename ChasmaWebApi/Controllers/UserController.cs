@@ -195,7 +195,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.Password))
+            string password = request.Password;
+            if (string.IsNullOrEmpty(password))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Invalid username or password.";
@@ -211,7 +212,15 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            (string hashedPassword, byte[] salt) = passwordUtility.HashPassword(request.Password);
+            if (!passwordUtility.IsPasswordValid(password))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Password does not meet complexity requirements.";
+                logger.LogError("Password provided does not meet complexity requirements. Sending error response");
+                return Ok(response);
+            }
+
+            (string hashedPassword, byte[] salt) = passwordUtility.HashPassword(password);
             UserAccountModel account = new()
             {
                 Name = request.Name,

@@ -20,5 +20,13 @@
         /// <param name="storedHash">The database password.</param>
         /// <returns>True if the passwords match; false otherwise.</returns>
         bool VerifyPassword(string password, byte[] salt, string storedHash);
+
+        /// <summary>
+        /// Determines if the given password meets the defined strength requirements, such as minimum length, complexity, etc.
+        /// Note: Is valid if there is at least one uppercase letter, one lowercase letter, one digit, one special character, and is at least 10 characters long.
+        /// </summary>
+        /// <param name="password">The plain text password to validate.</param>
+        /// <returns>True if the password meets the strength requirements; false otherwise. </returns>
+        bool IsPasswordValid(string password);
     }
 }
