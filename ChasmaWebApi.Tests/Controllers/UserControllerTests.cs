@@ -303,6 +303,7 @@ namespace ChasmaWebApi.Tests.Controllers
             TestDbContextFactory.SeedDatabase(dbContext, TestUserFullName, TestUserName, TestUserPassword, TestUserEmail);
             Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
             passwordUtilityMock.Setup(utility => utility.HashPassword(It.IsAny<string>())).Returns((null, null));
+            passwordUtilityMock.Setup(utility => utility.IsPasswordValid(It.IsAny<string>())).Returns(true);
             AddUserRequest request = new()
             {
                 Name = "name",
@@ -335,6 +336,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 Email = "email"
             };
             passwordUtilityMock.Setup(utility => utility.HashPassword(It.IsAny<string>())).Returns((request.Password, [1, 2, 3]));
+            passwordUtilityMock.Setup(utility => utility.IsPasswordValid(It.IsAny<string>())).Returns(true);
             Task<ActionResult<AddUserResponse>> responseTask = Controller.AddUserAccount(request);
             AddUserResponse addUserResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsFalse(addUserResponse.IsErrorResponse);
