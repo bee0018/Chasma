@@ -74,8 +74,11 @@ const LoginPage: React.FC = () => {
             setNotification(null);
         } catch (e) {
             setDisableSendButton(false);
-            const errorNotification = handleApiError(e, navigate, "Could not log in!", "An internal server error has occurred. Review logs.");
-            setNotification(errorNotification);
+            setNotification({
+                title: "Could not log in!",
+                message: "An internal server error has occurred. Review logs.",
+                isError: true,
+            });
         }
     }
 

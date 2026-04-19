@@ -112,23 +112,11 @@ namespace ChasmaWebApi.Core.Services.Control
         #region Infrastructure
 
         // <inheritdoc />
-        public bool TryUpdateApiConfiguration(ChasmaWebApiConfigurations newConfig, bool isDevelopmentMode, out string errorMessage)
+        public void UpdateApiConfiguration(string configFilePath, ChasmaWebApiConfigurations newConfig, ChasmaWebApiConfigurations currentConfig)
         {
-            errorMessage = string.Empty;
-            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
-            string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
-            string configFilePath = isDevelopmentMode
-                ? defaultConfigPath
-                : Path.Combine(appDataDirectory, "config.xml");
-            if (!File.Exists(configFilePath))
-            {
-                errorMessage = "Configuration file not found. Unable to update API configuration.";
-                return false;
-            }
-
-            string xmlText = ChasmaXmlBase.GenerateXml(newConfig);
+            currentConfig.Update(newConfig);
+            string xmlText = ChasmaXmlBase.GenerateXml(currentConfig);
             File.WriteAllText(configFilePath, xmlText, Encoding.UTF8);
-            return true;
         }
 
         #endregion

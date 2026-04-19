@@ -98,5 +98,67 @@ namespace ChasmaWebApi
             string dbPath = Path.Combine(folder, "Chasma.db");
             return $"Data Source={dbPath}";
         }
+
+        /// <summary>
+        /// Updates the current configuration with values from a new configuration object. Only properties that have different values will be updated.
+        /// </summary>
+        /// <param name="newConfig">The incoming configuration.</param>
+        public void Update(ChasmaWebApiConfigurations newConfig)
+        {
+            if (WebApiUrl != newConfig.WebApiUrl)
+            {
+                WebApiUrl = newConfig.WebApiUrl;
+            }
+
+            if (ThinClientUrl != newConfig.ThinClientUrl)
+            {
+                ThinClientUrl = newConfig.ThinClientUrl;
+            }
+
+            if (GitHubApiToken != newConfig.GitHubApiToken)
+            {
+                GitHubApiToken = newConfig.GitHubApiToken;
+            }
+
+            if (WorkflowRunReportThreshold != newConfig.WorkflowRunReportThreshold)
+            {
+                WorkflowRunReportThreshold = newConfig.WorkflowRunReportThreshold;
+            }
+
+            if (GitHubPullRequestScanIntervalSeconds != newConfig.GitHubPullRequestScanIntervalSeconds)
+            {
+                GitHubPullRequestScanIntervalSeconds = newConfig.GitHubPullRequestScanIntervalSeconds;
+            }
+
+            if (GitLabApiToken != newConfig.GitLabApiToken)
+            {
+                GitLabApiToken = newConfig.GitLabApiToken;
+            }
+
+            if (SelfHostedGitLabUrl != newConfig.SelfHostedGitLabUrl)
+            {
+                SelfHostedGitLabUrl = newConfig.SelfHostedGitLabUrl;
+            }
+
+            if (GitLabMergeRequestScanIntervalSeconds != newConfig.GitLabMergeRequestScanIntervalSeconds)
+            {
+                GitLabMergeRequestScanIntervalSeconds = newConfig.GitLabMergeRequestScanIntervalSeconds;
+            }
+
+            if (BitbucketApiToken != newConfig.BitbucketApiToken)
+            {
+                BitbucketApiToken = newConfig.BitbucketApiToken;
+            }
+
+            if (JwtSecretKey != newConfig.JwtSecretKey)
+            {
+                JwtSecretKey = newConfig.JwtSecretKey;
+            }
+
+            if (BindingPort != newConfig.BindingPort)
+            {
+                BindingPort = newConfig.BindingPort;
+            }
+        }
     }
 }
