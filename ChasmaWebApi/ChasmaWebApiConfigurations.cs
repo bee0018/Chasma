@@ -160,5 +160,19 @@ namespace ChasmaWebApi
                 BindingPort = newConfig.BindingPort;
             }
         }
+        
+        /// <summary>
+        /// Gets the application's configuration file path.
+        /// </summary>
+        /// <param name="isDevelopment">Flag indicating whether the application is in development mode.</param>
+        /// <returns>The configuration file path.</returns>
+        public static string GetConfigXmlFilePath(bool isDevelopment)
+        {
+            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
+            string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
+            return isDevelopment
+                ? defaultConfigPath
+                : Path.Combine(appDataDirectory, "config.xml");
+        }
     }
 }
