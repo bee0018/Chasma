@@ -69,6 +69,43 @@ namespace ChasmaWebApi.Controllers
         }
 
         /// <summary>
+        /// Gets the current API configuration.
+        /// </summary>
+        /// <returns>The API configuration message.</returns>
+        [HttpGet("getConfig")]
+        [AllowAnonymous]
+        public ActionResult<GetApiConfigMessage> GetConfig()
+        {
+            bool isDevelopment = webHostEnvironment.IsDevelopment();
+            string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
+            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
+            string configFilePath = isDevelopment
+                ? defaultConfigPath
+                : Path.Combine(appDataDirectory, "config.xml");
+            ChasmaWebApiConfigurations currentConfig = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
+            if (currentConfig == null)
+            {
+                logger.LogError("Failed to read the current API configuration from {configFilePath} during GetConfig. Sending error response.", configFilePath);
+                return BadRequest("Failed to read the current API configuration.");
+            }
+
+            GetApiConfigMessage response = new()
+            {
+                WebApiUrl = currentConfig.WebApiUrl,
+                ThinClientUrl = currentConfig.ThinClientUrl,
+                BindingPort = currentConfig.BindingPort,
+                JwtSecretKeyConfigured = !string.IsNullOrEmpty(currentConfig.JwtSecretKey) && currentConfig.JwtSecretKey != ChasmaWebApiConfigurations.DefaultJwtSecretKey && IsJwtSecretKeyValid(currentConfig.JwtSecretKey),
+                GitHubApiTokenConfigured = !string.IsNullOrEmpty(currentConfig.GitHubApiToken),
+                GitLabApiTokenConfigured = !string.IsNullOrEmpty(currentConfig.GitLabApiToken),
+                WorkflowRunReportThreshold = currentConfig.WorkflowRunReportThreshold,
+                GitHubPullRequestScanIntervalSeconds = currentConfig.GitHubPullRequestScanIntervalSeconds,
+                SelfHostedGitLabUrl = currentConfig.SelfHostedGitLabUrl,
+                GitLabMergeRequestScanIntervalSeconds = currentConfig.GitLabMergeRequestScanIntervalSeconds
+            };
+            return Ok(response);
+        }
+
+        /// <summary>
         /// Modifies the API configuration based on the request.
         /// </summary>
         /// <param name="request">The request containing the new API configuration.</param>

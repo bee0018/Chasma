@@ -31,6 +31,26 @@
         }
       }
     },
+    "/api/ApplicationConfiguration/getConfig": {
+      "get": {
+        "tags": [
+          "ApplicationConfiguration"
+        ],
+        "operationId": "ApplicationConfiguration_GetConfig",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetApiConfigMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ApplicationConfiguration/modifyConfig": {
       "post": {
         "tags": [
@@ -1501,6 +1521,61 @@
       "ChasmaXmlBase": {
         "type": "object",
         "additionalProperties": false
+      },
+      "GetApiConfigMessage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "webApiUrl": {
+                "type": "string"
+              },
+              "thinClientUrl": {
+                "type": "string"
+              },
+              "bindingPort": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "jwtSecretKeyConfigured": {
+                "type": "boolean"
+              },
+              "gitHubApiTokenConfigured": {
+                "type": "boolean"
+              },
+              "gitLabApiTokenConfigured": {
+                "type": "boolean"
+              },
+              "workflowRunReportThreshold": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "gitHubPullRequestScanIntervalSeconds": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "selfHostedGitLabUrl": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitLabMergeRequestScanIntervalSeconds": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "bitbucketApiToken": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        ]
       },
       "ModifyApiConfigResponse": {
         "allOf": [

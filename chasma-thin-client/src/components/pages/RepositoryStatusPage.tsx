@@ -896,13 +896,13 @@ const RepositoryStatusPage: React.FC = () => {
                                     {selectedFile ? (
                                         <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
                                             {!isSplitView && (
-                                                <div className="diff-panel">
+                                                <div className="diff-panel"
+                                                    style={{overflow: "hidden"}}>
                                                     <div className="diff-panel-header">
                                                         Unified Diff: {selectedFile.filePath}
                                                     </div>
 
                                                     <Virtuoso
-                                                        style={{ height: "600px" }} // or make dynamic
                                                         totalCount={safeParsedDiff.length}
                                                         itemContent={(index: number) => {
                                                             const line = safeParsedDiff[index];
