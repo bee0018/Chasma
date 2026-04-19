@@ -1,6 +1,7 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
@@ -90,7 +91,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             int userId = request.UserId;
-            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
                 logger.LogError("Invalid {request}. User with identifier {id} does not exist. Sending error response.", requestName, userId);
                 response.IsErrorResponse = true;
@@ -323,7 +324,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             int userId = request.UserId;
-            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"No user found in cache for user ID: {request.UserId}. Cannot merge branch.";

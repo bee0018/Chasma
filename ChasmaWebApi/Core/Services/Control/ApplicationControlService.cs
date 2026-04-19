@@ -334,7 +334,7 @@ namespace ChasmaWebApi.Core.Services.Control
         #region Stash Functionality
 
         // <inheritdoc />
-        public bool TryAddStash(string workingDirectory, UserAccountModel user, string stashMessage, StashModifiers stashOptions, out string errorMessage)
+        public bool TryAddStash(string workingDirectory, ApplicationUser user, string stashMessage, StashModifiers stashOptions, out string errorMessage)
         {
             return gitStashService.TryAddStash(workingDirectory, user, stashMessage, stashOptions, out errorMessage);
         }

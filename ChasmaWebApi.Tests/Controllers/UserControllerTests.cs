@@ -2,6 +2,7 @@
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
@@ -66,7 +67,7 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestInitialize]
         public void TestInitialize()
         {
-            cacheManagerMock.Setup(i => i.Users).Returns(new ConcurrentDictionary<int, UserAccountModel>());
+            cacheManagerMock.Setup(i => i.Users).Returns(new ConcurrentDictionary<int, ApplicationUser>());
             Controller = new UserController(dbContext, loggerMock.Object, passwordUtilityMock.Object, cacheManagerMock.Object, webApiConfigurationsMock.Object);
         }
 
@@ -194,6 +195,16 @@ namespace ChasmaWebApi.Tests.Controllers
                 UserName = TestUserName,
                 Password = TestUserPassword,
             };
+            ApplicationUser user = new ApplicationUser
+            {
+                UserId = 1,
+                UserName = TestUserName,
+                Email = TestUserEmail,
+                Name = TestUserFullName
+            };
+            ConcurrentDictionary<int, ApplicationUser> usersCache = new();
+            usersCache.TryAdd(user.UserId, user);
+            cacheManagerMock.Setup(manager => manager.Users).Returns(usersCache);
             Task<ActionResult<LoginResponse>> responseTask = Controller.Login(request);
             LoginResponse loginResponse = GetResponseFromHttpAction(responseTask, typeof(OkObjectResult));
             Assert.IsFalse(loginResponse.IsErrorResponse);

@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Git;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using LibGit2Sharp;
 
@@ -25,7 +26,7 @@ namespace ChasmaWebApi.Core.Services.Git
         }
 
         // <inheritdoc/>
-        public bool TryAddStash(string workingDirectory, UserAccountModel user, string stashMessage, StashModifiers stashOptions, out string errorMessage)
+        public bool TryAddStash(string workingDirectory, ApplicationUser user, string stashMessage, StashModifiers stashOptions, out string errorMessage)
         {
             errorMessage = string.Empty;
             try

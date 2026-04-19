@@ -4,6 +4,7 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Messages;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Responses.Configuration;
@@ -534,7 +535,7 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestMethod]
         public void TestAddGitRepositoryWithUnknownUser()
         {
-            ConcurrentDictionary<int, UserAccountModel> users = new();
+            ConcurrentDictionary<int, ApplicationUser> users = new();
             cacheManagerMock.Setup(i => i.Users).Returns(users);
             
             AddGitRepositoryRequest request = new()
@@ -555,18 +556,16 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestMethod]
         public void TestAddGitRepositoryWithFailureToAddRepository()
         {
-            UserAccountModel user = new()
+            ApplicationUser user = new()
             {
-                Id = 1,
+                UserId = 1,
                 Email = TestUserEmail,
                 Name = TestUserFullName,
-                Password = TestUserPassword,
                 UserName = TestUserName,
-                Salt = [1, 2, 3]
             };
-            ConcurrentDictionary<int, UserAccountModel> users = new()
+            ConcurrentDictionary<int, ApplicationUser> users = new()
             {
-                [user.Id] = user,
+                [user.UserId] = user,
             };
             cacheManagerMock.Setup(i => i.Users).Returns(users);
 
@@ -582,7 +581,7 @@ namespace ChasmaWebApi.Tests.Controllers
             AddGitRepositoryRequest request = new()
             {
                 RepositoryPath = "test_path",
-                UserId = user.Id,
+                UserId = user.UserId,
             };
             Task<ActionResult<AddGitRepositoryResponse>> task = Controller.AddGitRepository(request);
             AddGitRepositoryResponse response = GetResponseFromHttpAction(task, typeof(OkObjectResult));
@@ -597,18 +596,16 @@ namespace ChasmaWebApi.Tests.Controllers
         [TestMethod]
         public void TestAddGitRepositoryNominalCase()
         {
-            UserAccountModel user = new()
+            ApplicationUser user = new()
             {
-                Id = 1,
+                UserId = 1,
                 Email = TestUserEmail,
                 Name = TestUserFullName,
-                Password = TestUserPassword,
                 UserName = TestUserName,
-                Salt = [1, 2, 3]
             };
-            ConcurrentDictionary<int, UserAccountModel> users = new()
+            ConcurrentDictionary<int, ApplicationUser> users = new()
             {
-                [user.Id] = user,
+                [user.UserId] = user,
             };
             cacheManagerMock.Setup(i => i.Users).Returns(users);
 
@@ -616,7 +613,7 @@ namespace ChasmaWebApi.Tests.Controllers
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = TestRepositoryName,
-                UserId = user.Id,
+                UserId = user.UserId,
                 Owner = TestUserFullName,
                 Url = "test_url",
             };
@@ -631,7 +628,7 @@ namespace ChasmaWebApi.Tests.Controllers
             AddGitRepositoryRequest request = new()
             {
                 RepositoryPath = "test_path",
-                UserId = user.Id,
+                UserId = user.UserId,
             };
             applicationDbContext = TestDbContextFactory.CreateApplicationDbContext();
             Controller = new RepositoryConfigurationController(loggerMock.Object, controlServiceMock.Object, cacheManagerMock.Object, applicationDbContext);

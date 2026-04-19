@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 
@@ -23,7 +24,7 @@ public interface ICacheManager
     /// <summary>
     /// Gets the mapping of user identifiers to users in the system.
     /// </summary>
-    ConcurrentDictionary<int, UserAccountModel> Users { get; }
+    ConcurrentDictionary<int, ApplicationUser> Users { get; }
 
     /// <summary>
     /// Gets the mapping of GitHub pull request numbers to pull request details.

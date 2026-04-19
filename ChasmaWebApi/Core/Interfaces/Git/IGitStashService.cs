@@ -1,4 +1,5 @@
 ﻿using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using LibGit2Sharp;
 
@@ -18,7 +19,7 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="stashOptions">The stash options.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the changes were stashed successfully; false otherwise.</returns>
-        bool TryAddStash(string workingDirectory, UserAccountModel user, string stashMessage, StashModifiers stashOptions, out string errorMessage);
+        bool TryAddStash(string workingDirectory, ApplicationUser user, string stashMessage, StashModifiers stashOptions, out string errorMessage);
 
         /// <summary>
         /// Gets the stash list for the specified repository.

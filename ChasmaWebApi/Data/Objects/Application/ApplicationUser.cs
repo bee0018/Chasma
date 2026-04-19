@@ -11,6 +11,11 @@
         public int UserId { get; set; }
 
         /// <summary>
+        /// Gets or sets the user's display name.
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
         /// Gets or sets the user's username.
         /// </summary>
         public string UserName { get; set; }

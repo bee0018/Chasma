@@ -2,6 +2,7 @@
 using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
@@ -123,7 +124,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 FileName = "path",
             };
 
-            ConcurrentDictionary<int, UserAccountModel> usersMapping = new();
+            ConcurrentDictionary<int, ApplicationUser> usersMapping = new();
             cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
             ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
@@ -144,16 +145,14 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = Guid.NewGuid().ToString(),
                 UserId = userId
             };
-            UserAccountModel user = new()
+            ApplicationUser user = new()
             {
-                Id = userId,
+                UserId = userId,
                 Email = "email",
                 Name = "name",
-                Password = "password",
-                Salt = [],
                 UserName = "username"
             };
-            ConcurrentDictionary<int, UserAccountModel> usersMapping = new() { [user.Id] = user };
+            ConcurrentDictionary<int, ApplicationUser> usersMapping = new() { [user.UserId] = user };
             cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
             RepositorySummary summary = null;
             controlServiceMock.Setup(i => i.GetRepositoryStatus(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(summary);
@@ -176,16 +175,14 @@ namespace ChasmaWebApi.Tests.Controllers
                 RepositoryId = Guid.NewGuid().ToString(),
                 UserId = userId,
             };
-            UserAccountModel user = new()
+            ApplicationUser user = new()
             {
-                Id = userId,
+                UserId = userId,
                 Email = "email",
                 Name = "name",
-                Password = "password",
-                Salt = [],
                 UserName = "username"
             };
-            ConcurrentDictionary<int, UserAccountModel> usersMapping = new() { [user.Id] = user };
+            ConcurrentDictionary<int, ApplicationUser> usersMapping = new() { [user.UserId] = user };
             cacheManagerMock.Setup(i => i.Users).Returns(usersMapping);
             RepositorySummary summary = new()
             {
@@ -261,7 +258,7 @@ namespace ChasmaWebApi.Tests.Controllers
                 UserId = 1,
             };
 
-            ConcurrentDictionary<int, UserAccountModel> usersMapping = new();
+            ConcurrentDictionary<int, ApplicationUser> usersMapping = new();
             cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
             ActionResult<ApplyStagingActionResponse> actionResult = Controller.ApplyStagingAction(request);
             ApplyStagingActionResponse response = GetResponseFromHttpAction(actionResult, typeof(OkObjectResult));
@@ -282,16 +279,14 @@ namespace ChasmaWebApi.Tests.Controllers
                 FileName = "path",
                 UserId = userId,
             };
-            UserAccountModel user = new()
+            ApplicationUser user = new()
             {
-                Id = userId,
+                UserId = userId,
                 Email = "email",
                 Name = "name",
-                Password = "password",
-                Salt = [],
                 UserName = "username"
             };
-            ConcurrentDictionary<int, UserAccountModel> usersMapping = new() { [user.Id] = user };
+            ConcurrentDictionary<int, ApplicationUser> usersMapping = new() { [user.UserId] = user };
             cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
             List<RepositoryStatusElement>? statusElements = null;
             controlServiceMock.Setup(i => i.ApplyStagingAction(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns(statusElements);
@@ -314,16 +309,14 @@ namespace ChasmaWebApi.Tests.Controllers
                 FileName = "path",
                 UserId = userId,
             };
-            UserAccountModel user = new()
+            ApplicationUser user = new()
             {
-                Id = userId,
+                UserId = userId,
                 Email = "email",
                 Name = "name",
-                Password = "password",
-                Salt = [],
                 UserName = "username"
             };
-            ConcurrentDictionary<int, UserAccountModel> usersMapping = new() { [user.Id] = user };
+            ConcurrentDictionary<int, ApplicationUser> usersMapping = new() { [user.UserId] = user };
             List<RepositoryStatusElement>? statusElements = [new(), new()];
             cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
             controlServiceMock.Setup(i => i.ApplyStagingAction(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>())).Returns(statusElements);
@@ -434,7 +427,7 @@ namespace ChasmaWebApi.Tests.Controllers
             workingDirectories[request.RepositoryId] = "working_directory";
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
 
-            ConcurrentDictionary<int, UserAccountModel> usersMapping = new();
+            ConcurrentDictionary<int, ApplicationUser> usersMapping = new();
             cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
 
             ActionResult<GitCommitResponse> actionResult = Controller.CommitChanges(request);
@@ -461,17 +454,15 @@ namespace ChasmaWebApi.Tests.Controllers
             workingDirectories[request.RepositoryId] = "working_directory";
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
 
-            UserAccountModel user = new()
+            ApplicationUser user = new()
             {
-                Id = 1,
+                UserId = 1,
                 Email = "email",
                 Name = "name",
-                Password = "password",
-                Salt = [],
                 UserName = "username"
             };
-            ConcurrentDictionary<int, UserAccountModel> usersMapping = new();
-            usersMapping[user.Id] = user;
+            ConcurrentDictionary<int, ApplicationUser> usersMapping = new();
+            usersMapping[user.UserId] = user;
             cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
 
             controlServiceMock
@@ -501,17 +492,15 @@ namespace ChasmaWebApi.Tests.Controllers
             workingDirectories[request.RepositoryId] = "working_directory";
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
 
-            UserAccountModel user = new()
+            ApplicationUser user = new()
             {
-                Id = 1,
+                UserId = 1,
                 Email = "email",
                 Name = "name",
-                Password = "password",
-                Salt = [],
                 UserName = "username"
             };
-            ConcurrentDictionary<int, UserAccountModel> usersMapping = new();
-            usersMapping[user.Id] = user;
+            ConcurrentDictionary<int, ApplicationUser> usersMapping = new();
+            usersMapping[user.UserId] = user;
             cacheManagerMock.SetupGet(i => i.Users).Returns(usersMapping);
 
             controlServiceMock.Setup(i => i.CommitChanges(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()));
@@ -699,7 +688,7 @@ namespace ChasmaWebApi.Tests.Controllers
             workingDirectories[request.RepositoryId] = "working_directory";
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
-            ConcurrentDictionary<int, UserAccountModel> userAccounts = new();
+            ConcurrentDictionary<int, ApplicationUser> userAccounts = new();
             cacheManagerMock.SetupGet(i => i.Users).Returns(userAccounts);
             
             ActionResult<GitPullResponse> actionResult = Controller.PullChanges(request);
@@ -727,14 +716,12 @@ namespace ChasmaWebApi.Tests.Controllers
             };
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
-            ConcurrentDictionary<int, UserAccountModel> userAccounts = new();
-            userAccounts[request.UserId] = new UserAccountModel
+            ConcurrentDictionary<int, ApplicationUser> userAccounts = new();
+            userAccounts[request.UserId] = new ApplicationUser
             {
-                Id = 1,
+                UserId = 1,
                 Email = "email",
                 Name = "name",
-                Password = "password",
-                Salt = [],
                 UserName = "username"
             };
             cacheManagerMock.SetupGet(i => i.Users).Returns(userAccounts);
@@ -769,18 +756,16 @@ namespace ChasmaWebApi.Tests.Controllers
             };
             cacheManagerMock.SetupGet(i => i.WorkingDirectories).Returns(workingDirectories);
             
-            UserAccountModel user = new UserAccountModel
+            ApplicationUser user = new()
             {
-                Id = 1,
+                UserId = 1,
                 Email = "email",
                 Name = "name",
-                Password = "password",
-                Salt = [],
                 UserName = "username"
             };
-            ConcurrentDictionary<int, UserAccountModel> userAccounts = new()
+            ConcurrentDictionary<int, ApplicationUser> userAccounts = new()
             {
-                [user.Id] = user
+                [user.UserId] = user
             };
             cacheManagerMock.SetupGet(i => i.Users).Returns(userAccounts);
             

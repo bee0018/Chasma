@@ -3,6 +3,7 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Core.Services.Git;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Util;
@@ -263,15 +264,14 @@ namespace ChasmaWebApi.Core.Services.Simulation
                     continue;
                 }
 
-                if (!CacheManager.Users.TryGetValue(entry.UserId, out UserAccountModel user))
+                if (!CacheManager.Users.TryGetValue(entry.UserId, out ApplicationUser user))
                 {
                     // Creating a dummy user since the user associated with the merge simulation entry cannot be found.
                     user = new()
                     {
+                        UserId = entry.UserId,
                         Email = "chasma.bot@test.com",
                         Name = "chasma-bot",
-                        Password = string.Empty,
-                        Salt = [],
                         UserName = "chasma.bot"
                     };
                 }

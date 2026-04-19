@@ -133,7 +133,14 @@ namespace ChasmaWebApi.HostedServices
             List<UserAccountModel> users = await applicationDbContext.UserAccounts.ToListAsync(cancellationToken);
             foreach (UserAccountModel user in users)
             {
-                cacheManager.Users.TryAdd(user.Id, user);
+                ApplicationUser applicationUser = new()
+                {
+                    UserId = user.Id,
+                    Email = user.Email,
+                    UserName = user.UserName,
+                    Name = user.Name,
+                };
+                cacheManager.Users.TryAdd(user.Id, applicationUser);
             }
 
             logger.LogInformation("Finished updating the cache with the database data.");

@@ -110,7 +110,17 @@ namespace ChasmaWebApi.Controllers
                 return Unauthorized(response);
             }
 
-            UserAccountModel? account = await applicationDbContext.UserAccounts.FirstOrDefaultAsync(u => u.UserName == request.UserName);
+            string userName = request.UserName;
+            ApplicationUser appUser = cacheManager.Users.Values.FirstOrDefault(u => u.UserName == userName);
+            if (appUser == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid username or password.";
+                logger.LogError("Failed login attempt at {now}. Sending error response.", DateTimeOffset.Now);
+                return Unauthorized(response);
+            }
+
+            UserAccountModel? account = await applicationDbContext.UserAccounts.FirstOrDefaultAsync(u => u.UserName == appUser.UserName);
             if (account == null)
             {
                 response.IsErrorResponse = true;
@@ -236,7 +246,6 @@ namespace ChasmaWebApi.Controllers
                 await applicationDbContext.UserAccounts.AddAsync(account);
                 int rowsAffected = await applicationDbContext.SaveChangesAsync();
                 logger.LogInformation("User {username} has been added to the system successfully", account.UserName);
-                cacheManager.Users.TryAdd(account.Id, account);
                 ApplicationUserPermissions permissions = new()
                 {
                     IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
@@ -250,6 +259,7 @@ namespace ChasmaWebApi.Controllers
                     Email = account.Email,
                     Permissions = permissions,
                 };
+                cacheManager.Users.TryAdd(user.UserId, user);
                 response.User = user;
                 response.Token = GenerateAccessToken(account);
                 response.RefreshToken = account.RefreshToken;

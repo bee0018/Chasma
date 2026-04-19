@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
-using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 
@@ -18,7 +18,7 @@ public class CacheManager : ICacheManager
     public ConcurrentDictionary<string, string> WorkingDirectories { get; } = new();
 
     // <inheritdoc />
-    public ConcurrentDictionary<int, UserAccountModel> Users { get; } = new();
+    public ConcurrentDictionary<int, ApplicationUser> Users { get; } = new();
 
     // <inheritdoc />
     public ConcurrentDictionary<long, RemotePullRequest> GitHubPullRequests { get; } = new();

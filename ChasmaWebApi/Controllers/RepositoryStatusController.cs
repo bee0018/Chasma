@@ -1,6 +1,7 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Status;
@@ -84,7 +85,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             int userId = request.UserId;
-            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
                 logger.LogError("No user found in cache for user ID: {userId}. Cannot get repository status. Sending error response.", request.UserId);
                 response.IsErrorResponse = true;
@@ -150,7 +151,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             int userId = applyStagingActionRequest.UserId;
-            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
                 logger.LogError("No user found in cache for user ID: {userId}. Cannot apply staging action. Sending error response.", userId);
                 response.IsErrorResponse = true;
@@ -228,7 +229,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             int userId = request.UserId;
-            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"No user found in cache for user ID: {userId}. Cannot commit changes.";
@@ -345,7 +346,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             int userId = request.UserId;
-            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"No user found in cache for user ID: {userId}. Cannot pull changes.";
@@ -548,7 +549,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             int userId = request.UserId;
-            if (!cacheManager.Users.TryGetValue(userId, out UserAccountModel user))
+            if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
                 logger.LogError("Invalid {request}. Cannot get branch synchronization status because the user with {id} is unknown to the system. Sending error response.", requestName, userId);
                 response.IsErrorResponse = true;
