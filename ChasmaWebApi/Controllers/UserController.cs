@@ -155,6 +155,7 @@ namespace ChasmaWebApi.Controllers
                 UserName = account.UserName,
                 Email = account.Email,
                 Permissions = permissions,
+                Name = account.Name,
             };
             response.User = user;
             response.Token = GenerateAccessToken(account);
@@ -256,6 +257,7 @@ namespace ChasmaWebApi.Controllers
                 {
                     UserId = account.Id,
                     UserName = account.UserName,
+                    Name = account.Name,
                     Email = account.Email,
                     Permissions = permissions,
                 };
@@ -363,6 +365,186 @@ namespace ChasmaWebApi.Controllers
         }
 
         /// <summary>
+        /// Modifies the user account of the specified user.
+        /// Note: If the password field is left empty, the user's password will not be changed.
+        /// </summary>
+        /// <param name="request">The request to modify the user account details.</param>
+        /// <returns>The response of the modify user request.</returns>
+        [HttpPost]
+        [Route("modifyUser")]
+        public async Task<ActionResult<ModifyUserResponse>> ModifyUser([FromBody] ModifyUserRequest request)
+        {
+            ModifyUserResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Null modify user request recieved. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid modify user request received.";
+                return BadRequest(response);
+            }
+
+            int userId = request.UserId;
+            if (!cacheManager.Users.ContainsKey(userId))
+            {
+                logger.LogError("Failed to modify user. User {id} does not exist in cache. Sending error response.", userId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot modify user. User does not exist in cache.";
+                return Unauthorized(response);
+            }
+
+            UserAccountModel? user = applicationDbContext.UserAccounts.FirstOrDefault(i => i.Id == userId);
+            if (user == null)
+            {
+                logger.LogError("Failed to find user to modify. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid modify user request received.";
+                return Unauthorized(response);
+            }
+
+            string username = request.Username;
+            if (string.IsNullOrEmpty(username))
+            {
+                logger.LogError("Failed to modify user. Username is null or empty. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid modify user request received.";
+                return Ok(response);
+            }
+
+            string name = request.Name;
+            if (string.IsNullOrEmpty(name))
+            {
+                logger.LogError("Failed to modify user. Name is null or empty. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid modify user request received. Name is required.";
+                return Ok(response);
+            }
+
+            string email = request.Email;
+            if (string.IsNullOrEmpty(email))
+            {
+                logger.LogError("Failed to modify user. Email is null or empty. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid modify user request received. Email is required.";
+                return Ok(response);
+            }
+
+            bool passwordChanged;
+            string password = request.Password;
+            if (string.IsNullOrEmpty(password))
+            {
+                // The user is not changing the password, so extra validation can be skipped.
+                passwordChanged = false;
+            }
+            else if (!passwordUtility.IsPasswordValid(password))
+            {
+                // The user is attempting to change the password, but the new password does not meet complexity requirements.
+                passwordChanged = true;
+                logger.LogError("Failed to modify user. Password provided does not meet complexity requirements. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid modify user request received. Password does not meet complexity requirements.";
+                return Ok(response);
+            }
+            else
+            {
+                // The user is attempting to change the password, and the new password meets complexity requirements.
+                passwordChanged = true;
+            }
+
+            user.Name = name;
+            user.Email = email;
+            user.UserName = username;
+            user.RefreshToken = GenerateRefreshToken();
+            user.RefreshTokenExpiration = DateTime.UtcNow.AddDays(7);
+            if (passwordChanged)
+            {
+                (string hashedPassword, byte[] salt) = passwordUtility.HashPassword(password);
+                user.Password = hashedPassword;
+                user.Salt = salt;
+            }
+
+            try
+            {
+                await applicationDbContext.SaveChangesAsync();
+                ApplicationUser updatedUser = cacheManager.Users[user.Id];
+                updatedUser.UserName = user.UserName;
+                updatedUser.Email = user.Email;
+                updatedUser.Name = user.Name;
+
+                logger.LogInformation("User {username} modified successfully.", user.UserName);
+                response.User = updatedUser;
+                response.Token = GenerateAccessToken(user);
+                response.RefreshToken = user.RefreshToken;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "User {username} could not be modified. Sending error response.", user.UserName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "User could not be modified. Check server logs for more information.";
+                return Ok(response);
+            }
+        }
+
+        /// <summary>
+        /// Checks that the specified username is available in the system.
+        /// </summary>
+        /// <param name="request">The check username availability request.</param>
+        /// <returns>Response determining if the username is available.</returns>
+        [HttpPost]
+        [Route("checkUserNameAvailability")]
+        public async Task<ActionResult<CheckUsernameAvailabilityResponse>> CheckUserNameAvailability([FromBody] CheckUsernameAvailabilityRequest request)
+        {
+            CheckUsernameAvailabilityResponse response = new();
+            string requestName = nameof(CheckUsernameAvailabilityRequest);
+            if (request == null)
+            {
+                logger.LogError("Null {request} recieved. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid check username availability request received.";
+                return BadRequest(response);
+            }
+
+            string username = request.UserName;
+            if (string.IsNullOrEmpty(username))
+            {
+                logger.LogError("Sending error response for {request}. Username cannot be empty.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Username must be populated.";
+                return Ok(response);
+            }
+
+            ApplicationUser appUser = cacheManager.Users.Values.FirstOrDefault(i => i.UserName == username);
+            if (appUser != null)
+            {
+                if (appUser.UserName == username)
+                {
+                    // Want to relay to the user that the current logged-in username is available to them.
+                    response.IsAvailable = true;
+                    return Ok(response);
+                }
+
+                logger.LogError("Sending error response for {request}. User {name} is unavailable the system cache.", requestName, username);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"{username} is unavailable.";
+                return Ok(response);
+            }
+
+            UserAccountModel account = await applicationDbContext.UserAccounts.FirstOrDefaultAsync(i => i.UserName == username);
+            if (account != null)
+            {
+                logger.LogError("Sending error response for {request}. User {name} is unavailable in the database.", requestName, username);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"{username} is unavailable.";
+                return Ok(response);
+            }
+
+            response.IsAvailable = true;
+            return Ok(response);
+        }
+
+        #region Private Methods
+
+        /// <summary>
         /// Generates the access token for the user.
         /// </summary>
         /// <param name="account">The user to provide the access token for.</param>
@@ -393,5 +575,7 @@ namespace ChasmaWebApi.Controllers
         {
             return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         }
+
+        #endregion
     }
 }

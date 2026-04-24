@@ -112,7 +112,10 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                     message: `The host platform: ${RemoteHostPlatform[props.repository.hostPlatform!]} is not supported!`,
                     isError: true,
                 });
+                return;
             }
+
+            setNotification(null);
         };
     
         /**

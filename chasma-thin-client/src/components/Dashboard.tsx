@@ -12,6 +12,7 @@ import GlobalRepositoryTab from './dashboardTabs/GlobalRepositoryTab';
 import { useNavigate } from 'react-router-dom';
 import { handleApiError } from '../managers/TransactionHandlerManager';
 import LogoutModal from './modals/LogoutModal';
+import UserConfigTab from './dashboardTabs/UserConfigTab';
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -123,7 +124,10 @@ const Dashboard: React.FC = () => {
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
-                <div className="sidebar-profile">
+                <div
+                    className={`sidebar-profile ${activeTab === "userConfig" ? "active" : ""}`}
+                    onClick={() => handleTabClick("userConfig")}
+                    >
                     <span className="profile-icon">👤</span>
                     <span className="username">{user?.userName}</span>
                 </div>
@@ -211,6 +215,11 @@ const Dashboard: React.FC = () => {
                 {activeTab === "apiStatus" && (
                     <div className="panel-card">
                         <ApiStatusTab />
+                    </div>
+                )}
+                {activeTab === "userConfig" && (
+                    <div className="panel-card">
+                        <UserConfigTab />
                     </div>
                 )}
             </main>

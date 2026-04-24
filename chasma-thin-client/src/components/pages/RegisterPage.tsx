@@ -5,6 +5,7 @@ import {AddUserRequest} from "../../API/ChasmaWebApiClient";
 import {useCacheStore} from "../../managers/CacheManager";
 import {userClient} from "../../managers/ApiClientManager";
 import { handleApiError } from '../../managers/TransactionHandlerManager';
+import { validatePassword } from '../../stringHelperUtil';
 
 /**
  * Initializes a new instance of the Register Page class.
@@ -46,30 +47,6 @@ const RegisterPage: React.FC = () => {
 
     /** Flag indicating whether the passwords match. **/
     const passwordsMatch = password === confirmPassword;
-
-    /**
-     * Validates the password that has been entered by the user.
-     * @param enteredPassword The password the user has entered.
-     */
-    const validatePassword = (enteredPassword: string): void => {
-        let hasLower = false;
-        let hasUpper = false;
-        let hasDigit = false;
-        let hasSymbol = false;
-
-        for (const char of enteredPassword) {
-            if (char >= 'a' && char <= 'z') hasLower = true;
-            else if (char >= 'A' && char <= 'Z') hasUpper = true;
-            else if (char >= '0' && char <= '9') hasDigit = true;
-            else if (!/[a-zA-Z0-9]/.test(char)) hasSymbol = true;
-            if (hasLower && hasUpper && hasDigit && hasSymbol && enteredPassword.length >= 10) {
-                setPasswordIsValid(true);
-                return;
-            }
-        }
-        
-        setPasswordIsValid(false);
-    };
 
     /** Handles the request to register a new user with the system. **/
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -169,7 +146,8 @@ const RegisterPage: React.FC = () => {
                             value={password}
                             onChange={(e) => {
                                 setPassword(e.target.value);
-                                validatePassword(e.target.value);
+                                const passwordIsValid = validatePassword(e.target.value);
+                                setPasswordIsValid(passwordIsValid);
                             }}
                             required
                         />
