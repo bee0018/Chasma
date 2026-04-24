@@ -36,3 +36,11 @@ export function capitalizeFirst(str: string | undefined): string {
     str = str.replaceAll("_", " ");
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+/**
+ * Validates the password that has been entered by the user.
+ * @param enteredPassword The password the user has entered.
+ */
+export const validatePassword = (enteredPassword: string): boolean => {
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/.test(enteredPassword);
+};
