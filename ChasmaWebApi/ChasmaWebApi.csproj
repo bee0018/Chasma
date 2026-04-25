@@ -58,6 +58,17 @@
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
+	<Target Name="BuildClientToDevWwwroot" BeforeTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+		<Message Text="Building React frontend (dev wwwroot)..." Importance="high" />
+		<Exec WorkingDirectory="..\chasma-thin-client\" Command="npm run build" />
+		<RemoveDir Directories="wwwroot" />
+		<MakeDir Directories="wwwroot" />
+		<ItemGroup>
+			<SpaFiles Include="$(SpaSource)**\*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(SpaFiles)" DestinationFolder="wwwroot\%(RecursiveDir)" />
+	</Target>
+
 	<Target Name="GenerateOpenApiClients" AfterTargets="Build">
 		<Message Text="Running NSwag to generate clients..." Importance="high" />
 		<Exec Command="$(NSwagExe_Net80) run nswag.json" ConsoleToMSBuild="true" />

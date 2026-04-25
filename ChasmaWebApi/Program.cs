@@ -9,10 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 
 string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
-string logPath = Path.Combine(
-    appDataDirectory,
-    "logs",
-    "chasma-.log");
+string logPath = Path.Combine(appDataDirectory, "logs", "chasma-.log");
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()

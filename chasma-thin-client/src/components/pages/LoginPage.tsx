@@ -4,7 +4,6 @@ import ChasmaLogo from "../logos/ChasmaLogo";
 import {LoginRequest} from "../../API/ChasmaWebApiClient";
 import {useCacheStore} from "../../managers/CacheManager";
 import {userClient} from "../../managers/ApiClientManager";
-import { handleApiError } from '../../managers/TransactionHandlerManager';
 
 /**
  * Creates a new instance of the Login Page class.
