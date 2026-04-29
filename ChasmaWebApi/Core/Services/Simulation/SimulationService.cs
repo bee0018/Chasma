@@ -2,7 +2,6 @@
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Core.Services.Git;
-using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
@@ -36,6 +35,16 @@ namespace ChasmaWebApi.Core.Services.Simulation
         /// </summary>
         private readonly IGitStashService GitStashService;
 
+        /// <summary>
+        /// The Git repository service, which is responsible for repository data operations.
+        /// </summary>
+        private readonly IGitRepositoryService RepositoryService;
+
+        /// <summary>
+        /// The internal web API configurations.
+        /// </summary>
+        private readonly ChasmaWebApiConfigurations WebApiConfigurations;
+
         #region Constructor
 
         /// <summary>
@@ -44,12 +53,23 @@ namespace ChasmaWebApi.Core.Services.Simulation
         /// <param name="logger">The logging instance.</param>
         /// <param name="cacheManager">The internal cache manager.</param>
         /// <param name="gitBranchService">The branch service.</param>
-        public SimulationService(ILogger<SimulationService> logger, ICacheManager cacheManager, IGitBranchService gitBranchService, IGitStashService gitStashService)
+        /// <param name="gitStashService">The stash service.</param>
+        /// <param name="gitRepositoryService">The repository service.</param>
+        /// <param name="apiConfig">The internal API configurations.</param>
+        public SimulationService(
+            ILogger<SimulationService> logger,
+            ICacheManager cacheManager,
+            IGitBranchService gitBranchService,
+            IGitStashService gitStashService,
+            IGitRepositoryService gitRepositoryService,
+            ChasmaWebApiConfigurations apiConfig)
         {
             Logger = logger;
             CacheManager = cacheManager;
             GitBranchService = gitBranchService;
             GitStashService = gitStashService;
+            RepositoryService = gitRepositoryService;
+            WebApiConfigurations = apiConfig;
         }
 
         #endregion
@@ -230,11 +250,10 @@ namespace ChasmaWebApi.Core.Services.Simulation
             List<SimulatedMergeResult> dryRunResults = new();
             foreach (MergeSimulationEntry entry in entries)
             {
-                SimulatedMergeResult simulatedMergeResult = new();
-                string repoId = entry.RepositoryId;
                 string sourceBranchName = entry.SourceBranch;
                 string destinationBranchName = entry.DestinationBranch;
-                simulatedMergeResult.RepositoryName = CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository) ? repository.Name : repoId;
+                SimulatedMergeResult simulatedMergeResult = new();
+                string repoId = entry.RepositoryId;
                 if (!CacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
                 {
                     Logger.LogError("Invalid repository key {repoKey} provided to simulate merging {source} into {destination}.", repoId, sourceBranchName, destinationBranchName);
@@ -243,97 +262,122 @@ namespace ChasmaWebApi.Core.Services.Simulation
                     continue;
                 }
 
+                if (!CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+                {
+                    Logger.LogError("Could not find repository with key {repoKey} to simulate merging {source} into {destination}.", repoId, sourceBranchName, destinationBranchName);
+                    DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Could not find repository with key {repoId}. Add or ignore repository.");
+                    dryRunResults.Add(simulatedMergeResult);
+                    continue;
+                }
+
+                simulatedMergeResult.RepositoryName = repository.Name;
                 using Repository repo = new(workingDirectory);
-                string currentBranch = repo.Head.FriendlyName;
-                Branch sourceBranch = repo.Branches[$"origin/{sourceBranchName}"];
-                if (sourceBranch == null)
+                string mergeSimulationPath = Path.Combine(workingDirectory, "merge-sim");
+                string worktreePath = Path.Combine(mergeSimulationPath, Guid.NewGuid().ToString("N"));
+                try
                 {
-                    DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Source branch {sourceBranchName} does not exist. Merge cannot be performed.");
-                    dryRunResults.Add(simulatedMergeResult);
-                    Logger.LogError("Source branch {sourceBranchName} does not exist. Sending error response.", sourceBranchName);
-                    continue;
-                }
-
-                Commit originalCommit = repo.Head.Tip;
-                Branch destinationBranch = repo.Branches[destinationBranchName];
-                if (destinationBranch == null)
-                {
-                    DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Destination branch {destinationBranchName} does not exist. Merge cannot be performed.");
-                    dryRunResults.Add(simulatedMergeResult);
-                    Logger.LogError("Destination branch {destinationBranchName} does not exist. Sending error response.", destinationBranchName);
-                    continue;
-                }
-
-                if (!CacheManager.Users.TryGetValue(entry.UserId, out ApplicationUser user))
-                {
-                    // Creating a dummy user since the user associated with the merge simulation entry cannot be found.
-                    user = new()
+                    if (!ShellUtility.TryExecuteShellCommand($"git fetch --prune origin", workingDirectory, out string errorMessage))
                     {
-                        UserId = entry.UserId,
-                        Email = "chasma.bot@test.com",
-                        Name = "chasma-bot",
-                        UserName = "chasma.bot"
+                        Logger.LogError("Could not fetch latest changes in repository {id}.", repoId);
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, "Failed to create worktree because latest changes could not be retrieved.");
+                        dryRunResults.Add(simulatedMergeResult);
+                        continue;
+                    }
+
+                    Branch sourceBranch = repo.Branches[$"origin/{sourceBranchName}"];
+                    if (sourceBranch?.Tip == null)
+                    {
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Source branch {sourceBranchName} does not exist. Merge cannot be performed.");
+                        dryRunResults.Add(simulatedMergeResult);
+                        Logger.LogError("Source branch {sourceBranchName} does not exist. Sending error response.", sourceBranchName);
+                        continue;
+                    }
+
+                    Branch destinationBranch = repo.Branches[$"origin/{destinationBranchName}"];
+                    if (destinationBranch?.Tip == null)
+                    {
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Destination branch {destinationBranchName} does not exist. Merge cannot be performed.");
+                        dryRunResults.Add(simulatedMergeResult);
+                        Logger.LogError("Destination branch {destinationBranchName} does not exist. Sending error response.", destinationBranchName);
+                        continue;
+                    }
+
+                    if (!ShellUtility.TryExecuteShellCommand($"git worktree add --detach \"{worktreePath}\" {destinationBranch.Tip.Sha}", workingDirectory, out errorMessage))
+                    {
+                        Logger.LogError("Could not create worktree for temporary branch {branch} in repository {id}.", destinationBranchName, repoId);
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, "Failed to create worktree.");
+                        dryRunResults.Add(simulatedMergeResult);
+                        continue;
+                    }
+
+                    if (!CacheManager.Users.TryGetValue(entry.UserId, out ApplicationUser user))
+                    {
+                        // Creating a dummy user since the user associated with the merge simulation entry cannot be found.
+                        user = new()
+                        {
+                            UserId = entry.UserId,
+                            Email = "chasma.bot@test.com",
+                            Name = "chasma-bot",
+                            UserName = "chasma.bot"
+                        };
+                    }
+
+                    Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
+                    MergeOptions mergeOptions = new()
+                    {
+                        FailOnConflict = false,
+                        CommitOnSuccess = false,
+
                     };
-                }
+                    using Repository workTreeRepo = new(worktreePath);
+                    MergeResult mergeResult = workTreeRepo.Merge(sourceBranch.Tip, author, mergeOptions);
+                    string repoName = repository.Name;
+                    simulatedMergeResult.MergeStatus = GetMergeStatusMessage(mergeResult.Status, sourceBranchName, destinationBranchName, repoName);
+                    if (mergeResult.Status == MergeStatus.Conflicts)
+                    {
+                        #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type. This will not apply here because we know the files won't be null.
+                        List<string> conflictFiles = workTreeRepo.Index.Conflicts
+                            .Select(i => i.Ours?.Path ?? i.Theirs?.Path)
+                            .Where(i => !string.IsNullOrEmpty(i))
+                            .ToList();
+                        string conflictFilesString = string.Join("\n- ", conflictFiles);
+                        string conflictPhrase = workTreeRepo.Index.Conflicts.Any()
+                            ? $" due to conflicts in the following files: \n- {conflictFilesString}\n"
+                            : string.Empty;
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Merge from {sourceBranchName} to {destinationBranchName} cannot be performed{conflictPhrase} Resolve potential conflicts and try merging again.");
+                        simulatedMergeResult.ConflictingFiles = conflictFiles;
+                        Logger.LogInformation("Merge simulation of {sourceBranchName} into {destinationBranchName} for repository at {repoPath} resulted in conflicts in the following files: {files}.", sourceBranchName, destinationBranchName, workingDirectory, conflictFilesString);
+                    }
+                    else
+                    {
+                        simulatedMergeResult.IsSuccessful = true;
+                        Logger.LogInformation("Merge simulation of {sourceBranchName} into {destinationBranchName} for repository at {repoPath} was successful with merge status: {mergeStatus}.", sourceBranchName, destinationBranchName, workingDirectory, mergeResult.Status);
+                    }
 
-                string stashMessage = $"merge simulation stash for merging {sourceBranchName} into {destinationBranchName}";
-                if (!GitStashService.TryAddStash(workingDirectory, user, stashMessage, StashModifiers.Default, out string stashError))
-                {
-                    DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Failed to stash changes before simulating merge. Error: {stashError}");
                     dryRunResults.Add(simulatedMergeResult);
-                    Logger.LogError("Failed to stash changes before simulating merge of {sourceBranchName} into {destinationBranchName} for repository at {repoPath}. Error: {error}. Sending error response.", sourceBranchName, destinationBranchName, workingDirectory, stashError);
-                    repo.Reset(ResetMode.Hard, originalCommit);
-                    continue;
                 }
-
-                if (!GitBranchService.TryCheckoutBranch(workingDirectory, destinationBranchName, out string checkoutError))
+                catch (Exception e)
                 {
-                    DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Failed to checkout destination branch {destinationBranchName} before simulating merge. Error: {checkoutError}");
+                    Logger.LogError("Error when simulating merge from {source} to {destination}. Reason: {reason}", sourceBranchName, destinationBranchName, e);
+                    DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Error simulating merge from {sourceBranchName} to {destinationBranchName}. Review internal server logs for more information.");
                     dryRunResults.Add(simulatedMergeResult);
-                    Logger.LogError("Failed to checkout destination branch {destinationBranchName} before simulating merge of {sourceBranchName} into {destinationBranchName} for repository at {repoPath}. Error: {error}.", destinationBranchName, sourceBranchName, destinationBranchName, workingDirectory, checkoutError);
-                    continue;
                 }
+                finally
+                {
+                    if (!ShellUtility.TryExecuteShellCommand($"git worktree remove --force {worktreePath}", workingDirectory, out string errorMessage))
+                    {
+                        Logger.LogError("Failed to remove worktrees in repo {id} because {error}.", repoId, errorMessage);
+                    }
 
-                Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
-                MergeOptions mergeOptions = new()
-                {
-                    FailOnConflict = true,
-                    CommitOnSuccess = false,
+                    if (!ShellUtility.TryExecuteShellCommand($"git worktree prune", workingDirectory, out errorMessage))
+                    {
+                        Logger.LogError("Failed to prune worktrees in repo {id} because {error}.", repoId, errorMessage);
+                    }
 
-                };
-                MergeResult mergeResult = repo.Merge(sourceBranch, author, mergeOptions);
-                string repoName = repository != null ? repository.Name : repoId;
-                simulatedMergeResult.MergeStatus = GetMergeStatusMessage(mergeResult.Status, sourceBranchName, destinationBranchName, repoName);
-                if (mergeResult.Status == MergeStatus.Conflicts)
-                {
-                    string conflictPhrase = repo.Index.Conflicts.Any()
-                        ? $" due to conflicts in the following files: {string.Join(", ", repo.Index.Conflicts.Select(i => i.Ours.Path))}"
-                        : string.Empty;
-                    DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Merge from {sourceBranchName} to {destinationBranchName} cannot be performed{conflictPhrase}. Resolve potential conflicts and try merging again.");
-                    simulatedMergeResult.ConflictingFiles = repo.Index.Conflicts.Select(i => i.Ours.Path).ToList();
-                    Logger.LogInformation("Merge simulation of {sourceBranchName} into {destinationBranchName} for repository at {repoPath} resulted in conflicts in the following files: {files}.", sourceBranchName, destinationBranchName, workingDirectory, string.Join(", ", simulatedMergeResult.ConflictingFiles));
-                }
-                else
-                {
-                    simulatedMergeResult.IsSuccessful = true;
-                    Logger.LogInformation("Merge simulation of {sourceBranchName} into {destinationBranchName} for repository at {repoPath} was successful with merge status: {mergeStatus}.", sourceBranchName, destinationBranchName, workingDirectory, mergeResult.Status);
-                }
-
-                dryRunResults.Add(simulatedMergeResult);
-                if (!GitBranchService.TryCheckoutBranch(workingDirectory, currentBranch, out string error))
-                {
-                    Logger.LogError("Failed to checkout {source} after merge simulation. Reason: {reason}", currentBranch, error);
-                    continue;
-                }
-
-                repo.Reset(ResetMode.Hard, originalCommit);
-                if (!GitStashService.TryPopStash(workingDirectory, out string popError))
-                {
-                    Logger.LogError("Failed to pop stash after simulating merge of {sourceBranchName} into {destinationBranchName} for repository at {repoPath}. Error: {error}.", sourceBranchName, destinationBranchName, workingDirectory, popError);
-                }
-                else
-                {
-                    Logger.LogInformation("Successfully popped stash after simulating merge of {sourceBranchName} into {destinationBranchName} for repository at {repoPath}.", sourceBranchName, destinationBranchName, workingDirectory);
+                    if (Directory.Exists(mergeSimulationPath))
+                    {
+                        Directory.Delete(mergeSimulationPath, true);
+                    }
                 }
             }
 

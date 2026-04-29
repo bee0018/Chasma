@@ -5,7 +5,6 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
 using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Core.Services.Git;
-using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
@@ -275,7 +274,7 @@ namespace ChasmaWebApi.Core.Services.Control
                 else
                 {
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
-                    string token = GetApiToken(remoteHostPlatform);
+                    string token = RemoteHelper.GetApiToken(remoteHostPlatform, apiConfigurations);
                     (string branchName, int aheadCount, int behindCount, string lastUpdated) divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
                     string repoName = repository.Name;
                     string repoOwner = repository.Owner;
@@ -426,21 +425,6 @@ namespace ChasmaWebApi.Core.Services.Control
         #endregion
 
         #region Private Methods
-
-        /// <summary>
-        /// Gets the remote host platform API token based on the repository type.
-        /// </summary>
-        /// <param name="remoteHostPlatform">The repository's remote host platform.</param>
-        /// <returns>The repository remote host platform API token.</returns>
-        private string GetApiToken(RemoteHostPlatform remoteHostPlatform)
-        {
-            return remoteHostPlatform switch
-            {
-                RemoteHostPlatform.GitHub => apiConfigurations.GitHubApiToken,
-                RemoteHostPlatform.GitLab => apiConfigurations.GitLabApiToken,
-                _ => string.Empty,
-            };
-        }
 
         /// <summary>
         /// Gets the build status from the remote builds from the remote host platform.

@@ -66,5 +66,21 @@ namespace ChasmaWebApi.Util
                 return RemoteHostPlatform.Unknown;
             }
         }
+
+        /// <summary>
+        /// Gets the remote host platform API token based on the repository type.
+        /// </summary>
+        /// <param name="remoteHostPlatform">The repository's remote host platform.</param>
+        /// <param name="apiConfigurations">The API configurations.</param>
+        /// <returns>The repository remote host platform API token.</returns>
+        public static string GetApiToken(RemoteHostPlatform remoteHostPlatform, ChasmaWebApiConfigurations apiConfigurations)
+        {
+            return remoteHostPlatform switch
+            {
+                RemoteHostPlatform.GitHub => apiConfigurations.GitHubApiToken,
+                RemoteHostPlatform.GitLab => apiConfigurations.GitLabApiToken,
+                _ => string.Empty,
+            };
+        }
     }
 }
