@@ -30,21 +30,6 @@ namespace ChasmaWebApi.Core.Services.Simulation
         /// </summary>
         private readonly IGitBranchService GitBranchService;
 
-        /// <summary>
-        /// The Git stash service, which is responsible for handling Git stash operations.
-        /// </summary>
-        private readonly IGitStashService GitStashService;
-
-        /// <summary>
-        /// The Git repository service, which is responsible for repository data operations.
-        /// </summary>
-        private readonly IGitRepositoryService RepositoryService;
-
-        /// <summary>
-        /// The internal web API configurations.
-        /// </summary>
-        private readonly ChasmaWebApiConfigurations WebApiConfigurations;
-
         #region Constructor
 
         /// <summary>
@@ -53,23 +38,11 @@ namespace ChasmaWebApi.Core.Services.Simulation
         /// <param name="logger">The logging instance.</param>
         /// <param name="cacheManager">The internal cache manager.</param>
         /// <param name="gitBranchService">The branch service.</param>
-        /// <param name="gitStashService">The stash service.</param>
-        /// <param name="gitRepositoryService">The repository service.</param>
-        /// <param name="apiConfig">The internal API configurations.</param>
-        public SimulationService(
-            ILogger<SimulationService> logger,
-            ICacheManager cacheManager,
-            IGitBranchService gitBranchService,
-            IGitStashService gitStashService,
-            IGitRepositoryService gitRepositoryService,
-            ChasmaWebApiConfigurations apiConfig)
+        public SimulationService(ILogger<SimulationService> logger, ICacheManager cacheManager, IGitBranchService gitBranchService)
         {
             Logger = logger;
             CacheManager = cacheManager;
             GitBranchService = gitBranchService;
-            GitStashService = gitStashService;
-            RepositoryService = gitRepositoryService;
-            WebApiConfigurations = apiConfig;
         }
 
         #endregion
