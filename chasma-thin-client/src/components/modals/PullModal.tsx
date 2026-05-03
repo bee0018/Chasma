@@ -190,7 +190,7 @@ const PullModal: React.FC<IPullModalProps> = (props: IPullModalProps) => {
                             hidden={successfullyPulled}
                             onClick={handlePullRequestOperation}
                         >
-                            Pull
+                            {props.isSafeMode ? "Simulate " : ""}Pull
                         </button>
                         <button
                             className="modal-button secondary"

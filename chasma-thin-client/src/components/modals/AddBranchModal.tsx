@@ -216,7 +216,7 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
                                 onClick={handleAddBranchOperation}
                                 disabled={addBranchRequestSent}
                             >
-                                {props.isSafeMode ? "Simulating " : ""}Add Branch
+                                {props.isSafeMode ? "Simulate " : ""}Add Branch
                             </button>
                         }
                         <button

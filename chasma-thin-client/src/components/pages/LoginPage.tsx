@@ -75,7 +75,7 @@ const LoginPage: React.FC = () => {
             setDisableSendButton(false);
             setNotification({
                 title: "Could not log in!",
-                message: "An internal server error has occurred. Review logs.",
+                message: "Verify credentials are correct. Review server and console logs for more information.",
                 isError: true,
             });
         }
