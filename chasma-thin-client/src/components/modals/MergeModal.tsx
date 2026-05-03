@@ -51,7 +51,10 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
     const [workingBranchName, setWorkingBranchName] = useState<string | undefined>(undefined);
 
     /** Gets or sets the remote branches to merge. **/
-    const [branchesList, setBranchesList] = React.useState<string[] | undefined>([]);
+    const [branchesList, setBranchesList] = useState<string[] | undefined>([]);
+
+    /** Gets or sets the merge simulation output location. */
+    const [mergeSimOutputLocation, setMergeSimOutputLocation] = useState<string | undefined>(undefined);
 
     /** The navigation function. **/
     const navigate = useNavigate();
@@ -123,6 +126,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
         mergeEntry.destinationBranch = destinationBranch
         mergeEntry.sourceBranch = workingBranchName;
         mergeEntry.userId = props.userId;
+        mergeEntry.outputFilePath = mergeSimOutputLocation;
         request.mergeEntries = [mergeEntry];
         try {
             const response = await dryRunClient.simulateMergeBranches(request);
@@ -146,6 +150,9 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
             setSuccessfullyMerged(false);
             const errorNotification = handleApiError(e, navigate, "Error simulating merge operation!", "Error occurred while attempting to simulate merging changes. Check error logs.");
             setNotification(errorNotification);
+        }
+        finally {
+            setMergeSimOutputLocation(undefined);
         }
     }
 
@@ -253,6 +260,16 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
                                     <option key={branch} value={branch}>{branch}</option>
                                 ))}
                             </select>
+                            <br/>
+                            {props.isSafeMode &&
+                                <input
+                                    type="text"
+                                    className="modal-input-field"
+                                    placeholder="Merge Simulation Output Location (Optional)"
+                                    value={mergeSimOutputLocation}
+                                    onChange={(e) => setMergeSimOutputLocation(e.target.value)}
+                                />
+                            }
                         </div>
                     )}
                     <div className="modal-actions">
