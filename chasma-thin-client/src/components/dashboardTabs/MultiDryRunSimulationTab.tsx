@@ -127,6 +127,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
                 mergeEntry.userId = user?.userId;
                 mergeEntry.sourceBranch = entry.baseBranchToMerge;
                 mergeEntry.destinationBranch = entry.destinationBranchToMerge;
+                mergeEntry.outputFilePath = entry.outputFilePath;
                 mergeSimulationInputs.push(mergeEntry);
             }
         });

@@ -52,6 +52,9 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
     /** Gets or sets the working branch name. **/
     const [baseBranchName, setBaseBranchName] = useState<string | undefined>(undefined);
 
+    /** Gets or sets the simulation output location. */
+    const [simOutputLocation, setSimOutputLocation] = useState<string | undefined>(undefined);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -88,6 +91,7 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
             branchToAdd: branchToAdd,
             baseBranchToMerge: baseBranchName,
             destinationBranchToMerge: destinationBranch,
+            outputFilePath: simOutputLocation,
         };
         props.onUpdate(entry);
     }
@@ -172,7 +176,8 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
         branchToPull,
         branchToAdd,
         baseBranchName,
-        destinationBranch
+        destinationBranch,
+        simOutputLocation
     ]);
 
     return (
@@ -270,6 +275,13 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
                                 <option key={branch} value={branch}>{branch}</option>
                             ))}
                         </select>
+                        <input
+                            type="text"
+                            className="modal-input-field"
+                            placeholder="Merge Simulation Output Location (Optional)"
+                            value={simOutputLocation}
+                            onChange={(e) => setSimOutputLocation(e.target.value)}
+                        />
                         <span><code>{baseBranchName}</code> ➜ <code>{destinationBranch}</code></span>
                     </>
                 }
