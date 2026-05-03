@@ -4158,6 +4158,9 @@
               },
               "password": {
                 "type": "string"
+              },
+              "currentPassword": {
+                "type": "string"
               }
             }
           }

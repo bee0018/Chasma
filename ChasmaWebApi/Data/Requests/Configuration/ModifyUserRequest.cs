@@ -31,5 +31,10 @@ namespace ChasmaWebApi.Data.Requests.Configuration
         /// Gets or sets the password of the user to be modified.
         /// </summary>
         public string Password { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's current password.
+        /// </summary>
+        public string CurrentPassword { get; set; }
     }
 }

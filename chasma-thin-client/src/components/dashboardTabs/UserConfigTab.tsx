@@ -38,6 +38,9 @@ const UserConfigTab: React.FC = () => {
     /** Gets or sets the confirmed password. */
     const [confirmPassword, setConfirmedPassword] = useState<string>("");
 
+    /** Gets or sets the user's current password. */
+    const [currentUserPassword, setCurrentUserPassword] = useState<string>("");
+
     /** Gets or sets a value indicating whether the password is valid. */
     const [passwordIsValid, setPasswordIsValid] = useState(true);
 
@@ -46,6 +49,35 @@ const UserConfigTab: React.FC = () => {
 
     /** Flag indicating whether the passwords match. **/
     const passwordsMatch = password === confirmPassword;
+
+    /** Flag indicating whether the username is valid. */
+    const isUsernameValid = !!username && !usernameValidationError;
+
+    /** Flag indicating whether the user's full name is valid. */
+    const isFullNameValid = !!fullName && fullName.trim().length > 0;
+    
+    /** The whitespace-trimmed user's email. */
+    const normalizedEmail = email?.trim();
+
+    /** Flag indicating whether the email is valid. */
+    const isEmailValid = !!normalizedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
+
+    /** Flag indicating whether the password section is valid. */
+    const isPasswordSectionValid = password.length === 0 || (passwordIsValid && passwordsMatch && currentUserPassword.length > 0);
+    
+    /** The total number of validated fields. */
+    const totalFields = 4;
+
+    /** The number of valid input fields. */
+    const validCount = [
+        isUsernameValid,
+        isFullNameValid,
+        isEmailValid,
+        isPasswordSectionValid
+    ].filter(Boolean).length;
+
+    /** The number signifying the percentage of completeness of user configuration. */
+    const progressPercent = Math.round((validCount / totalFields) * 100);
 
     /**
      * Handles the input that the user makes to the password.
@@ -82,6 +114,7 @@ const UserConfigTab: React.FC = () => {
             request.email = email;
             request.name = fullName;
             request.password = password;
+            request.currentPassword = currentUserPassword;
             const response = await userClient.modifyUser(request);
             if (response.isErrorResponse) {
                 setNotification({
@@ -127,6 +160,7 @@ const UserConfigTab: React.FC = () => {
             setNotification(errorNotification);
         }
     };
+ 
     return (
         <>
             <div className="workflow-page-header">
@@ -186,6 +220,20 @@ const UserConfigTab: React.FC = () => {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)} />
             </div>
+            {!isFullNameValid && (
+                <>
+                    <div className="password-error">Full name is not valid!</div>
+                    <br/>
+                </>
+            )}
+            {isFullNameValid && (
+                <>
+                    <div className="password-success">
+                        Full name is valid!
+                    </div>
+                    <br/>
+                </>
+            )}
             <div className="form-row">
                 <label>Edit Email:</label>
                 <input
@@ -195,6 +243,20 @@ const UserConfigTab: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)} />
             </div>
+            {!isEmailValid && (
+                <>
+                    <div className="password-error">Enter a valid email!</div>
+                    <br/>
+                </>
+            )}
+            {isEmailValid && (
+                <>
+                    <div className="password-success">
+                        Email is valid!
+                    </div>
+                    <br/>
+                </>
+            )}
             <div className="form-row">
                 <label>Change Password:</label>
                 <input
@@ -207,7 +269,7 @@ const UserConfigTab: React.FC = () => {
             {!passwordIsValid && password && (
                 <>
                     <div className="password-error">
-                        <p>Password needs to meet the following requirements:</p>
+                        Password needs to meet the following requirements:
                         <ul>
                             <li>At least 1 lowercase character</li>
                             <li>At least 1 uppercase character</li>
@@ -222,7 +284,7 @@ const UserConfigTab: React.FC = () => {
             {passwordIsValid && password && (
                 <>
                     <div className="password-success">
-                        Password meets requirements!
+                        Password meets complexity requirements!
                     </div>
                     <br/>
                 </>
@@ -231,35 +293,66 @@ const UserConfigTab: React.FC = () => {
                 <>
                     <div className="form-row">
                         <label>Confirm Password:</label>
-                            <input
-                                type="password"
-                                className="input-field"
-                                placeholder="Confirm Password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmedPassword(e.target.value)} />
+                        <input
+                            type="password"
+                            className="input-field"
+                            placeholder="Confirm Password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmedPassword(e.target.value)} />
                     </div>
-                {password !== confirmPassword && (
-                <>
-                    <div className="password-error">
-                        <p>Passwords do not match!</p>
-                    </div>
-                    <br/>
-                </>
-                )}
-                {password === confirmPassword && (
+                    {password !== confirmPassword && (
                     <>
-                        <div className="password-success">
-                            Passwords match! You're good to go!
-                        </div>
+                        <div className="password-error">Passwords do not match!</div>
                         <br/>
                     </>
-                )}
+                    )}
+                    {password === confirmPassword && (
+                        <>
+                            <div className="password-success">Passwords match!</div>
+                            <br/>
+                        </>
+                    )}
+                    <div className="form-row">
+                    <label>Current Password:</label>
+                    <input
+                        type="password"
+                        className="input-field"
+                        placeholder="*************"
+                        value={currentUserPassword}
+                        onChange={(e) => setCurrentUserPassword(e.target.value)} />
+                    </div>
+                    {currentUserPassword.length <= 0 && (
+                        <>
+                            <div className="password-error">Password must be entered!</div>
+                            <br/>
+                        </>
+                    )}
+                    {currentUserPassword.length > 0 && (
+                        <>
+                            <div className="password-success">Password ready!</div>
+                            <br/>
+                        </>
+                    )}
             </>
             )}
+            <h2>
+                {progressPercent === 100
+                    ? "All Set — Save When Ready!"
+                    : "A Few Things Left to Finish"}
+            </h2>
+            <div className="progress-container">
+                <div className="progress-bar" style={{
+                    width: `${progressPercent}%`,
+                    background: progressPercent === 100
+                        ? "linear-gradient(90deg, #22c55e, #4ade80)"
+                        : "linear-gradient(90deg, #973737, #de4a4a)"}}
+                />
+            </div>
+            <br/>
             <button
                 type="submit"
                 className="submit-button"
-                disabled={!passwordsMatch || !passwordIsValid}
+                disabled={progressPercent !== 100}
                 onClick={() => handleModifyUserAction()}
             >
                 Save

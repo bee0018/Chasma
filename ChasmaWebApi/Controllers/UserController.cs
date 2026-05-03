@@ -444,9 +444,17 @@ namespace ChasmaWebApi.Controllers
                 response.ErrorMessage = "Invalid modify user request received. Password does not meet complexity requirements.";
                 return Ok(response);
             }
+            if (!passwordUtility.VerifyPassword(request.CurrentPassword, user.Salt, user.Password))
+            {
+                // The user's new password is valid, but the current password does not match.
+                logger.LogError("Failed to modify user because the current password does not match. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The current password entered is not correct.";
+                return Ok(response);
+            }
             else
             {
-                // The user is attempting to change the password, and the new password meets complexity requirements.
+                // The user is attempting to change the password, current password was correct, and the new password meets complexity requirements.
                 passwordChanged = true;
             }
 
