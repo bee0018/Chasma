@@ -39,6 +39,7 @@ export type SimulationEntry = {
     branchToAdd?: string;
     baseBranchToMerge?: string;
     destinationBranchToMerge?: string;
+    outputFilePath?: string;
 }
 
 /** The toggle options for select the global view mode. */

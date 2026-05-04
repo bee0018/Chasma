@@ -24,5 +24,10 @@
         /// Gets or sets the destination branch name.
         /// </summary>
         public string DestinationBranch { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional output file path where the results of the merge simulation should be stored.
+        /// </summary>
+        public string? OutputFilePath { get; set; }
     }
 }

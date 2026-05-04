@@ -260,7 +260,7 @@ namespace ChasmaWebApi.Core.Services.Simulation
                     Branch sourceBranch = repo.Branches[$"origin/{sourceBranchName}"];
                     if (sourceBranch?.Tip == null)
                     {
-                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Source branch {sourceBranchName} does not exist. Merge cannot be performed.");
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Source branch origin/{sourceBranchName} does not exist. Merge cannot be performed.");
                         dryRunResults.Add(simulatedMergeResult);
                         Logger.LogError("Source branch {sourceBranchName} does not exist. Sending error response.", sourceBranchName);
                         continue;
@@ -269,7 +269,7 @@ namespace ChasmaWebApi.Core.Services.Simulation
                     Branch destinationBranch = repo.Branches[$"origin/{destinationBranchName}"];
                     if (destinationBranch?.Tip == null)
                     {
-                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Destination branch {destinationBranchName} does not exist. Merge cannot be performed.");
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Destination branch origin/{destinationBranchName} does not exist. Merge cannot be performed.");
                         dryRunResults.Add(simulatedMergeResult);
                         Logger.LogError("Destination branch {destinationBranchName} does not exist. Sending error response.", destinationBranchName);
                         continue;
@@ -317,7 +317,27 @@ namespace ChasmaWebApi.Core.Services.Simulation
                         string conflictPhrase = workTreeRepo.Index.Conflicts.Any()
                             ? $" due to conflicts in the following files: \n- {conflictFilesString}\n"
                             : string.Empty;
-                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Merge from {sourceBranchName} to {destinationBranchName} cannot be performed{conflictPhrase} Resolve potential conflicts and try merging again.");
+                        string outputFilePath = entry.OutputFilePath;
+                        string logOutputPhrase = "Resolve potential conflicts and try merging again.";
+                        if (!string.IsNullOrEmpty(outputFilePath))
+                        {
+                            logOutputPhrase = $"See the merge conflict result package at {outputFilePath}.";
+                            Commit baseCommit = repo.ObjectDatabase.FindMergeBase(sourceBranch.Tip, destinationBranch.Tip);
+                            MergeConflictResultPackageEntry package = new()
+                            {
+                                OutputPath = outputFilePath,
+                                TimeStamp = DateTimeOffset.Now.ToString("yyyyMMdd_HHmmss"),
+                                WorktreePath = worktreePath,
+                                ConflictingFiles = conflictFiles,
+                                Repository = repository,
+                                SourceBranch = sourceBranch,
+                                DestinationBranch = destinationBranch,
+                                BaseCommit = baseCommit
+                            };
+                            CreateMergeConflictResultsPackage(package);
+                        }
+
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Merge from {sourceBranchName} to {destinationBranchName} cannot be performed{conflictPhrase} {logOutputPhrase}");
                         simulatedMergeResult.ConflictingFiles = conflictFiles;
                         Logger.LogInformation("Merge simulation of {sourceBranchName} into {destinationBranchName} for repository at {repoPath} resulted in conflicts in the following files: {files}.", sourceBranchName, destinationBranchName, workingDirectory, conflictFilesString);
                     }
@@ -378,6 +398,40 @@ namespace ChasmaWebApi.Core.Services.Simulation
                 MergeStatus.NonFastForward => $"{branchPhrase} Merge successful with a non-fast-forward.",
                 _ => "An unknown merge status was encountered."
             };
+        }
+
+        /// <summary>
+        /// Creates a package containing the results of a merge conflict, including conflicted files, and a README in the specified output directory.
+        /// </summary>
+        /// <param name="package">The merge conflict result package entry containing information about the merge conflict.</param>
+        private static void CreateMergeConflictResultsPackage(MergeConflictResultPackageEntry package)
+        {
+            string outputPath = package.OutputPath;
+            if (!Directory.Exists(outputPath))
+            {
+                Directory.CreateDirectory(outputPath);
+            }
+
+            
+            string mergeSimOutputFolderName = $"merge-sim_{package.Repository.Name}_{package.TimeStamp}";
+            string conflictOutputDirectory = Path.Combine(outputPath, mergeSimOutputFolderName);
+            if (!Directory.Exists(conflictOutputDirectory))
+            {
+                Directory.CreateDirectory(conflictOutputDirectory);
+            }
+
+            foreach (string conflictFile in package.ConflictingFiles)
+            {
+                string relativeFilePath = conflictFile.Replace('/', Path.DirectorySeparatorChar);
+                string sourceFilePath = Path.Combine(package.WorktreePath, relativeFilePath);
+                string extractedFileName = Path.GetFileName(sourceFilePath);
+                string destinationFilePath = Path.Combine(conflictOutputDirectory, extractedFileName);
+                File.Copy(sourceFilePath, destinationFilePath, overwrite: true);
+            }
+
+            string conflictDetectionReportHtmlPath = Path.Combine(conflictOutputDirectory, $"merge-conflict-report.html");
+            string hmtlContent = DryRunHelper.BuildMergeConflictResultPackageHtmlContent(package);
+            File.WriteAllText(conflictDetectionReportHtmlPath, hmtlContent);
         }
 
         #endregion
