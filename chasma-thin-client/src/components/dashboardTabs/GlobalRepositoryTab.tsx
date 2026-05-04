@@ -174,7 +174,7 @@ const GlobalRepositoryTab: React.FC = () => {
                                         <td>{capitalizeFirst(pr.mergeableState)}</td>
                                         <td>{pr.createdAt}</td>
                                         <td>{pr.mergedAt}</td>
-                                        <td>{pr.merged}</td>
+                                        <td>{pr.mergedAt ? "Yes" : ""}</td>
                                     </tr>
                                 ))}
                                 </tbody>

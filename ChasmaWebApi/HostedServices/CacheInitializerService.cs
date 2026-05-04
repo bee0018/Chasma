@@ -339,21 +339,6 @@ namespace ChasmaWebApi.HostedServices
                     continue;
                 }
 
-                if (pr.Merged)
-                {
-                    cacheManager.GitHubPullRequests.TryRemove(pr.Number, out _);
-                    logger.LogInformation("Stop tracking pull request {prId} because it has been merged.", pr.Number);
-                    return;
-                }
-
-                StringEnum<ItemState> closedState = new(ItemState.Closed);
-                if (pr.ActiveState == closedState.StringValue)
-                {
-                    cacheManager.GitHubPullRequests.TryRemove(pr.Number, out _);
-                    logger.LogInformation("Stop tracking pull request {prId} because it has been closed.", pr.Number);
-                    return;
-                }
-
                 cacheManager.GitHubPullRequests.AddOrUpdate(pr.Number, pr, (_, _) => pr);
             }
         }
@@ -512,20 +497,6 @@ namespace ChasmaWebApi.HostedServices
                 if (mr == null)
                 {
                     continue;
-                }
-
-                if (mr.Merged)
-                {
-                    cacheManager.GitLabMergeRequests.TryRemove(mr.Number, out _);
-                    logger.LogInformation("Stop tracking merge request {mrId} because it has been merged.", mr.Number);
-                    return;
-                }
-
-                if (mr.ActiveState == "closed")
-                {
-                    cacheManager.GitLabMergeRequests.TryRemove(mr.Number, out _);
-                    logger.LogInformation("Stop tracking merge request {mrId} because it has been closed.", mr.Number);
-                    return;
                 }
 
                 cacheManager.GitLabMergeRequests.AddOrUpdate(mr.Number, mr, (_, _) => mr);
