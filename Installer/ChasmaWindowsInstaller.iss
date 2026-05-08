@@ -64,9 +64,5 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 Filename: "sc.exe"; Parameters: "create ChasmaWebApi binPath= ""{app}\ChasmaWebApi.exe"" start= auto"; Flags: runhidden
 Filename: "sc.exe"; Parameters: "start ChasmaWebApi"; Flags: runhidden
 
-[UninstallRun]
-Filename: "sc.exe"; Parameters: "stop ChasmaWebApi"; Flags: runhidden
-Filename: "sc.exe"; Parameters: "delete ChasmaWebApi"; Flags: runhidden
-
 [UninstallDelete]
 Type: filesandordirs; Name: "{commonappdata}\Chasma"
