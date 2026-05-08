@@ -12,16 +12,16 @@ namespace ChasmaWebApi
         #region XML Elements
 
         /// <summary>
-        /// Gets or sets the Chasma web API url.
+        /// Gets or sets where the port to listens on all IPs using IPv6 [::], or IPv4 0.0.0.0 if IPv6 is not supported.
         /// </summary>
-        [XmlElement("webApiUrl")]
-        public string WebApiUrl { get; set; }
+        [XmlElement("bindingPort")]
+        public int BindingPort { get; set; }
 
         /// <summary>
-        /// Gets or sets the URL of the thin client.
+        /// Gets or sets the JWT secret key.
         /// </summary>
-        [XmlElement("thinClientUrl")]
-        public string ThinClientUrl { get; set; }
+        [XmlElement("jwtSecretKey")]
+        public string JwtSecretKey { get; set; }
 
         /// <summary>
         /// Gets or sets the GitHub API token.
@@ -59,24 +59,6 @@ namespace ChasmaWebApi
         [XmlElement("gitLabMergeRequestScanIntervalSeconds")]
         public int? GitLabMergeRequestScanIntervalSeconds { get; set; }
 
-        /// <summary>
-        /// Gets or sets the Bitbucket API token.
-        /// </summary>
-        [XmlElement("bitbucketApiToken")]
-        public string? BitbucketApiToken { get; set; }
-
-        /// <summary>
-        /// Gets or sets the JWT secret key.
-        /// </summary>
-        [XmlElement("jwtSecretKey")]
-        public string JwtSecretKey { get; set; }
-
-        /// <summary>
-        /// Gets or sets where the port to listens on all IPs using IPv6 [::], or IPv4 0.0.0.0 if IPv6 is not supported.
-        /// </summary>
-        [XmlElement("bindingPort")]
-        public int BindingPort { get; set; }
-
         #endregion
 
         /// <summary>
@@ -105,16 +87,6 @@ namespace ChasmaWebApi
         /// <param name="newConfig">The incoming configuration.</param>
         public void Update(ChasmaWebApiConfigurations newConfig)
         {
-            if (WebApiUrl != newConfig.WebApiUrl)
-            {
-                WebApiUrl = newConfig.WebApiUrl;
-            }
-
-            if (ThinClientUrl != newConfig.ThinClientUrl)
-            {
-                ThinClientUrl = newConfig.ThinClientUrl;
-            }
-
             if (GitHubApiToken != newConfig.GitHubApiToken)
             {
                 GitHubApiToken = newConfig.GitHubApiToken;
@@ -143,11 +115,6 @@ namespace ChasmaWebApi
             if (GitLabMergeRequestScanIntervalSeconds != newConfig.GitLabMergeRequestScanIntervalSeconds)
             {
                 GitLabMergeRequestScanIntervalSeconds = newConfig.GitLabMergeRequestScanIntervalSeconds;
-            }
-
-            if (BitbucketApiToken != newConfig.BitbucketApiToken)
-            {
-                BitbucketApiToken = newConfig.BitbucketApiToken;
             }
 
             if (JwtSecretKey != newConfig.JwtSecretKey)

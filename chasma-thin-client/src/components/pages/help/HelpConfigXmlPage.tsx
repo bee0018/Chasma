@@ -16,38 +16,35 @@ const HelpConfigXmlPage: React.FC = () => (
         <pre className="xml-example-block">
 {`<?xml version="1.0" encoding="utf-8"?>
 <configurations xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-\t<webApiUrl>https://localhost:44349/</webApiUrl>
-\t<thinClientUrl>http://localhost:3000</thinClientUrl>
+\t<bindingPort>6000</bindingPort>
+\t<jwtSecretKey>secretKey</jwtSecretKey>
 \t<githubApiToken>token</githubApiToken>
 \t<workflowRunReportThreshold>30</workflowRunReportThreshold>
 \t<gitHubPullRequestScanIntervalSeconds>45</gitHubPullRequestScanIntervalSeconds>
 \t<gitlabApiToken>token</gitlabApiToken>
 \t<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
 \t<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
-\t<bitbucketApiToken>token</bitbucketApiToken>
-\t<jwtSecretKey>secretKey</jwtSecretKey>
-\t<bindingPort>6000</bindingPort>
 </configurations>`}
                     </pre>
         <h3 className="help-subtitle">Attributes</h3>
         <div className="xml-attr">
             <div className="xml-attr-header">
-                <span className="xml-name">webApiUrl</span>
-                <span className="xml-type">string</span>
+                <span className="xml-name">bindingPort</span>
+                <span className="xml-type">integer</span>
                 <span className="xml-required">required</span>
             </div>
-            <p>Defines the URL where the backend Web API will be running and listening for requests.</p>
-            <p className="xml-meta">Default: <code>https://localhost:5000/</code></p>
+            <p>Defines the port where the backend API will listen to requests on.</p>
+            <p className="xml-meta">Default: 6000</p>
         </div>
 
         <div className="xml-attr">
             <div className="xml-attr-header">
-                <span className="xml-name">thinClientUrl</span>
+                <span className="xml-name">jwtSecretKey</span>
                 <span className="xml-type">string</span>
                 <span className="xml-required">required</span>
             </div>
-            <p>Defines the URL where this web application will be running and sending requests to the Web API.</p>
-            <p className="xml-meta">Default: <code>http://localhost:3000</code></p>
+            <p>Cryptographic string or key pair used to sign and verify JSON Web Tokens, ensuring the token's authenticity and integrity.</p>
+            <p className="xml-meta">Default: none</p>
         </div>
 
         <div className="xml-attr">
@@ -108,36 +105,6 @@ const HelpConfigXmlPage: React.FC = () => (
             </div>
             <p>Defines the interval in seconds at which GitLab merge requests are scanned for updates.</p>
             <p className="xml-meta">Default: <code>45</code></p>
-        </div>
-
-        <div className="xml-attr">
-            <div className="xml-attr-header">
-                <span className="xml-name">bitbucketApiToken</span>
-                <span className="xml-type">string</span>
-                <span className="xml-optional">optional</span>
-            </div>
-            <p>Defines the GitLab API token that is used for access and performing operations with the Atlassian.Net SDK development package.</p>
-            <p className="xml-meta">Default: none</p>
-        </div>
-
-        <div className="xml-attr">
-            <div className="xml-attr-header">
-                <span className="xml-name">jwtSecretKey</span>
-                <span className="xml-type">string</span>
-                <span className="xml-required">required</span>
-            </div>
-            <p>Cryptographic string or key pair used to sign and verify JSON Web Tokens, ensuring the token's authenticity and integrity.</p>
-            <p className="xml-meta">Default: none</p>
-        </div>
-
-        <div className="xml-attr">
-            <div className="xml-attr-header">
-                <span className="xml-name">bindingPort</span>
-                <span className="xml-type">integer</span>
-                <span className="xml-required">required</span>
-            </div>
-            <p>Defines the port where the backend API will listen to requests on.</p>
-            <p className="xml-meta">Default: 6000</p>
         </div>
     </section>
 );

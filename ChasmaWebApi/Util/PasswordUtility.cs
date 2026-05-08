@@ -14,16 +14,16 @@ namespace ChasmaWebApi.Util
             byte[] salt = new byte[16];
             using RandomNumberGenerator rng = RandomNumberGenerator.Create();
             rng.GetBytes(salt);
-            using Rfc2898DeriveBytes pbkdf2 = new(password, salt, 100000, HashAlgorithmName.SHA256);
-            string hash = Convert.ToBase64String(pbkdf2.GetBytes(32));
+            byte[] derivedKey = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100000, HashAlgorithmName.SHA256, 32);
+            string hash = Convert.ToBase64String(derivedKey);
             return (hash, salt);
         }
 
         // <inheritdoc/>
         public bool VerifyPassword(string password, byte[] salt, string storedHash)
         {
-            using Rfc2898DeriveBytes pbkdf2 = new(password, salt, 100000, HashAlgorithmName.SHA256);
-            string hash = Convert.ToBase64String(pbkdf2.GetBytes(32));
+            byte[] derivedKey = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100000, HashAlgorithmName.SHA256, 32);
+            string hash = Convert.ToBase64String(derivedKey);
             return hash == storedHash;
         }
 

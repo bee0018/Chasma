@@ -1,5 +1,5 @@
 {
-  "x-generator": "NSwag v14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))",
+  "x-generator": "NSwag v14.7.1.0 (NJsonSchema v11.6.1.0 (Newtonsoft.Json v13.0.0.0))",
   "openapi": "3.0.0",
   "info": {
     "title": "Chasma Git Manager API",
@@ -1595,12 +1595,6 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "webApiUrl": {
-                "type": "string"
-              },
-              "thinClientUrl": {
-                "type": "string"
-              },
               "bindingPort": {
                 "type": "integer",
                 "format": "int32"
@@ -1631,10 +1625,6 @@
               "gitLabMergeRequestScanIntervalSeconds": {
                 "type": "integer",
                 "format": "int32",
-                "nullable": true
-              },
-              "bitbucketApiToken": {
-                "type": "string",
                 "nullable": true
               }
             }
@@ -1701,10 +1691,11 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "webApiUrl": {
-                "type": "string"
+              "bindingPort": {
+                "type": "integer",
+                "format": "int32"
               },
-              "thinClientUrl": {
+              "jwtSecretKey": {
                 "type": "string"
               },
               "gitHubApiToken": {
@@ -1733,17 +1724,6 @@
                 "type": "integer",
                 "format": "int32",
                 "nullable": true
-              },
-              "bitbucketApiToken": {
-                "type": "string",
-                "nullable": true
-              },
-              "jwtSecretKey": {
-                "type": "string"
-              },
-              "bindingPort": {
-                "type": "integer",
-                "format": "int32"
               }
             }
           }
@@ -2194,25 +2174,9 @@
       "HeartbeatStatus": {
         "type": "integer",
         "description": "",
-        "x-enum-names": [
-          "Ok",
-          "Error"
-        ],
-        "x-enum-varnames": [
-          "Ok",
-          "Error"
-        ],
         "x-enumNames": [
           "Ok",
           "Error"
-        ],
-        "x-enum-descriptions": [
-          null,
-          null
-        ],
-        "x-enumDescriptions": [
-          null,
-          null
         ],
         "enum": [
           0,
@@ -2725,35 +2689,11 @@
       "RemoteHostPlatform": {
         "type": "integer",
         "description": "",
-        "x-enum-names": [
-          "Unknown",
-          "GitHub",
-          "GitLab",
-          "Bitbucket"
-        ],
-        "x-enum-varnames": [
-          "Unknown",
-          "GitHub",
-          "GitLab",
-          "Bitbucket"
-        ],
         "x-enumNames": [
           "Unknown",
           "GitHub",
           "GitLab",
           "Bitbucket"
-        ],
-        "x-enum-descriptions": [
-          null,
-          null,
-          null,
-          null
-        ],
-        "x-enumDescriptions": [
-          null,
-          null,
-          null,
-          null
         ],
         "enum": [
           0,
@@ -2973,40 +2913,6 @@
         "type": "integer",
         "description": "Calculated status of a filepath in the working directory considering the current Index and the Head.",
         "x-enumFlags": true,
-        "x-enum-names": [
-          "Unaltered",
-          "NewInIndex",
-          "ModifiedInIndex",
-          "DeletedFromIndex",
-          "RenamedInIndex",
-          "TypeChangeInIndex",
-          "NewInWorkdir",
-          "ModifiedInWorkdir",
-          "DeletedFromWorkdir",
-          "TypeChangeInWorkdir",
-          "RenamedInWorkdir",
-          "Unreadable",
-          "Ignored",
-          "Conflicted",
-          "Nonexistent"
-        ],
-        "x-enum-varnames": [
-          "Unaltered",
-          "NewInIndex",
-          "ModifiedInIndex",
-          "DeletedFromIndex",
-          "RenamedInIndex",
-          "TypeChangeInIndex",
-          "NewInWorkdir",
-          "ModifiedInWorkdir",
-          "DeletedFromWorkdir",
-          "TypeChangeInWorkdir",
-          "RenamedInWorkdir",
-          "Unreadable",
-          "Ignored",
-          "Conflicted",
-          "Nonexistent"
-        ],
         "x-enumNames": [
           "Unaltered",
           "NewInIndex",
@@ -3023,40 +2929,6 @@
           "Ignored",
           "Conflicted",
           "Nonexistent"
-        ],
-        "x-enum-descriptions": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "x-enumDescriptions": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
         ],
         "enum": [
           0,
@@ -3363,30 +3235,10 @@
       "ResetMode": {
         "type": "integer",
         "description": "Specifies the kind of operation that Reset should perform.",
-        "x-enum-names": [
-          "Soft",
-          "Mixed",
-          "Hard"
-        ],
-        "x-enum-varnames": [
-          "Soft",
-          "Mixed",
-          "Hard"
-        ],
         "x-enumNames": [
           "Soft",
           "Mixed",
           "Hard"
-        ],
-        "x-enum-descriptions": [
-          null,
-          null,
-          null
-        ],
-        "x-enumDescriptions": [
-          null,
-          null,
-          null
         ],
         "enum": [
           1,
@@ -3706,35 +3558,11 @@
         "type": "integer",
         "description": "Options controlling Stash behavior.\n            ",
         "x-enumFlags": true,
-        "x-enum-names": [
-          "Default",
-          "KeepIndex",
-          "IncludeUntracked",
-          "IncludeIgnored"
-        ],
-        "x-enum-varnames": [
-          "Default",
-          "KeepIndex",
-          "IncludeUntracked",
-          "IncludeIgnored"
-        ],
         "x-enumNames": [
           "Default",
           "KeepIndex",
           "IncludeUntracked",
           "IncludeIgnored"
-        ],
-        "x-enum-descriptions": [
-          null,
-          null,
-          null,
-          null
-        ],
-        "x-enumDescriptions": [
-          null,
-          null,
-          null,
-          null
         ],
         "enum": [
           0,
@@ -3879,25 +3707,9 @@
         "type": "integer",
         "description": "The flags which control whether the index should be reinstated.",
         "x-enumFlags": true,
-        "x-enum-names": [
-          "Default",
-          "ReinstateIndex"
-        ],
-        "x-enum-varnames": [
-          "Default",
-          "ReinstateIndex"
-        ],
         "x-enumNames": [
           "Default",
           "ReinstateIndex"
-        ],
-        "x-enum-descriptions": [
-          null,
-          null
-        ],
-        "x-enumDescriptions": [
-          null,
-          null
         ],
         "enum": [
           0,
@@ -3987,9 +3799,6 @@
             "type": "boolean"
           },
           "isUsingGitLabApi": {
-            "type": "boolean"
-          },
-          "isUsingBitbucketApi": {
             "type": "boolean"
           }
         }

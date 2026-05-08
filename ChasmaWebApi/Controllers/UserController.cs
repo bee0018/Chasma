@@ -147,7 +147,6 @@ namespace ChasmaWebApi.Controllers
             {
                 IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
                 IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken),
-                IsUsingBitbucketApi = !string.IsNullOrEmpty(apiConfiguration.BitbucketApiToken),
             };
             ApplicationUser user = new()
             {
@@ -251,7 +250,6 @@ namespace ChasmaWebApi.Controllers
                 {
                     IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
                     IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken),
-                    IsUsingBitbucketApi = !string.IsNullOrEmpty(apiConfiguration.BitbucketApiToken),
                 };
                 ApplicationUser user = new()
                 {
