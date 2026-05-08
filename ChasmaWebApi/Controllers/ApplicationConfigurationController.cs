@@ -91,8 +91,6 @@ namespace ChasmaWebApi.Controllers
 
             GetApiConfigMessage response = new()
             {
-                WebApiUrl = currentConfig.WebApiUrl,
-                ThinClientUrl = currentConfig.ThinClientUrl,
                 BindingPort = currentConfig.BindingPort,
                 JwtSecretKeyConfigured = !string.IsNullOrEmpty(currentConfig.JwtSecretKey) && currentConfig.JwtSecretKey != ChasmaWebApiConfigurations.DefaultJwtSecretKey && IsJwtSecretKeyValid(currentConfig.JwtSecretKey),
                 GitHubApiTokenConfigured = !string.IsNullOrEmpty(currentConfig.GitHubApiToken),
@@ -172,16 +170,6 @@ namespace ChasmaWebApi.Controllers
         private static List<string> GetInvalidRequiredXmlElements(ChasmaWebApiConfigurations config)
         {
             List<string> invalidElements = [];
-            if (!IsValidUrl(config.WebApiUrl))
-            {
-                invalidElements.Add("webApiUrl");
-            }
-
-            if (!IsValidUrl(config.ThinClientUrl))
-            {
-                invalidElements.Add("thinClientUrl");
-            }
-
             if (!IsJwtSecretKeyValid(config.JwtSecretKey))
             {
                 invalidElements.Add("jwtSecretKey");
@@ -193,16 +181,6 @@ namespace ChasmaWebApi.Controllers
             }
 
             return invalidElements;
-        }
-
-        /// <summary>
-        /// Detemines if the url provided is a valid HTTP or HTTPS url.
-        /// </summary>
-        /// <param name="url">The url to validate.</param>
-        /// <returns>True if valid; false otherwise.</returns>
-        private static bool IsValidUrl(string url)
-        {
-            return Uri.TryCreate(url, UriKind.Absolute, out Uri result) && (result.Scheme == Uri.UriSchemeHttp || result.Scheme == Uri.UriSchemeHttps);
         }
 
         /// <summary>

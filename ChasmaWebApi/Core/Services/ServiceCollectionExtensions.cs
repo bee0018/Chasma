@@ -63,7 +63,7 @@ namespace ChasmaWebApi.Core.Services
                 options.AddPolicy(devCorsPolicy, policy =>
                 {
                     policy
-                        .WithOrigins(webApiConfigurations.ThinClientUrl)
+                        .WithOrigins("http://localhost:3000")
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });

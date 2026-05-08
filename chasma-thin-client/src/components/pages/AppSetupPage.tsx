@@ -12,12 +12,6 @@ export const AppSetupPage: React.FC = () => {
     /** Sets the notification modal. */
     const setNotification = useCacheStore(state => state.setNotification);
 
-    /** Gets or sets the web API url. */
-    const [webApiUrl, setWebApiUrl] = useState<string | undefined>(undefined);
-
-    /** Gets or sets the thin client url. */
-    const [thinClientUrl, setThinClientUrl] = useState<string | undefined>(undefined);
-
     /** Gets or sets the JWT secret key. */
     const [jwtSecretKey, setJwtSecretKey] = useState<string | undefined>(undefined);
 
@@ -57,9 +51,6 @@ export const AppSetupPage: React.FC = () => {
     /** Gets or sets the GitLab merge request scan interval in seconds. */
     const [gitLabMergeRequestScanIntervalSeconds, setGitLabMergeRequestScanIntervalSeconds] = useState<string | undefined>(undefined);
 
-    /** Gets or sets the BitBucket API access token. */
-    const [bitbucketApiToken, setBitbucketApiToken] = useState<string | undefined>(undefined);
-
     /** Gets or sets a value indicating whether the request is ready to be sent. */
     const [disableSendButton, setDisableSendButton] = useState(false);
 
@@ -98,24 +89,6 @@ export const AppSetupPage: React.FC = () => {
 
     /** Handles the event when the user wants to handle application configuration. */
     const handleApplicationConfiguration = async () => {
-        if (isBlankOrUndefined(webApiUrl)) {
-            setNotification({
-                    title: "Could not apply configurations!",
-                    message: "'webApiUrl' must be populated!",
-                    isError: true,
-                });
-            return;
-        }
-
-        if (isBlankOrUndefined(thinClientUrl)) {
-            setNotification({
-                    title: "Could not apply configurations!",
-                    message: "'thinClientUrl' must be populated!",
-                    isError: true,
-                });
-            return;
-        }
-
         if (!jwtIsConfigured && isBlankOrUndefined(jwtSecretKey)) {
             setNotification({
                     title: "Could not apply configurations!",
@@ -161,8 +134,6 @@ export const AppSetupPage: React.FC = () => {
     const sendModifyConfigurationRequest = async () => {
         setDisableSendButton(true);
         const config = new ChasmaWebApiConfigurations();
-        config.webApiUrl = webApiUrl;
-        config.thinClientUrl = thinClientUrl;
         config.jwtSecretKey = !jwtIsConfigured ? jwtSecretKey : generateRefreshToken();
         config.bindingPort = safeNumber(bindingPort);
         config.gitHubApiToken = gitHubApiToken;
@@ -171,7 +142,6 @@ export const AppSetupPage: React.FC = () => {
         config.gitLabApiToken = gitlabApiToken;
         config.selfHostedGitLabUrl = selfHostedGitLabUrl;
         config.gitLabMergeRequestScanIntervalSeconds = safeNumber(gitLabMergeRequestScanIntervalSeconds);
-        config.bitbucketApiToken = bitbucketApiToken;
         const request = new ModifyApiConfigRequest();
         request.apiConfiguration = config;
         try {
@@ -226,8 +196,6 @@ export const AppSetupPage: React.FC = () => {
         const getApiConfig = async () => {
             try {
                 const response = await appConfigClient.getConfig();
-                setWebApiUrl(response.webApiUrl);
-                setThinClientUrl(response.thinClientUrl);
                 setJwtIsConfigured(response.jwtSecretKeyConfigured);
                 if (response.jwtSecretKeyConfigured) {
                     setJwtIsValid(true);
@@ -263,48 +231,37 @@ export const AppSetupPage: React.FC = () => {
             <h1 className="page-title">Setup Chasma System</h1>
             <h2 className="page-description">The system is not configured. After saving your changes, please restart the application for them to take effect.</h2>
             <div className="xml-attr">
-            <div className="xml-attr-header">
-                <span className="xml-name">webApiUrl</span>
-                <span className="xml-type">string</span>
-                <span className="xml-required">required</span>
-            </div>
-            <p>Defines the URL where this web application will be running and sending requests to the Web API.</p>
-            <input
-                type="text"
-                className="input-field"
-                placeholder="Web API Url"
-                value={webApiUrl}
-                onChange={(e) => setWebApiUrl(e.target.value)}
-                required />
-            </div>
-            <button
-                className="stage-button stage"
-                onClick={() => setWebApiUrl("http://localhost:5000")}
-            >
-                Apply Default
-            </button>
-
-            <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">thinClientUrl</span>
-                    <span className="xml-type">string</span>
+                    <span className="xml-name">bindingPort</span>
+                    <span className="xml-type">integer</span>
                     <span className="xml-required">required</span>
                 </div>
-                <p>Defines the URL where this web application will be running and sending requests to the Web API.</p>
+                <p>Defines the port where the backend API will listen to requests on.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="Thin Client Url"
-                    value={thinClientUrl}
-                    onChange={(e) => setThinClientUrl(e.target.value)}
+                    placeholder="Binding Port"
+                    value={bindingPort}
+                    onChange={(e) => {
+                        setBindingPort(e.target.value);
+                        validateBindingPort(e.target.value);
+                    }}
                     required />
+                <button
+                    className="stage-button stage"
+                    onClick={() => {
+                        setBindingPort("5000");
+                        setPortIsValid(true);
+                    }}
+                >
+                    Apply Default
+                </button>
+                {!portIsValid && (
+                    <div className="password-error">
+                        Port must be between 0 - 65535.
+                    </div>
+                )}
             </div>
-            <button
-                className="stage-button stage"
-                onClick={() => setThinClientUrl("http://localhost:5000")}
-            >
-                Apply Default
-            </button>
 
             <div className="xml-attr">
                 <div className="xml-attr-header">
@@ -337,39 +294,6 @@ export const AppSetupPage: React.FC = () => {
                     JWT Secret Key must be greater or equal to 16 characters.
                 </div>
             )}
-            </div>
-
-            <div className="xml-attr">
-                <div className="xml-attr-header">
-                    <span className="xml-name">bindingPort</span>
-                    <span className="xml-type">integer</span>
-                    <span className="xml-required">required</span>
-                </div>
-                <p>Defines the port where the backend API will listen to requests on.</p>
-                <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Binding Port"
-                    value={bindingPort}
-                    onChange={(e) => {
-                        setBindingPort(e.target.value);
-                        validateBindingPort(e.target.value);
-                    }}
-                    required />
-                <button
-                    className="stage-button stage"
-                    onClick={() => {
-                        setBindingPort("5000");
-                        setPortIsValid(true);
-                    }}
-                >
-                    Apply Default
-                </button>
-                {!portIsValid && (
-                    <div className="password-error">
-                        Port must be between 0 - 65535.
-                    </div>
-                )}
             </div>
 
             <div className="xml-attr">
@@ -477,20 +401,6 @@ export const AppSetupPage: React.FC = () => {
                 )}
             </div>
 
-            <div className="xml-attr">
-                <div className="xml-attr-header">
-                    <span className="xml-name">bitbucketApiToken</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
-                </div>
-                <p>Defines the GitLab API token that is used for access and performing operations with the Atlassian.Net SDK development package.</p>
-                <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Paste Bitbucket Access Token"
-                    value={bitbucketApiToken}
-                    onChange={(e) => setBitbucketApiToken(e.target.value)} />
-            </div>
             <button
                 className="submit-button"
                 type="submit"

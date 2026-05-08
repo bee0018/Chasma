@@ -608,15 +608,6 @@ const RepositoryStatusPage: React.FC = () => {
                                     Create GitLab Issue🐛
                             </div>
                         }
-                        {user?.permissions
-                            && user.permissions.isUsingBitbucketApi
-                            && selectedRepo?.hostPlatform === RemoteHostPlatform.Bitbucket &&
-                            <div
-                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
-                                onClick={() => handleTabClick("issues")}>
-                                    Create Bitbucket Task🐛
-                            </div>
-                        }
                         <div
                             className={`tab ${activeTab === "shell" ? "active" : ""}`}
                             style={{ marginTop: "20px" }}

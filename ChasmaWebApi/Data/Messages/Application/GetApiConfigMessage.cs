@@ -8,16 +8,6 @@ namespace ChasmaWebApi.Data.Messages.Application
     public class GetApiConfigMessage : ChasmaXmlBase
     {
         /// <summary>
-        /// Gets or sets the Chasma web API url.
-        /// </summary>
-        public string WebApiUrl { get; set; }
-
-        /// <summary>
-        /// Gets or sets the URL of the thin client.
-        /// </summary>
-        public string ThinClientUrl { get; set; }
-
-        /// <summary>
         /// Gets or sets where the port to listens on all IPs using IPv6 [::], or IPv4 0.0.0.0 if IPv6 is not supported.
         /// </summary>
         public int BindingPort { get; set; }
@@ -56,10 +46,5 @@ namespace ChasmaWebApi.Data.Messages.Application
         /// Gets or sets the interval in seconds at which GitLab merge requests are scanned for updates.
         /// </summary>
         public int? GitLabMergeRequestScanIntervalSeconds { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the Bitbucket API token is configured.
-        /// </summary>
-        public string? BitbucketApiToken { get; set; }
     }
 }

@@ -1,5 +1,4 @@
-﻿using ChasmaWebApi.Data.Objects;
-using ChasmaWebApi.Util;
+﻿using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Tests.Util
 {
@@ -18,8 +17,6 @@ namespace ChasmaWebApi.Tests.Util
             string configFilePath = "config.xml";
             ChasmaWebApiConfigurations? webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
             Assert.IsNotNull(webApiConfigurations);
-            Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.WebApiUrl));
-            Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.ThinClientUrl));
             Assert.IsFalse(string.IsNullOrEmpty(webApiConfigurations.GitHubApiToken));
             Assert.IsFalse(webApiConfigurations.WorkflowRunReportThreshold <= 0);
         }
@@ -34,9 +31,7 @@ namespace ChasmaWebApi.Tests.Util
             string xmlText = ChasmaXmlBase.GenerateXml(config);
             ChasmaWebApiConfigurations? generatedConfig = ChasmaXmlBase.DeserializeToObject<ChasmaWebApiConfigurations>(xmlText);
             Assert.IsNotNull(generatedConfig);
-            Assert.AreEqual(config.WebApiUrl, generatedConfig.WebApiUrl);
             Assert.AreEqual(config.GitHubApiToken, generatedConfig.GitHubApiToken);
-            Assert.AreEqual(config.ThinClientUrl, generatedConfig.ThinClientUrl);
             Assert.AreEqual(config.WorkflowRunReportThreshold, generatedConfig.WorkflowRunReportThreshold);
         }
 
@@ -48,9 +43,7 @@ namespace ChasmaWebApi.Tests.Util
         {
             return new ChasmaWebApiConfigurations()
             {
-                WebApiUrl = "webApiUrl",
                 GitHubApiToken = "token",
-                ThinClientUrl = "thinClientUrl",
                 WorkflowRunReportThreshold = 20,
             };
         }
