@@ -235,7 +235,10 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                         >
                             <ul>
                                 <li onClick={() => navigate(`/status/${contextMenu.repo.name}/${contextMenu.repo.id}`)}>
-                                    Open Status Page
+                                    Go To Repository Status Page
+                                </li>
+                                <li onClick={() => navigate(`/status/${contextMenu.repo.name}/${contextMenu.repo.id}`)}>
+                                    Open Repository Status On New Page
                                 </li>
                                 <li onClick={() => handleRepoDelete(contextMenu.repo.id)}>
                                     Delete
