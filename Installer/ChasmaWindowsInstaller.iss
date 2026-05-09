@@ -60,9 +60,5 @@ Name: "{commonappdata}\Chasma"; Permissions: users-full
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\favicon.ico"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\favicon.ico"; Tasks: desktopicon
 
-[Run]
-Filename: "sc.exe"; Parameters: "create ChasmaWebApi binPath= ""{app}\ChasmaWebApi.exe"" start= auto"; Flags: runhidden
-Filename: "sc.exe"; Parameters: "start ChasmaWebApi"; Flags: runhidden
-
 [UninstallDelete]
 Type: filesandordirs; Name: "{commonappdata}\Chasma"

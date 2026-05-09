@@ -2,7 +2,14 @@ import { NavigateFunction } from "react-router-dom";
 import { ApiException } from "../API/ChasmaWebApiClient";
 import { useCacheStore } from "./CacheManager";
 
-
+/**
+ * Handles the exception from the backend API.
+ * @param error The API exception error.
+ * @param navigate The React navigate function.
+ * @param title The error modal title.
+ * @param errorMessage The API error message.
+ * @returns 
+ */
 export function handleApiError(error: unknown, navigate: NavigateFunction, title?: string, errorMessage?: string) {
     console.error(error);
     if (error instanceof ApiException) {
