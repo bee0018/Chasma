@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+if [ ! -d "/var/lib/Chasma" ]; then
+    mkdir -p /var/lib/Chasma
+fi
+
+chmod 777 /var/lib/Chasma
+chmod +x /opt/chasma/ChasmaWebApi
+ln -sf /opt/chasma/ChasmaWebApi /usr/bin/chasma
+update-desktop-database -q
+exit 0
