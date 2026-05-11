@@ -57,6 +57,7 @@ try
             await app.StartAsync();
             LaunchStartupGate(webApiConfigurations.BindingPort);
             await app.WaitForShutdownAsync();
+            return;
         }
         catch (IOException exception)
         {
