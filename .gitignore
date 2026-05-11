@@ -15,3 +15,5 @@ ChasmaWebApi/ChasmaWebApi.csproj.user
 Installer/Artifacts/
 ChasmaWebApi/wwwroot/
 Installer/publish/
+Installer/Windows/publish/
+Installer/Linux/linux-publish/
