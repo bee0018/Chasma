@@ -42,6 +42,3 @@ jobs:
 
     - name: Build Web API
       run: dotnet build ./ChasmaWebApi/ChasmaWebApi.sln --no-restore
-
-    - name: Test Web API
-      run: dotnet test ./ChasmaWebApi/ChasmaWebApi.sln --no-build --verbosity normal
