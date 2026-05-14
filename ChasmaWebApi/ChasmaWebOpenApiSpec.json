@@ -707,7 +707,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddGitRepositoryRequest"
+                "$ref": "#/components/schemas/AddGitRepositoriesRequest"
               }
             }
           },
@@ -720,7 +720,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AddGitRepositoryResponse"
+                  "$ref": "#/components/schemas/AddGitRepositoriesResponse"
                 }
               }
             }
@@ -2745,7 +2745,7 @@
           }
         ]
       },
-      "AddGitRepositoryResponse": {
+      "AddGitRepositoriesResponse": {
         "allOf": [
           {
             "$ref": "#/components/schemas/ResponseBase"
@@ -2754,14 +2754,38 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "repository": {
-                "$ref": "#/components/schemas/LocalGitRepository"
+              "repositories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LocalGitRepository"
+                }
+              },
+              "additionResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepositoryAdditionResult"
+                }
               }
             }
           }
         ]
       },
-      "AddGitRepositoryRequest": {
+      "RepositoryAdditionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "repositoryName": {
+            "type": "string"
+          }
+        }
+      },
+      "AddGitRepositoriesRequest": {
         "allOf": [
           {
             "$ref": "#/components/schemas/ChasmaXmlBase"
@@ -2774,8 +2798,11 @@
                 "type": "integer",
                 "format": "int32"
               },
-              "repositoryPath": {
-                "type": "string"
+              "repositoryPaths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }

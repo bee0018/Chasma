@@ -192,94 +192,134 @@ namespace ChasmaWebApi.Core.Services.Index
         }
 
         // <inheritdoc/>
-        public bool TryAddGitRepository(string repoPath, int userId, out LocalGitRepository localGitRepository, out string errorMessage)
+        public List<RepositoryAdditionResult> AddGitRepositories(IEnumerable<string> repoPaths, int userId, out List<NewRepository> newRepositories)
         {
-            localGitRepository = null;
-            errorMessage = string.Empty;
-            if (!Directory.Exists(repoPath))
+            List<RepositoryAdditionResult> additionResults = [];
+            newRepositories = [];
+            foreach (string repoPath in repoPaths)
             {
-                errorMessage = $"The provided path: {repoPath} does not exist.";
-                Logger.LogError(errorMessage);
-                return false;
-            }
-
-            HashSet<string> workingDirectories;
-            lock (lockObject)
-            {
-                workingDirectories = CacheManager.WorkingDirectories.Values.ToHashSet();
-            }
-
-            if (workingDirectories.Contains(repoPath))
-            {
-                errorMessage = $"The provided path {repoPath} already exists in the cache.";
-                Logger.LogWarning("Working directory {directory} already exists in cache, so it will be ignored.", repoPath);
-                return false;
-            }
-
-            if (!Repository.IsValid(repoPath))
-            {
-                errorMessage = $"The provided path: {repoPath} is not a valid git repository.";
-                Logger.LogError(errorMessage);
-                return false;
-            }
-
-            string? repositoryName = GetRepositoryName(repoPath);
-            if (string.IsNullOrWhiteSpace(repositoryName))
-            {
-                errorMessage = $"Could not get repository name for the file directory {repoPath}.";
-                Logger.LogError("Could get repository name for the file directory {path} so it cannot be added to cache. Sending error response.", repoPath);
-                return false;
-            }
-
-            string pushUrl;
-            try
-            {
-                using Repository repository = new(repoPath);
-                LibGit2Sharp.Remote? remoteRepository = repository.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
-                if (remoteRepository == null)
+                RepositoryAdditionResult result = new();
+                if (!Directory.Exists(repoPath))
                 {
-                    errorMessage = $"Failed to find remote repository in {repoPath}.";
-                    Logger.LogError("Failed to find remote repository in {repoPath}, so it cannot be added to cache.", repoPath);
-                    return false;
+                    Logger.LogError("Cannot add repository at path {path} because the path doesn't exist. Skipping addition or repo", repoPath);
+                    result.RepositoryName = Path.GetFileName(repoPath);
+                    result.IsSuccessful = false;
+                    result.Reason = $"The provided path {repoPath} does not exist and could not be created.";
+                    additionResults.Add(result);
+                    continue;
                 }
 
-                pushUrl = remoteRepository.PushUrl;
-                if (string.IsNullOrEmpty(pushUrl))
+                HashSet<string> workingDirectories;
+                lock (lockObject)
                 {
-                    errorMessage = $"Failed to find push url for {repositoryName}.";
-                    Logger.LogError("Failed to find push url for {repoName}, so it cannot be added to cache.", repositoryName);
-                    return false;
+                    workingDirectories = CacheManager.WorkingDirectories.Values.ToHashSet();
                 }
-            }
-            catch (Exception e)
-            {
-                errorMessage = $"An error occurred while accessing the git repository at {repoPath}: {e.Message}";
-                Logger.LogError("An error occurred while accessing the git repository at {repoPath}: {error}. Sending error response.", repoPath, e);
-                return false;
+
+                if (workingDirectories.Contains(repoPath))
+                {
+                    Logger.LogError("Working directory {directory} already exists in cache, so it will be ignored when adding repository to the system.", repoPath);
+                    result.RepositoryName = Path.GetFileName(repoPath);
+                    result.IsSuccessful = false;
+                    result.Reason = $"The provided path {repoPath} already exists in the cache.";
+                    additionResults.Add(result);
+                    continue;
+                }
+
+                if (!Repository.IsValid(repoPath))
+                {
+                    Logger.LogError("The provided path: {repoPath} is not a valid git repository when trying to add repository.", repoPath);
+                    result.RepositoryName = Path.GetFileName(repoPath);
+                    result.IsSuccessful = false;
+                    result.Reason = $"The provided path: {repoPath} is not a valid git repository.";
+                    additionResults.Add(result);
+                    continue;
+                }
+
+                string? repositoryName = GetRepositoryName(repoPath);
+                if (string.IsNullOrWhiteSpace(repositoryName))
+                {
+                    Logger.LogError("Could get repository name for the file directory {path} so it cannot be added to cache when trying to add repository.", repoPath);
+                    result.RepositoryName = Path.GetFileName(repoPath);
+                    result.IsSuccessful = false;
+                    result.Reason = $"Could not get repository name for the file directory {repoPath}.";
+                    additionResults.Add(result);
+                    continue;
+                }
+
+                string pushUrl;
+                try
+                {
+                    using Repository repository = new(repoPath);
+                    LibGit2Sharp.Remote? remoteRepository = repository.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
+                    if (remoteRepository == null)
+                    {
+                        Logger.LogError("Failed to find remote repository in {repoPath}, so it cannot be added to cache when trying to add repository.", repoPath);
+                        result.RepositoryName = repositoryName;
+                        result.IsSuccessful = false;
+                        result.Reason = $"Failed to find remote repository in {repoPath}.";
+                        additionResults.Add(result);
+                        continue;
+                    }
+
+                    pushUrl = remoteRepository.PushUrl;
+                    if (string.IsNullOrEmpty(pushUrl))
+                    {
+                        Logger.LogError("Failed to find push url for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
+                        result.RepositoryName = repositoryName;
+                        result.IsSuccessful = false;
+                        result.Reason = $"Failed to find push url for {repositoryName}.";
+                        additionResults.Add(result);
+                        continue;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError("An error occurred while accessing the git repository at {repoPath}: {error}.", repoPath, e);
+                    result.RepositoryName = repositoryName;
+                    result.IsSuccessful = false;
+                    result.Reason = $"An error occurred while accessing the git repository at {repoPath}: {e.Message}";
+                    additionResults.Add(result);
+                    continue;
+                }
+
+                string? repositoryOwner = GetRepositoryOwner(pushUrl);
+                if (string.IsNullOrEmpty(repositoryOwner))
+                {
+                    Logger.LogError("Failed to find repository owner for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
+                    result.RepositoryName = repositoryName;
+                    result.IsSuccessful = false;
+                    result.Reason = $"Failed to find repository owner for {repositoryName}.";
+                    additionResults.Add(result);
+                    continue;
+                }
+
+                RemoteHostPlatform platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
+                string repoCacheKey = Guid.NewGuid().ToString();
+                LocalGitRepository localGitRepository = new()
+                {
+                    Id = repoCacheKey,
+                    UserId = userId,
+                    Name = repositoryName,
+                    Owner = repositoryOwner,
+                    Url = pushUrl,
+                    HostPlatform = platform,
+                };
+                CacheManager.WorkingDirectories.TryAdd(localGitRepository.Id, repoPath);
+                CacheManager.Repositories.TryAdd(localGitRepository.Id, localGitRepository);
+
+                result.RepositoryName = repositoryName;
+                result.IsSuccessful = true;
+                additionResults.Add(result);
+
+                NewRepository newRepo = new()
+                {
+                    Repository = localGitRepository,
+                    WorkingDirectory = repoPath,
+                };
+                newRepositories.Add(newRepo);
             }
 
-            string? repositoryOwner = GetRepositoryOwner(pushUrl);
-            if (string.IsNullOrEmpty(repositoryOwner))
-            {
-                errorMessage = $"Failed to find repository owner for {repositoryName}.";
-                Logger.LogError("Failed to find repository owner for {repoName}, so it cannot be added to cache.", repositoryName);
-                return false;
-            }
-
-            RemoteHostPlatform platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
-            string repoCacheKey = Guid.NewGuid().ToString();
-            localGitRepository = new()
-            {
-                Id = repoCacheKey,
-                UserId = userId,
-                Name = repositoryName,
-                Owner = repositoryOwner,
-                Url = pushUrl,
-                HostPlatform = platform,
-            };
-            CacheManager.WorkingDirectories.TryAdd(localGitRepository.Id, repoPath);
-            CacheManager.Repositories.TryAdd(localGitRepository.Id, localGitRepository);
-            return true;
+            return additionResults;
         }
 
         #region Private Methods

@@ -3,9 +3,9 @@
 namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
-    /// Class representing a request to add a Git repository from the local filesystem.
+    /// Class representing a request to add multiple Git repositories from the local filesystem.
     /// </summary>
-    public class AddGitRepositoryRequest : ChasmaXmlBase
+    public class AddGitRepositoriesRequest : ChasmaXmlBase
     {
         /// <summary>
         /// Gets or sets the unique identifier for the user.
@@ -13,8 +13,8 @@ namespace ChasmaWebApi.Data.Requests.Configuration
         public int UserId { get; set; }
 
         /// <summary>
-        /// Gets or sets the file system path to the Git repository.
+        /// Gets or sets the list of file system paths to the Git repositories to be added.
         /// </summary>
-        public string RepositoryPath { get; set; }
+        public List<string> RepositoryPaths { get; set; } = new();
     }
 }

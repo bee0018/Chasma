@@ -4,15 +4,12 @@ import ApiStatusTab from "./dashboardTabs/ApiStatusTab";
 import IncludeRepositoryModal from "./modals/IncludeRepositoryModal";
 import BatchOperationsTab from "./dashboardTabs/BatchOperationsTab";
 import {useCacheStore} from "../managers/CacheManager";
-import {AddGitRepositoryRequest} from "../API/ChasmaWebApiClient";
-import AddRepositoryModal from "./modals/AddRepositoryModal";
-import {configClient} from "../managers/ApiClientManager";
 import MultiDryRunSimulationTab from "./dashboardTabs/MultiDryRunSimulationTab";
 import GlobalRepositoryTab from './dashboardTabs/GlobalRepositoryTab';
 import { useNavigate } from 'react-router-dom';
-import { handleApiError } from '../managers/TransactionHandlerManager';
 import LogoutModal from './modals/LogoutModal';
 import UserConfigTab from './dashboardTabs/UserConfigTab';
+import RepositoryAdditionsTab from './dashboardTabs/RepositoryAdditionsTab';
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -25,14 +22,8 @@ const Dashboard: React.FC = () => {
     /** Gets or sets a value indicating whether the user is including repositories. **/
     const [isIncludingRepos, setIsIncludingRepos] = useState(false);
 
-    /** Gets or sets a value indicating whether the user is adding a repository. **/
-    const [isAddingRepo, setIsAddingRepo] = useState(false);
-
     /** Gets or sets the repository version. Serves as a trigger to update child components. **/
     const [reposVersion, setReposVersion] = useState(0);
-
-    /** Gets or sets a value indicating whether the request is ready to be sent. */
-    const [disableSendButton, setDisableSendButton] = useState(false);
 
     /** Gets or sets a value indicating whether the user is logging out. **/
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -54,60 +45,6 @@ const Dashboard: React.FC = () => {
     /** Handles the event when the user selects a tab. **/
     const handleTabClick = (tab: string) => {
         setActiveTab(tab);
-    };
-
-    /**
-     * Handles the event when the user attempts to add a repository to the application.
-     * @param repoPath The repository path.
-     */
-    const handleAddLocalRepository = async (repoPath: string) => {
-        if (disableSendButton) return;
-        
-        setDisableSendButton(true);
-        setNotification({
-            title: "Adding local git repository from logical drive...",
-            message: "Please wait while your request is being processed. May take a while depending on how large your filesystem is.",
-            isError: false,
-            loading: true
-        });
-        const request = new AddGitRepositoryRequest();
-        request.userId = user?.userId;
-        request.repositoryPath = repoPath;
-        try {
-            const response = await configClient.addGitRepository(request);
-            if (response.isErrorResponse) {
-                setNotification({
-                    title: "Failed to add repository!",
-                    message: response.errorMessage,
-                    isError: true,
-                });
-                setDisableSendButton(false);
-                return;
-            }
-
-            if (!response.repository) {
-                setNotification({
-                    title: "Failed to add repository!",
-                    message: "Received empty repository from the internal server.",
-                    isError: true,
-                });
-                setDisableSendButton(false);
-                return;
-            }
-
-            setNotification({
-                title: "Successfully added repository!",
-                message: `Close the modal to start managing ${response.repository.name}!`,
-                isError: false,
-            });
-            setDisableSendButton(false);
-            useCacheStore.getState().addLocalGitRepository(response.repository);
-            handleReposUpdated();
-        } catch (error) {
-            setDisableSendButton(false);
-            const errorNotification = handleApiError(error, navigate, "Failed to add repository!", "Review console logs for more information.");
-            setNotification(errorNotification);
-        }
     };
 
     /** Logs the user out of the system. */
@@ -150,10 +87,10 @@ const Dashboard: React.FC = () => {
                     🧪 Simulate
                 </div>
                 <div
-                    className="tab"
-                    onClick={() => setIsAddingRepo(true)}
+                    className={`tab ${activeTab === "addRepos" ? "active" : ""}`}
+                    onClick={() => handleTabClick("addRepos")}
                 >
-                    ➕ Add Repo
+                    ➕ Add Repositories
                 </div>
                 <div
                     className="tab"
@@ -222,17 +159,17 @@ const Dashboard: React.FC = () => {
                         <UserConfigTab />
                     </div>
                 )}
+                {activeTab === "addRepos" && (
+                    <div className="panel-card">
+                        <RepositoryAdditionsTab />
+                    </div>
+                )}
             </main>
 
             {isIncludingRepos && (
                 <IncludeRepositoryModal
                     onClose={() => setIsIncludingRepos(false)}
                     onRepositoriesUpdated={handleReposUpdated} />
-            )}
-            {isAddingRepo && (
-                <AddRepositoryModal
-                    onClose={() => setIsAddingRepo(false)}
-                    onRepositorySelected={handleAddLocalRepository} />
             )}
             {isLoggingOut && (
                 <LogoutModal

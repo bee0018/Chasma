@@ -137,9 +137,9 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public bool TryAddSpecificGitRepository(string repoPath, int userId, out LocalGitRepository localGitRepository, out string errorMessage)
+        public List<RepositoryAdditionResult> AddGitRepositories(IEnumerable<string> repoPaths, int userId, out List<NewRepository> newRepositories)
         {
-            return repositoryIndexService.TryAddGitRepository(repoPath, userId, out localGitRepository, out errorMessage);
+            return repositoryIndexService.AddGitRepositories(repoPaths, userId, out newRepositories);
         }
 
         // <inheritdoc />
