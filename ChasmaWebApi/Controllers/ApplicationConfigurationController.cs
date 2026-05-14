@@ -16,11 +16,6 @@ namespace ChasmaWebApi.Controllers
     public class ApplicationConfigurationController : ControllerBase
     {
         /// <summary>
-        /// The internal web API configurations.
-        /// </summary>
-        private readonly ChasmaWebApiConfigurations apiConfiguration;
-
-        /// <summary>
         /// The logger instance for logging diagnostic and operational information within the class.
         /// </summary>
         private readonly ILogger<ApplicationConfigurationController> logger;
@@ -38,13 +33,11 @@ namespace ChasmaWebApi.Controllers
         /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationConfigurationController"/> class with the specified API configurations.
         /// </summary>
-        /// <param name="config">The internal API configuration.</param>
         /// <param name="log">The logger instance.</param>
         /// <param name="controlSerivce">The application control service instance.</param>
         /// <param name="env">The web host environment instance.</param>
-        public ApplicationConfigurationController(ChasmaWebApiConfigurations config, ILogger<ApplicationConfigurationController> log, IApplicationControlService controlSerivce, IWebHostEnvironment env)
+        public ApplicationConfigurationController(ILogger<ApplicationConfigurationController> log, IApplicationControlService controlSerivce, IWebHostEnvironment env)
         {
-            apiConfiguration = config;
             logger = log;
             applicationControlService = controlSerivce;
             webHostEnvironment = env;
@@ -59,6 +52,7 @@ namespace ChasmaWebApi.Controllers
         [AllowAnonymous]
         public ActionResult<GetSystemReadyMessage> GetSystemReady()
         {
+            ChasmaWebApiConfigurations apiConfiguration = ChasmaWebApiConfigurations.GetApiConfig();
             List<string> invalidElements = GetInvalidRequiredXmlElements(apiConfiguration);
             GetSystemReadyMessage response = new()
             {
@@ -131,15 +125,6 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            List<string> invalidElements = GetInvalidRequiredXmlElements(newConfig);
-            if (invalidElements.Count > 0)
-            {
-                logger.LogError("Received an invalid ApiConfiguration in the {request}. Invalid elements: {invalidElements}. Sending error response.", requestName, string.Join(", ", invalidElements));
-                response.IsErrorResponse = true;
-                response.ErrorMessage = $"Invalid configuration elements: {string.Join(", ", invalidElements)}";
-                return Ok(response);
-            }
-
             bool isDevelopment = webHostEnvironment.IsDevelopment();
             string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
             string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
@@ -155,6 +140,27 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
+            string currentJwtSecretKey = currentConfig.JwtSecretKey;
+            string newJwtSecretKey = newConfig.JwtSecretKey;
+            if (!string.IsNullOrEmpty(currentJwtSecretKey) && IsJwtSecretKeyValid(currentJwtSecretKey) && string.IsNullOrEmpty(newJwtSecretKey))
+            {
+                // Current JWT is valid and the user is not changing it, so we will keep the current JWT secret key to avoid accidentally invalidating it.
+                newConfig.JwtSecretKey = currentJwtSecretKey;
+            }
+            else
+            {
+                // If the new JWT secret key is not valid, we will send an error response because the user input an invalid key.
+                List<string> invalidElements = GetInvalidRequiredXmlElements(newConfig);
+                if (invalidElements.Count > 0)
+                {
+                    logger.LogError("Received an invalid ApiConfiguration in the {request}. Invalid elements: {invalidElements}. Sending error response.", requestName, string.Join(", ", invalidElements));
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = $"Invalid configuration elements: {string.Join(", ", invalidElements)}";
+                    return Ok(response);
+                }
+            }
+
+            response.StaticConfigurationsChanged = currentConfig.BindingPort != newConfig.BindingPort || currentConfig.JwtSecretKey != newConfig.JwtSecretKey;
             applicationControlService.UpdateApiConfiguration(configFilePath, newConfig, currentConfig);
             logger.LogInformation("Successfully processed {request}. Sending success response.", requestName);
             return Ok(response);

@@ -22,11 +22,6 @@ namespace ChasmaWebApi.Controllers
         private readonly ILogger<DryRunController> logger;
 
         /// <summary>
-        /// The internal cache manager.
-        /// </summary>
-        private readonly ICacheManager cacheManager;
-
-        /// <summary>
         /// The internal API application control service for managing application-level operations.
         /// </summary>
         private readonly IApplicationControlService applicationControlService;
@@ -35,12 +30,10 @@ namespace ChasmaWebApi.Controllers
         /// Initializes a new instance of the <see cref="DryRunController"/> class.
         /// </summary>
         /// <param name="log">The internal logging service.</param>
-        /// <param name="apiCacheManager">The API cache manager.</param>
         /// <param name="controlService">The application control orchestrator.</param>
-        public DryRunController(ILogger<DryRunController> log, ICacheManager apiCacheManager, IApplicationControlService controlService)
+        public DryRunController(ILogger<DryRunController> log, IApplicationControlService controlService)
         {
             logger = log;
-            cacheManager = apiCacheManager;
             applicationControlService = controlService;
         }
 

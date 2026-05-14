@@ -181,7 +181,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div
                     className="tab"
-                    onClick={() => window.open("setup", "_blank")}>
+                    onClick={() => navigate('/setup')}>
                     ⚙️ Configure
                 </div>
                 <div

@@ -1638,7 +1638,12 @@
           },
           {
             "type": "object",
-            "additionalProperties": false
+            "additionalProperties": false,
+            "properties": {
+              "staticConfigurationsChanged": {
+                "type": "boolean"
+              }
+            }
           }
         ]
       },

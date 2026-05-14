@@ -67,11 +67,6 @@ namespace ChasmaWebApi.Core.Services.Control
         private readonly ILogger<ApplicationControlService> logger;
 
         /// <summary>
-        /// The API configurations.
-        /// </summary>
-        private readonly ChasmaWebApiConfigurations apiConfigurations;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationControlService"/> class with the specified dependencies.
         /// </summary>
         /// <param name="repoIndexService">The repository index service.</param>
@@ -83,7 +78,6 @@ namespace ChasmaWebApi.Core.Services.Control
         /// <param name="simService">The git operation simulation service.</param>
         /// <param name="gitlabService">The GitLab remote repository management service.</param>
         /// <param name="log">The internal logging instance.</param>
-        /// <param name="config">The internal API configurations.</param>
         public ApplicationControlService(
             IRepositoryIndexService repoIndexService,
             IGitRepositoryService gitRepoService,
@@ -93,8 +87,7 @@ namespace ChasmaWebApi.Core.Services.Control
             IGitHubService gitHubRemoteService,
             ISimulationService simService,
             IGitLabService gitlabService,
-            ILogger<ApplicationControlService> log,
-            ChasmaWebApiConfigurations config)
+            ILogger<ApplicationControlService> log)
         {
             repositoryIndexService = repoIndexService;
             gitRepositoryService = gitRepoService;
@@ -105,7 +98,6 @@ namespace ChasmaWebApi.Core.Services.Control
             simulationService = simService;
             gitLabService = gitlabService;
             logger = log;
-            apiConfigurations = config;
         }
 
         #region Infrastructure
@@ -274,6 +266,7 @@ namespace ChasmaWebApi.Core.Services.Control
                 else
                 {
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
+                    ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
                     string token = RemoteHelper.GetApiToken(remoteHostPlatform, apiConfigurations);
                     (string branchName, int aheadCount, int behindCount, string lastUpdated) divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
                     string repoName = repository.Name;
@@ -441,6 +434,7 @@ namespace ChasmaWebApi.Core.Services.Control
                 buildsExistForBranch = true;
             }
 
+            ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             WorkflowRunResult mostRecentBuild = orderedBuilds.Take(apiConfigurations.WorkflowRunReportThreshold ?? 30).FirstOrDefault(i => i.BranchName == branchName);
             if (buildsExistForBranch && mostRecentBuild == null)
             {

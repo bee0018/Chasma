@@ -136,3 +136,23 @@
     outline: 2px solid #22d3ee;
     outline-offset: 2px;
 }
+
+.continue-button {
+    background: #1f2937;
+    color: #22d3ee;
+    border: 1px solid #22d3ee;
+    border-radius: 16px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.continue-button:hover {
+    background: #334155;
+}

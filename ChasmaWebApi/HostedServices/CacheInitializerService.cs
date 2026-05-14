@@ -19,8 +19,7 @@ namespace ChasmaWebApi.HostedServices
     /// <param name="logger">The internal logging interface.</param>
     /// <param name="cacheManager">The application's cache manager.</param>
     /// <param name="serviceScopeFactory">The service scope factory used for getting required services.</param>
-    /// <param name="config">The application configurations.</param>
-    public class CacheInitializerService(ILogger<CacheInitializerService> logger, ICacheManager cacheManager, IServiceScopeFactory serviceScopeFactory, ChasmaWebApiConfigurations config) : IHostedService
+    public class CacheInitializerService(ILogger<CacheInitializerService> logger, ICacheManager cacheManager, IServiceScopeFactory serviceScopeFactory) : IHostedService
     {
         /// <summary>
         /// The internal logging interface.
@@ -38,9 +37,9 @@ namespace ChasmaWebApi.HostedServices
         private readonly IServiceScopeFactory serviceScopeFactory = serviceScopeFactory;
 
         /// <summary>
-        /// The web API application configurations.
+        /// The initial web API application configurations.
         /// </summary>
-        private readonly ChasmaWebApiConfigurations configurations = config;
+        private ChasmaWebApiConfigurations InitialApiConfiguration { get; set; }
 
         /// <summary>
         /// The GitHub API client.
@@ -156,8 +155,9 @@ namespace ChasmaWebApi.HostedServices
         /// <returns>Task that initializes the cache with data from network clients.</returns>
         private async Task InitializeNetworkCacheAsync(CancellationToken cancellationToken)
         {
+            InitialApiConfiguration = ChasmaWebApiConfigurations.GetApiConfig();
             logger.LogInformation("Populating the network cache with data from Git clients.");
-            if (string.IsNullOrEmpty(configurations.GitHubApiToken))
+            if (string.IsNullOrEmpty(InitialApiConfiguration.GitHubApiToken))
             {
                 logger.LogWarning("GitHub API token is not provided. Skipping GitHub network cache initialization.");
             }
@@ -166,7 +166,7 @@ namespace ChasmaWebApi.HostedServices
                 await PopulateGitHubPullRequestCacheAsync(cancellationToken);
             }
 
-            if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+            if (string.IsNullOrEmpty(InitialApiConfiguration.GitLabApiToken))
             {
                 logger.LogWarning("GitLab API token is not provided. Skipping GitHub network cache initialization.");
             }
@@ -206,7 +206,7 @@ namespace ChasmaWebApi.HostedServices
         /// <returns>Task containing the result of the API operation.</returns>
         private async Task<List<RemotePullRequest>?> GetGitHubPullRequestAsync(string owner, string repoName)
         {
-            if (string.IsNullOrEmpty(configurations.GitHubApiToken))
+            if (string.IsNullOrEmpty(InitialApiConfiguration.GitHubApiToken))
             {
                 logger.LogWarning("GitHub API token is not provided. Cannot fetch pull requests for {repoName}.", repoName);
                 return null;
@@ -214,7 +214,7 @@ namespace ChasmaWebApi.HostedServices
 
             try
             {
-                GitHubClient = RemoteHelper.GetGitHubClient(repoName, configurations.GitHubApiToken);
+                GitHubClient = RemoteHelper.GetGitHubClient(repoName, InitialApiConfiguration.GitHubApiToken);
                 IReadOnlyList<PullRequest> pullRequests = await GitHubClient.PullRequest.GetAllForRepository(owner, repoName);
                 List<RemotePullRequest> gitHubPullRequests = [];
                 foreach (PullRequest pullRequest in pullRequests)
@@ -254,6 +254,7 @@ namespace ChasmaWebApi.HostedServices
         /// <returns>The internal GitHub pull request.</returns>
         private async Task<RemotePullRequest?> GetPullRequestByPrNumberAsync(string owner, string name, long prNumber)
         {
+            ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
             if (string.IsNullOrEmpty(configurations.GitHubApiToken))
             {
                 logger.LogWarning("GitHub API token is not provided. Cannot fetch pull requests for {repoName}.", name);
@@ -303,7 +304,7 @@ namespace ChasmaWebApi.HostedServices
         /// </summary>
         private void StartPullRequestPolling(CancellationToken cancellationToken)
         {
-            int intervalSeconds = configurations.GitHubPullRequestScanIntervalSeconds ?? 45;
+            int intervalSeconds = InitialApiConfiguration.GitHubPullRequestScanIntervalSeconds ?? 45;
             PullRequestPollTimer = new PeriodicTimer(TimeSpan.FromSeconds(intervalSeconds));
             _ = Task.Run(async () =>
             {
@@ -399,7 +400,7 @@ namespace ChasmaWebApi.HostedServices
         /// <returns>Task containing the result of the API operation.</returns>
         private async Task<List<RemotePullRequest>?> GetGitLabMergeRequestAsync(LocalGitRepository repository)
         {
-            if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+            if (string.IsNullOrEmpty(InitialApiConfiguration.GitLabApiToken))
             {
                 logger.LogWarning("GitLab API token is not provided. Cannot fetch merge requests for {repoName}.", repository.Name);
                 return null;
@@ -407,7 +408,7 @@ namespace ChasmaWebApi.HostedServices
 
             try
             {
-                GitLabClient = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                GitLabClient = RemoteHelper.GetGitLabClient(InitialApiConfiguration.GitLabApiToken, InitialApiConfiguration.SelfHostedGitLabUrl);
                 string owner = repository.Owner;
                 string repoName = repository.Name;
                 Project project = await GitLabClient.Projects.GetAsync($"{owner}/{repoName}");
@@ -459,7 +460,7 @@ namespace ChasmaWebApi.HostedServices
         /// </summary>
         private void StartMergeRequestPolling(CancellationToken cancellationToken)
         {
-            int intervalSeconds = configurations.GitLabMergeRequestScanIntervalSeconds ?? 45;
+            int intervalSeconds = InitialApiConfiguration.GitLabMergeRequestScanIntervalSeconds ?? 45;
             MergeRequestPollTimer = new PeriodicTimer(TimeSpan.FromSeconds(intervalSeconds));
             _ = Task.Run(async () =>
             {
@@ -513,6 +514,7 @@ namespace ChasmaWebApi.HostedServices
         /// <returns>The internal remote pull request.</returns>
         private async Task<RemotePullRequest?> GetMergeRequestByIidNumberAsync(string owner, string repoName, long mergeRequestId, CancellationToken cancellationToken)
         {
+            ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
             if (string.IsNullOrEmpty(configurations.GitLabApiToken))
             {
                 logger.LogWarning("GitLab API token is not provided. Cannot fetch merge requests for {repoName}.", repoName);

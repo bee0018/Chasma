@@ -33,24 +33,17 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         private readonly ICacheManager cacheManager;
 
-        /// <summary>
-        /// The API configurations options.
-        /// </summary>
-        private readonly ChasmaWebApiConfigurations webApiConfigurations;
-
         #region Constructor
 
         /// <summary>
         /// Instantiates a new <see cref="RepositoryStatusController"/> class.
         /// </summary>
         /// <param name="log">The internal API logger.</param>
-        /// <param name="config">The API configurations.</param>
         /// <param name="controlService">The application control service.</param>
         /// <param name="apiCacheManager">The internal API cache manager.</param>
-        public RepositoryStatusController(ILogger<RepositoryStatusController> log, ChasmaWebApiConfigurations config, IApplicationControlService controlService, ICacheManager apiCacheManager)
+        public RepositoryStatusController(ILogger<RepositoryStatusController> log, IApplicationControlService controlService, ICacheManager apiCacheManager)
         {
             logger = log;
-            webApiConfigurations = config;
             applicationControlService = controlService;
             cacheManager = apiCacheManager;
         }
@@ -93,6 +86,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             string repoId = request.RepositoryId;
+            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             string token = webApiConfigurations.GitHubApiToken;
             logger.LogInformation("Received request to run git status for repository ID: {repoId}", repoId);
             RepositorySummary summary = applicationControlService.GetRepositoryStatus(repoId, user.UserName, token);
@@ -158,6 +152,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
+            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             string token = webApiConfigurations.GitHubApiToken;
             string repoKey = applyStagingActionRequest.RepoKey;
             string fileName = applyStagingActionRequest.FileName;
@@ -287,6 +282,7 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
+            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             if (!applicationControlService.TryPushChanges(workingDirectory, webApiConfigurations.GitHubApiToken, out string errorMessage))
             {
                 response.IsErrorResponse = true;
@@ -354,6 +350,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             string fullName = user.Name;
+            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             string token = webApiConfigurations.GitHubApiToken;
             if (!applicationControlService.TryPullChanges(workingDirectory, fullName, email, token, out string errorMessage))
             {
