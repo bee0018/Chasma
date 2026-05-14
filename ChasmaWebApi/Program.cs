@@ -21,7 +21,6 @@ Log.Logger = new LoggerConfiguration()
     rollOnFileSizeLimit: true))
     .CreateLogger();
 ChasmaWebApiConfigurations? webApiConfigurations = null;
-bool isDevelopment = false;
 try
 {
     int attempts = 0;
@@ -30,10 +29,10 @@ try
         try
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
-            isDevelopment = builder.Environment.IsDevelopment();
-            HandleConfigurationFileSetup(appDataDirectory, isDevelopment);
-            string configFilePath = ChasmaWebApiConfigurations.GetConfigXmlFilePath(isDevelopment);
-            webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Error has occurred deserializing configuration file.");
+            ChasmaWebApiConfigurations.IsDevelopmentMode = builder.Environment.IsDevelopment();
+            HandleConfigurationFileSetup(appDataDirectory);
+            string configFilePath = ChasmaWebApiConfigurations.GetConfigXmlFilePath();
+            webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
             if (webApiConfigurations == null)
             {
                 throw new Exception("Failed to load configuration. Please ensure the configuration file is present and valid.");
@@ -74,7 +73,7 @@ try
             }
 
             Log.Warning("Port {Port} is already in use. Attempting to use a different port...", webApiConfigurations.BindingPort);
-            HandlePortBindingFailure(webApiConfigurations, isDevelopment);
+            HandlePortBindingFailure(webApiConfigurations);
             attempts++;
         }
     }
@@ -132,11 +131,10 @@ static async void LaunchStartupGate(int port)
 /// Handles the configuration file setup.
 /// </summary>
 /// <param name="appDataDirectory">The application data directly.</param>
-/// <param name="isDevelopment">Flag indicating whether the application is in development mode.</param>
-static void HandleConfigurationFileSetup(string appDataDirectory, bool isDevelopment)
+static void HandleConfigurationFileSetup(string appDataDirectory)
 {
-    string configFilePath = ChasmaWebApiConfigurations.GetConfigXmlFilePath(isDevelopment);
-    if (!File.Exists(configFilePath) && !isDevelopment)
+    string configFilePath = ChasmaWebApiConfigurations.GetConfigXmlFilePath();
+    if (!File.Exists(configFilePath) && !ChasmaWebApiConfigurations.IsDevelopmentMode)
     {
         // If the config file doesn't exist, copy the default one to the app data directory.
         // This ensures that the application has a config file to read from and write to, while also allowing for user modifications in production.
@@ -181,13 +179,12 @@ static async Task<bool> IsOurApiRunning(int port)
 /// Handles the port binding failure by assigning a free port and updating the configuration file.
 /// </summary>
 /// <param name="config">The configuration object containing the port information.</param>
-/// <param name="isDevelopment">Flag indicating whether the application is in development mode.</param>
-static void HandlePortBindingFailure(ChasmaWebApiConfigurations config, bool isDevelopment)
+static void HandlePortBindingFailure(ChasmaWebApiConfigurations config)
 {
     int freePort = GetFreePort();
     config.BindingPort = freePort;
     string xmlText = ChasmaXmlBase.GenerateXml(config);
-    string configFilePath = ChasmaWebApiConfigurations.GetConfigXmlFilePath(isDevelopment);
+    string configFilePath = ChasmaWebApiConfigurations.GetConfigXmlFilePath();
     File.WriteAllText(configFilePath, xmlText, Encoding.UTF8);
 }
 

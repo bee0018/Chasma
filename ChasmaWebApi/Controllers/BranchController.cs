@@ -34,23 +34,16 @@ namespace ChasmaWebApi.Controllers
         private readonly IApplicationControlService applicationControlService;
 
         /// <summary>
-        /// The Chasma Web API configurations.
-        /// </summary>
-        private readonly ChasmaWebApiConfigurations webApiConfigurations;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="BranchController"/> class.
         /// </summary>
         /// <param name="log">The internal API logger.</param>
         /// <param name="controlService">The application control orchestrator.</param>
         /// <param name="apiCacheManager">The API cache manager.</param>
-        /// <param name="apiConfig">The applications configuration.</param>
-        public BranchController(ILogger<BranchController> log, IApplicationControlService controlService, ICacheManager apiCacheManager, ChasmaWebApiConfigurations apiConfig)
+        public BranchController(ILogger<BranchController> log, IApplicationControlService controlService, ICacheManager apiCacheManager)
         {
             logger = log;
             applicationControlService = controlService;
             cacheManager = apiCacheManager;
-            webApiConfigurations = apiConfig;
         }
 
         /// <summary>
@@ -107,6 +100,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
+            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             string token = webApiConfigurations.GitHubApiToken;
             if (!applicationControlService.TryAddNewBranch(workingDirectory, branchName, user.UserName, token, out string errorMessage))
             {
@@ -335,6 +329,7 @@ namespace ChasmaWebApi.Controllers
             {
                 string sourceBranchName = request.SourceBranch;
                 string destinationBranchName = request.DestinationBranch;
+                ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
                 string token = webApiConfigurations.GitHubApiToken;
                 if (!applicationControlService.TryMergeChanges(workingDirectory, sourceBranchName, destinationBranchName, user.Name, user.Email, token, out string errorMessage))
                 {

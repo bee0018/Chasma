@@ -3,6 +3,7 @@ import { useCacheStore } from "../../managers/CacheManager";
 import { isBlankOrUndefined } from "../../stringHelperUtil";
 import { ChasmaWebApiConfigurations, ModifyApiConfigRequest } from "../../API/ChasmaWebApiClient";
 import { appConfigClient } from "../../managers/ApiClientManager";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Initializes a new instance of the parent AppSetupPage class.
@@ -13,7 +14,7 @@ export const AppSetupPage: React.FC = () => {
     const setNotification = useCacheStore(state => state.setNotification);
 
     /** Gets or sets the JWT secret key. */
-    const [jwtSecretKey, setJwtSecretKey] = useState<string | undefined>(undefined);
+    const [jwtSecretKey, setJwtSecretKey] = useState<string>("");
 
     /** Gets or sets a value indicating whether the JWT secret key is valid. */
     const [jwtIsValid, setJwtIsValid] = useState<boolean | undefined>(undefined);
@@ -56,6 +57,12 @@ export const AppSetupPage: React.FC = () => {
 
     /** Gets the safe version of the number; undefined otherwise. */
     const safeNumber = (value?: string) => value && !isNaN(Number(value)) ? Number(value) : undefined;
+
+    /** The navigate function. */
+    const navigate = useNavigate();
+
+    /** Gets the logged in user. */
+    const user = useCacheStore(state => state.user);
 
     /** Gets a flag indicating whether binding port is valid. **/
     function validateBindingPort(value: string | undefined): void {
@@ -134,7 +141,7 @@ export const AppSetupPage: React.FC = () => {
     const sendModifyConfigurationRequest = async () => {
         setDisableSendButton(true);
         const config = new ChasmaWebApiConfigurations();
-        config.jwtSecretKey = !jwtIsConfigured ? jwtSecretKey : generateRefreshToken();
+        config.jwtSecretKey = jwtSecretKey;
         config.bindingPort = safeNumber(bindingPort);
         config.gitHubApiToken = gitHubApiToken;
         config.workflowRunReportThreshold = safeNumber(workflowRunReportThreshold);
@@ -156,11 +163,22 @@ export const AppSetupPage: React.FC = () => {
                 return;
             }
 
-            setNotification({
-                title: "Successfully applied configurations!",
-                message: "Restart the app to apply changes.",
-                isError: false,
-            });
+            if (response.staticConfigurationsChanged) {
+                setNotification({
+                    title: "Successfully applied configurations!",
+                    message: "Binding Port and/or JWT Secret key has been updated. Restart the app to apply changes.",
+                    isError: false,
+                });
+            }
+            else {
+                // This has been an 'on the fly change' that does not require a system restart
+                setNotification({
+                    title: "Successfully applied configurations!",
+                    message: "No system restart required.",
+                    isError: false,
+                });
+            }
+            
             setDisableSendButton(false);
         }
         catch (e) {
@@ -187,6 +205,40 @@ export const AppSetupPage: React.FC = () => {
         }
         
         return btoa(binary);
+    }
+
+    useEffect(() => {
+        const getIsSystemReady = async () => {
+            try {
+                const response = await appConfigClient.getSystemReady();
+                if (!response.isReady) {
+                    setNotification({
+                        title: "Setup Chasma System",
+                        message: "The system is not configured. Enter your configurations and select the 'Apply Configurations' button at the bottom of the screen to save changes.",
+                        isError: false,
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+                setNotification({
+                    title: "Error determining system readiness!",
+                    message: "Review console logs.",
+                    isError: true,
+                });
+            }
+        };
+
+        getIsSystemReady();
+    }, [setNotification]);
+
+    /** Handles the event when the user wants to continue to the next tab. */
+    const handleNavigation = () => {
+        if (user === null) {
+            navigate('/login');
+        }
+        else {
+            navigate('/home')
+        }
     }
 
     useEffect(() => {
@@ -228,8 +280,13 @@ export const AppSetupPage: React.FC = () => {
 
     return (
         <div className="panel-card">
-            <h1 className="page-title">Setup Chasma System</h1>
-            <h2 className="page-description">The system is not configured. After saving your changes, please restart the application for them to take effect.</h2>
+            <button
+                className="continue-button"
+                onClick={handleNavigation}
+            >
+                {user === null ? "Continue to Login" : "Home"} →
+            </button>
+            <h1 className="page-title">Chasma Setup</h1>
             <div className="xml-attr">
                 <div className="xml-attr-header">
                     <span className="xml-name">bindingPort</span>

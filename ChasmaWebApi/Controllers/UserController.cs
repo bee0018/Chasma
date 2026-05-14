@@ -46,25 +46,18 @@ namespace ChasmaWebApi.Controllers
         private readonly ICacheManager cacheManager;
 
         /// <summary>
-        /// The internal web API configurations.
-        /// </summary>
-        private readonly ChasmaWebApiConfigurations apiConfiguration;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="UserController"/> class.
         /// </summary>
         /// <param name="dbContext">The application database context.</param>
         /// <param name="log">The injected internal logger.</param>
         /// <param name="passwordUtil">The injected password utility.</param>
         /// <param name="apiCacheManager">The internal API cache manager.</param>
-        /// <param name="config">The internal web API configurations.</param>
-        public UserController(ApplicationDbContext dbContext, ILogger<UserController> log, IPasswordUtility passwordUtil, ICacheManager apiCacheManager, ChasmaWebApiConfigurations config)
+        public UserController(ApplicationDbContext dbContext, ILogger<UserController> log, IPasswordUtility passwordUtil, ICacheManager apiCacheManager)
         {
             applicationDbContext = dbContext;
             logger = log;
             passwordUtility = passwordUtil;
             cacheManager = apiCacheManager;
-            apiConfiguration = config;
         }
 
         /// <summary>
@@ -86,6 +79,7 @@ namespace ChasmaWebApi.Controllers
                 return Unauthorized(response);
             }
 
+            ChasmaWebApiConfigurations apiConfiguration = ChasmaWebApiConfigurations.GetApiConfig();
             if (string.IsNullOrEmpty(apiConfiguration.JwtSecretKey) || apiConfiguration.JwtSecretKey.Length < 16)
             {
                 logger.LogWarning("Login attempt blocked - system not configured.");
@@ -181,6 +175,7 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
+            ChasmaWebApiConfigurations apiConfiguration = ChasmaWebApiConfigurations.GetApiConfig();
             if (string.IsNullOrEmpty(apiConfiguration.JwtSecretKey) || apiConfiguration.JwtSecretKey.Length < 16)
             {
                 logger.LogWarning("Login attempt blocked - system not configured.");
@@ -555,13 +550,14 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         /// <param name="account">The user to provide the access token for.</param>
         /// <returns>The generate token.</returns>
-        private string GenerateAccessToken(UserAccountModel account)
+        private static string GenerateAccessToken(UserAccountModel account)
         {
             List<Claim> claims =
                     [
                         new(ClaimTypes.Name, account.UserName),
                         new(ClaimTypes.NameIdentifier, account.Id.ToString())
                     ];
+            ChasmaWebApiConfigurations apiConfiguration = ChasmaWebApiConfigurations.GetApiConfig();
             SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(apiConfiguration.JwtSecretKey));
             SigningCredentials credentials = new(key, SecurityAlgorithms.HmacSha256);
             JwtSecurityToken token = new(

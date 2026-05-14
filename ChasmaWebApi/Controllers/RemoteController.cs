@@ -34,22 +34,15 @@ namespace ChasmaWebApi.Controllers
         private readonly ICacheManager cacheManager;
 
         /// <summary>
-        /// The API configurations options.
-        /// </summary>
-        private readonly ChasmaWebApiConfigurations webApiConfigurations;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="RemoteController"/> class.
         /// </summary>
         /// <param name="log">The internal logger.</param>
         /// <param name="controlService">The application orchestrator.</param>
-        /// <param name="apiConfig">The API configurations.</param>
         /// <param name="apiCacheManager">The internal API cache manager.</param>
-        public RemoteController(ILogger<RemoteController> log, IApplicationControlService controlService, ChasmaWebApiConfigurations apiConfig, ICacheManager apiCacheManager)
+        public RemoteController(ILogger<RemoteController> log, IApplicationControlService controlService, ICacheManager apiCacheManager)
         {
             logger = log;
             applicationControlService = controlService;
-            webApiConfigurations = apiConfig;
             cacheManager = apiCacheManager;
         }
 
@@ -103,6 +96,7 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
+            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             logger.LogInformation("Attempting to get workflow data for the last {threshold} builds for {repoName}.", webApiConfigurations.WorkflowRunReportThreshold, request.RepositoryName);
             string token = webApiConfigurations.GitHubApiToken;
             if (string.IsNullOrEmpty(token))
@@ -225,6 +219,7 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
+                ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
                 string token = webApiConfigurations.GitHubApiToken;
                 string title = request.PullRequestTitle;
                 string headBranch = request.WorkingBranchName;
@@ -311,6 +306,7 @@ namespace ChasmaWebApi.Controllers
                 string repoOwner = request.RepositoryOwner;
                 string title = request.Title;
                 string body = request.Body;
+                ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
                 string token = webApiConfigurations.GitHubApiToken;
                 bool issueIsCreated = applicationControlService.TryCreateIssue(repoName, repoOwner, title, body, token, out int issueId, out string issueUrl, out string errorMessage);
                 if (!issueIsCreated)

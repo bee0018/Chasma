@@ -19,11 +19,6 @@ namespace ChasmaWebApi.Core.Services.Remote
         private readonly ILogger<GitLabService> logger;
 
         /// <summary>
-        /// The internal API configuration.
-        /// </summary>
-        private readonly ChasmaWebApiConfigurations configurations;
-
-        /// <summary>
         /// The internal cache manager.
         /// </summary>
         private readonly ICacheManager cacheManager;
@@ -37,12 +32,10 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// Initializes a new instance of the <see cref="GitLabService"/> class.
         /// </summary>
         /// <param name="log">The internal API logger.</param>
-        /// <param name="config">The web API configurations.</param>
         /// <param name="apiCacheManager">The API cache manager.</param>
-        public GitLabService(ILogger<GitLabService> log, ChasmaWebApiConfigurations config, ICacheManager apiCacheManager)
+        public GitLabService(ILogger<GitLabService> log, ICacheManager apiCacheManager)
         {
             logger = log;
-            configurations = config;
             cacheManager = apiCacheManager;
         }
 
@@ -218,6 +211,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             try
             {
+                ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
                 Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
@@ -264,6 +258,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             try
             {
+                ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
                 Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
@@ -292,6 +287,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             try
             {
+                ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
                 Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{issue.RepoOwner}/{issue.RepoName}");
                 IssueCreate issueRequest = new()
@@ -323,6 +319,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             try
             {
+                ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
                 Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{preparedMergeRequest.RepoOwner}/{preparedMergeRequest.RepoName}");
                 IMergeRequestClient mergeRequestClient = Client.GetMergeRequest(project.Id);

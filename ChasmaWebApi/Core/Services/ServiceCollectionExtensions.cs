@@ -89,7 +89,6 @@ namespace ChasmaWebApi.Core.Services
                 });
 
             return services
-                .AddSingleton(webApiConfigurations)
                 .AddSingleton<IPasswordUtility, PasswordUtility>()
                 .AddSingleton<ICacheManager, CacheManager>()
                 .AddSingleton<IApplicationControlService, ApplicationControlService>()

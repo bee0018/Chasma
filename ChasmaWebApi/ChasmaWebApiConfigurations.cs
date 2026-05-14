@@ -67,6 +67,11 @@ namespace ChasmaWebApi
         public const string DefaultJwtSecretKey = "TEMP_DEV_KEY_1234567890";
 
         /// <summary>
+        /// Gets or sets a value indicating whether the application is running in development mode.
+        /// </summary>
+        public static bool IsDevelopmentMode { get; set; }
+
+        /// <summary>
         /// Gets the connection string in the format that is expected of SQLite3 database connections.
         /// </summary>
         /// <returns>The formatted database connection string.</returns>
@@ -131,15 +136,25 @@ namespace ChasmaWebApi
         /// <summary>
         /// Gets the application's configuration file path.
         /// </summary>
-        /// <param name="isDevelopment">Flag indicating whether the application is in development mode.</param>
         /// <returns>The configuration file path.</returns>
-        public static string GetConfigXmlFilePath(bool isDevelopment)
+        public static string GetConfigXmlFilePath()
         {
             string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
             string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
-            return isDevelopment
+            return IsDevelopmentMode
                 ? defaultConfigPath
                 : Path.Combine(appDataDirectory, "config.xml");
+        }
+
+        /// <summary>
+        /// Gets the API configuration by deserializing it from the XML file.
+        /// </summary>
+        /// <returns>The current configuration file.</returns>
+        public static ChasmaWebApiConfigurations GetApiConfig()
+        {
+            string configFilePath = GetConfigXmlFilePath();
+            ChasmaWebApiConfigurations apiConfig = DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
+            return apiConfig;
         }
     }
 }

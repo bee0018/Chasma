@@ -5,5 +5,9 @@
     /// </summary>
     public class ModifyApiConfigResponse : ResponseBase
     {
+        /// <summary>
+        /// Gets or sets a value indicating whether the static configurations have changed since the last update.
+        /// </summary>
+        public bool StaticConfigurationsChanged { get; set; }
     }
 }
