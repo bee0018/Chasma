@@ -88,7 +88,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 }
             }
 
-            Logger.LogInformation("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
+            Logger.LogDebug("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
             (string branchName, int aheadCount, int behindCount, string lastUpdated) = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, username, token, Logger);
             string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
             string commitHash = GetCommitHash(repo.Head, Logger);

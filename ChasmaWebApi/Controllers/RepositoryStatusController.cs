@@ -88,7 +88,7 @@ namespace ChasmaWebApi.Controllers
             string repoId = request.RepositoryId;
             ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             string token = webApiConfigurations.GitHubApiToken;
-            logger.LogInformation("Received request to run git status for repository ID: {repoId}", repoId);
+            logger.LogDebug("Received request to run git status for repository ID: {repoId}", repoId);
             RepositorySummary summary = applicationControlService.GetRepositoryStatus(repoId, user.UserName, token);
             if (summary == null)
             {
