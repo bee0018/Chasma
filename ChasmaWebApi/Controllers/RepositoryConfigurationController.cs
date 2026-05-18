@@ -159,63 +159,63 @@ public class RepositoryConfigurationController : ControllerBase
     /// <returns>The response to adding a git repository to the system.</returns>
     [HttpPost]
     [Route("addGitRepository")]
-    public async Task<ActionResult<AddGitRepositoryResponse>> AddGitRepository([FromBody] AddGitRepositoryRequest request)
+    public async Task<ActionResult<AddGitRepositoriesResponse>> AddGitRepository([FromBody] AddGitRepositoriesRequest request)
     {
-        logger.LogInformation("Received an {request}.", nameof(AddGitRepositoryRequest));
-        AddGitRepositoryResponse response = new();
+        logger.LogInformation("Received an {request}.", nameof(AddGitRepositoriesRequest));
+        AddGitRepositoriesResponse response = new();
         if (request == null)
         {
-            logger.LogError("Received a null {request}. Sending error response.", nameof(AddGitRepositoryRequest));
+            logger.LogError("Received a null {request}. Sending error response.", nameof(AddGitRepositoriesRequest));
             response.IsErrorResponse = true;
             response.ErrorMessage = "Request must be populated.";
             return BadRequest(response);
         }
 
-        string repoPath = request.RepositoryPath;
-        if (string.IsNullOrEmpty(repoPath))
+        List<string> repoPaths = request.RepositoryPaths;
+        if (repoPaths.Count == 0)
         {
-            logger.LogError("Invalid {request}. Repository path is required. Sending error response.", nameof(AddGitRepositoryRequest));
+            logger.LogError("Invalid {request}. One or more repository paths are required. Sending error response.", nameof(AddGitRepositoriesRequest));
             response.IsErrorResponse = true;
-            response.ErrorMessage = "Invalid request. Repository path is required.";
+            response.ErrorMessage = "Invalid request. One or more repository paths are required.";
             return BadRequest(response);
         }
 
         int userId = request.UserId;
         if (!cacheManager.Users.TryGetValue(userId, out _))
         {
-            logger.LogError("Invalid {request}. User with identifier {id} does not exist. Sending error response.", nameof(AddGitRepositoryRequest), userId);
+            logger.LogError("Invalid {request}. User with identifier {id} does not exist. Sending error response.", nameof(AddGitRepositoriesRequest), userId);
             response.IsErrorResponse = true;
             response.ErrorMessage = "Invalid request. Could not find user.";
             return BadRequest(response);
         }
 
-        if (!applicationControlService.TryAddSpecificGitRepository(repoPath, userId, out LocalGitRepository localGitRepository, out string errorMessage))
+        List<RepositoryAdditionResult> additionResults = applicationControlService.AddGitRepositories(repoPaths, userId, out List<NewRepository> newRepositories);
+        foreach (NewRepository newRepository in newRepositories)
         {
-            logger.LogError("Failed to add git repository from path {repoPath}. Reason: {reason}", repoPath, errorMessage);
-            response.IsErrorResponse = true;
-            response.ErrorMessage = errorMessage;
-            return Ok(response);
+            string repoPath = newRepository.WorkingDirectory;
+            LocalGitRepository localGitRepository = newRepository.Repository;
+            RepositoryModel repositoryModel = new()
+            {
+                Id = localGitRepository.Id,
+                UserId = localGitRepository.UserId,
+                Name = localGitRepository.Name,
+                Owner = localGitRepository.Owner,
+                Url = localGitRepository.Url,
+                HostPlatform = localGitRepository.HostPlatform,
+                IsIgnored = false,
+            };
+            await applicationDbContext.Repositories.AddAsync(repositoryModel);
+            WorkingDirectoryModel workingDirectoryModel = new()
+            {
+                RepositoryId = localGitRepository.Id,
+                WorkingDirectory = repoPath,
+            };
+            await applicationDbContext.WorkingDirectories.AddAsync(workingDirectoryModel);
         }
-
-        RepositoryModel repositoryModel = new()
-        {
-            Id = localGitRepository.Id,
-            UserId = localGitRepository.UserId,
-            Name = localGitRepository.Name,
-            Owner = localGitRepository.Owner,
-            Url = localGitRepository.Url,
-            HostPlatform = localGitRepository.HostPlatform,
-            IsIgnored = false,
-        };
-        await applicationDbContext.Repositories.AddAsync(repositoryModel);
-        WorkingDirectoryModel workingDirectoryModel = new()
-        {
-            RepositoryId = localGitRepository.Id,
-            WorkingDirectory = repoPath,
-        };
-        await applicationDbContext.WorkingDirectories.AddAsync(workingDirectoryModel);
+        
         await applicationDbContext.SaveChangesAsync();
-        response.Repository = localGitRepository;
+        response.Repositories = newRepositories.Select(i => i.Repository).ToList();
+        response.AdditionResults = additionResults;
         return Ok(response);
     }
 

@@ -26,14 +26,13 @@ namespace ChasmaWebApi.Core.Interfaces.Index
         bool TryDeleteRepository(string repositoryId, int userId, out List<LocalGitRepository> localGitRepositories, out string errorMessage);
 
         /// <summary>
-        /// Tries to add a git repository to the cache with the specified filepath.
+        /// Adds a git repositories to the cache with the specified filepath.
         /// </summary>
-        /// <param name="repoPath">The filepath to the repository.</param>
+        /// <param name="repoPaths">The list of filepaths to its repository.</param>
         /// <param name="userId">The user identifier.</param>
-        /// <param name="localGitRepository">The add git repository.</param>
-        /// <param name="errorMessage">The error message.</param>
-        /// <returns>True if the repository was added to the system; false otherwise.</returns>
-        bool TryAddGitRepository(string repoPath, int userId, out LocalGitRepository localGitRepository, out string errorMessage);
+        /// <param name="newRepositories">The added git repositories.</param>
+        /// <returns>The list of repository addition results.</returns>
+        List<RepositoryAdditionResult> AddGitRepositories(IEnumerable<string> repoPaths, int userId, out List<NewRepository> newRepositories);
 
         /// <summary>
         /// Tries to remove the file from the repository index and stage the deletion for the next commit.
