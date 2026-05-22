@@ -275,3 +275,29 @@
     gap: 10px;
     margin-bottom: 10px;
 }
+
+.custom-path-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: all 0.2s ease;
+    background: transparent;
+    border: 1px solid #22d3ee;
+    color: #22d3ee;
+    width: "max-content";
+    min-width: "120px"
+}
+
+.custom-path-btn:hover {
+    background: rgba(34, 211, 238, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(34, 211, 238, 0.2);
+}
+
+.custom-path-btn:active {
+    transform: translateY(0);
+    background: rgba(34, 211, 238, 0.25);
+}

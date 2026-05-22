@@ -52,6 +52,27 @@ export const AppSetupPage: React.FC = () => {
     /** Gets or sets the GitLab merge request scan interval in seconds. */
     const [gitLabMergeRequestScanIntervalSeconds, setGitLabMergeRequestScanIntervalSeconds] = useState<string | undefined>(undefined);
 
+    /** Gets or sets the user's GitHub username. */
+    const [gitHubUsername, setGitHubUsername] = useState<string | undefined>(undefined);
+
+    /** Gets or sets the user's GitLab username. */
+    const [gitLabUsername, setGitLabUsername] = useState<string | undefined>(undefined);
+
+    /** Gets or sets the global workspace path. */
+    const [globalWorkspacePath, setGlobalWorkspacePath] = useState<string | undefined>(undefined);
+
+    /** Gets or sets the GitHub SSH private key path. */
+    const [gitHubSshPrivateKeyPath, setGitHubSshPrivateKeyPath] = useState<string | undefined>(undefined);
+
+    /** Gets or sets the GitHub SSH private key passphrase. */
+    const [gitHubSshPassphrase, setGitHubSshPassphrase] = useState<string | undefined>(undefined);
+
+    /** Gets or sets the GitLab SSH private key path. */
+    const [gitLabSshPrivateKeyPath, setGitLabSshPrivateKeyPath] = useState<string | undefined>(undefined);
+
+    /** Gets or sets the GitLab SSH private key passphrase. */
+    const [gitLabSshPassphrase, setGitLabSshPassphrase] = useState<string | undefined>(undefined);
+
     /** Gets or sets a value indicating whether the request is ready to be sent. */
     const [disableSendButton, setDisableSendButton] = useState(false);
 
@@ -132,6 +153,15 @@ export const AppSetupPage: React.FC = () => {
             return;
         }
 
+        if (isBlankOrUndefined(globalWorkspacePath)) {
+            setNotification({
+                    title: "Could not apply configurations!",
+                    message: "'globalWorkspacePath' must be populated!",
+                    isError: true,
+                });
+            return;
+        }
+
         await sendModifyConfigurationRequest();
     };
 
@@ -149,6 +179,8 @@ export const AppSetupPage: React.FC = () => {
         config.gitLabApiToken = gitlabApiToken;
         config.selfHostedGitLabUrl = selfHostedGitLabUrl;
         config.gitLabMergeRequestScanIntervalSeconds = safeNumber(gitLabMergeRequestScanIntervalSeconds);
+        config.gitHubUsername = gitHubUsername;
+        config.gitLabUsername = gitLabUsername;
         const request = new ModifyApiConfigRequest();
         request.apiConfiguration = config;
         try {
@@ -265,6 +297,13 @@ export const AppSetupPage: React.FC = () => {
                 setGitHubPullRequestScanIntervalSeconds(String(response.gitHubPullRequestScanIntervalSeconds));
                 setSelfHostedGitLabUrl(response.selfHostedGitLabUrl);
                 setGitLabMergeRequestScanIntervalSeconds(String(response.gitLabMergeRequestScanIntervalSeconds));
+                setGitHubUsername(response.gitHubUsername);
+                setGitLabUsername(response.gitLabUsername);
+                setGlobalWorkspacePath(response.globalWorkspacePath);
+                setGitHubSshPrivateKeyPath(response.gitHubSshKeyPrivateKeyPath);
+                setGitHubSshPassphrase(response.gitHubSshPassphrase);
+                setGitLabSshPrivateKeyPath(response.gitLabSshKeyPrivateKeyPath);
+                setGitLabSshPassphrase(response.gitLabSshPassphrase);
             } catch (error) {
                 console.log(error);
                 setNotification({
@@ -355,6 +394,72 @@ export const AppSetupPage: React.FC = () => {
 
             <div className="xml-attr">
                 <div className="xml-attr-header">
+                    <span className="xml-name">globalWorkspacePath</span>
+                    <span className="xml-type">string</span>
+                    <span className="xml-required">required</span>
+                </div>
+                <p>The user-defined workspace variable where all repositories will be stored.</p>
+            <input
+                type="text"
+                className="input-field"
+                placeholder="Workspace directory"
+                value={globalWorkspacePath}
+                onChange={(e) => setGlobalWorkspacePath(e.target.value)}
+                required />
+            {(!globalWorkspacePath || globalWorkspacePath.length === 0) && (
+                <div className="password-error">
+                    Global workspace directory is required.
+                </div>
+            )}
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">gitHubUsername</span>
+                    <span className="xml-type">string</span>
+                    <span className="xml-optional">optional</span>
+                </div>
+                <p>Your GitHub user name.</p>
+            <input
+                    type="text"
+                    className="input-field"
+                    placeholder="GitHub username"
+                    value={gitHubUsername}
+                    onChange={(e) => setGitHubUsername(e.target.value)} />
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">gitHubSshPrivateKeyPath</span>
+                    <span className="xml-type">string</span>
+                    <span className="xml-optional">optional</span>
+                </div>
+                <p>The path to the SSH private key for your GitHub account.</p>
+            <input
+                    type="text"
+                    className="input-field"
+                    placeholder="GitHub account SSH Private Key Path"
+                    value={gitHubSshPrivateKeyPath}
+                    onChange={(e) => setGitHubSshPrivateKeyPath(e.target.value)} />
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">gitHubSshPassphrase</span>
+                    <span className="xml-type">string</span>
+                    <span className="xml-optional">optional</span>
+                </div>
+                <p>The passphrase to the SSH private key for your GitHub account.</p>
+            <input
+                    type="text"
+                    className="input-field"
+                    placeholder="GitHub account SSH Private Key Passphrase"
+                    value={gitHubSshPassphrase}
+                    onChange={(e) => setGitHubSshPassphrase(e.target.value)} />
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
                     <span className="xml-name">gitHubApiToken</span>
                     <span className="xml-type">string</span>
                     <span className="xml-optional">optional</span>
@@ -406,6 +511,51 @@ export const AppSetupPage: React.FC = () => {
                         Must be a valid integer greater than 0. May be skipped if not wanting to use.
                     </div>
                 )}
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">gitLabUsername</span>
+                    <span className="xml-type">string</span>
+                    <span className="xml-optional">optional</span>
+                </div>
+                <p>Your GitLab user name.</p>
+            <input
+                    type="text"
+                    className="input-field"
+                    placeholder="GitLab username"
+                    value={gitLabUsername}
+                    onChange={(e) => setGitLabUsername(e.target.value)} />
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">gitLabSshPrivateKeyPath</span>
+                    <span className="xml-type">string</span>
+                    <span className="xml-optional">optional</span>
+                </div>
+                <p>The path to the SSH private key for your GitLab account.</p>
+            <input
+                    type="text"
+                    className="input-field"
+                    placeholder="GitLab account SSH Private Key Path"
+                    value={gitLabSshPrivateKeyPath}
+                    onChange={(e) => setGitLabSshPrivateKeyPath(e.target.value)} />
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">gitLabSshPassphrase</span>
+                    <span className="xml-type">string</span>
+                    <span className="xml-optional">optional</span>
+                </div>
+                <p>The passphrase to the SSH private key for your GitLab account.</p>
+            <input
+                    type="text"
+                    className="input-field"
+                    placeholder="GitLab account SSH Private Key Passphrase"
+                    value={gitHubSshPassphrase}
+                    onChange={(e) => setGitLabSshPassphrase(e.target.value)} />
             </div>
 
             <div className="xml-attr">

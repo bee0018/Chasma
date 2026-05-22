@@ -41,5 +41,14 @@ namespace ChasmaWebApi.Core.Interfaces.Index
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the file is removed; false otherwise.</returns>
         bool TryRemoveFile(RepositoryStatusElement selectedFile, out string errorMessage);
+
+        /// <summary>
+        /// Clones git repositories to the cache with the specified filepath.
+        /// </summary>
+        /// <param name="blueprints">The list of blueprints for git cloning.</param>
+        /// <param name="userId">The user identifier.</param>
+        /// <param name="newRepositories">The clone git repositories.</param>
+        /// <returns>The list of repository addition results.</returns>
+        List<RepositoryAdditionResult> CloneRepositories(IEnumerable<GitCloneBlueprint> blueprints, int userId, out List<NewRepository> newRepositories);
     }
 }

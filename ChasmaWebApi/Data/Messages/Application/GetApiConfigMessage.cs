@@ -46,5 +46,40 @@ namespace ChasmaWebApi.Data.Messages.Application
         /// Gets or sets the interval in seconds at which GitLab merge requests are scanned for updates.
         /// </summary>
         public int? GitLabMergeRequestScanIntervalSeconds { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's GitHub username.
+        /// </summary>
+        public string? GitHubUsername { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's GitLab username.
+        /// </summary>
+        public string? GitLabUsername { get; set; }
+
+        /// <summary>
+        /// Gets or sets the global workspace path.
+        /// </summary>
+        public string GlobalWorkspacePath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the GitHub account SSH key private key file path.
+        /// </summary>
+        public string? GitHubSshKeyPrivateKeyPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the GitLab account SSH key private key file path.
+        /// </summary>
+        public string? GitLabSshKeyPrivateKeyPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the GitHub account SSH key pass phrase.
+        /// </summary>
+        public string? GitHubSshPassphrase { get; set; }
+
+        /// <summary>
+        /// Gets or sets the GitLab account SSH key pass phrase.
+        /// </summary>
+        public string? GitLabSshPassphrase { get; set; }
     }
 }

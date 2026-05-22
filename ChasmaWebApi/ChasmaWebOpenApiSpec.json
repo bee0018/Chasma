@@ -824,6 +824,38 @@
         }
       }
     },
+    "/api/RepositoryConfiguration/gitClone": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_CloneRepositories",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitCloneRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitCloneResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryStatus/gitStatus": {
       "post": {
         "tags": [
@@ -1626,6 +1658,33 @@
                 "type": "integer",
                 "format": "int32",
                 "nullable": true
+              },
+              "gitHubUsername": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitLabUsername": {
+                "type": "string",
+                "nullable": true
+              },
+              "globalWorkspacePath": {
+                "type": "string"
+              },
+              "gitHubSshKeyPrivateKeyPath": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitLabSshKeyPrivateKeyPath": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitHubSshPassphrase": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitLabSshPassphrase": {
+                "type": "string",
+                "nullable": true
               }
             }
           }
@@ -1703,6 +1762,13 @@
               "jwtSecretKey": {
                 "type": "string"
               },
+              "globalWorkspacePath": {
+                "type": "string"
+              },
+              "gitHubUsername": {
+                "type": "string",
+                "nullable": true
+              },
               "gitHubApiToken": {
                 "type": "string",
                 "nullable": true
@@ -1717,7 +1783,27 @@
                 "format": "int32",
                 "nullable": true
               },
+              "gitLabUsername": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitHubSshKeyPrivateKeyPath": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitHubSshPassphrase": {
+                "type": "string",
+                "nullable": true
+              },
               "gitLabApiToken": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitLabSshKeyPrivateKeyPath": {
+                "type": "string",
+                "nullable": true
+              },
+              "gitLabSshPassphrase": {
                 "type": "string",
                 "nullable": true
               },
@@ -2979,6 +3065,73 @@
           32768,
           -2147483648
         ]
+      },
+      "GitCloneResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repositories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LocalGitRepository"
+                }
+              },
+              "additionResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepositoryAdditionResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GitCloneRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChasmaXmlBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "blueprints": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GitCloneBlueprint"
+                }
+              },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "GitCloneBlueprint": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "workingDirectory": {
+            "type": "string"
+          },
+          "recurseSubmodules": {
+            "type": "boolean"
+          }
+        }
       },
       "GitStatusResponse": {
         "allOf": [

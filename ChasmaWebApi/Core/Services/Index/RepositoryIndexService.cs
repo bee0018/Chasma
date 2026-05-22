@@ -198,125 +198,60 @@ namespace ChasmaWebApi.Core.Services.Index
             newRepositories = [];
             foreach (string repoPath in repoPaths)
             {
-                RepositoryAdditionResult result = new();
-                if (!Directory.Exists(repoPath))
+                RepositoryAdditionResult additionResult = RegisterLocalRepository(repoPath, userId, out NewRepository addedRepo);
+                additionResults.Add(additionResult);
+                if (addedRepo != null)
                 {
-                    Logger.LogError("Cannot add repository at path {path} because the path doesn't exist. Skipping addition or repo", repoPath);
-                    result.RepositoryName = Path.GetFileName(repoPath);
-                    result.IsSuccessful = false;
-                    result.Reason = $"The provided path {repoPath} does not exist and could not be created.";
-                    additionResults.Add(result);
-                    continue;
+                    newRepositories.Add(addedRepo);
                 }
+            }
 
-                HashSet<string> workingDirectories;
-                lock (lockObject)
-                {
-                    workingDirectories = CacheManager.WorkingDirectories.Values.ToHashSet();
-                }
+            return additionResults;
+        }
 
-                if (workingDirectories.Contains(repoPath))
-                {
-                    Logger.LogError("Working directory {directory} already exists in cache, so it will be ignored when adding repository to the system.", repoPath);
-                    result.RepositoryName = Path.GetFileName(repoPath);
-                    result.IsSuccessful = false;
-                    result.Reason = $"The provided path {repoPath} already exists in the cache.";
-                    additionResults.Add(result);
-                    continue;
-                }
-
-                if (!Repository.IsValid(repoPath))
-                {
-                    Logger.LogError("The provided path: {repoPath} is not a valid git repository when trying to add repository.", repoPath);
-                    result.RepositoryName = Path.GetFileName(repoPath);
-                    result.IsSuccessful = false;
-                    result.Reason = $"The provided path: {repoPath} is not a valid git repository.";
-                    additionResults.Add(result);
-                    continue;
-                }
-
-                string? repositoryName = GetRepositoryName(repoPath);
-                if (string.IsNullOrWhiteSpace(repositoryName))
-                {
-                    Logger.LogError("Could get repository name for the file directory {path} so it cannot be added to cache when trying to add repository.", repoPath);
-                    result.RepositoryName = Path.GetFileName(repoPath);
-                    result.IsSuccessful = false;
-                    result.Reason = $"Could not get repository name for the file directory {repoPath}.";
-                    additionResults.Add(result);
-                    continue;
-                }
-
-                string pushUrl;
+        // <inheritdoc/>
+        public List<RepositoryAdditionResult> CloneRepositories(IEnumerable<GitCloneBlueprint> blueprints, int userId, out List<NewRepository> newRepositories)
+        {
+            List<RepositoryAdditionResult> additionResults = [];
+            newRepositories = [];
+            ChasmaWebApiConfigurations apiConfiguration = ChasmaWebApiConfigurations.GetApiConfig();
+            foreach (GitCloneBlueprint blueprint in blueprints)
+            {
                 try
                 {
-                    using Repository repository = new(repoPath);
-                    LibGit2Sharp.Remote? remoteRepository = repository.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
-                    if (remoteRepository == null)
+                    string sourceUrl = blueprint.SourceUrl;
+                    if (sourceUrl.StartsWith("git@", StringComparison.OrdinalIgnoreCase) || sourceUrl.StartsWith("ssh://", StringComparison.OrdinalIgnoreCase))
                     {
-                        Logger.LogError("Failed to find remote repository in {repoPath}, so it cannot be added to cache when trying to add repository.", repoPath);
-                        result.RepositoryName = repositoryName;
-                        result.IsSuccessful = false;
-                        result.Reason = $"Failed to find remote repository in {repoPath}.";
-                        additionResults.Add(result);
-                        continue;
+                        CloneRepositoryUsingSshProtocol(blueprint, userId, additionResults, newRepositories, apiConfiguration);
                     }
-
-                    pushUrl = remoteRepository.PushUrl;
-                    if (string.IsNullOrEmpty(pushUrl))
+                    else if (sourceUrl.StartsWith("https", StringComparison.OrdinalIgnoreCase))
                     {
-                        Logger.LogError("Failed to find push url for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
-                        result.RepositoryName = repositoryName;
-                        result.IsSuccessful = false;
-                        result.Reason = $"Failed to find push url for {repositoryName}.";
-                        additionResults.Add(result);
-                        continue;
+                        CloneRepositoryUsingHttpsProtocol(blueprint, userId, apiConfiguration, additionResults, newRepositories);
+                    }
+                    else
+                    {
+                        Logger.LogError("Encountered unexpected URL format {url} when trying to determine credentials for cloning. Will skip cloning attempt.", sourceUrl);
+                        RepositoryAdditionResult additionResult = new()
+                        {
+                            IsSuccessful = false,
+                            Reason = $"The provided repository URL {sourceUrl} is not in a recognized format for determining credentials. Supported formats are HTTPS and SSH URLs. Will have to manually clone from terminal.",
+                            RepositoryName = Path.GetFileName(blueprint.WorkingDirectory.TrimEnd(Path.DirectorySeparatorChar)),
+                        };
+                        additionResults.Add(additionResult);
                     }
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError("An error occurred while accessing the git repository at {repoPath}: {error}.", repoPath, e);
-                    result.RepositoryName = repositoryName;
-                    result.IsSuccessful = false;
-                    result.Reason = $"An error occurred while accessing the git repository at {repoPath}: {e.Message}";
-                    additionResults.Add(result);
-                    continue;
+                    RepositoryAdditionResult additionResult = new()
+                    {
+                        IsSuccessful = false,
+                        Reason = e.Message,
+                        RepositoryName = !string.IsNullOrEmpty(blueprint.WorkingDirectory)
+                            ? Path.GetFileName(blueprint.WorkingDirectory.TrimEnd(Path.DirectorySeparatorChar))
+                            : "Unknown Repository",
+                    };
+                    additionResults.Add(additionResult);
                 }
-
-                string? repositoryOwner = GetRepositoryOwner(pushUrl);
-                if (string.IsNullOrEmpty(repositoryOwner))
-                {
-                    Logger.LogError("Failed to find repository owner for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
-                    result.RepositoryName = repositoryName;
-                    result.IsSuccessful = false;
-                    result.Reason = $"Failed to find repository owner for {repositoryName}.";
-                    additionResults.Add(result);
-                    continue;
-                }
-
-                RemoteHostPlatform platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
-                string repoCacheKey = Guid.NewGuid().ToString();
-                LocalGitRepository localGitRepository = new()
-                {
-                    Id = repoCacheKey,
-                    UserId = userId,
-                    Name = repositoryName,
-                    Owner = repositoryOwner,
-                    Url = pushUrl,
-                    HostPlatform = platform,
-                };
-                CacheManager.WorkingDirectories.TryAdd(localGitRepository.Id, repoPath);
-                CacheManager.Repositories.TryAdd(localGitRepository.Id, localGitRepository);
-
-                result.RepositoryName = repositoryName;
-                result.IsSuccessful = true;
-                additionResults.Add(result);
-
-                NewRepository newRepo = new()
-                {
-                    Repository = localGitRepository,
-                    WorkingDirectory = repoPath,
-                };
-                newRepositories.Add(newRepo);
             }
 
             return additionResults;
@@ -443,6 +378,268 @@ namespace ChasmaWebApi.Core.Services.Index
             }
 
             return repositoryOwner;
+        }
+
+        /// <summary>
+        /// Registers the addition of a new repository by validating the repository path, extracting necessary information, and adding it to the cache if valid.
+        /// </summary>
+        /// <param name="repoPath">The repository path.</param>
+        /// <param name="userId">The user identifier.</param>
+        /// <param name="newRepo">The newly added repository to cache.</param>
+        /// <returns>The repository addition result.</returns>
+        private RepositoryAdditionResult RegisterLocalRepository(string repoPath, int userId, out NewRepository newRepo)
+        {
+            newRepo = null;
+            RepositoryAdditionResult result = new();
+            if (!Directory.Exists(repoPath))
+            {
+                Logger.LogError("Cannot add repository at path {path} because the path doesn't exist. Skipping addition or repo", repoPath);
+                result.RepositoryName = Path.GetFileName(repoPath);
+                result.IsSuccessful = false;
+                result.Reason = $"The provided path {repoPath} does not exist and could not be created.";
+                return result;
+            }
+
+            HashSet<string> workingDirectories;
+            lock (lockObject)
+            {
+                workingDirectories = CacheManager.WorkingDirectories.Values.ToHashSet();
+            }
+
+            if (workingDirectories.Contains(repoPath))
+            {
+                Logger.LogError("Working directory {directory} already exists in cache, so it will be ignored when adding repository to the system.", repoPath);
+                result.RepositoryName = Path.GetFileName(repoPath);
+                result.IsSuccessful = false;
+                result.Reason = $"The provided path {repoPath} already exists in the cache.";
+                return result;
+            }
+
+            if (!Repository.IsValid(repoPath))
+            {
+                Logger.LogError("The provided path: {repoPath} is not a valid git repository when trying to add repository.", repoPath);
+                result.RepositoryName = Path.GetFileName(repoPath);
+                result.IsSuccessful = false;
+                result.Reason = $"The provided path: {repoPath} is not a valid git repository.";
+                return result;
+            }
+
+            string? repositoryName = GetRepositoryName(repoPath);
+            if (string.IsNullOrWhiteSpace(repositoryName))
+            {
+                Logger.LogError("Could get repository name for the file directory {path} so it cannot be added to cache when trying to add repository.", repoPath);
+                result.RepositoryName = Path.GetFileName(repoPath);
+                result.IsSuccessful = false;
+                result.Reason = $"Could not get repository name for the file directory {repoPath}.";
+                return result;
+            }
+
+            string pushUrl;
+            try
+            {
+                using Repository repository = new(repoPath);
+                LibGit2Sharp.Remote? remoteRepository = repository.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
+                if (remoteRepository == null)
+                {
+                    Logger.LogError("Failed to find remote repository in {repoPath}, so it cannot be added to cache when trying to add repository.", repoPath);
+                    result.RepositoryName = repositoryName;
+                    result.IsSuccessful = false;
+                    result.Reason = $"Failed to find remote repository in {repoPath}.";
+                    return result;
+                }
+
+                pushUrl = remoteRepository.PushUrl;
+                if (string.IsNullOrEmpty(pushUrl))
+                {
+                    Logger.LogError("Failed to find push url for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
+                    result.RepositoryName = repositoryName;
+                    result.IsSuccessful = false;
+                    result.Reason = $"Failed to find push url for {repositoryName}.";
+                    return result;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("An error occurred while accessing the git repository at {repoPath}: {error}.", repoPath, e);
+                result.RepositoryName = repositoryName;
+                result.IsSuccessful = false;
+                result.Reason = $"An error occurred while accessing the git repository at {repoPath}: {e.Message}";
+                return result;
+            }
+
+            string? repositoryOwner = GetRepositoryOwner(pushUrl);
+            if (string.IsNullOrEmpty(repositoryOwner))
+            {
+                Logger.LogError("Failed to find repository owner for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
+                result.RepositoryName = repositoryName;
+                result.IsSuccessful = false;
+                result.Reason = $"Failed to find repository owner for {repositoryName}.";
+                return result;
+            }
+
+            RemoteHostPlatform platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
+            string repoCacheKey = Guid.NewGuid().ToString();
+            LocalGitRepository localGitRepository = new()
+            {
+                Id = repoCacheKey,
+                UserId = userId,
+                Name = repositoryName,
+                Owner = repositoryOwner,
+                Url = pushUrl,
+                HostPlatform = platform,
+            };
+            CacheManager.WorkingDirectories.TryAdd(localGitRepository.Id, repoPath);
+            CacheManager.Repositories.TryAdd(localGitRepository.Id, localGitRepository);
+
+            newRepo = new()
+            {
+                Repository = localGitRepository,
+                WorkingDirectory = repoPath,
+            };
+            result.RepositoryName = repositoryName;
+            result.IsSuccessful = true;
+            return result;
+        }
+
+        /// <summary>
+        /// Clones the specified repository using the SSH protocol.
+        /// </summary>
+        /// <param name="blueprint">The git clone blueprint.</param>
+        /// <param name="userId">The user identifier.</param>
+        /// <param name="additionResults">The repository addition results.</param>
+        /// <param name="newRepositories">The newly added git repositories.</param>
+        /// <param name="apiConfigurations">The API configurations.</param>
+        private void CloneRepositoryUsingSshProtocol(GitCloneBlueprint blueprint, int userId, ICollection<RepositoryAdditionResult> additionResults, ICollection<NewRepository> newRepositories, ChasmaWebApiConfigurations apiConfigurations)
+        {
+            string sourceUrl = blueprint.SourceUrl;
+            RemoteHostPlatform remoteHostPlatform = RemoteHelper.GetRemoteHostPlatform(sourceUrl);
+            string privateKeyPath;
+            if (remoteHostPlatform == RemoteHostPlatform.GitHub)
+            {
+                privateKeyPath = apiConfigurations.GitHubSshKeyPrivateKeyPath;
+            }
+            else if (remoteHostPlatform == RemoteHostPlatform.GitLab)
+            {
+                privateKeyPath = apiConfigurations.GitLabSshKeyPrivateKeyPath;
+            }
+            else
+            {
+                privateKeyPath = string.Empty;
+            }
+
+            bool directoryCreated = false;
+            string workingDirectory = blueprint.WorkingDirectory;
+            if (!Directory.Exists(workingDirectory))
+            {
+                Directory.CreateDirectory(workingDirectory);
+                directoryCreated = true;
+            }
+
+            string recurseSubmodules = blueprint.RecurseSubmodules ? "--recurse-submodules" : string.Empty;
+            string repoFolderName = Path.GetFileNameWithoutExtension(sourceUrl.TrimEnd('/'));
+            string absoluteClonedRepositoryPath = Path.Combine(workingDirectory, repoFolderName);
+            string cloneCommand = $"git -c core.sshCommand=\"ssh -i {privateKeyPath} -o IdentitiesOnly=yes\" clone {recurseSubmodules} {sourceUrl} \"{absoluteClonedRepositoryPath}\"";
+            if (!ShellUtility.TryExecuteShellCommand(cloneCommand, workingDirectory, out string errorMessage))
+            {
+                RepositoryAdditionResult additionResult = new()
+                {
+                    IsSuccessful = false,
+                    Reason = errorMessage,
+                    RepositoryName = Path.GetFileName(absoluteClonedRepositoryPath.TrimEnd(Path.DirectorySeparatorChar)),
+                };
+                additionResults.Add(additionResult);
+                if (directoryCreated)
+                {
+                    Directory.Delete(workingDirectory);
+                }
+            }
+            else
+            {
+                RepositoryAdditionResult additionResult = RegisterLocalRepository(absoluteClonedRepositoryPath, userId, out NewRepository clonedRepo);
+                additionResults.Add(additionResult);
+                if (clonedRepo != null)
+                {
+                    newRepositories.Add(clonedRepo);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clones the repository using the HTTPS protocol.
+        /// </summary>
+        /// <param name="blueprint">The git cloning repository template.</param>
+        /// <param name="userId">The user identifier.</param>
+        /// <param name="apiConfiguration">The API configuration.</param>
+        /// <param name="additionResults">The repository addition results.</param>
+        /// <param name="newRepositories">The newly added git repositories.</param>
+        private void CloneRepositoryUsingHttpsProtocol(GitCloneBlueprint blueprint, int userId, ChasmaWebApiConfigurations apiConfiguration, ICollection<RepositoryAdditionResult> additionResults, ICollection<NewRepository> newRepositories)
+        {
+            string remotePlatformUsername = null;
+            string apiAccessToken = null;
+            string workingDirectory = blueprint.WorkingDirectory;
+            string sourceUrl = blueprint.SourceUrl;
+            RemoteHostPlatform remoteHostPlatform = RemoteHelper.GetRemoteHostPlatform(sourceUrl);
+            if (remoteHostPlatform == RemoteHostPlatform.GitHub)
+            {
+                remotePlatformUsername = apiConfiguration.GitHubUsername;
+                apiAccessToken = apiConfiguration.GitHubApiToken;
+            }
+            else if (remoteHostPlatform == RemoteHostPlatform.GitLab)
+            {
+                remotePlatformUsername = apiConfiguration.GitLabUsername;
+                apiAccessToken = apiConfiguration.GitLabApiToken;
+            }
+            
+            try
+            {
+                CloneOptions cloneOptions = new()
+                {
+                    RecurseSubmodules = blueprint.RecurseSubmodules,
+                    CredentialsProvider = (_url, _user, _cred) => GetUserPasswordCredentials(blueprint, apiConfiguration, apiAccessToken, remotePlatformUsername),
+                };
+                Repository.Clone(sourceUrl, workingDirectory, cloneOptions);
+                RepositoryAdditionResult additionResult = RegisterLocalRepository(workingDirectory, userId, out NewRepository clonedRepo);
+                additionResults.Add(additionResult);
+                if (clonedRepo != null)
+                {
+                    newRepositories.Add(clonedRepo);
+                }
+            }
+            catch (Exception e)
+            {
+                RepositoryAdditionResult additionResult = new()
+                {
+                    IsSuccessful = false,
+                    Reason = $"An error occurred while trying to clone the repository: {e.Message}",
+                    RepositoryName = Path.GetFileName(workingDirectory.TrimEnd(Path.DirectorySeparatorChar)),
+                };
+                additionResults.Add(additionResult);
+            }
+        }
+
+        /// <summary>
+        /// Gets the user-password credentials for HTTPS git cloning.
+        /// </summary>
+        /// <param name="blueprint">The git cloning blueprint details.</param>
+        /// <param name="apiConfiguration">The API configuration.</param>
+        /// <param name="apiAccessToken">The remote host platform API personal access token.</param>
+        /// <param name="remotePlatformUsername">The remote host platform username (e.g., GitHub login username).</param>
+        /// <returns>The user-password credentials.</returns>
+        private static UsernamePasswordCredentials GetUserPasswordCredentials(GitCloneBlueprint blueprint, ChasmaWebApiConfigurations apiConfiguration, string apiAccessToken, string remotePlatformUsername)
+        {
+            // If we don't have an global API token, pass null to try an anonymous public clone.
+            if (string.IsNullOrEmpty(apiAccessToken))
+            {
+                return null;
+            }
+
+            return new UsernamePasswordCredentials
+            {
+                // Fall back to standard "git" if username isn't saved. 
+                // Most platforms accept any non-empty string when using access tokens.
+                Username = !string.IsNullOrEmpty(remotePlatformUsername) ? remotePlatformUsername : "git",
+                Password = apiAccessToken,
+            };
         }
 
         #endregion

@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import LogoutModal from './modals/LogoutModal';
 import UserConfigTab from './dashboardTabs/UserConfigTab';
 import RepositoryAdditionsTab from './dashboardTabs/RepositoryAdditionsTab';
+import CloneRepositoriesTab from './dashboardTabs/CloneRepositoriesTab';
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -87,6 +88,12 @@ const Dashboard: React.FC = () => {
                     🧪 Simulate
                 </div>
                 <div
+                    className={`tab ${activeTab === "cloneRepos" ? "active" : ""}`}
+                    onClick={() => handleTabClick("cloneRepos")}
+                >
+                    🚚 Clone Repositories
+                </div>
+                <div
                     className={`tab ${activeTab === "addRepos" ? "active" : ""}`}
                     onClick={() => handleTabClick("addRepos")}
                 >
@@ -162,6 +169,11 @@ const Dashboard: React.FC = () => {
                 {activeTab === "addRepos" && (
                     <div className="panel-card">
                         <RepositoryAdditionsTab />
+                    </div>
+                )}
+                {activeTab === "cloneRepos" && (
+                    <div className="panel-card">
+                        <CloneRepositoriesTab />
                     </div>
                 )}
             </main>

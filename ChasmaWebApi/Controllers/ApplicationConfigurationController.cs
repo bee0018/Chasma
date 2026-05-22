@@ -30,6 +30,8 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         private readonly IWebHostEnvironment webHostEnvironment;
 
+        #region Constructor
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationConfigurationController"/> class with the specified API configurations.
         /// </summary>
@@ -42,6 +44,8 @@ namespace ChasmaWebApi.Controllers
             applicationControlService = controlSerivce;
             webHostEnvironment = env;
         }
+
+        #endregion
 
         /// <summary>
         /// Gets a message indicating whether the system is ready.
@@ -92,7 +96,14 @@ namespace ChasmaWebApi.Controllers
                 WorkflowRunReportThreshold = currentConfig.WorkflowRunReportThreshold,
                 GitHubPullRequestScanIntervalSeconds = currentConfig.GitHubPullRequestScanIntervalSeconds,
                 SelfHostedGitLabUrl = currentConfig.SelfHostedGitLabUrl,
-                GitLabMergeRequestScanIntervalSeconds = currentConfig.GitLabMergeRequestScanIntervalSeconds
+                GitLabMergeRequestScanIntervalSeconds = currentConfig.GitLabMergeRequestScanIntervalSeconds,
+                GitHubUsername = currentConfig.GitHubUsername,
+                GitLabUsername = currentConfig.GitLabUsername,
+                GlobalWorkspacePath = currentConfig.GlobalWorkspacePath,
+                GitHubSshKeyPrivateKeyPath = currentConfig.GitHubSshKeyPrivateKeyPath,
+                GitLabSshKeyPrivateKeyPath = currentConfig.GitLabSshKeyPrivateKeyPath,
+                GitHubSshPassphrase = currentConfig.GitHubSshPassphrase,
+                GitLabSshPassphrase = currentConfig.GitLabSshPassphrase,
             };
             return Ok(response);
         }
@@ -184,6 +195,11 @@ namespace ChasmaWebApi.Controllers
             if (config.BindingPort <= 0 || config.BindingPort > 65535)
             {
                 invalidElements.Add("bindingPort");
+            }
+
+            if (string.IsNullOrEmpty(config.GlobalWorkspacePath))
+            {
+                invalidElements.Add("globalWorkspacePath");
             }
 
             return invalidElements;
