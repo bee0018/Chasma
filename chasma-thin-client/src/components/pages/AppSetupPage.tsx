@@ -181,6 +181,7 @@ export const AppSetupPage: React.FC = () => {
         config.gitLabMergeRequestScanIntervalSeconds = safeNumber(gitLabMergeRequestScanIntervalSeconds);
         config.gitHubUsername = gitHubUsername;
         config.gitLabUsername = gitLabUsername;
+        config.globalWorkspacePath = globalWorkspacePath;
         const request = new ModifyApiConfigRequest();
         request.apiConfiguration = config;
         try {
