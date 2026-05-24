@@ -190,30 +190,7 @@ public class RepositoryConfigurationController : ControllerBase
         }
 
         List<RepositoryAdditionResult> additionResults = applicationControlService.AddGitRepositories(repoPaths, userId, out List<NewRepository> newRepositories);
-        foreach (NewRepository newRepository in newRepositories)
-        {
-            string repoPath = newRepository.WorkingDirectory;
-            LocalGitRepository localGitRepository = newRepository.Repository;
-            RepositoryModel repositoryModel = new()
-            {
-                Id = localGitRepository.Id,
-                UserId = localGitRepository.UserId,
-                Name = localGitRepository.Name,
-                Owner = localGitRepository.Owner,
-                Url = localGitRepository.Url,
-                HostPlatform = localGitRepository.HostPlatform,
-                IsIgnored = false,
-            };
-            await applicationDbContext.Repositories.AddAsync(repositoryModel);
-            WorkingDirectoryModel workingDirectoryModel = new()
-            {
-                RepositoryId = localGitRepository.Id,
-                WorkingDirectory = repoPath,
-            };
-            await applicationDbContext.WorkingDirectories.AddAsync(workingDirectoryModel);
-        }
-        
-        await applicationDbContext.SaveChangesAsync();
+        await AddRepositoriesToDatabase(newRepositories);
         response.Repositories = newRepositories.Select(i => i.Repository).ToList();
         response.AdditionResults = additionResults;
         return Ok(response);
@@ -385,4 +362,77 @@ public class RepositoryConfigurationController : ControllerBase
         logger.LogInformation("Successfully removed file {fileName} from repository with key {repoKey}.", selectedFile.FilePath, selectedFile.RepositoryId);
         return Ok(response);
     }
+
+    /// <summary>
+    /// Clones the list of git repositories from the specified clone information and adds them to cache.
+    /// </summary>
+    /// <param name="request">The request to add multiple repositories.</param>
+    /// <returns>The response to cloning a repository.</returns>
+    [HttpPost]
+    [Route("gitClone")]
+    public async Task<ActionResult<GitCloneResponse>> CloneRepositories([FromBody] GitCloneRequest request)
+    {
+        string requestName = nameof(GitCloneRequest);
+        GitCloneResponse response = new();
+        if (request == null)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = $"Null {requestName} was received. Cannot start cloning operation.";
+            logger.LogError("Invalid {request} received to clone repositories.", requestName);
+            return BadRequest(response);
+        }
+
+        List<GitCloneBlueprint> blueprints = request.Blueprints;
+        if (blueprints.Count == 0)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Nothing to do because there are no repositories.";
+            logger.LogError("Invalid {request} received to clone repositories because no blueprints were provided.", requestName);
+            return Ok(response);
+        }
+
+        List<RepositoryAdditionResult> additionResults = applicationControlService.CloneGitRepositories(blueprints, request.UserId, out List<NewRepository> newRepositories);
+        await AddRepositoriesToDatabase(newRepositories);
+        logger.LogInformation("Finished cloning repositories. Successfully cloned {successCount} repo(s) and failed to clone {failureCount} repo(s).", newRepositories.Count, additionResults.Count - newRepositories.Count);
+        response.Repositories = newRepositories.Select(i => i.Repository).ToList();
+        response.AdditionResults = additionResults;
+        return Ok(response);
+    }
+
+    #region Private Methods
+
+    /// <summary>
+    /// Adds the specified repositories to the database.
+    /// </summary>
+    /// <param name="newRepositories">The new repositories to add to the database.</param>
+    /// <returns>The completed task.</returns>
+    private async Task AddRepositoriesToDatabase(IEnumerable<NewRepository> newRepositories)
+    {
+        foreach (NewRepository newRepository in newRepositories)
+        {
+            string repoPath = newRepository.WorkingDirectory;
+            LocalGitRepository localGitRepository = newRepository.Repository;
+            RepositoryModel repositoryModel = new()
+            {
+                Id = localGitRepository.Id,
+                UserId = localGitRepository.UserId,
+                Name = localGitRepository.Name,
+                Owner = localGitRepository.Owner,
+                Url = localGitRepository.Url,
+                HostPlatform = localGitRepository.HostPlatform,
+                IsIgnored = false,
+            };
+            await applicationDbContext.Repositories.AddAsync(repositoryModel);
+            WorkingDirectoryModel workingDirectoryModel = new()
+            {
+                RepositoryId = localGitRepository.Id,
+                WorkingDirectory = repoPath,
+            };
+            await applicationDbContext.WorkingDirectories.AddAsync(workingDirectoryModel);
+        }
+
+        await applicationDbContext.SaveChangesAsync();
+    }
+
+    #endregion
 }

@@ -365,5 +365,14 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="newConfig">The new API configuration.</param>
         /// <param name="currentConfig">The current API configuration.</param>
         void UpdateApiConfiguration(string configFilePath, ChasmaWebApiConfigurations newConfig, ChasmaWebApiConfigurations currentConfig);
+
+        /// <summary>
+        /// Clones git repositories to the cache with the specified filepath.
+        /// </summary>
+        /// <param name="blueprints">The list of blueprints for git cloning.</param>
+        /// <param name="userId">The user identifier.</param>
+        /// <param name="newRepositories">The clone git repositories.</param>
+        /// <returns>The list of repository addition results.</returns>
+        List<RepositoryAdditionResult> CloneGitRepositories(IEnumerable<GitCloneBlueprint> blueprints, int userId, out List<NewRepository> newRepositories);
     }
 }

@@ -24,6 +24,18 @@ namespace ChasmaWebApi
         public string JwtSecretKey { get; set; }
 
         /// <summary>
+        /// Gets or sets the global workspace path where all repositories will be stored.
+        /// </summary>
+        [XmlElement("globalWorkspacePath")]
+        public string GlobalWorkspacePath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's GitHub username.
+        /// </summary>
+        [XmlElement("gitHubUsername")]
+        public string? GitHubUsername { get; set; }
+
+        /// <summary>
         /// Gets or sets the GitHub API token.
         /// </summary>
         [XmlElement("githubApiToken")]
@@ -42,10 +54,40 @@ namespace ChasmaWebApi
         public int? GitHubPullRequestScanIntervalSeconds { get; set; }
 
         /// <summary>
+        /// Gets or sets the user's GitLab username.
+        /// </summary>
+        [XmlElement("gitLabUsername")]
+        public string? GitLabUsername { get; set; }
+
+        /// <summary>
+        /// Gets or sets the filepath of the generated PEM RSA SSH key file for the GitHub account.
+        /// </summary>
+        [XmlElement("gitHubSshPrivateKeyPath")]
+        public string? GitHubSshKeyPrivateKeyPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user-defineed password used to encrypt an SSH private key file when it is generated for a GitHub account.
+        /// </summary>
+        [XmlElement("gitHubSshPassphrase")]
+        public string? GitHubSshPassphrase { get; set; }
+
+        /// <summary>
         /// Gets or sets the GitLab API token.
         /// </summary>
         [XmlElement("gitlabApiToken")]
         public string? GitLabApiToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets the filepath of the generated PEM RSA SSH key file for the GitLab account.
+        /// </summary>
+        [XmlElement("gitLabSshPrivateKeyPath")]
+        public string? GitLabSshKeyPrivateKeyPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user-defineed password used to encrypt an SSH private key file when it is generated for a GitLab account.
+        /// </summary>
+        [XmlElement("gitLabSshPassphrase")]
+        public string? GitLabSshPassphrase { get; set; }
 
         /// <summary>
         /// Gets or sets the self hosted GitLab url.
@@ -130,6 +172,41 @@ namespace ChasmaWebApi
             if (BindingPort != newConfig.BindingPort)
             {
                 BindingPort = newConfig.BindingPort;
+            }
+
+            if (GitHubUsername != newConfig.GitHubUsername)
+            {
+                GitHubUsername = newConfig.GitHubUsername;
+            }
+
+            if (GitLabUsername != newConfig.GitLabUsername)
+            {
+                GitLabUsername = newConfig.GitLabUsername;
+            }
+
+            if (GlobalWorkspacePath != newConfig.GlobalWorkspacePath)
+            {
+                GlobalWorkspacePath = newConfig.GlobalWorkspacePath;
+            }
+
+            if (GitHubSshKeyPrivateKeyPath != newConfig.GitHubSshKeyPrivateKeyPath)
+            {
+                GitHubSshKeyPrivateKeyPath = newConfig.GitHubSshKeyPrivateKeyPath;
+            }
+
+            if (GitHubSshPassphrase != newConfig.GitHubSshPassphrase)
+            {
+                GitHubSshPassphrase = newConfig.GitHubSshPassphrase;
+            }
+
+            if (GitLabSshKeyPrivateKeyPath != newConfig.GitLabSshKeyPrivateKeyPath)
+            {
+                GitLabSshKeyPrivateKeyPath = newConfig.GitLabSshKeyPrivateKeyPath;
+            }
+
+            if (GitLabSshPassphrase != newConfig.GitLabSshPassphrase)
+            {
+                GitLabSshPassphrase = newConfig.GitLabSshPassphrase;
             }
         }
         

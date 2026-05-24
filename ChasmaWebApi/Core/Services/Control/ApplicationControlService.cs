@@ -154,6 +154,12 @@ namespace ChasmaWebApi.Core.Services.Control
             return repositoryIndexService.TryRemoveFile(selectedFile, out errorMessage);
         }
 
+        // <inheritdoc />
+        public List<RepositoryAdditionResult> CloneGitRepositories(IEnumerable<GitCloneBlueprint> blueprints, int userId, out List<NewRepository> newRepositories)
+        {
+            return repositoryIndexService.CloneRepositories(blueprints, userId, out newRepositories);
+        }
+
         #endregion
 
         #region Branch Configuration

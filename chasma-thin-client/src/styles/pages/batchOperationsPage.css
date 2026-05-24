@@ -430,3 +430,119 @@
         width: 100%;
     }
 }
+
+.page-warning-banner {
+    display: flex;
+    gap: 12px;
+    background-color: #2c2516;
+    border-left: 4px solid #f59f00;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #e9ecef;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.warning-icon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.warning-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.warning-text {
+    margin: 0 0 12px 0;
+    line-height: 1.5;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+.warning-details {
+    font-size: 13px;
+    width: 100%;
+}
+
+.warning-details summary {
+    font-weight: 600;
+    color: #ffd43b;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+
+.warning-details summary:hover {
+    color: #fab005;
+    text-decoration: underline;
+}
+
+.requirements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #3d3a35;
+    box-sizing: border-box;
+}
+
+.platform-requirement {
+    background-color: #1e1e1e;
+    border: 1px solid #343a40;
+    border-radius: 6px;
+    padding: 14px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+.platform-requirement h4 {
+    margin: 0 0 10px 0;
+    color: #f1f3f5;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #2b2b2b;
+    padding-bottom: 6px;
+    word-break: break-word;
+}
+
+.platform-requirement ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.platform-requirement li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+    color: #ced4da;
+    word-break: break-word;
+}
+
+.platform-requirement li:last-child {
+    margin-bottom: 0;
+}
+
+.platform-requirement code {
+    background-color: #2b2b2b;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    color: #ff8787;
+    display: inline-block;
+    max-width: 100%;
+    overflow-x: auto;
+    vertical-align: middle;
+    white-space: nowrap;
+}
