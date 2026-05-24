@@ -121,7 +121,7 @@ const RepositoryAdditionsTab: React.FC = () => {
                     <div className="left-panel">
                         <div className="panel-card">
                             <div className="panel-header">
-                                <h2 className="page-description">Streamline your workflow by instantly syncing new repositories; simply provide the full system path to your project folder to get started!</h2>
+                                <h2 className="page-description">Streamline your workflow by instantly syncing new repositories; simply provide the full system path to your project folder to get started ⛷️</h2>
                             </div>
                         </div>
                         <section className="command-mode-section">

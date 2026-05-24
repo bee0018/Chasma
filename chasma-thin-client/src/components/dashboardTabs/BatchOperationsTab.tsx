@@ -230,7 +230,7 @@ const BatchOperationsTab: React.FC = () => {
                 <header className="batch-page-header">
                     <h1 className="page-title">Batch Repository Operations</h1>
                     <p className="page-description">
-                        Execute shell commands across all registered repositories at once.
+                        Execute shell commands across all registered repositories at once ⛓️
                     </p>
                 </header>
 

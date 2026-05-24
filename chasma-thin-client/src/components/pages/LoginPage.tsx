@@ -91,7 +91,7 @@ const LoginPage: React.FC = () => {
             <button
                 className="config-button"
                 onClick={() => navigate("/setup")}>
-                    Configure
+                    System Settings
             </button>
             <div className="login-card">
                 <div className="login-logo">

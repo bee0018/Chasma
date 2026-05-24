@@ -560,7 +560,7 @@ const RepositoryStatusPage: React.FC = () => {
                         >
                             Stashes🗄️
                         </div>
-                        <div className="tab" style={{ marginTop: "20px" }} onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
+                        <div className="tab" onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
                     </>
                 }
                 <div className="tab" onClick={() => setIsAddingBranch(true)}>Add Branch ➕</div>

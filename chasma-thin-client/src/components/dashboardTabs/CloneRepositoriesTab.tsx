@@ -154,7 +154,7 @@ const CloneRepositoriesTab: React.FC = () => {
                                     <h1 className="page-title">Clone Multiple Repositories</h1>
                                     <p className="page-description">
                                         Manage and clone multiple source repositories to set up your
-                                        workspace.
+                                        workspace 🌱
                                     </p>
                                     <div className="page-warning-banner">
                                         <span className="warning-icon">⚠️</span>

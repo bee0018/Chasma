@@ -73,65 +73,65 @@ const Dashboard: React.FC = () => {
                     className={`tab ${activeTab === "home" ? "active" : ""}`}
                     onClick={() => handleTabClick("home")}
                 >
-                    🏠 Home
+                    Home 🏠
                 </div>
                 <div
                     className={`tab ${activeTab === "batchOperations" ? "active" : ""}`}
                     onClick={() => handleTabClick("batchOperations")}
                 >
-                    ⚡ Batch Ops
+                    Batch Ops ⚡
                 </div>
                 <div
                     className={`tab ${activeTab === "dryRun" ? "active" : ""}`}
                     onClick={() => handleTabClick("dryRun")}
                 >
-                    🧪 Simulate
+                    Simulate 🧪
                 </div>
                 <div
                     className={`tab ${activeTab === "cloneRepos" ? "active" : ""}`}
                     onClick={() => handleTabClick("cloneRepos")}
                 >
-                    🚚 Clone Repositories
+                    Clone Repositories 🚚
                 </div>
                 <div
                     className={`tab ${activeTab === "addRepos" ? "active" : ""}`}
                     onClick={() => handleTabClick("addRepos")}
                 >
-                    ➕ Add Repositories
-                </div>
-                <div
-                    className="tab"
-                    onClick={() => setIsIncludingRepos(true)}
-                >
-                    🚫 Ignored Repos
+                    Add Repositories ➕
                 </div>
                 <div
                     className={`tab ${activeTab === "globalPrs" ? "active" : ""}`}
                     onClick={() => handleTabClick("globalPrs")}
                 >
-                    🌍 Global
+                    Global 🌍
                 </div>
                 <div
                     className={`tab ${activeTab === "apiStatus" ? "active" : ""}`}
                     onClick={() => handleTabClick("apiStatus")}
                 >
-                    🔌 API Status
+                    API Status 🔌
+                </div>
+                <div
+                    className="tab"
+                    onClick={() => setIsIncludingRepos(true)}
+                >
+                    Ignored Repos 🚫
                 </div>
                 <div
                     className="tab"
                     onClick={() => window.open("\help", "_blank")}>
-                    <span className="profile-icon">💡</span>
                     <span className="username">Help</span>
+                    <span className="profile-icon">💡</span>
                 </div>
                 <div
                     className="tab"
                     onClick={() => navigate('/setup')}>
-                    ⚙️ Configure
+                    System Settings ⚙️
                 </div>
                 <div
                     className="sidebar-help"
                     onClick={() => setIsLoggingOut(true)}>
-                    <span className="username">⏻ Logout</span>
+                    <span className="username">Logout ⏻</span>
                 </div>
             </aside>
 

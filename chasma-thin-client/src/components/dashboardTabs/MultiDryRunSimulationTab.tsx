@@ -270,7 +270,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
                     <div className="left-panel">
                         <div className="panel-card">
                             <div className="panel-header">
-                                <h2 className="page-description">Simulate actions without actually affecting the repositories!</h2>
+                                <h2 className="page-description">Simulate actions without actually affecting the repositories 🥽</h2>
                             </div>
                         </div>
                             <section className="command-mode-section">
