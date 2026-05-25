@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Non-commercial use only
 
-#define MyAppName "Chasma"
+#define MyAppName "Emryce"
 #define MyAppVersion "1.0"
 #define MyAppPublisher "Bryce Ellis"
 #define MyAppURL "https://github.com/bee0018/Chasma"
@@ -38,7 +38,7 @@ DisableProgramGroupPage=yes
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=C:\Users\bryce\Desktop
-OutputBaseFilename=chasma-setup
+OutputBaseFilename=emryce-setup
 SetupIconFile=publish\wwwroot\favicon.ico
 SolidCompression=yes
 WizardStyle=modern dynamic
@@ -54,11 +54,11 @@ Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
 Source: "publish\wwwroot\favicon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Dirs]
-Name: "{commonappdata}\Chasma"; Permissions: users-full
+Name: "{commonappdata}\Emryce"; Permissions: users-full
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\favicon.ico"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\favicon.ico"; Tasks: desktopicon
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{commonappdata}\Chasma"
+Type: filesandordirs; Name: "{commonappdata}\Emryce"

@@ -199,7 +199,7 @@ export const AppSetupPage: React.FC = () => {
             if (response.staticConfigurationsChanged) {
                 setNotification({
                     title: "Successfully applied configurations!",
-                    message: "Binding Port and/or JWT Secret key has been updated. Restart the app to apply changes.",
+                    message: "Binding Port, JWT Secret Key, and/or Global Workspace Path key has been updated. Restart the app to apply changes.",
                     isError: false,
                 });
             }
