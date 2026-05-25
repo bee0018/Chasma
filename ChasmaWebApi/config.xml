@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configurations xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 	<bindingPort>5000</bindingPort>
-	<jwtSecretKey>secretKey</jwtSecretKey>
-	<globalWorkspacePath>path/to/workspace</globalWorkspacePath>
-	<gitHubUsername>gitHubUser</gitHubUsername>
-	<gitHubSshPrivateKeyPath>path/to/private/key</gitHubSshPrivateKeyPath>
-	<gitHubSshPassphrase>phrase</gitHubSshPassphrase>
-	<githubApiToken>token</githubApiToken>
+	<jwtSecretKey/>
+	<globalWorkspacePath/>
+	<gitHubUsername/>
+	<gitHubSshPrivateKeyPath/>
+	<gitHubSshPassphrase/>
+	<githubApiToken/>
 	<workflowRunReportThreshold>30</workflowRunReportThreshold>
 	<gitHubPullRequestScanIntervalSeconds>20</gitHubPullRequestScanIntervalSeconds>
-	<gitLabUsername>gitLabUsername</gitLabUsername>
-	<gitlabApiToken>token</gitlabApiToken>
-	<gitLabSshPrivateKeyPath>path/to/private/key</gitLabSshPrivateKeyPath>
-	<gitLabSshPassphrase>phrase</gitLabSshPassphrase>
-	<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
+	<gitLabUsername/>
+	<gitlabApiToken/>
+	<gitLabSshPrivateKeyPath/>
+	<gitLabSshPassphrase/>
+	<selfHostedGitLabUrl/>
 	<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 </configurations>
