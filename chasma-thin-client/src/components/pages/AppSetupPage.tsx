@@ -246,7 +246,7 @@ export const AppSetupPage: React.FC = () => {
                 const response = await appConfigClient.getSystemReady();
                 if (!response.isReady) {
                     setNotification({
-                        title: "Setup Chasma System",
+                        title: "Setup Emryce System",
                         message: "The system is not configured. Enter your configurations and select the 'Apply Configurations' button at the bottom of the screen to save changes.",
                         isError: false,
                     });
@@ -326,7 +326,7 @@ export const AppSetupPage: React.FC = () => {
             >
                 {user === null ? "Continue to Login" : "Home"} →
             </button>
-            <h1 className="page-title">Chasma Setup</h1>
+            <h1 className="page-title">System Settings</h1>
             <div className="xml-attr">
                 <div className="xml-attr-header">
                     <span className="xml-name">bindingPort</span>

@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
 
-if [ ! -d "/var/lib/Chasma" ]; then
-    mkdir -p /var/lib/Chasma
+if [ ! -d "/var/lib/Emryce" ]; then
+    mkdir -p /var/lib/Emryce
 fi
 
-chmod 777 /var/lib/Chasma
-chmod +x /opt/chasma/ChasmaWebApi
-ln -sf /opt/chasma/ChasmaWebApi /usr/bin/chasma
+chmod 777 /var/lib/Emryce
+chmod +x /opt/emryce/ChasmaWebApi
+ln -sf /opt/emryce/ChasmaWebApi /usr/bin/emryce
 update-desktop-database -q
 exit 0

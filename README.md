@@ -1,4 +1,4 @@
-# GitCtrl
+# Emryce
 ## A Smarter Way to Work with Multiple Git Repositories
 
 Managing multiple Git repositories shouldn’t mean juggling terminals, IDE tabs, and half-remembered commands. This application gives you a unified, real-time control center for all your local Git repositories—so you can focus on writing code, not managing tooling.

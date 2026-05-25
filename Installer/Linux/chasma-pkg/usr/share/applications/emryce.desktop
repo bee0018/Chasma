@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Emryce
+Comment=Launch Emryce Web Application
+Exec=/usr/bin/emryce
+Path=/opt/emryce
+Icon=/opt/emryce/wwwroot/favicon.ico
+Terminal=false
+Categories=Utility;Development;

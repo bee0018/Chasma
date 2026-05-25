@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {Link, useNavigate} from 'react-router-dom';
-import ChasmaLogo from "../logos/ChasmaLogo";
+import logo from "../logos/emryce-logo-withBg.svg";
 import {LoginRequest} from "../../API/ChasmaWebApiClient";
 import {useCacheStore} from "../../managers/CacheManager";
 import {userClient} from "../../managers/ApiClientManager";
@@ -95,7 +95,7 @@ const LoginPage: React.FC = () => {
             </button>
             <div className="login-card">
                 <div className="login-logo">
-                    <ChasmaLogo />
+                    <img src={logo} alt="Emryce Official Logo" className="logo-image" />
                 </div>
                 <h1 className="login-title">Sign In</h1>
                 <form onSubmit={handleLogin}>
