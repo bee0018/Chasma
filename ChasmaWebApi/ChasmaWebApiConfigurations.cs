@@ -121,10 +121,10 @@ namespace ChasmaWebApi
         {
             string folder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                "Chasma"
+                "Emryce"
             );
             Directory.CreateDirectory(folder);
-            string dbPath = Path.Combine(folder, "Chasma.db");
+            string dbPath = Path.Combine(folder, "Emryce.db");
             return $"Data Source={dbPath}";
         }
 
@@ -216,7 +216,7 @@ namespace ChasmaWebApi
         /// <returns>The configuration file path.</returns>
         public static string GetConfigXmlFilePath()
         {
-            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
+            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Emryce");
             string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
             return IsDevelopmentMode
                 ? defaultConfigPath

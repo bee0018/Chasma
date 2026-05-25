@@ -76,7 +76,7 @@ namespace ChasmaWebApi.Controllers
         {
             bool isDevelopment = webHostEnvironment.IsDevelopment();
             string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
-            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
+            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Emryce");
             string configFilePath = isDevelopment
                 ? defaultConfigPath
                 : Path.Combine(appDataDirectory, "config.xml");
@@ -138,7 +138,7 @@ namespace ChasmaWebApi.Controllers
 
             bool isDevelopment = webHostEnvironment.IsDevelopment();
             string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
-            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
+            string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Emryce");
             string configFilePath = isDevelopment
                 ? defaultConfigPath
                 : Path.Combine(appDataDirectory, "config.xml");
@@ -171,7 +171,9 @@ namespace ChasmaWebApi.Controllers
                 }
             }
 
-            response.StaticConfigurationsChanged = currentConfig.BindingPort != newConfig.BindingPort || currentConfig.JwtSecretKey != newConfig.JwtSecretKey;
+            response.StaticConfigurationsChanged = currentConfig.BindingPort != newConfig.BindingPort 
+                || currentConfig.JwtSecretKey != newConfig.JwtSecretKey
+                || currentConfig.GlobalWorkspacePath != newConfig.GlobalWorkspacePath;
             applicationControlService.UpdateApiConfiguration(configFilePath, newConfig, currentConfig);
             logger.LogInformation("Successfully processed {request}. Sending success response.", requestName);
             return Ok(response);

@@ -8,8 +8,8 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 
-string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Chasma");
-string logPath = Path.Combine(appDataDirectory, "logs", "chasma-.log");
+string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Emryce");
+string logPath = Path.Combine(appDataDirectory, "logs", "emryce-.log");
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
@@ -45,7 +45,7 @@ try
                 return;
             }
 
-            Log.Information("Starting Chasma Web API...");
+            Log.Information("Starting Emryce...");
             Log.Information("Environment: {Env}", builder.Environment.EnvironmentName);
             Log.Information("Using config file: {ConfigPath}", configFilePath);
 

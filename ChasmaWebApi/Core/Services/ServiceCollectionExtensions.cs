@@ -103,7 +103,7 @@ namespace ChasmaWebApi.Core.Services
                 .AddEndpointsApiExplorer()
                 .AddOpenApiDocument(config =>
                 {
-                    config.Title = "Chasma Git Manager API";
+                    config.Title = "Emryce API";
                     config.Version = "v1";
                 })
                 .AddDbContext<ApplicationDbContext>(options => options.UseSqlite(webApiConfigurations.GetDatabaseConnectionString()))

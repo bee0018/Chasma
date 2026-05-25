@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
-import ChasmaLogo from "../logos/ChasmaLogo";
+import logo from "../logos/emryce-logo-withBg.svg";
 import {AddUserRequest} from "../../API/ChasmaWebApiClient";
 import {useCacheStore} from "../../managers/CacheManager";
 import {userClient} from "../../managers/ApiClientManager";
@@ -81,7 +81,7 @@ const RegisterPage: React.FC = () => {
 
             setNotification({
                 title: `Successfully added to the system!`,
-                message: `Welcome to Chasma Git Manager, ${response.user.userName}.`,
+                message: `Welcome to Emryce Workflow Manager, ${response.user.userName}.`,
                 isError: false,
             });
             setDisableSendButton(false);
@@ -110,7 +110,7 @@ const RegisterPage: React.FC = () => {
             </button>
             <div className="login-card">
                 <div className="login-logo">
-                    <ChasmaLogo/>
+                    <img src={logo} alt="Emryce Official Logo" className="logo-image" />
                 </div>
                 <h1 className="login-title">Register</h1>
                 <form onSubmit={handleRegister}>

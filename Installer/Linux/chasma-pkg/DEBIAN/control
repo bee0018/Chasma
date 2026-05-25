@@ -1,7 +1,0 @@
-Package: chasma
-Version: 1.0
-Section: utils
-Priority: optional
-Architecture: amd64
-Maintainer: Bryce Ellis
-Description: Web API application enhancing developer productivity and Git workflow automation.
