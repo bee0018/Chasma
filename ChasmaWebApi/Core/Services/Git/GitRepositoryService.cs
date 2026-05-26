@@ -368,6 +368,61 @@ namespace ChasmaWebApi.Core.Services.Git
             return ShellUtility.TryExecuteShellCommand($"git restore {selectedFile.FilePath}", workingDirectory, out errorMessage);
         }
 
+        public static void StageLineRange(string repoPath, string relativeFilePath, int startLine, int endLine)
+    {
+        using var repo = new Repository(repoPath);
+        
+        // 1. Get the current working directory file content
+        string fullPath = Path.Combine(repoPath, relativeFilePath);
+        string[] workingCopyLines = File.ReadAllLines(fullPath);
+
+        // 2. Get the currently staged content (if any, otherwise get HEAD)
+        string[] stagedLines;
+        var indexEntry = repo.Index[relativeFilePath];
+        
+        if (indexEntry != null)
+        {
+            var blob = repo.Lookup<Blob>(indexEntry.Id);
+            stagedLines = blob.GetContentText().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        }
+        else
+        {
+            // If not staged yet, fall back to the HEAD commit version
+            var headEntry = repo.Head.Tip?[relativeFilePath];
+            if (headEntry != null)
+            {
+                var blob = repo.Lookup<Blob>(headEntry.Target.Id);
+                stagedLines = blob.GetContentText().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            }
+            else
+            {
+                // File is brand new/untracked
+                stagedLines = new string[workingCopyLines.Length];
+                Array.Fill(stagedLines, string.Empty);
+            }
+        }
+
+        // 3. Construct the new staged content
+        // Line numbers are usually 1-indexed, so adjust for 0-indexed arrays
+        for (int i = startLine - 1; i <= endLine - 1; i++)
+        {
+            if (i >= 0 && i < workingCopyLines.Length)
+            {
+                stagedLines[i] = workingCopyLines[i];
+            }
+        }
+
+        string newStagedContent = string.Join(Environment.NewLine, stagedLines);
+
+        // 4. Update the Git Index
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(newStagedContent));
+        var newBlob = repo.ObjectDatabase.CreateBlob(stream);
+        
+        repo.Index.Add(newBlob, relativeFilePath, Mode.NonExecutableFile);
+        repo.Index.Write();
+    }
+}
+
         /// <summary>
         /// Gets the branch diversion calculation for the specified repository.
         /// </summary>
