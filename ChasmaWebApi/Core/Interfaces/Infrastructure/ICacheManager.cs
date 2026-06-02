@@ -34,4 +34,9 @@ public interface ICacheManager
     /// Gets the mapping of GitLab merge request numbers to merge request details.
     /// </summary>
     ConcurrentDictionary<long, RemotePullRequest> GitLabMergeRequests { get; }
+
+    /// <summary>
+    /// Gets the mapping of work context snapshot identifiers to work context snapshots for the development workspaces in the system.
+    /// </summary>
+    ConcurrentDictionary<int, WorkContextSnapshot> WorkContextSnapshots { get; }
 }

@@ -68,6 +68,7 @@ const LoginPage: React.FC = () => {
             useCacheStore.getState().setUser(response.user);
             useCacheStore.getState().setToken(response.token);
             useCacheStore.getState().setRefreshToken(response.refreshToken);
+            useCacheStore.getState().setWorkspaceSnapshots(response.snapshots);
             setDisableSendButton(false);
             navigate('/home');
             setNotification(null);

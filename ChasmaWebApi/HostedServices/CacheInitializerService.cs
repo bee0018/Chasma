@@ -142,6 +142,39 @@ namespace ChasmaWebApi.HostedServices
                 cacheManager.Users.TryAdd(user.Id, applicationUser);
             }
 
+            List<WorkContextSnapshotModel> workspaceSnapshots = await applicationDbContext.WorkContextSnapshots.ToListAsync(cancellationToken);
+            foreach (WorkContextSnapshotModel workContextSnapshotModel in workspaceSnapshots)
+            {
+                List<RepositoryWorkContextSnapshotModel> repositorySnapshotModels = await applicationDbContext.RepositorySnapshots
+                    .Where(i => i.SnapshotId == workContextSnapshotModel.SnapshotId)
+                    .ToListAsync(cancellationToken);
+                List<RepsoitoryWorkContextSnapshotEntry> repositorySnapshots = [];
+                foreach (RepositoryWorkContextSnapshotModel repositorySnapshot in repositorySnapshotModels)
+                {
+                    RepsoitoryWorkContextSnapshotEntry entry = new()
+                    {
+                        SnapshotId = workContextSnapshotModel.SnapshotId,
+                        RepositoryId = repositorySnapshot.RepositoryId,
+                        BranchName = repositorySnapshot.BranchName,
+                        CommitHash = repositorySnapshot.CommitHash,
+                        CreatedAt = repositorySnapshot.CreatedAt,
+                        StashMessage = repositorySnapshot.StashMessage,
+                        IntentNote = repositorySnapshot.IntentNote,
+                    };
+                    repositorySnapshots.Add(entry);
+                }
+
+                WorkContextSnapshot snapshot = new()
+                {
+                    SnapshotId = workContextSnapshotModel.SnapshotId,
+                    UserId = workContextSnapshotModel.UserId,
+                    SnapshotNote = workContextSnapshotModel.SnapshotNote,
+                    DisplayName = workContextSnapshotModel.DisplayName,
+                    RepositorySnapshots = repositorySnapshots,
+                };
+                cacheManager.WorkContextSnapshots.TryAdd(snapshot.SnapshotId, snapshot);
+            }
+
             logger.LogInformation("Finished updating the cache with the database data.");
             _ = Task.Run(async () =>
             {

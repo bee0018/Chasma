@@ -351,6 +351,24 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         bool TryRestoringFile(RepositoryStatusElement selectedFile, out string errorMessage);
 
         /// <summary>
+        /// Adds the work context snapshot for the user with the provided snapshot display name, list of repository snapshot blueprints, and an optional snapshot note.
+        /// </summary>
+        /// <param name="userId">The user identifier this snapshot is associated to.</param>
+        /// <param name="snapshotDisplayName">The name of the snapshot.</param>
+        /// <param name="blueprints">The snapshot addition blueprints.</param>
+        /// <param name="snapshotNote">The note of intent for the overall snapshot.</param>
+        /// <param name="snapshot">The newly created workspace snapshot.</param>
+        /// <returns>The list of snapshot addition results.</returns>
+        List<RepositorySnapshotAdditionResult> AddWorkContextSnapshot(int userId, string snapshotDisplayName, IEnumerable<RepositorySnapshotBlueprint> blueprints, string? snapshotNote, out WorkContextSnapshot snapshot);
+
+        /// <summary>
+        /// Applies the work context snapshot with the provided snapshot,
+        /// </summary>
+        /// <param name="snapshot">The workspace context snapshot.</param>
+        /// <returns>Returns a list of results for each repository snapshot application, indicating whether each application was successful or not.</returns>
+        List<RepositorySnapshotAdditionResult> ApplyWorkspaceContextSnapshot(WorkContextSnapshot snapshot);
+
+        /// <summary>
         /// Tries to remove the file from the repository index and stage the deletion for the next commit.
         /// </summary>
         /// <param name="selectedFile">The file to delete.</param>

@@ -153,6 +153,7 @@ namespace ChasmaWebApi.Controllers
             response.User = user;
             response.Token = GenerateAccessToken(account);
             response.RefreshToken = account.RefreshToken;
+            response.Snapshots = cacheManager.WorkContextSnapshots.Values.Where(i => i.UserId == user.UserId).ToList();
             return Ok(response);
         }
 

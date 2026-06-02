@@ -14,8 +14,9 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="repoKey">The repository identifier.</param>
         /// <param name="username">The git username.</param>
         /// <param name="token">The git API token.</param>
+        /// <param name="existingRepo">The repository.</param>
         /// <returns>A repository summary of running the command 'git status'.</returns>
-        RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token);
+        RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token, Repository? existingRepo = null);
 
         /// <summary>
         /// Applies the staging action to the specified files.
@@ -95,5 +96,23 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the file is restored; false otherwise.</returns>
         bool TryGitRestore(RepositoryStatusElement selectedFile, out string errorMessage);
+
+        /// <summary>
+        /// Adds the work context snapshot for the user with the provided snapshot display name, list of repository snapshot blueprints, and an optional snapshot note.
+        /// </summary>
+        /// <param name="userId">The user identifier this snapshot is associated to.</param>
+        /// <param name="snapshotDisplayName">The name of the snapshot.</param>
+        /// <param name="blueprints">The snapshot addition blueprints.</param>
+        /// <param name="snapshotNote">The note of intent for the overall snapshot.</param>
+        /// <param name="snapshot">The newly created workspace snapshot.</param>
+        /// <returns>The list of snapshot addition results.</returns>
+        List<RepositorySnapshotAdditionResult> AddWorkContextSnapshot(int userId, string snapshotDisplayName, IEnumerable<RepositorySnapshotBlueprint> blueprints, string? snapshotNote, out WorkContextSnapshot snapshot);
+
+        /// <summary>
+        /// Loads the work context snapshot with the provided snapshot, applying the repository snapshots contained in the snapshot to the user's local repositories.
+        /// </summary>
+        /// <param name="snapshot">The workspace context snapshot.</param>
+        /// <returns>Returns a list of results for each repository snapshot application, indicating whether each application was successful or not.</returns>
+        List<RepositorySnapshotAdditionResult> LoadWorkspaceContextSnapshot(WorkContextSnapshot snapshot);
     }
 }
