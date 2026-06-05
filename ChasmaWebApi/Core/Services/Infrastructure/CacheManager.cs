@@ -25,4 +25,7 @@ public class CacheManager : ICacheManager
 
     // <inheritdoc />
     public ConcurrentDictionary<long, RemotePullRequest> GitLabMergeRequests { get; } = new();
+
+    // <inheritdoc />
+    public ConcurrentDictionary<int, WorkContextSnapshot> WorkContextSnapshots { get; } = new();
 }

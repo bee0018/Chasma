@@ -4,6 +4,7 @@ using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
+using ChasmaWebApi.Util.Extensions;
 using LibGit2Sharp;
 using System.Diagnostics;
 using Branch = LibGit2Sharp.Branch;
@@ -28,6 +29,16 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         private readonly ICacheManager CacheManager;
 
+        /// <summary>
+        /// The Git stash service, which is responsible for handling Git stash operations such as creating and applying stashes when taking work context snapshots.
+        /// </summary>
+        private readonly IGitStashService GitStashService;
+
+        /// <summary>
+        /// The Git branch service, which is responsible for handling branching operations.
+        /// </summary>
+        private readonly IGitBranchService GitBranchService;
+
         #region Constructor
 
         /// <summary>
@@ -35,17 +46,20 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         /// <param name="logger">The logger used to record diagnostic and operational messages for the service.</param>
         /// <param name="cacheManager">The cache manager used to store and retrieve cached data for repository operations.</param>
-        /// <param name="branchService">The Git branch service used to perform branch-related operations.</param>
-        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager)
+        /// <param name="stashService">The Git stash service used to perform stash-related operations.</param>
+        /// <param name="branchService">The Git branch service used to perform branch related operations.</param>
+        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager, IGitStashService stashService, IGitBranchService branchService)
         {
             Logger = logger;
             CacheManager = cacheManager;
+            GitStashService = stashService;
+            GitBranchService = branchService;
         }
 
         #endregion
 
         // <inheritdoc/>
-        public RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token)
+        public RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token, Repository? existingRepo = null)
         {
             if (!CacheManager.WorkingDirectories.TryGetValue(repoKey, out string workingDirectory))
             {
@@ -53,69 +67,79 @@ namespace ChasmaWebApi.Core.Services.Git
                 return null;
             }
 
-            using Repository repo = new(workingDirectory);
-            List<RepositoryStatusElement> statusElements = new();
-            RepositoryStatus status = repo.RetrieveStatus();
-            foreach (StatusEntry item in status)
+            Repository repo = existingRepo ?? new(workingDirectory);
+            try
             {
-                FileStatus state = item.State;
-                if (state == FileStatus.Ignored)
+                List<RepositoryStatusElement> statusElements = new();
+                RepositoryStatus status = repo.RetrieveStatus();
+                foreach (StatusEntry item in status)
                 {
-                    // We only care about modified, deleted, and new files for now.
-                    continue;
-                }
+                    FileStatus state = item.State;
+                    if (state == FileStatus.Ignored)
+                    {
+                        // We only care about modified, deleted, and new files for now.
+                        continue;
+                    }
 
-                bool isStaged = IsFileStaged(state, out bool hasUnstagedChanges);
-                RepositoryStatusElement statusElement = new()
-                {
-                    RepositoryId = repoKey,
-                    FilePath = item.FilePath,
-                    State = item.State,
-                    IsStaged = isStaged,
-                };
-                statusElements.Add(statusElement);
-                if (hasUnstagedChanges)
-                {
-                    // Add another commitEntry for the unstaged changes.
-                    RepositoryStatusElement unstagedElement = new()
+                    bool isStaged = IsFileStaged(state, out bool hasUnstagedChanges);
+                    RepositoryStatusElement statusElement = new()
                     {
                         RepositoryId = repoKey,
                         FilePath = item.FilePath,
-                        State = FileStatus.ModifiedInWorkdir,
-                        IsStaged = false,
+                        State = item.State,
+                        IsStaged = isStaged,
                     };
-                    statusElements.Add(unstagedElement);
+                    statusElements.Add(statusElement);
+                    if (hasUnstagedChanges)
+                    {
+                        // Add another commitEntry for the unstaged changes.
+                        RepositoryStatusElement unstagedElement = new()
+                        {
+                            RepositoryId = repoKey,
+                            FilePath = item.FilePath,
+                            State = FileStatus.ModifiedInWorkdir,
+                            IsStaged = false,
+                        };
+                        statusElements.Add(unstagedElement);
+                    }
+                }
+
+                Logger.LogDebug("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
+                (string branchName, int aheadCount, int behindCount, string lastUpdated) = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, username, token, Logger);
+                string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
+                string commitHash = GetCommitHash(repo.Head, Logger);
+                List<RemotePullRequest> remotePullRequests;
+                LibGit2Sharp.Remote? remoteOriginBranch = repo.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
+                if (remoteOriginBranch == null)
+                {
+                    Logger.LogWarning("Failed to find remote orign branch in {repoPath}, remote pull requests cannot be tracked.", workingDirectory);
+                    remotePullRequests = new();
+                }
+                else
+                {
+                    remotePullRequests = GetRemotePullRequests(remoteOriginBranch.PushUrl, branchName);
+                }
+
+                RepositorySummary repositorySummary = new()
+                {
+                    StatusElements = statusElements,
+                    CommitsAhead = aheadCount,
+                    CommitsBehind = behindCount,
+                    BranchName = branchName,
+                    RemoteUrl = remoteUrl,
+                    CommitHash = commitHash,
+                    PullRequests = remotePullRequests,
+                    LastUpdated = lastUpdated,
+                };
+                return repositorySummary;
+            }
+            finally
+            {
+                if (existingRepo == null)
+                {
+                    repo.Dispose();
                 }
             }
-
-            Logger.LogDebug("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
-            (string branchName, int aheadCount, int behindCount, string lastUpdated) = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, username, token, Logger);
-            string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
-            string commitHash = GetCommitHash(repo.Head, Logger);
-            List<RemotePullRequest> remotePullRequests;
-            LibGit2Sharp.Remote? remoteOriginBranch = repo.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
-            if (remoteOriginBranch == null)
-            {
-                Logger.LogWarning("Failed to find remote orign branch in {repoPath}, remote pull requests cannot be tracked.", workingDirectory);
-                remotePullRequests = new();
-            }
-            else
-            {
-                remotePullRequests = GetRemotePullRequests(remoteOriginBranch.PushUrl, branchName);
-            }
-
-            RepositorySummary repositorySummary = new()
-            {
-                StatusElements = statusElements,
-                CommitsAhead = aheadCount,
-                CommitsBehind = behindCount,
-                BranchName = branchName,
-                RemoteUrl = remoteUrl,
-                CommitHash = commitHash,
-                PullRequests = remotePullRequests,
-                LastUpdated = lastUpdated,
-            };
-            return repositorySummary;
         }
 
         // <inheritdoc />
@@ -147,7 +171,8 @@ namespace ChasmaWebApi.Core.Services.Git
                 Logger.LogInformation("{action} file {file}", stagingAction, fileName);
             }
 
-            RepositorySummary summary = GetRepositoryStatus(repoId, string.Empty, string.Empty);
+            repo.Index.Write();
+            RepositorySummary summary = GetRepositoryStatus(repoId, string.Empty, string.Empty, repo);
             return summary?.StatusElements;
         }
 
@@ -175,7 +200,8 @@ namespace ChasmaWebApi.Core.Services.Git
             }
 
             Logger.LogInformation("{action} file {file}", stagingAction, fileName);
-            RepositorySummary summary = GetRepositoryStatus(repoKey, username, token);
+            repo.Index.Write();
+            RepositorySummary summary = GetRepositoryStatus(repoKey, username, token, repo);
             return summary?.StatusElements;
         }
 
@@ -366,6 +392,261 @@ namespace ChasmaWebApi.Core.Services.Git
             }
 
             return ShellUtility.TryExecuteShellCommand($"git restore {selectedFile.FilePath}", workingDirectory, out errorMessage);
+        }
+
+        // <inheritdoc />
+        public List<RepositorySnapshotAdditionResult> AddWorkContextSnapshot(int userId, string snapshotDisplayName, IEnumerable<RepositorySnapshotBlueprint> blueprints, string? snapshotNote, out WorkContextSnapshot snapshot)
+        {
+            List<RepositorySnapshotAdditionResult> additionResults = [];
+            List<RepsoitoryWorkContextSnapshotEntry> repoSnapshotEntries = [];
+            foreach (RepositorySnapshotBlueprint blueprint in blueprints)
+            {
+                RepositorySnapshotAdditionResult additionResult;
+                string errorMessage;
+                string repoId = blueprint.RepositoryId;
+                if (!CacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+                {
+                    errorMessage = $"Invalid repository key {repoId} provided to take snapshot.";
+                    Logger.LogError("Failed to take repository snapshot due to: {reason}. Skipping snapshot creation.", errorMessage);
+                    additionResult = new()
+                    {
+                        IsSuccessful = false,
+                        Reason = errorMessage,
+                        SnapshotName = snapshotDisplayName,
+                        RepositoryName = repoId,
+                    };
+                    additionResults.Add(additionResult);
+                    continue;
+                }
+
+                if (!CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+                {
+                    errorMessage = $"Failed to find repository in cache. Cannot save workspace context snapshot.";
+                    Logger.LogError("Failed to take repository snapshot due to: {reason}. Skipping snapshot creation.", errorMessage);
+                    additionResult = new()
+                    {
+                        IsSuccessful = false,
+                        Reason = errorMessage,
+                        SnapshotName = snapshotDisplayName,
+                        RepositoryName = repoId,
+                    };
+                    additionResults.Add(additionResult);
+                    continue;
+                }
+
+                if (!CacheManager.Users.TryGetValue(userId, out ApplicationUser user))
+                {
+                    errorMessage = $"Current user does not exist, therefore cannot save workspace context snapshot..";
+                    Logger.LogError("Failed to take repository snapshot due to: {reason}. Skipping snapshot creation.", errorMessage);
+                    additionResult = new()
+                    {
+                        IsSuccessful = false,
+                        Reason = errorMessage,
+                        SnapshotName = snapshotDisplayName,
+                        RepositoryName = repository.Name,
+                    };
+                    additionResults.Add(additionResult);
+                    continue;
+                }
+
+                string stashMessage = $"Snapshot stash {Guid.NewGuid()} for {snapshotDisplayName} at {DateTime.Now}";
+                StashModifiers stashOption = StashModifiers.Default | StashModifiers.IncludeUntracked;
+                if (!GitStashService.TryAddStash(workingDirectory, user, stashMessage, stashOption, out errorMessage))
+                {
+                    Logger.LogError("Failed to take repository snapshot due to: {reason}. Skipping snapshot creation.", errorMessage);
+                    additionResult = new()
+                    {
+                        IsSuccessful = false,
+                        Reason = errorMessage,
+                        SnapshotName = snapshotDisplayName,
+                        RepositoryName = repository.Name,
+                    };
+                    additionResults.Add(additionResult);
+                    continue;
+                }
+
+                try
+                {
+                    using Repository repo = new(workingDirectory);
+                    int stashIndex = repo.Stashes.FindIndex(i => i.Message.Contains(stashMessage));
+                    if (stashIndex != -1 && !GitStashService.TryApplyStash(workingDirectory, stashIndex, StashApplyModifiers.Default, out errorMessage))
+                    {
+                        errorMessage = $"Failed to reapply the stash for the repository {repository.Name} because: {errorMessage}";
+                        Logger.LogError(errorMessage);
+                        additionResult = new()
+                        {
+                            IsSuccessful = false,
+                            Reason = errorMessage,
+                            SnapshotName = snapshotDisplayName,
+                            RepositoryName = repository.Name,
+                        };
+                        additionResults.Add(additionResult);
+                        continue;
+                    }
+
+                    RepsoitoryWorkContextSnapshotEntry entry = new()
+                    {
+                        RepositoryId = repoId,
+                        BranchName = repo.Head.FriendlyName,
+                        CommitHash = repo.Head.Tip?.Sha ?? string.Empty,
+                        CreatedAt = DateTimeOffset.Now.ToLocalTime().ToString("g"),
+                        StashMessage = stashMessage,
+                        IntentNote = blueprint.IntentNote,
+                    };
+                    repoSnapshotEntries.Add(entry);
+
+                    additionResult = new()
+                    {
+                        IsSuccessful = true,
+                        Reason = string.Empty,
+                        SnapshotName = snapshotDisplayName,
+                        RepositoryName = repository.Name,
+                    };
+                    additionResults.Add(additionResult);
+                }
+                catch (Exception e)
+                {
+                    errorMessage = $"Failed to create repository snapshot entry due to an exception: {e.Message}. Skipping snapshot creation.";
+                    Logger.LogError(e, "Failed to take repository snapshot due to an exception. Skipping snapshot creation. Exception message: {message}", e.Message);
+                    additionResult = new()
+                    {
+                        IsSuccessful = false,
+                        Reason = errorMessage,
+                        SnapshotName = snapshotDisplayName,
+                        RepositoryName = repository.Name,
+                    };
+                    additionResults.Add(additionResult);
+                }
+            }
+
+
+            // After adding the workspace snapshot to the database, then the snapshot identifier will be set ensure synchronization between the database and cache.
+            snapshot = new()
+            {
+                DisplayName = snapshotDisplayName,
+                RepositorySnapshots = repoSnapshotEntries,
+                SnapshotNote = snapshotNote,
+                UserId = userId,
+            };
+            return additionResults;
+        }
+
+        // <inheritdoc />
+        public List<RepositorySnapshotAdditionResult> LoadWorkspaceContextSnapshot(WorkContextSnapshot snapshot)
+        {
+            List<RepositorySnapshotAdditionResult> additionResults = [];
+            foreach (RepsoitoryWorkContextSnapshotEntry repoEntry in snapshot.RepositorySnapshots)
+            {
+                RepositorySnapshotAdditionResult additionResult;
+                string errorMessage;
+                string repoId = repoEntry.RepositoryId;
+                if (!CacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+                {
+                    errorMessage = $"Invalid repository key {repoId} provided to load snapshot.";
+                    Logger.LogError("Failed to load repository snapshot due to: {reason}. Skipping snapshot loading: {name}.", errorMessage, snapshot.DisplayName);
+                    additionResult = new()
+                    {
+                        IsSuccessful = false,
+                        Reason = errorMessage,
+                        SnapshotName = snapshot.DisplayName,
+                        RepositoryName = repoId,
+                    };
+                    additionResults.Add(additionResult);
+                    continue;
+                }
+
+                if (!CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+                {
+                    errorMessage = $"Could not find local git repository in the system with ID: {repoId}.";
+                    Logger.LogError("Failed to load repository snapshot due to: {reason}. Skipping snapshot loading: {name}.", errorMessage, snapshot.DisplayName);
+                    additionResult = new()
+                    {
+                        IsSuccessful = false,
+                        Reason = errorMessage,
+                        SnapshotName = snapshot.DisplayName,
+                        RepositoryName = repoId,
+                    };
+                    additionResults.Add(additionResult);
+                    continue;
+                }
+
+                try
+                {
+                    using Repository repo = new(workingDirectory);
+                    repo.Reset(ResetMode.Hard);
+                    if (!GitBranchService.TryCheckoutBranch(workingDirectory, repoEntry.BranchName, out errorMessage))
+                    {
+                        errorMessage = $"Cannot load snapshot for this {repository.Name} because: {errorMessage}.";
+                        Logger.LogError(errorMessage);
+                        additionResult = new()
+                        {
+                            IsSuccessful = false,
+                            Reason = errorMessage,
+                            SnapshotName = snapshot.DisplayName,
+                            RepositoryName = repository.Name,
+                        };
+                        additionResults.Add(additionResult);
+                        continue;
+                    }
+
+                    Commit commit = repo.Commits.FirstOrDefault(i => i.Sha == repoEntry.CommitHash);
+                    if (commit == null)
+                    {
+                        errorMessage = $"Failed to find the commit with hash {repoEntry.CommitHash} in the repository. Cannot fully load snapshot for {repository.Name}.";
+                        Logger.LogError(errorMessage);
+                        additionResult = new()
+                        {
+                            IsSuccessful = false,
+                            Reason = errorMessage,
+                            SnapshotName = snapshot.DisplayName,
+                            RepositoryName = repository.Name,
+                        };
+                        additionResults.Add(additionResult);
+                        continue;
+                    }
+                    
+                    repo.Reset(ResetMode.Hard, commit);
+                    int stashIndex = repo.Stashes.FindIndex(i => i.Message.Contains(repoEntry.StashMessage ?? string.Empty));
+                    if (!GitStashService.TryApplyStash(workingDirectory, stashIndex, StashApplyModifiers.Default, out errorMessage))
+                    {
+                        errorMessage = $"Failed to apply the stash for the repository {repository.Name} because: {errorMessage}";
+                        Logger.LogError(errorMessage);
+                        additionResult = new()
+                        {
+                            IsSuccessful = false,
+                            Reason = errorMessage,
+                            SnapshotName = snapshot.DisplayName,
+                            RepositoryName = repository.Name,
+                        };
+                        additionResults.Add(additionResult);
+                        continue;
+                    }
+
+                    additionResult = new()
+                    {
+                        IsSuccessful = true,
+                        Reason = string.Empty,
+                        SnapshotName = snapshot.DisplayName,
+                        RepositoryName = repository.Name,
+                    };
+                    additionResults.Add(additionResult);
+                }
+                catch (Exception e)
+                {
+                    errorMessage = $"Failed to load repository snapshot entry due to an exception: {e.Message}. Skipping snapshot creation for {snapshot.DisplayName}.";
+                    Logger.LogError(e, "Failed to load repository snapshot due to an exception. Skipping snapshot creation for {name}. Exception message: {message}", snapshot.DisplayName, e.Message);
+                    additionResult = new()
+                    {
+                        IsSuccessful = false,
+                        Reason = errorMessage,
+                        SnapshotName = snapshot.DisplayName,
+                        RepositoryName = repository.Name,
+                    };
+                    additionResults.Add(additionResult);
+                }
+            }
+
+            return additionResults;
         }
 
         /// <summary>

@@ -31,13 +31,22 @@ namespace ChasmaWebApi.Core.Services.Git
             try
             {
                 using Repository repository = new(workingDirectory);
-                Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
-                Stash stash = repository.Stashes.Add(author, stashMessage, stashOptions);
-                if (stash != null)
+                RepositoryStatus repoStatus = repository.RetrieveStatus();
+                if (repoStatus.IsDirty)
                 {
-                    Logger.LogInformation("Successfully created stash {stashName} in repository at {repoPath}.", stash.CanonicalName, workingDirectory);
+                    Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
+                    Stash stash = repository.Stashes.Add(author, stashMessage, stashOptions);
+                    if (stash != null)
+                    {
+                        Logger.LogInformation("Successfully created stash {stashName} in repository at {repoPath}.", stash.CanonicalName, workingDirectory);
+                        return true;
+                    }
+
+                    Logger.LogError("Failed to create stash at {repoPath}.", workingDirectory);
+                    return false;
                 }
 
+                Logger.LogInformation("Repository at {repoPath} is clean. No stash created.", workingDirectory);
                 return true;
             }
             catch (Exception e)

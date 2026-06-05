@@ -1,12 +1,17 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Data;
+using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
+using ChasmaWebApi.Data.Responses.Configuration;
 using ChasmaWebApi.Data.Responses.Status;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChasmaWebApi.Controllers
 {
@@ -33,6 +38,11 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         private readonly ICacheManager cacheManager;
 
+        /// <summary>
+        /// The application database context for interacting with the database.
+        /// </summary>
+        private readonly ApplicationDbContext applicationDbContext;
+
         #region Constructor
 
         /// <summary>
@@ -41,11 +51,13 @@ namespace ChasmaWebApi.Controllers
         /// <param name="log">The internal API logger.</param>
         /// <param name="controlService">The application control service.</param>
         /// <param name="apiCacheManager">The internal API cache manager.</param>
-        public RepositoryStatusController(ILogger<RepositoryStatusController> log, IApplicationControlService controlService, ICacheManager apiCacheManager)
+        /// <param name="dbContext">The application database context.</param>
+        public RepositoryStatusController(ILogger<RepositoryStatusController> log, IApplicationControlService controlService, ICacheManager apiCacheManager, ApplicationDbContext dbContext)
         {
             logger = log;
             applicationControlService = controlService;
             cacheManager = apiCacheManager;
+            applicationDbContext = dbContext;
         }
 
         #endregion
@@ -605,6 +617,191 @@ namespace ChasmaWebApi.Controllers
             }
 
             logger.LogInformation("Successfully restored file: {filePath} in repo: {repoId}", selectedFile.FilePath, selectedFile.RepositoryId);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Adds a new workspace context snapshot based on the provided blueprints, which include the repository ID and optional intent note for each repository to be snapshotted.
+        /// </summary>
+        /// <param name="request">The add work context snapshot request.</param>
+        /// <returns>The response to adding a workspace context.</returns>
+        [HttpPost]
+        [Route("addSnapshot")]
+        public async Task<ActionResult<AddWorkContextSnapshotResponse>> AddWorkspaceSnapshot([FromBody] AddWorkContextSnapshotRequest request)
+        {
+            AddWorkContextSnapshotResponse response = new();
+            string requestName = nameof(AddWorkContextSnapshotRequest);
+            if (request == null)
+            {
+                logger.LogError("Null {request} received. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            string snapshotDisplayName = request.SnapshotDisplayName;
+            if (string.IsNullOrEmpty(snapshotDisplayName))
+            {
+                logger.LogError("Snapshot display name in {request} is empty. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Snapshot display name must be populated.";
+                return Ok(response);
+            }
+
+            List<RepositorySnapshotBlueprint> blueprints = request.Blueprints;
+            if (blueprints.Count == 0)
+            {
+                logger.LogError("There are no blueprints to process to create a workspace snapshot. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "There is nothing to do.";
+                return Ok(response);
+            }
+
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out _))
+            {
+                logger.LogError("No user found in cache for user ID: {userId}. Cannot create workspace context. Sending error response.", userId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No user found in cache for user ID: {request.UserId}. Cannot create workspace context.";
+                return Ok(response);
+            }
+
+            string? snapshotNote = request.SnapshotNote;
+            List<RepositorySnapshotAdditionResult> additionResults = applicationControlService.AddWorkContextSnapshot(userId, snapshotDisplayName, blueprints, snapshotNote, out WorkContextSnapshot snapshot);
+            if (additionResults.Count == 0 || snapshot == null)
+            {
+                logger.LogError("Failed to create workspace snapshot for user ID: {userId}. Sending error response.", userId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to create workspace snapshot for user ID: {userId}. Check server logs for more information.";
+                return Ok(response);
+            }
+
+            WorkContextSnapshotModel workContextSnapshotModel = new()
+            {
+                DisplayName = snapshot.DisplayName,
+                SnapshotNote = snapshot.SnapshotNote,
+                UserId = snapshot.UserId,
+            };
+            await applicationDbContext.WorkContextSnapshots.AddAsync(workContextSnapshotModel);
+            await applicationDbContext.SaveChangesAsync();
+
+            int snapshotId = workContextSnapshotModel.SnapshotId;
+            snapshot.SnapshotId = snapshotId;
+            foreach (RepsoitoryWorkContextSnapshotEntry repoSnapshot in snapshot.RepositorySnapshots)
+            {
+                repoSnapshot.SnapshotId = snapshot.SnapshotId;
+                RepositoryWorkContextSnapshotModel repoWorkContextSnapshotModel = new()
+                {
+                    SnapshotId = repoSnapshot.SnapshotId,
+                    RepositoryId = repoSnapshot.RepositoryId,
+                    BranchName = repoSnapshot.BranchName,
+                    CommitHash = repoSnapshot.CommitHash ?? string.Empty,
+                    CreatedAt = repoSnapshot.CreatedAt,
+                    StashMessage = repoSnapshot.StashMessage,
+                    IntentNote = repoSnapshot.IntentNote
+                };
+                await applicationDbContext.RepositorySnapshots.AddAsync(repoWorkContextSnapshotModel);
+            }
+
+            await applicationDbContext.SaveChangesAsync();
+            cacheManager.WorkContextSnapshots.TryAdd(snapshot.SnapshotId, snapshot);
+
+
+            response.WorkContextSnapshot = snapshot;
+            response.AdditionResults = additionResults;
+            logger.LogInformation("Successfully created workspace context snapshot with identifier: {id}.", snapshot.SnapshotId);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Loads the specified workspace context snapshot.
+        /// </summary>
+        /// <param name="request">The request to load the snapshot.</param>
+        /// <returns>The response to loading a snapshot.</returns>
+        [HttpPost]
+        [Route("loadSnapshot")]
+        public ActionResult<ApplyWorkContextSnapshotResponse> LoadWorkspaceSnapshot([FromBody] ApplyWorkContextSnapshotRequest request)
+        {
+            ApplyWorkContextSnapshotResponse response = new();
+            string requestName = nameof(ApplyWorkContextSnapshotRequest);
+            if (request == null)
+            {
+                logger.LogError("Null {request} received. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            int snapshotId = request.SnapshotId;
+            if (!cacheManager.WorkContextSnapshots.TryGetValue(snapshotId, out WorkContextSnapshot snapshot))
+            {
+                logger.LogError("No workspace context snapshot found in cache for snapshot ID: {snapshotId}. Sending error response.", snapshotId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No workspace context snapshot found for snapshot ID: {snapshotId}.";
+                return Ok(response);
+            }
+
+            response.AdditionResults = applicationControlService.ApplyWorkspaceContextSnapshot(snapshot);
+            logger.LogInformation("Successfully loaded workspace context snapshot with ID: {snapshotId}.", snapshotId);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Deletes the list of snapshots from the cache and database.
+        /// </summary>
+        /// <param name="request">The request to delete a list of snapshots from the system.</param>
+        /// <returns>The response to deleting multiple snapshots.</returns>
+        [HttpDelete]
+        [Route("deleteSnapshot")]
+        public async Task<ActionResult<DeleteWorkspaceSnapshotResponse>> DeleteWorkspaceSnapshots([FromBody] DeleteWorkspaceSnapshotRequest request)
+        {
+            DeleteWorkspaceSnapshotResponse response = new();
+            string requestName = nameof(DeleteWorkspaceSnapshotRequest);
+            if (request == null)
+            {
+                logger.LogError("{request} received is null. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request must be populated.";
+                return BadRequest(response);
+            }
+
+            List<int> snapshotIds = request.SnapshotIds;
+            if (snapshotIds.Count == 0)
+            {
+                logger.LogError("No snapshot IDs were provided in the {request}. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "No snapshot IDs were provided.";
+                return Ok(response);
+            }
+
+            List<int> deletedSnapshotIds = [];
+            foreach (int snapshotId in snapshotIds)
+            {
+                if (!cacheManager.WorkContextSnapshots.TryRemove(snapshotId, out _))
+                {
+                    continue;
+                }
+
+                WorkContextSnapshotModel snapshotModel = await applicationDbContext.WorkContextSnapshots.FirstOrDefaultAsync(i => i.SnapshotId == snapshotId);
+                if (snapshotModel == null)
+                {
+                    continue;
+                }
+
+                List<RepositoryWorkContextSnapshotModel> repoSnapshots = await applicationDbContext.RepositorySnapshots
+                    .Where(i => i.SnapshotId == snapshotId)
+                    .ToListAsync();
+                applicationDbContext.RepositorySnapshots.RemoveRange(repoSnapshots);
+                await applicationDbContext.SaveChangesAsync();
+
+                applicationDbContext.WorkContextSnapshots.Remove(snapshotModel);
+                await applicationDbContext.SaveChangesAsync();
+                deletedSnapshotIds.Add(snapshotId);
+            }
+
+
+            logger.LogInformation("Successfully deleted workspace context snapshot(s): {snapshotId}.", string.Join(", ", deletedSnapshotIds));
+            response.SnapshotIds = deletedSnapshotIds;
             return Ok(response);
         }
     }

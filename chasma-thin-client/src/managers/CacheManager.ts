@@ -1,5 +1,5 @@
 ﻿import { create } from "zustand";
-import {ApplicationUser, LocalGitRepository} from "../API/ChasmaWebApiClient";
+import {ApplicationUser, LocalGitRepository, WorkContextSnapshot} from "../API/ChasmaWebApiClient";
 import {persist} from 'zustand/middleware'
 
 interface Notification {
@@ -26,6 +26,9 @@ interface CacheState {
     /** The notification to display on the application. */
     notification: Notification | null;
 
+    /** The user's workspace snapshots. */
+    workspaceSnapshots: WorkContextSnapshot[];
+
     /** Sets the logged-in user. **/
     setUser: (user: ApplicationUser | undefined) => void;
 
@@ -41,14 +44,23 @@ interface CacheState {
     /** Sets the notification of the app. */
     setNotification: (notification: Notification | null) => void;
 
+    /** Sets the user's workspace snapshots. **/
+    setWorkspaceSnapshots: (repos: WorkContextSnapshot[] | undefined) => void;
+
     /** Dismisses the notificaiton from the app. */
     clearNotification: () => void;
 
     /** Deletes the repository with the specified repository identifier. **/
     deleteRepository: (repoId: string | undefined) => void;
 
+    /** Deletes the workspace snapshot with the specified snapshot identifier. */
+    deleteSnapshot: (snapshotId: number | undefined) => void;
+
     /** Adds a local git repository to the cache. **/
     addLocalGitRepository: (repo: LocalGitRepository) => void;
+
+    /** Adds a workspace snapshot to the cache. */
+    addWorkspaceSnapshot: (snapshot: WorkContextSnapshot) => void;
 
     /** Clears the cache. **/
     clearCache: () => void;
@@ -65,20 +77,36 @@ export const useCacheStore = create<CacheState>()(
             token: undefined,
             refreshToken: undefined,
             notification: null,
+            workspaceSnapshots: [],
             setUser: (user) => set({ user }),
             setRepositories: (repositories) => set({ repositories }),
             setToken: (token) => set({ token }),
             setRefreshToken: (refreshToken) => set({ refreshToken }),
             setNotification: (notification) => set({ notification }),
+            setWorkspaceSnapshots: (workspaceSnapshots) => set({ workspaceSnapshots }),
             clearNotification: () => set({ notification: null }),
             deleteRepository: (repoId: string | undefined) => set((state) => ({
                 repositories: [...state.repositories.filter(i => i.id !== repoId)],
+            })),
+            deleteSnapshot: (snapshotId: number | undefined) => set((state) => ({
+                workspaceSnapshots: [...state.workspaceSnapshots.filter(i => i.snapshotId !== snapshotId)],
             })),
             addLocalGitRepository: (repo) =>
                 set((state) => ({
                     repositories: [...state.repositories, repo],
                 })),
-            clearCache: () => set({ user: null, repositories: [], token: undefined, refreshToken: undefined, notification: null }),
+            addWorkspaceSnapshot: (snapshot) =>
+                set((state) => ({
+                    workspaceSnapshots: [...state.workspaceSnapshots, snapshot],
+                })),
+            clearCache: () => set({
+                user: null,
+                repositories: [],
+                workspaceSnapshots: [],
+                token: undefined,
+                refreshToken: undefined,
+                notification: null
+            }),
         }),
         {
             name: "cache-store",

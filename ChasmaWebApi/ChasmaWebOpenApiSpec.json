@@ -2,7 +2,7 @@
   "x-generator": "NSwag v14.7.1.0 (NJsonSchema v11.6.1.0 (Newtonsoft.Json v13.0.0.0))",
   "openapi": "3.0.0",
   "info": {
-    "title": "Chasma Git Manager API",
+    "title": "Emryce API",
     "version": "v1"
   },
   "servers": [
@@ -1169,6 +1169,102 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GitRestoreResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryStatus/addSnapshot": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_AddWorkspaceSnapshot",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddWorkContextSnapshotRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddWorkContextSnapshotResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryStatus/loadSnapshot": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_LoadWorkspaceSnapshot",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyWorkContextSnapshotRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyWorkContextSnapshotResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryStatus/deleteSnapshot": {
+      "delete": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_DeleteWorkspaceSnapshots",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteWorkspaceSnapshotRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteWorkspaceSnapshotResponse"
                 }
               }
             }
@@ -3568,6 +3664,202 @@
           }
         ]
       },
+      "AddWorkContextSnapshotResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "workContextSnapshot": {
+                "$ref": "#/components/schemas/WorkContextSnapshot"
+              },
+              "additionResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepositorySnapshotAdditionResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WorkContextSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "snapshotId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "snapshotNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "repositorySnapshots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RepsoitoryWorkContextSnapshotEntry"
+            }
+          }
+        }
+      },
+      "RepsoitoryWorkContextSnapshotEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "snapshotId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "repositoryId": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "commitHash": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "stashMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "intentNote": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RepositorySnapshotAdditionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "snapshotName": {
+            "type": "string"
+          },
+          "repositoryName": {
+            "type": "string"
+          }
+        }
+      },
+      "AddWorkContextSnapshotRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "snapshotDisplayName": {
+            "type": "string"
+          },
+          "blueprints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RepositorySnapshotBlueprint"
+            }
+          },
+          "snapshotNote": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RepositorySnapshotBlueprint": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "intentNote": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ApplyWorkContextSnapshotResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "additionResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepositorySnapshotAdditionResult"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ApplyWorkContextSnapshotRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "snapshotId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DeleteWorkspaceSnapshotResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "snapshotIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeleteWorkspaceSnapshotRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "snapshotIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
       "ExecuteShellCommandResponse": {
         "allOf": [
           {
@@ -3949,6 +4241,12 @@
               },
               "refreshToken": {
                 "type": "string"
+              },
+              "snapshots": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WorkContextSnapshot"
+                }
               }
             }
           }

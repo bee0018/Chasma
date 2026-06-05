@@ -11,6 +11,7 @@ import LogoutModal from './modals/LogoutModal';
 import UserConfigTab from './dashboardTabs/UserConfigTab';
 import RepositoryAdditionsTab from './dashboardTabs/RepositoryAdditionsTab';
 import CloneRepositoriesTab from './dashboardTabs/CloneRepositoriesTab';
+import ApplySnapshotsTab from './dashboardTabs/ApplySnapshotsTab';
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -106,6 +107,12 @@ const Dashboard: React.FC = () => {
                     Global 🌍
                 </div>
                 <div
+                    className={`tab ${activeTab === "snapshots" ? "active" : ""}`}
+                    onClick={() => handleTabClick("snapshots")}
+                >
+                    Snapshots 📸
+                </div>
+                <div
                     className={`tab ${activeTab === "apiStatus" ? "active" : ""}`}
                     onClick={() => handleTabClick("apiStatus")}
                 >
@@ -174,6 +181,11 @@ const Dashboard: React.FC = () => {
                 {activeTab === "cloneRepos" && (
                     <div className="panel-card">
                         <CloneRepositoriesTab />
+                    </div>
+                )}
+                {activeTab === "snapshots" && (
+                    <div className="panel-card">
+                        <ApplySnapshotsTab />
                     </div>
                 )}
             </main>

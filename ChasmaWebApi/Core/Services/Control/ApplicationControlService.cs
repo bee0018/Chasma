@@ -315,6 +315,18 @@ namespace ChasmaWebApi.Core.Services.Control
             return gitRepositoryService.TryGitRestore(selectedFile, out errorMessage);
         }
 
+        // <inheritdoc />
+        public List<RepositorySnapshotAdditionResult> AddWorkContextSnapshot(int userId, string snapshotDisplayName, IEnumerable<RepositorySnapshotBlueprint> blueprints, string? snapshotNote, out WorkContextSnapshot snapshot)
+        {
+            return gitRepositoryService.AddWorkContextSnapshot(userId, snapshotDisplayName, blueprints, snapshotNote, out snapshot);
+        }
+
+        // <inheritdoc />
+        public List<RepositorySnapshotAdditionResult> ApplyWorkspaceContextSnapshot(WorkContextSnapshot snapshot)
+        {
+            return gitRepositoryService.LoadWorkspaceContextSnapshot(snapshot);
+        }
+
         #endregion
 
         #region Stash Functionality

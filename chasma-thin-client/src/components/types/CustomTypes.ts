@@ -44,3 +44,6 @@ export type SimulationEntry = {
 
 /** The toggle options for select the global view mode. */
 export type GlobalViewMode = "prs" | "branchSync";
+
+/** The toggle options for saving or applying workspace snapshots. **/
+export type SnapshotMode = "add" | "apply";

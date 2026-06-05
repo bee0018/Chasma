@@ -1,4 +1,5 @@
 ﻿using ChasmaWebApi.Data.Objects.Application;
+using ChasmaWebApi.Data.Objects.Git;
 
 namespace ChasmaWebApi.Data.Responses.Status
 {
@@ -21,5 +22,10 @@ namespace ChasmaWebApi.Data.Responses.Status
         /// Gets or sets the user's refresh token.
         /// </summary>
         public string RefreshToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of workspace snapshots for the specified user.
+        /// </summary>
+        public List<WorkContextSnapshot> Snapshots { get; set; } = [];
     }
 }
