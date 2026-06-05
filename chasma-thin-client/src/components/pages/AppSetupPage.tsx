@@ -111,7 +111,7 @@ export const AppSetupPage: React.FC = () => {
             setJwtIsValid(true);
             return;
         }
-        
+
         setJwtIsValid(false);
     };
 
@@ -119,46 +119,46 @@ export const AppSetupPage: React.FC = () => {
     const handleApplicationConfiguration = async () => {
         if (!jwtIsConfigured && isBlankOrUndefined(jwtSecretKey)) {
             setNotification({
-                    title: "Could not apply configurations!",
-                    message: "'jwtSecretKey' must be populated!",
-                    isError: true,
-                });
+                title: "Could not apply configurations!",
+                message: "'jwtSecretKey' must be populated!",
+                isError: true,
+            });
             return;
         }
 
         if (!jwtIsConfigured && jwtSecretKey && jwtSecretKey.length < 16) {
             setNotification({
-                    title: "Could not apply configurations!",
-                    message: "'jwtSecretKey' must be greater than or equal to 16 characters!",
-                    isError: true,
-                });
+                title: "Could not apply configurations!",
+                message: "'jwtSecretKey' must be greater than or equal to 16 characters!",
+                isError: true,
+            });
             return;
         }
 
         if (isBlankOrUndefined(bindingPort)) {
             setNotification({
-                    title: "Could not apply configurations!",
-                    message: "'bindingPort' must be populated!",
-                    isError: true,
-                });
+                title: "Could not apply configurations!",
+                message: "'bindingPort' must be populated!",
+                isError: true,
+            });
             return;
         }
 
         if (!isValidInteger(bindingPort)) {
             setNotification({
-                    title: "Could not apply configurations!",
-                    message: "'bindingPort' must be a valid integer!",
-                    isError: true,
-                });
+                title: "Could not apply configurations!",
+                message: "'bindingPort' must be a valid integer!",
+                isError: true,
+            });
             return;
         }
 
         if (isBlankOrUndefined(globalWorkspacePath)) {
             setNotification({
-                    title: "Could not apply configurations!",
-                    message: "'globalWorkspacePath' must be populated!",
-                    isError: true,
-                });
+                title: "Could not apply configurations!",
+                message: "'globalWorkspacePath' must be populated!",
+                isError: true,
+            });
             return;
         }
 
@@ -211,7 +211,7 @@ export const AppSetupPage: React.FC = () => {
                     isError: false,
                 });
             }
-            
+
             setDisableSendButton(false);
         }
         catch (e) {
@@ -234,9 +234,9 @@ export const AppSetupPage: React.FC = () => {
         crypto.getRandomValues(bytes);
         let binary = "";
         for (let i = 0; i < bytes.length; i++) {
-          binary += String.fromCharCode(bytes[i]);
+            binary += String.fromCharCode(bytes[i]);
         }
-        
+
         return btoa(binary);
     }
 
@@ -314,7 +314,7 @@ export const AppSetupPage: React.FC = () => {
                 });
             }
         };
-        
+
         getApiConfig().catch(e => console.error(e));
     }, []);
 
@@ -367,30 +367,30 @@ export const AppSetupPage: React.FC = () => {
                     <span className="xml-required">required</span>
                 </div>
                 <p>Cryptographic string or key pair used to sign and verify JSON Web Tokens, ensuring the token's authenticity and integrity.</p>
-            <input
-                type={jwtIsConfigured ? "password" : "text"}
-                className="input-field"
-                placeholder={jwtIsConfigured ? "Already Configured" : "Enter JWT Secret Key"}
-                value={jwtSecretKey}
-                onChange={(e) => {
-                    setJwtSecretKey(e.target.value);
-                    validateJwt(e.target.value);
-                }}
-                required />
-            <button
-                className="stage-button stage"
-                onClick={() => {
-                    setJwtSecretKey(generateRefreshToken());
-                    setJwtIsValid(true);
-                }}
-            >
-                Apply Default
-            </button>
-            {!jwtIsValid && (
-                <div className="password-error">
-                    JWT Secret Key must be greater or equal to 16 characters.
-                </div>
-            )}
+                <input
+                    type={jwtIsConfigured ? "password" : "text"}
+                    className="input-field"
+                    placeholder={jwtIsConfigured ? "Already Configured" : "Enter JWT Secret Key"}
+                    value={jwtSecretKey}
+                    onChange={(e) => {
+                        setJwtSecretKey(e.target.value);
+                        validateJwt(e.target.value);
+                    }}
+                    required />
+                <button
+                    className="stage-button stage"
+                    onClick={() => {
+                        setJwtSecretKey(generateRefreshToken());
+                        setJwtIsValid(true);
+                    }}
+                >
+                    Apply Default
+                </button>
+                {!jwtIsValid && (
+                    <div className="password-error">
+                        JWT Secret Key must be greater or equal to 16 characters.
+                    </div>
+                )}
             </div>
 
             <div className="xml-attr">
@@ -400,18 +400,18 @@ export const AppSetupPage: React.FC = () => {
                     <span className="xml-required">required</span>
                 </div>
                 <p>The user-defined workspace variable where all repositories will be stored.</p>
-            <input
-                type="text"
-                className="input-field"
-                placeholder="Workspace directory"
-                value={globalWorkspacePath}
-                onChange={(e) => setGlobalWorkspacePath(e.target.value)}
-                required />
-            {(!globalWorkspacePath || globalWorkspacePath.length === 0) && (
-                <div className="password-error">
-                    Global workspace directory is required.
-                </div>
-            )}
+                <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Workspace directory"
+                    value={globalWorkspacePath}
+                    onChange={(e) => setGlobalWorkspacePath(e.target.value)}
+                    required />
+                {(!globalWorkspacePath || globalWorkspacePath.length === 0) && (
+                    <div className="password-error">
+                        Global workspace directory is required.
+                    </div>
+                )}
             </div>
 
             <div className="xml-attr">
@@ -421,7 +421,7 @@ export const AppSetupPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>Your GitHub user name.</p>
-            <input
+                <input
                     type="text"
                     className="input-field"
                     placeholder="GitHub username"
@@ -436,7 +436,7 @@ export const AppSetupPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>The path to the SSH private key for your GitHub account.</p>
-            <input
+                <input
                     type="text"
                     className="input-field"
                     placeholder="GitHub account SSH Private Key Path"
@@ -451,7 +451,7 @@ export const AppSetupPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>The passphrase to the SSH private key for your GitHub account.</p>
-            <input
+                <input
                     type="text"
                     className="input-field"
                     placeholder="GitHub account SSH Private Key Passphrase"
@@ -488,9 +488,9 @@ export const AppSetupPage: React.FC = () => {
                     value={workflowRunReportThreshold}
                     onChange={(e) => setWorkflowRunReportThreshold(e.target.value)} />
                 {!isValidInteger(workflowRunReportThreshold) && (
-                        <div className="password-error">
-                            Must be a valid integer greater than 0. May be skipped if not wanting to use.
-                        </div>
+                    <div className="password-error">
+                        Must be a valid integer greater than 0. May be skipped if not wanting to use.
+                    </div>
                 )}
             </div>
 
@@ -521,7 +521,7 @@ export const AppSetupPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>Your GitLab user name.</p>
-            <input
+                <input
                     type="text"
                     className="input-field"
                     placeholder="GitLab username"
@@ -536,7 +536,7 @@ export const AppSetupPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>The path to the SSH private key for your GitLab account.</p>
-            <input
+                <input
                     type="text"
                     className="input-field"
                     placeholder="GitLab account SSH Private Key Path"
@@ -551,7 +551,7 @@ export const AppSetupPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>The passphrase to the SSH private key for your GitLab account.</p>
-            <input
+                <input
                     type="text"
                     className="input-field"
                     placeholder="GitLab account SSH Private Key Passphrase"
@@ -581,7 +581,7 @@ export const AppSetupPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>GitLab absolute URL (with or without the /api/v* path).</p>
-            <input
+                <input
                     type="text"
                     className="input-field"
                     placeholder="Self Hosted GitLab Url"
