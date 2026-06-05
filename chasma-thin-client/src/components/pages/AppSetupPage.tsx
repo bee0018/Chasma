@@ -327,17 +327,19 @@ export const AppSetupPage: React.FC = () => {
                 {user === null ? "Continue to Login" : "Home"} →
             </button>
             <h1 className="page-title">System Settings</h1>
+
+            {/* Binding Port */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">bindingPort</span>
-                    <span className="xml-type">integer</span>
-                    <span className="xml-required">required</span>
+                    <span className="xml-name">App Port Number</span>
+                    <span className="xml-type">Numbers only</span>
+                    <span className="xml-required">Required</span>
                 </div>
-                <p>Defines the port where the backend API will listen to requests on.</p>
+                <p>The network port where this application will run. If you aren't sure, the default port 5000 usually works perfectly.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="Binding Port"
+                    placeholder="e.g., 5000"
                     value={bindingPort}
                     onChange={(e) => {
                         setBindingPort(e.target.value);
@@ -351,26 +353,27 @@ export const AppSetupPage: React.FC = () => {
                         setPortIsValid(true);
                     }}
                 >
-                    Apply Default
+                    Use Default (5000)
                 </button>
                 {!portIsValid && (
                     <div className="password-error">
-                        Port must be between 0 - 65535.
+                        Please enter a valid port number between 0 and 65535.
                     </div>
                 )}
             </div>
 
+            {/* JWT Secret Key */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">jwtSecretKey</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-required">required</span>
+                    <span className="xml-name">Security Security Key (JWT)</span>
+                    <span className="xml-type">Text</span>
+                    <span className="xml-required">Required</span>
                 </div>
-                <p>Cryptographic string or key pair used to sign and verify JSON Web Tokens, ensuring the token's authenticity and integrity.</p>
+                <p>A secret password used behind the scenes to keep your login sessions safe and secure. You can type your own or click below to generate a secure one.</p>
                 <input
                     type={jwtIsConfigured ? "password" : "text"}
                     className="input-field"
-                    placeholder={jwtIsConfigured ? "Already Configured" : "Enter JWT Secret Key"}
+                    placeholder={jwtIsConfigured ? "Saved & Encrypted" : "Enter a secure secret key"}
                     value={jwtSecretKey}
                     onChange={(e) => {
                         setJwtSecretKey(e.target.value);
@@ -384,227 +387,240 @@ export const AppSetupPage: React.FC = () => {
                         setJwtIsValid(true);
                     }}
                 >
-                    Apply Default
+                    Generate Secure Key
                 </button>
                 {!jwtIsValid && (
                     <div className="password-error">
-                        JWT Secret Key must be greater or equal to 16 characters.
+                        Your secret key must be at least 16 characters long to keep your app safe.
                     </div>
                 )}
             </div>
 
+            {/* Global Workspace Path */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">globalWorkspacePath</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-required">required</span>
+                    <span className="xml-name">Storage Folder Path</span>
+                    <span className="xml-type">Folder Path</span>
+                    <span className="xml-required">Required</span>
                 </div>
-                <p>The user-defined workspace variable where all repositories will be stored.</p>
+                <p>The main folder on your computer or server where all downloaded code repositories will be stored.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="Workspace directory"
+                    placeholder="e.g., /home/user/projects or C:\Projects"
                     value={globalWorkspacePath}
                     onChange={(e) => setGlobalWorkspacePath(e.target.value)}
                     required />
                 {(!globalWorkspacePath || globalWorkspacePath.length === 0) && (
                     <div className="password-error">
-                        Global workspace directory is required.
+                        Please specify a folder path to save your work.
                     </div>
                 )}
             </div>
 
+            {/* GitHub Username */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitHubUsername</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitHub Username</span>
+                    <span className="xml-type">Text</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>Your GitHub user name.</p>
+                <p>Your personal or organization username on GitHub.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="GitHub username"
+                    placeholder="e.g., octocat"
                     value={gitHubUsername}
                     onChange={(e) => setGitHubUsername(e.target.value)} />
             </div>
 
+            {/* GitHub SSH Private Key Path */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitHubSshPrivateKeyPath</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitHub SSH Key Location</span>
+                    <span className="xml-type">File Path</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>The path to the SSH private key for your GitHub account.</p>
+                <p>The file path to your GitHub private SSH key if you connect over SSH instead of using tokens.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="GitHub account SSH Private Key Path"
+                    placeholder="e.g., /home/user/.ssh/id_rsa"
                     value={gitHubSshPrivateKeyPath}
                     onChange={(e) => setGitHubSshPrivateKeyPath(e.target.value)} />
             </div>
 
+            {/* GitHub SSH Passphrase */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitHubSshPassphrase</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitHub SSH Key Password</span>
+                    <span className="xml-type">Text</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>The passphrase to the SSH private key for your GitHub account.</p>
+                <p>The password (passphrase) that unlocks your GitHub SSH key, if you set one up.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="GitHub account SSH Private Key Passphrase"
+                    placeholder="Leave blank if your key doesn't have a password"
                     value={gitHubSshPassphrase}
                     onChange={(e) => setGitHubSshPassphrase(e.target.value)} />
             </div>
 
+            {/* GitHub API Token */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitHubApiToken</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitHub Personal Access Token</span>
+                    <span className="xml-type">Text</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>Defines the GitHub API token that is used for access and performing operations with the Octokit GitHub development package.</p>
+                <p>Your GitHub Personal Access Token (PAT). This lets the app securely talk to your GitHub account to sync repositories and track workflows.</p>
                 <input
                     type={gitHubApiTokenIsConfigured ? "password" : "text"}
                     className="input-field"
-                    placeholder={gitHubApiTokenIsConfigured ? "Already Configured" : "Paste GitHub API Access Token"}
+                    placeholder={gitHubApiTokenIsConfigured ? "Saved & Encrypted" : "Paste ghp_ token here"}
                     value={gitHubApiToken}
                     onChange={(e) => setGitHubApiToken(e.target.value)} />
             </div>
 
+            {/* Workflow Run Report Threshold */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">workflowRunReportThreshold</span>
-                    <span className="xml-type">integer</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">Max Workflow History Limit</span>
+                    <span className="xml-type">Numbers only</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>Defines the maximum number of workflow runs to report to the web application.</p>
+                <p>The maximum number of recent workflow runs to look up and show on your dashboard at one time.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="Workflow Threshold"
+                    placeholder="e.g., 20 (Leave blank for no limit)"
                     value={workflowRunReportThreshold}
                     onChange={(e) => setWorkflowRunReportThreshold(e.target.value)} />
                 {!isValidInteger(workflowRunReportThreshold) && (
                     <div className="password-error">
-                        Must be a valid integer greater than 0. May be skipped if not wanting to use.
+                        Please enter a whole number greater than 0, or leave it blank to skip.
                     </div>
                 )}
             </div>
 
+            {/* GitHub Pull Request Scan Interval */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitHubPullRequestScanIntervalSeconds</span>
-                    <span className="xml-type">integer</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitHub Pull Request Refresh Rate</span>
+                    <span className="xml-type">Seconds</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>Defines the interval in seconds at which GitHub pull requests are scanned for updates.</p>
+                <p>How often (in seconds) the application checks GitHub for new pull request changes.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="Pull Request Interval"
+                    placeholder="e.g., 60 (checks every minute)"
                     value={gitHubPullRequestScanIntervalSeconds}
                     onChange={(e) => setGitHubPullRequestScanIntervalSeconds(e.target.value)} />
                 {!isValidInteger(gitHubPullRequestScanIntervalSeconds) && (
                     <div className="password-error">
-                        Must be a valid integer greater than 0. May be skipped if not wanting to use.
+                        Please enter a valid number of seconds greater than 0, or leave it blank to skip.
                     </div>
                 )}
             </div>
 
+            {/* GitLab Username */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitLabUsername</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitLab Username</span>
+                    <span className="xml-type">Text</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>Your GitLab user name.</p>
+                <p>Your personal or organization username on GitLab.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="GitLab username"
+                    placeholder="e.g., gitlab_user"
                     value={gitLabUsername}
                     onChange={(e) => setGitLabUsername(e.target.value)} />
             </div>
 
+            {/* GitLab SSH Private Key Path */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitLabSshPrivateKeyPath</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitLab SSH Key Location</span>
+                    <span className="xml-type">File Path</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>The path to the SSH private key for your GitLab account.</p>
+                <p>The file path to your GitLab private SSH key if you connect over SSH instead of using tokens.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="GitLab account SSH Private Key Path"
+                    placeholder="e.g., /home/user/.ssh/id_rsa"
                     value={gitLabSshPrivateKeyPath}
                     onChange={(e) => setGitLabSshPrivateKeyPath(e.target.value)} />
             </div>
 
+            {/* GitLab SSH Passphrase */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitLabSshPassphrase</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitLab SSH Key Password</span>
+                    <span className="xml-type">Text</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>The passphrase to the SSH private key for your GitLab account.</p>
+                <p>The password (passphrase) that unlocks your GitLab SSH key, if you set one up.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="GitLab account SSH Private Key Passphrase"
-                    value={gitHubSshPassphrase}
+                    placeholder="Leave blank if your key doesn't have a password"
+                    value={gitLabSshPassphrase}
                     onChange={(e) => setGitLabSshPassphrase(e.target.value)} />
             </div>
 
+            {/* GitLab API Token */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitlabApiToken</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitLab Personal Access Token</span>
+                    <span className="xml-type">Text</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>Defines the GitLab API token that is used for access and performing operations with the NGitLab development package.</p>
+                <p>Your GitLab Personal Access Token. This lets the app securely check your GitLab repositories and merge requests.</p>
                 <input
                     type={gitLabApiTokenIsConfigured ? "password" : "text"}
                     className="input-field"
-                    placeholder={gitLabApiTokenIsConfigured ? "Already Configured" : "Paste GitLab API Access Token"}
+                    placeholder={gitLabApiTokenIsConfigured ? "Saved & Encrypted" : "Paste glpat- token here"}
                     value={gitlabApiToken}
                     onChange={(e) => setGitLabApiToken(e.target.value)} />
             </div>
 
+            {/* Self-Hosted GitLab URL */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">selfHostedGitLabUrl</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">Custom GitLab Website URL</span>
+                    <span className="xml-type">Web Address</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>GitLab absolute URL (with or without the /api/v* path).</p>
+                <p>If you use a private, custom-hosted version of GitLab instead of the public GitLab.com, enter your server's web address here.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="Self Hosted GitLab Url"
+                    placeholder="e.g., https://gitlab.mycompany.com"
                     value={selfHostedGitLabUrl}
                     onChange={(e) => setSelfHostedGitLabUrl(e.target.value)} />
             </div>
 
+            {/* GitLab Merge Request Scan Interval */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitLabMergeRequestScanIntervalSeconds</span>
-                    <span className="xml-type">integer</span>
-                    <span className="xml-optional">optional</span>
+                    <span className="xml-name">GitLab Merge Request Refresh Rate</span>
+                    <span className="xml-type">Seconds</span>
+                    <span className="xml-optional">Optional</span>
                 </div>
-                <p>Defines the interval in seconds at which GitLab merge requests are scanned for updates.</p>
+                <p>How often (in seconds) the application checks GitLab for new merge request changes.</p>
                 <input
                     type="text"
                     className="input-field"
-                    placeholder="Merge Request Interval"
+                    placeholder="e.g., 60 (checks every minute)"
                     value={gitLabMergeRequestScanIntervalSeconds}
                     onChange={(e) => setGitLabMergeRequestScanIntervalSeconds(e.target.value)} />
                 {!isValidInteger(gitLabMergeRequestScanIntervalSeconds) && (
                     <div className="password-error">
-                        Must be a valid integer greater than 0. May be skipped if not wanting to use.
+                        Please enter a valid number of seconds greater than 0, or leave it blank to skip.
                     </div>
                 )}
             </div>
@@ -615,7 +631,7 @@ export const AppSetupPage: React.FC = () => {
                 disabled={disableSendButton}
                 onClick={handleApplicationConfiguration}
             >
-                Apply Configuration
+                Save Settings
             </button>
         </div>
     );
