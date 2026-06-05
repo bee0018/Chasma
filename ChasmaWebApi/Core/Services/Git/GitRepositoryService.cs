@@ -384,14 +384,14 @@ namespace ChasmaWebApi.Core.Services.Git
                 return false;
             }
 
-            if (selectedFile.IsStaged && !ShellUtility.TryExecuteShellCommand($"git restore --staged {selectedFile.FilePath}", workingDirectory, out errorMessage))
+            if (selectedFile.IsStaged && !ShellUtility.TryExecuteShellCommand($"git restore --staged \"{selectedFile.FilePath}\"", workingDirectory, out errorMessage))
             {
                 errorMessage = $"Failed to unstage file: {errorMessage}";
                 Logger.LogError("Could not unstage changes when trying to restore file and now sending error response. Reason: {error}", errorMessage);
                 return false;
             }
 
-            return ShellUtility.TryExecuteShellCommand($"git restore {selectedFile.FilePath}", workingDirectory, out errorMessage);
+            return ShellUtility.TryExecuteShellCommand($"git restore \"{selectedFile.FilePath}\"", workingDirectory, out errorMessage);
         }
 
         // <inheritdoc />
