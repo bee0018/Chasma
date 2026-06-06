@@ -71,7 +71,7 @@ public class RepositoryConfigurationController : ControllerBase
         logger.LogInformation("Getting repositories for user with id: {userId}.", userId);
         List<LocalGitRepository> repositories = cacheManager.Repositories.Values
             .Where(i => i.UserId == userId && !i.IsIgnored)
-            .OrderBy(i => i.Name)
+            .OrderBy(i => i.GetDisplayName())
             .ToList();
         LocalRepositoriesInfoMessage message = new()
         {
@@ -93,7 +93,7 @@ public class RepositoryConfigurationController : ControllerBase
         logger.LogInformation("Getting ignored repositories for user with id: {userId}.", userId);
         List<string> repositories = cacheManager.Repositories.Values
             .Where(i => i.UserId == userId && i.IsIgnored)
-            .Select(i => $"{i.Name}:{i.Id}")
+            .Select(i => $"{i.GetDisplayName()}:{i.Id}")
             .ToList();
         GetIgnoredRepositoriesMessage message = new()
         {
@@ -133,6 +133,7 @@ public class RepositoryConfigurationController : ControllerBase
                 Url = repo.Url,
                 HostPlatform = repo.HostPlatform,
                 IsIgnored = false,
+                DisplayName = repo.DisplayName,
             };
             await applicationDbContext.Repositories.AddAsync(repositoryModel);
 
@@ -301,7 +302,7 @@ public class RepositoryConfigurationController : ControllerBase
             return Ok(response);
         }
 
-        string repoName = localGitRepository.Name;
+        string repoName = localGitRepository.GetDisplayName();
         bool isIgnored = request.IsIgnored;
         repositoryModel.IsIgnored = isIgnored;
         int rowsAffected = await applicationDbContext.SaveChangesAsync();
@@ -399,8 +400,96 @@ public class RepositoryConfigurationController : ControllerBase
         return Ok(response);
     }
 
-    #region Private Methods
+    /// <summary>
+    /// Changes the repository display name for the specified repository.
+    /// </summary>
+    /// <param name="request">The request to change the repository display name.</param>
+    /// <returns>The response to changing the repository display name.</returns>
+    [HttpPost]
+    [Route("changeRepositoryDisplayName")]
+    public async Task<ActionResult<ChangeRepositoryDisplayNameResponse>> ChangeRepositoryDisplayName([FromBody] ChangeRepositoryDisplayNameRequest request)
+    {
+        ChangeRepositoryDisplayNameResponse response = new();
+        string requestName = nameof(ChangeRepositoryDisplayNameRequest);
+        if (request == null)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Null request was received. Cannot change repository display name.";
+            logger.LogError("Invalid {request} received to change repository display name.", requestName);
+            return BadRequest(response);
+        }
 
+        string repoId = request.RepositoryId;
+        if (string.IsNullOrEmpty(repoId))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Repository identifier is required.";
+            logger.LogError("Invalid {request} received to change repository display name because the repository identifier was null or empty.", requestName);
+            return Ok(response);
+        }
+
+        if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "No repository was found in cache with the specified identifier.";
+            logger.LogError("No repository was found in cache with an identifier: {repoId}. Cannot change display name. Sending error response.", repoId);
+            return Ok(response);
+        }
+
+        string newDisplayName = request.NewName;
+        if (string.IsNullOrEmpty(newDisplayName))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. New display name is required.";
+            logger.LogError("Invalid {request} received to change repository display name because the new display name was null or empty.", requestName);
+            return Ok(response);
+        }
+
+        if (newDisplayName == repository.DisplayName)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Display name must not be the current display name.";
+            logger.LogError("Invalid {request} received to change repository display name because the new display is the same as the current display name. Sending error response.", requestName);
+            return Ok(response);
+        }
+
+        RepositoryModel repositoryModel = await applicationDbContext.Repositories.FirstOrDefaultAsync(i => i.Id == repoId);
+        if (repositoryModel == null)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "No repository was found in the database with the specified identifier.";
+            logger.LogError("No repository was found in the database with an identifier: {repoId}. Cannot change display name. Sending error response.", repoId);
+            return Ok(response);
+        }
+
+        try
+        {
+            repositoryModel.DisplayName = newDisplayName;
+            int rowsAffected = await applicationDbContext.SaveChangesAsync();
+            if (rowsAffected == 0)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Failed to save changes to the database. Check server logs for more information.";
+                logger.LogError("Database failed to update repository display name for repository with id {repoId}. Sending error response.", repoId);
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully changed repository display name to {newDisplayName} in cache and the database.", newDisplayName);
+            repository.DisplayName = newDisplayName;
+            response.Repository = repository;
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An exception was thrown while attempting to change the repository display name for repository with id {repoId}. Sending error response.", repoId);
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "An exception was thrown while attempting to change the repository display name. Check server logs for more information.";
+            return Ok(response);
+        }
+    }
+
+    #region Private Methods
+    
     /// <summary>
     /// Adds the specified repositories to the database.
     /// </summary>
@@ -421,6 +510,7 @@ public class RepositoryConfigurationController : ControllerBase
                 Url = localGitRepository.Url,
                 HostPlatform = localGitRepository.HostPlatform,
                 IsIgnored = false,
+                DisplayName = localGitRepository.DisplayName,
             };
             await applicationDbContext.Repositories.AddAsync(repositoryModel);
             WorkingDirectoryModel workingDirectoryModel = new()

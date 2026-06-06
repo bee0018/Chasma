@@ -41,4 +41,15 @@ public class LocalGitRepository
     /// Gets or sets the remote host platform.
     /// </summary>
     public RemoteHostPlatform HostPlatform { get; set; }
+
+    /// <summary>
+    /// Gets or sets the repository's display name.
+    /// </summary>
+    public string? DisplayName { get; set; }
+
+    /// <summary>
+    /// Gets the display name of the repository.
+    /// </summary>
+    /// <returns>The display name if it exists; repository name otherwise.</returns>
+    public string GetDisplayName() => !string.IsNullOrEmpty(DisplayName) ? DisplayName : Name;
 }

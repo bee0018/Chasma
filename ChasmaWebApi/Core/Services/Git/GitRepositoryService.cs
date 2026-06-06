@@ -443,7 +443,7 @@ namespace ChasmaWebApi.Core.Services.Git
                         IsSuccessful = false,
                         Reason = errorMessage,
                         SnapshotName = snapshotDisplayName,
-                        RepositoryName = repository.Name,
+                        RepositoryName = repository.GetDisplayName(),
                     };
                     additionResults.Add(additionResult);
                     continue;
@@ -459,7 +459,7 @@ namespace ChasmaWebApi.Core.Services.Git
                         IsSuccessful = false,
                         Reason = errorMessage,
                         SnapshotName = snapshotDisplayName,
-                        RepositoryName = repository.Name,
+                        RepositoryName = repository.GetDisplayName(),
                     };
                     additionResults.Add(additionResult);
                     continue;
@@ -471,14 +471,14 @@ namespace ChasmaWebApi.Core.Services.Git
                     int stashIndex = repo.Stashes.FindIndex(i => i.Message.Contains(stashMessage));
                     if (stashIndex != -1 && !GitStashService.TryApplyStash(workingDirectory, stashIndex, StashApplyModifiers.Default, out errorMessage))
                     {
-                        errorMessage = $"Failed to reapply the stash for the repository {repository.Name} because: {errorMessage}";
+                        errorMessage = $"Failed to reapply the stash for the repository {repository.GetDisplayName()} because: {errorMessage}";
                         Logger.LogError(errorMessage);
                         additionResult = new()
                         {
                             IsSuccessful = false,
                             Reason = errorMessage,
                             SnapshotName = snapshotDisplayName,
-                            RepositoryName = repository.Name,
+                            RepositoryName = repository.GetDisplayName(),
                         };
                         additionResults.Add(additionResult);
                         continue;
@@ -500,7 +500,7 @@ namespace ChasmaWebApi.Core.Services.Git
                         IsSuccessful = true,
                         Reason = string.Empty,
                         SnapshotName = snapshotDisplayName,
-                        RepositoryName = repository.Name,
+                        RepositoryName = repository.GetDisplayName(),
                     };
                     additionResults.Add(additionResult);
                 }
@@ -513,7 +513,7 @@ namespace ChasmaWebApi.Core.Services.Git
                         IsSuccessful = false,
                         Reason = errorMessage,
                         SnapshotName = snapshotDisplayName,
-                        RepositoryName = repository.Name,
+                        RepositoryName = repository.GetDisplayName(),
                     };
                     additionResults.Add(additionResult);
                 }
@@ -576,14 +576,14 @@ namespace ChasmaWebApi.Core.Services.Git
                     repo.Reset(ResetMode.Hard);
                     if (!GitBranchService.TryCheckoutBranch(workingDirectory, repoEntry.BranchName, out errorMessage))
                     {
-                        errorMessage = $"Cannot load snapshot for this {repository.Name} because: {errorMessage}.";
+                        errorMessage = $"Cannot load snapshot for this {repository.GetDisplayName()} because: {errorMessage}.";
                         Logger.LogError(errorMessage);
                         additionResult = new()
                         {
                             IsSuccessful = false,
                             Reason = errorMessage,
                             SnapshotName = snapshot.DisplayName,
-                            RepositoryName = repository.Name,
+                            RepositoryName = repository.GetDisplayName(),
                         };
                         additionResults.Add(additionResult);
                         continue;
@@ -592,14 +592,14 @@ namespace ChasmaWebApi.Core.Services.Git
                     Commit commit = repo.Commits.FirstOrDefault(i => i.Sha == repoEntry.CommitHash);
                     if (commit == null)
                     {
-                        errorMessage = $"Failed to find the commit with hash {repoEntry.CommitHash} in the repository. Cannot fully load snapshot for {repository.Name}.";
+                        errorMessage = $"Failed to find the commit with hash {repoEntry.CommitHash} in the repository. Cannot fully load snapshot for {repository.GetDisplayName()}.";
                         Logger.LogError(errorMessage);
                         additionResult = new()
                         {
                             IsSuccessful = false,
                             Reason = errorMessage,
                             SnapshotName = snapshot.DisplayName,
-                            RepositoryName = repository.Name,
+                            RepositoryName = repository.GetDisplayName(),
                         };
                         additionResults.Add(additionResult);
                         continue;
@@ -609,14 +609,14 @@ namespace ChasmaWebApi.Core.Services.Git
                     int stashIndex = repo.Stashes.FindIndex(i => i.Message.Contains(repoEntry.StashMessage ?? string.Empty));
                     if (!GitStashService.TryApplyStash(workingDirectory, stashIndex, StashApplyModifiers.Default, out errorMessage))
                     {
-                        errorMessage = $"Failed to apply the stash for the repository {repository.Name} because: {errorMessage}";
+                        errorMessage = $"Failed to apply the stash for the repository {repository.GetDisplayName()} because: {errorMessage}";
                         Logger.LogError(errorMessage);
                         additionResult = new()
                         {
                             IsSuccessful = false,
                             Reason = errorMessage,
                             SnapshotName = snapshot.DisplayName,
-                            RepositoryName = repository.Name,
+                            RepositoryName = repository.GetDisplayName(),
                         };
                         additionResults.Add(additionResult);
                         continue;
@@ -627,7 +627,7 @@ namespace ChasmaWebApi.Core.Services.Git
                         IsSuccessful = true,
                         Reason = string.Empty,
                         SnapshotName = snapshot.DisplayName,
-                        RepositoryName = repository.Name,
+                        RepositoryName = repository.GetDisplayName(),
                     };
                     additionResults.Add(additionResult);
                 }
@@ -640,7 +640,7 @@ namespace ChasmaWebApi.Core.Services.Git
                         IsSuccessful = false,
                         Reason = errorMessage,
                         SnapshotName = snapshot.DisplayName,
-                        RepositoryName = repository.Name,
+                        RepositoryName = repository.GetDisplayName(),
                     };
                     additionResults.Add(additionResult);
                 }

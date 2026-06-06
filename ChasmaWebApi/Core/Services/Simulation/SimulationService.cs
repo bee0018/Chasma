@@ -55,8 +55,10 @@ namespace ChasmaWebApi.Core.Services.Simulation
             foreach (PullSimulationEntry entry in entries)
             {
                 string repoId = entry.RepositoryId;
-                SimulatedGitPullResult simulatedPullResult = new();
-                simulatedPullResult.RepositoryName = CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository) ? repository.Name : repoId;
+                SimulatedGitPullResult simulatedPullResult = new()
+                {
+                    RepositoryName = CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository) ? repository.GetDisplayName() : repoId
+                };
                 if (!CacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
                 {
                     Logger.LogError("Invalid repository key {repoKey} provided to simulate git pull.", repoId);
@@ -179,8 +181,10 @@ namespace ChasmaWebApi.Core.Services.Simulation
             foreach (AddBranchSimulationEntry entry in entries)
             {
                 string repoId = entry.RepositoryId;
-                SimulatedAddBranchResult simulatedAddBranchResult = new();
-                simulatedAddBranchResult.RepositoryName = CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository) ? repository.Name : repoId;
+                SimulatedAddBranchResult simulatedAddBranchResult = new()
+                {
+                    RepositoryName = CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository) ? repository.GetDisplayName() : repoId
+                };
                 if (!CacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
                 {
                     Logger.LogError("Invalid repository key {repoKey} provided to simulate adding a branch.", repoId);
@@ -243,7 +247,7 @@ namespace ChasmaWebApi.Core.Services.Simulation
                     continue;
                 }
 
-                simulatedMergeResult.RepositoryName = repository.Name;
+                simulatedMergeResult.RepositoryName = repository.GetDisplayName();
                 using Repository repo = new(workingDirectory);
                 string mergeSimulationPath = Path.Combine(workingDirectory, "merge-sim");
                 string worktreePath = Path.Combine(mergeSimulationPath, Guid.NewGuid().ToString("N"));

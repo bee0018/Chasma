@@ -52,5 +52,11 @@ namespace ChasmaWebApi.Data.Models
         /// </summary>
         [Column("remote_host_platform")]
         public RemoteHostPlatform HostPlatform { get; set; }
+
+        /// <summary>
+        /// Gets or sets the repository's display name.
+        /// </summary>
+        [Column("display_name")]
+        public string? DisplayName { get; set; }
     }
 }

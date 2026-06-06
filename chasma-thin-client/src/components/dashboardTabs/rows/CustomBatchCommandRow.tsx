@@ -104,7 +104,7 @@ const CustomBatchCommandRow: React.FC<IBatchCommandRowProps> = (
                     <option value="">Select Repository</option>
                     {repositories?.map(repo => (
                         <option key={repo.id} value={repo.id}>
-                            {repo.name}
+                            {repo.displayName ? repo.displayName : repo.name}
                         </option>
                     ))}
                 </select>
@@ -112,7 +112,7 @@ const CustomBatchCommandRow: React.FC<IBatchCommandRowProps> = (
                 {selectedRepo && (
                     <div className="repo-metadata modern-card">
                         <div className="repo-meta-line">
-                            <strong>Repo Title:</strong> {selectedRepo.name}
+                            <strong>Repo Title:</strong> {selectedRepo.displayName ? selectedRepo.displayName : selectedRepo.name}
                         </div>
                         <div className="repo-meta-line">
                             <strong>Repo ID:</strong> {selectedRepo.id}

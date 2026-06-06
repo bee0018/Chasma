@@ -259,7 +259,7 @@ const ApplySnapshotsTab: React.FC = () => {
     const getRepositorySnapshotDisplayName = (repoSnapshot: RepsoitoryWorkContextSnapshotEntry) => {
         const repository = repositories.find(i => i.id === repoSnapshot.repositoryId);
         if (repository) {
-            return repository.name;
+            return repository.displayName ? repository.displayName : repository.name;
         }
 
         return `${repoSnapshot.repositoryId} (Not Found in System)`;

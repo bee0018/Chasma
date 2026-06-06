@@ -1,6 +1,6 @@
 ﻿import { create } from "zustand";
-import {ApplicationUser, LocalGitRepository, WorkContextSnapshot} from "../API/ChasmaWebApiClient";
-import {persist} from 'zustand/middleware'
+import { ApplicationUser, LocalGitRepository, WorkContextSnapshot } from "../API/ChasmaWebApiClient";
+import { persist } from 'zustand/middleware'
 
 interface Notification {
     title: string;
@@ -62,6 +62,9 @@ interface CacheState {
     /** Adds a workspace snapshot to the cache. */
     addWorkspaceSnapshot: (snapshot: WorkContextSnapshot) => void;
 
+    /** Updates a local git repository in the cache. **/
+    updateLocalGitRepository: (repo: LocalGitRepository) => void;
+
     /** Clears the cache. **/
     clearCache: () => void;
 }
@@ -98,6 +101,12 @@ export const useCacheStore = create<CacheState>()(
             addWorkspaceSnapshot: (snapshot) =>
                 set((state) => ({
                     workspaceSnapshots: [...state.workspaceSnapshots, snapshot],
+                })),
+            updateLocalGitRepository: (updatedRepo) =>
+                set((state) => ({
+                    repositories: state.repositories.map((repo) =>
+                        repo.id === updatedRepo.id ? updatedRepo : repo
+                    ),
                 })),
             clearCache: () => set({
                 user: null,
