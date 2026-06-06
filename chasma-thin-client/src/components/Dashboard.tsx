@@ -1,26 +1,14 @@
 import React, { useState } from 'react';
-import HomeTab from "./dashboardTabs/HomeTab";
-import ApiStatusTab from "./dashboardTabs/ApiStatusTab";
+import { useCacheStore } from "../managers/CacheManager";
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import IncludeRepositoryModal from "./modals/IncludeRepositoryModal";
-import BatchOperationsTab from "./dashboardTabs/BatchOperationsTab";
-import {useCacheStore} from "../managers/CacheManager";
-import MultiDryRunSimulationTab from "./dashboardTabs/MultiDryRunSimulationTab";
-import GlobalRepositoryTab from './dashboardTabs/GlobalRepositoryTab';
-import { useNavigate } from 'react-router-dom';
 import LogoutModal from './modals/LogoutModal';
-import UserConfigTab from './dashboardTabs/UserConfigTab';
-import RepositoryAdditionsTab from './dashboardTabs/RepositoryAdditionsTab';
-import CloneRepositoriesTab from './dashboardTabs/CloneRepositoriesTab';
-import ApplySnapshotsTab from './dashboardTabs/ApplySnapshotsTab';
 
 /**
  * Initializes a new instance of the Dashboard class.
  * @constructor
  */
 const Dashboard: React.FC = () => {
-    /** Gets or sets the active tab that the user has selected. **/
-    const [activeTab, setActiveTab] = useState("home");
-
     /** Gets or sets a value indicating whether the user is including repositories. **/
     const [isIncludingRepos, setIsIncludingRepos] = useState(false);
 
@@ -30,7 +18,7 @@ const Dashboard: React.FC = () => {
     /** Gets or sets a value indicating whether the user is logging out. **/
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-   /** Sets the notification modal. */
+    /** Sets the notification modal. */
     const setNotification = useCacheStore(state => state.setNotification);
 
     /** The logged-in user. **/
@@ -39,21 +27,25 @@ const Dashboard: React.FC = () => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
+    /** The live route info to dynamically track highlighted states. **/
+    const location = useLocation();
+
     /** Handles the trigger when the repositories are updated. **/
     const handleReposUpdated = () => {
         setReposVersion(v => v + 1);
     };
 
-    /** Handles the event when the user selects a tab. **/
-    const handleTabClick = (tab: string) => {
-        setActiveTab(tab);
+    /** Helper function to see which tab path matches our path sub-route context */
+    const isActive = (path: string) => {
+        if (path === "/dashboard" && location.pathname === "/dashboard") return "active";
+        return location.pathname.endsWith(path) ? "active" : "";
     };
 
     /** Logs the user out of the system. */
     function logoutUser() {
         useCacheStore.getState().clearCache();
         window.location.href = "/";
-         setNotification({
+        setNotification({
             title: "User logged out successfully.",
             message: "",
             isError: false,
@@ -64,57 +56,57 @@ const Dashboard: React.FC = () => {
         <div className="dashboard-container">
             <aside className="sidebar">
                 <div
-                    className={`sidebar-profile ${activeTab === "userConfig" ? "active" : ""}`}
-                    onClick={() => handleTabClick("userConfig")}
-                    >
+                    className={`sidebar-profile ${isActive("userConfig")}`}
+                    onClick={() => navigate("userConfig")}
+                >
                     <span className="profile-icon">👤</span>
                     <span className="username">{user?.userName}</span>
                 </div>
                 <div
-                    className={`tab ${activeTab === "home" ? "active" : ""}`}
-                    onClick={() => handleTabClick("home")}
+                    className={`tab ${isActive("/home")}`}
+                    onClick={() => navigate("")}
                 >
                     Home 🏠
                 </div>
                 <div
-                    className={`tab ${activeTab === "batchOperations" ? "active" : ""}`}
-                    onClick={() => handleTabClick("batchOperations")}
+                    className={`tab ${isActive("batchOperations")}`}
+                    onClick={() => navigate("batchOperations")}
                 >
                     Batch Ops ⚡
                 </div>
                 <div
-                    className={`tab ${activeTab === "dryRun" ? "active" : ""}`}
-                    onClick={() => handleTabClick("dryRun")}
+                    className={`tab ${isActive("dryRun")}`}
+                    onClick={() => navigate("dryRun")}
                 >
                     Simulate 🧪
                 </div>
                 <div
-                    className={`tab ${activeTab === "cloneRepos" ? "active" : ""}`}
-                    onClick={() => handleTabClick("cloneRepos")}
+                    className={`tab ${isActive("cloneRepos")}`}
+                    onClick={() => navigate("cloneRepos")}
                 >
                     Clone Repositories 🚚
                 </div>
                 <div
-                    className={`tab ${activeTab === "addRepos" ? "active" : ""}`}
-                    onClick={() => handleTabClick("addRepos")}
+                    className={`tab ${isActive("addRepos")}`}
+                    onClick={() => navigate("addRepos")}
                 >
                     Add Repositories ➕
                 </div>
                 <div
-                    className={`tab ${activeTab === "globalPrs" ? "active" : ""}`}
-                    onClick={() => handleTabClick("globalPrs")}
+                    className={`tab ${isActive("global")}`}
+                    onClick={() => navigate("global")}
                 >
                     Global 🌍
                 </div>
                 <div
-                    className={`tab ${activeTab === "snapshots" ? "active" : ""}`}
-                    onClick={() => handleTabClick("snapshots")}
+                    className={`tab ${isActive("snapshots")}`}
+                    onClick={() => navigate("snapshots")}
                 >
                     Snapshots 📸
                 </div>
                 <div
-                    className={`tab ${activeTab === "apiStatus" ? "active" : ""}`}
-                    onClick={() => handleTabClick("apiStatus")}
+                    className={`tab ${isActive("apiStatus")}`}
+                    onClick={() => navigate("apiStatus")}
                 >
                     API Status 🔌
                 </div>
@@ -126,7 +118,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div
                     className="tab"
-                    onClick={() => window.open("\help", "_blank")}>
+                    onClick={() => window.open("/help", "_blank")}>
                     <span className="username">Help</span>
                     <span className="profile-icon">💡</span>
                 </div>
@@ -143,51 +135,9 @@ const Dashboard: React.FC = () => {
             </aside>
 
             <main className="content">
-                {activeTab === "home" && (
-                    <div className="panel-card">
-                        <HomeTab reposVersion={reposVersion} />
-                    </div>
-                )}
-                {activeTab === "batchOperations" && (
-                    <div className="panel-card">
-                        <BatchOperationsTab />
-                    </div>
-                )}
-                {activeTab === "dryRun" && (
-                    <div className="panel-card">
-                        <MultiDryRunSimulationTab />
-                    </div>
-                )}
-                {activeTab === "globalPrs" && (
-                    <div className="panel-card">
-                        <GlobalRepositoryTab />
-                    </div>
-                )}
-                {activeTab === "apiStatus" && (
-                    <div className="panel-card">
-                        <ApiStatusTab />
-                    </div>
-                )}
-                {activeTab === "userConfig" && (
-                    <div className="panel-card">
-                        <UserConfigTab />
-                    </div>
-                )}
-                {activeTab === "addRepos" && (
-                    <div className="panel-card">
-                        <RepositoryAdditionsTab />
-                    </div>
-                )}
-                {activeTab === "cloneRepos" && (
-                    <div className="panel-card">
-                        <CloneRepositoriesTab />
-                    </div>
-                )}
-                {activeTab === "snapshots" && (
-                    <div className="panel-card">
-                        <ApplySnapshotsTab />
-                    </div>
-                )}
+                <div className="panel-card">
+                    <Outlet context={{ reposVersion }} /> 
+                </div>
             </main>
 
             {isIncludingRepos && (

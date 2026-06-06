@@ -1,6 +1,6 @@
 import './styles/App.css';
 import Dashboard from "./components/Dashboard";
-import {BrowserRouter, Route, Routes} from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import RepositoryStatusPage from "./components/pages/RepositoryStatusPage";
 import WorkflowRunsPage from "./components/pages/WorkflowRunsPage";
 import LoginPage from "./components/pages/LoginPage";
@@ -20,6 +20,15 @@ import { RefreshRequest } from './API/ChasmaWebApiClient';
 import { useEffect, useRef } from 'react';
 import AppSetupPage from './components/pages/AppSetupPage';
 import StartupGate from './components/pages/gates/StartupGate';
+import UserConfigTab from './components/dashboardTabs/UserConfigTab';
+import BatchOperationsTab from './components/dashboardTabs/BatchOperationsTab';
+import MultiDryRunSimulationTab from './components/dashboardTabs/MultiDryRunSimulationTab';
+import CloneRepositoriesTab from './components/dashboardTabs/CloneRepositoriesTab';
+import RepositoryAdditionsTab from './components/dashboardTabs/RepositoryAdditionsTab';
+import GlobalRepositoryTab from './components/dashboardTabs/GlobalRepositoryTab';
+import ApplySnapshotsTab from './components/dashboardTabs/ApplySnapshotsTab';
+import ApiStatusTab from './components/dashboardTabs/ApiStatusTab';
+import HomeTab from './components/dashboardTabs/HomeTab';
 
 function App() {
     /** The notification modal to display in the application. */
@@ -45,19 +54,19 @@ function App() {
      * @returns The token expiration value.
      */
     function getTokenExpiration(token: string): number {
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.exp * 1000;
-    } catch {
-        return 0; // force refresh/logout
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.exp * 1000;
+        } catch {
+            return 0; // force refresh/logout
+        }
     }
-}
 
     /** Logs the user out of the system. */
     function logoutUser() {
         useCacheStore.getState().clearCache();
         window.location.href = "/";
-         setNotification({
+        setNotification({
             title: "Session expired.",
             message: "Please log in again.",
             isError: true,
@@ -76,62 +85,62 @@ function App() {
      */
     const REFRESH_BEFORE_EXPIRY = 2 * 60 * 1000;
     useEffect(() => {
-    const timeout = setTimeout(() => {
-        const interval = setInterval(async () => {
-            const token = useCacheStore.getState().token;
-            if (!token || !useCacheStore.getState().refreshToken) {
-                return;
-            }
-
-            const now = Date.now();
-            const tokenExpiration = getTokenExpiration(token);
-            const isUserActive = (now - lastActivity.current) < ACTIVITY_THRESHOLD;
-            const isExpiringSoon = (tokenExpiration - now) < REFRESH_BEFORE_EXPIRY;
-
-            if (isUserActive && isExpiringSoon) {
-                try {
-                    const request = new RefreshRequest();
-                    request.refreshToken = useCacheStore.getState().refreshToken;
-
-                    if (!request.refreshToken) {
-                        logoutUser();
-                        return;
-                    }
-
-                    const response = await userClient.refresh(request);
-
-                    if (response.isErrorResponse) {
-                        logoutUser();
-                        return;
-                    }
-
-                    useCacheStore.getState().setToken(response.token);
-                    useCacheStore.getState().setRefreshToken(response.refreshToken);
-                } catch {
-                    logoutUser();
+        const timeout = setTimeout(() => {
+            const interval = setInterval(async () => {
+                const token = useCacheStore.getState().token;
+                if (!token || !useCacheStore.getState().refreshToken) {
+                    return;
                 }
-            }
-        }, 30000); // every 30 seconds
 
-        return () => clearInterval(interval);
-    }, 5000); // wait 5 seconds after mount/login
+                const now = Date.now();
+                const tokenExpiration = getTokenExpiration(token);
+                const isUserActive = (now - lastActivity.current) < ACTIVITY_THRESHOLD;
+                const isExpiringSoon = (tokenExpiration - now) < REFRESH_BEFORE_EXPIRY;
 
-    return () => clearTimeout(timeout);
-}, []);
+                if (isUserActive && isExpiringSoon) {
+                    try {
+                        const request = new RefreshRequest();
+                        request.refreshToken = useCacheStore.getState().refreshToken;
+
+                        if (!request.refreshToken) {
+                            logoutUser();
+                            return;
+                        }
+
+                        const response = await userClient.refresh(request);
+
+                        if (response.isErrorResponse) {
+                            logoutUser();
+                            return;
+                        }
+
+                        useCacheStore.getState().setToken(response.token);
+                        useCacheStore.getState().setRefreshToken(response.refreshToken);
+                    } catch {
+                        logoutUser();
+                    }
+                }
+            }, 30000); // every 30 seconds
+
+            return () => clearInterval(interval);
+        }, 5000); // wait 5 seconds after mount/login
+
+        return () => clearTimeout(timeout);
+    }, []);
 
     useEffect(() => {
-    window.addEventListener("mousemove", updateActivity);
-    window.addEventListener("keydown", updateActivity);
-    window.addEventListener("click", updateActivity);
-    window.addEventListener("scroll", updateActivity);
+        window.addEventListener("mousemove", updateActivity);
+        window.addEventListener("keydown", updateActivity);
+        window.addEventListener("click", updateActivity);
+        window.addEventListener("scroll", updateActivity);
 
-    return () => {
-        window.removeEventListener("mousemove", updateActivity);
-        window.removeEventListener("keydown", updateActivity);
-        window.removeEventListener("click", updateActivity);
-        window.removeEventListener("scroll", updateActivity);
-    };
-}, []);
+        return () => {
+            window.removeEventListener("mousemove", updateActivity);
+            window.removeEventListener("keydown", updateActivity);
+            window.removeEventListener("click", updateActivity);
+            window.removeEventListener("scroll", updateActivity);
+        };
+    }, []);
 
     return <div>
         <BrowserRouter>
@@ -140,7 +149,17 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/setup" element={<AppSetupPage />} />
                 <Route path="/register" element={<RegisterPage />} />
-                <Route path="/home" element={<Dashboard />} />
+                <Route path="/home" element={<Dashboard />}>
+                    <Route index element={<HomeTab />} />
+                    <Route path="userConfig" element={<UserConfigTab />} />
+                    <Route path="batchOperations" element={<BatchOperationsTab />} />
+                    <Route path="dryRun" element={<MultiDryRunSimulationTab />} />
+                    <Route path="cloneRepos" element={<CloneRepositoriesTab />} />
+                    <Route path="addRepos" element={<RepositoryAdditionsTab />} />
+                    <Route path="global" element={<GlobalRepositoryTab />} />
+                    <Route path="snapshots" element={<ApplySnapshotsTab />} />
+                    <Route path="apiStatus" element={<ApiStatusTab />} />
+                </Route>
                 <Route path="/help" element={<HelpPage />}>
                     <Route path="config" element={<HelpConfigXmlPage />} />
                     <Route path="api-start" element={<HelpApiStartPage />} />
