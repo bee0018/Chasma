@@ -103,6 +103,7 @@ namespace ChasmaWebApi.HostedServices
                     Url = repoModel.Url,
                     IsIgnored = repoModel.IsIgnored,
                     HostPlatform = repoModel.HostPlatform,
+                    DisplayName = repoModel.DisplayName,
                 };
                 cacheManager.Repositories.TryAdd(repository.Id, repository);
             }
@@ -388,11 +389,10 @@ namespace ChasmaWebApi.HostedServices
                     .ToList();
             foreach (LocalGitRepository repository in gitHubRepositories)
             {
-                string repoName = repository.Name;
                 List<RemotePullRequest>? pullRequests = await GetGitHubPullRequestAsync(repository.Owner, repository.Name);
                 if (pullRequests == null)
                 {
-                    logger.LogWarning("No pull requests could be found for {name}.", repoName);
+                    logger.LogWarning("No pull requests could be found for {name}.", repository.GetDisplayName());
                     continue;
                 }
 
@@ -435,7 +435,7 @@ namespace ChasmaWebApi.HostedServices
         {
             if (string.IsNullOrEmpty(InitialApiConfiguration.GitLabApiToken))
             {
-                logger.LogWarning("GitLab API token is not provided. Cannot fetch merge requests for {repoName}.", repository.Name);
+                logger.LogWarning("GitLab API token is not provided. Cannot fetch merge requests for {repoName}.", repository.GetDisplayName());
                 return null;
             }
 
@@ -447,14 +447,14 @@ namespace ChasmaWebApi.HostedServices
                 Project project = await GitLabClient.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
                 {
-                    logger.LogError("Could not find project on GitLab with owner: {owner} and repo {repoName}", owner, repoName);
+                    logger.LogError("Could not find project on GitLab with owner: {owner} and repo {repoName}", owner, repository.GetDisplayName());
                     return null;
                 }
 
                 IMergeRequestClient mergeRequestClient = GitLabClient.GetMergeRequest(project.Id);
                 if (mergeRequestClient == null)
                 {
-                    logger.LogError("Could not find merge request client on GitLab with owner: {owner} and repo {repoName}", owner, repoName);
+                    logger.LogError("Could not find merge request client on GitLab with owner: {owner} and repo {repoName}", owner, repository.GetDisplayName());
                     return null;
                 }
 
@@ -482,7 +482,7 @@ namespace ChasmaWebApi.HostedServices
             }
             catch (Exception e)
             {
-                logger.LogWarning("Error when trying to get list of open merge requests in {repoName}: {error}", repository.Name, e);
+                logger.LogWarning("Error when trying to get list of open merge requests in {repoName}: {error}", repository.GetDisplayName(), e);
                 return null;
             }
         }
@@ -615,7 +615,7 @@ namespace ChasmaWebApi.HostedServices
                 List<RemotePullRequest>? mergeRequests = await GetGitLabMergeRequestAsync(repository);
                 if (mergeRequests == null)
                 {
-                    logger.LogWarning("No merge requests could be found for {name}.", repository.Name);
+                    logger.LogWarning("No merge requests could be found for {name}.", repository.GetDisplayName());
                     continue;
                 }
 

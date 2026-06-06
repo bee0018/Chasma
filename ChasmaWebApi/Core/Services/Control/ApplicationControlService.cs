@@ -260,7 +260,7 @@ namespace ChasmaWebApi.Core.Services.Control
                 {
                     branchSyncStatus = new()
                     {
-                        RepositoryName = repository.Name,
+                        RepositoryName = repository.GetDisplayName(),
                         BranchExists = false,
                         Ahead = "-",
                         Behind = "-",
@@ -279,7 +279,7 @@ namespace ChasmaWebApi.Core.Services.Control
                     string repoOwner = repository.Owner;
                     if (string.IsNullOrEmpty(token))
                     {
-                        logger.LogWarning("No API token found for repository {RepoName} with remote host platform {RemoteHostPlatform}. Unable to fetch build status from remote host platform.", repoName, remoteHostPlatform);
+                        logger.LogWarning("No API token found for repository {RepoName} with remote host platform {RemoteHostPlatform}. Unable to fetch build status from remote host platform.", repository.GetDisplayName(), remoteHostPlatform);
                     }
                     else if (remoteHostPlatform == RemoteHostPlatform.GitHub && gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> gitHubResults, out _))
                     {
@@ -293,7 +293,7 @@ namespace ChasmaWebApi.Core.Services.Control
                     RepositorySummary? summary = gitRepositoryService.GetRepositoryStatus(repository.Id, username, token);
                     branchSyncStatus = new()
                     {
-                        RepositoryName = repository.Name,
+                        RepositoryName = repository.GetDisplayName(),
                         BranchExists = true,
                         Ahead = divergenceDetails.aheadCount.ToString(),
                         Behind = divergenceDetails.behindCount.ToString(),

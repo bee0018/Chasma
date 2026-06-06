@@ -1,14 +1,15 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import GitRepoOverviewCard from "../GitRepoOverviewCard";
 import {
     DeleteRepositoryRequest,
     IgnoreRepositoryRequest,
     LocalGitRepository,
 } from "../../API/ChasmaWebApiClient";
-import {useCacheStore} from "../../managers/CacheManager";
-import {configClient} from "../../managers/ApiClientManager";
+import { useCacheStore } from "../../managers/CacheManager";
+import { configClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import ChangeRepositoryDisplayNameModal from "../modals/ChangeRepositoryDisplayNameModal";
 
 /**
  * The properties of the Home Tab.
@@ -37,6 +38,9 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
 
     /** Gets or sets a value indicating whether the request is ready to be sent. */
     const [disableSendButton, setDisableSendButton] = useState(false);
+
+    /** Gets or sets the repository being edited. */
+    const [activeRenameRepo, setActiveRenameRepo] = useState<LocalGitRepository | null>(null);
 
     useEffect(() => {
         updateUserRepositoryConfiguration().catch(console.error);
@@ -217,7 +221,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                             <GitRepoOverviewCard
                                 key={repo.id}
                                 repository={repo}
-                                url={`/status/${repo.name}/${repo.id}`}
+                                url={`/status/${repo.displayName ? repo.displayName : repo.name}/${repo.id}`}
                                 onDelete={handleRepoDelete}
                                 onContextMenu={(e) => handleContextMenu(e, repo)}
                                 user={user} />
@@ -239,10 +243,10 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                                 </li>
                                 <li>
                                     <a
-                                    href={`/status/${contextMenu.repo.name}/${contextMenu.repo.id}`} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                                        href={`/status/${contextMenu.repo.name}/${contextMenu.repo.id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
                                         Open Status in New Tab
                                     </a>
                                 </li>
@@ -251,6 +255,9 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                                 </li>
                                 <li onClick={() => handleIgnoreAction(contextMenu.repo.id)}>
                                     Ignore
+                                </li>
+                                <li onClick={() => setActiveRenameRepo(contextMenu.repo)}>
+                                    Change Display Name
                                 </li>
                             </ul>
                         </div>
@@ -263,6 +270,11 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                 >
                     Add Git Repos from Local Machine
                 </button>
+                {activeRenameRepo &&
+                    <ChangeRepositoryDisplayNameModal
+                        onClose={() => setActiveRenameRepo(null)}
+                        repository={activeRenameRepo} />
+                }
             </div>
         </>
     );

@@ -102,7 +102,7 @@ namespace ChasmaWebApi.Core.Services.Index
                 // Multiple instances of the same repository are allowed, but they must have different identifiers and working directories.
                 if (CacheManager.Repositories.Values.Any(i => IsDuplicateRepository(localRepo, i, workingDirectory)))
                 {
-                    Logger.LogWarning("Repository {repoName} already exists in cache, so it will be ignored.", localRepo.Name);
+                    Logger.LogWarning("Repository {repoName} already exists in cache, so it will be ignored.", localRepo.GetDisplayName());
                     continue;
                 }
 
@@ -114,15 +114,15 @@ namespace ChasmaWebApi.Core.Services.Index
             {
                 if (CacheManager.Repositories.TryAdd(repository.Id, repository))
                 {
-                    Logger.LogInformation("Added repository {repoName} to cache for user {userId}.", repository.Name, userId);
+                    Logger.LogInformation("Added repository {repoName} to cache for user {userId}.", repository.GetDisplayName(), userId);
                 }
                 else
                 {
-                    Logger.LogWarning("Cannot add duplicate repository with name {name} and id {id}", repository.Name, repository.Id);
+                    Logger.LogWarning("Cannot add duplicate repository with name {name} and id {id}", repository.GetDisplayName(), repository.Id);
                 }
             }
 
-            newRepositories = newRepositories.OrderBy(i => i.Name).ToList();
+            newRepositories = newRepositories.OrderBy(i => i.GetDisplayName()).ToList();
             return newRepositories.Count > 0;
         }
 
@@ -141,7 +141,7 @@ namespace ChasmaWebApi.Core.Services.Index
                     return false;
                 }
 
-                repoName = repository.Name;
+                repoName = repository.GetDisplayName();
                 if (!CacheManager.WorkingDirectories.TryRemove(repositoryId, out string workingDirectory))
                 {
                     errorMessage = $"Failed to find working directory for repository {repoName} in cache.";
@@ -151,7 +151,7 @@ namespace ChasmaWebApi.Core.Services.Index
 
                 localGitRepositories = CacheManager.Repositories.Values
                     .Where(i => i.UserId == userId)
-                    .OrderBy(i => i.Name)
+                    .OrderBy(i => i.GetDisplayName())
                     .ToList();
             }
 

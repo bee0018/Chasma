@@ -108,7 +108,7 @@ const RepositorySnapshotRow: React.FC<IRepositorySnapshotRowProps> = (props: IRe
                             <option value="">Select Repository</option>
                             {props.repositories?.map(repo => (
                                 <option key={repo.id} value={repo.id}>
-                                    {repo.name}
+                                    {repo.displayName ? repo.displayName : repo.name}
                                 </option>
                             ))}
                         </select>

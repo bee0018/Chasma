@@ -199,7 +199,7 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
                     <option value="">Select Repository</option>
                     {repositories?.map(repo => (
                         <option key={repo.id} value={repo.id}>
-                            {repo.name}
+                            {repo.displayName ? repo.displayName : repo.name}
                         </option>
                     ))}
                 </select>
@@ -207,7 +207,7 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
                 {selectedRepo && (
                     <div className="repo-metadata modern-card">
                         <div className="repo-meta-line">
-                            <strong>Repo Title:</strong> {selectedRepo.name}
+                            <strong>Repo Title:</strong> {selectedRepo.displayName ? selectedRepo.displayName : selectedRepo.name}
                         </div>
                         <div className="repo-meta-line">
                             <strong>Repo ID:</strong> {selectedRepo.id}

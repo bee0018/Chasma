@@ -105,7 +105,7 @@ namespace ChasmaWebApi.Core.Services.Infrastructure
 
                 List<ShellCommandResult> commandResults = ExecuteShellCommands(workingDirectory, entry.Commands);
                 string repoName = CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository)
-                    ? repository.Name
+                    ? repository.GetDisplayName()
                     : repoId;
                 foreach (ShellCommandResult commandResult in commandResults)
                 {

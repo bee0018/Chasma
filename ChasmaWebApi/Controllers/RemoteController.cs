@@ -441,13 +441,13 @@ namespace ChasmaWebApi.Controllers
             {
                 if (!applicationControlService.TryCreateIssue(outline, out GitLabIssueResult issue, out string errorMessage))
                 {
-                    logger.LogError("Failed to create GitLab issue for {repo} because: {error}", repository.Name, errorMessage);
+                    logger.LogError("Failed to create GitLab issue for {repo} because: {error}", repository.GetDisplayName(), errorMessage);
                     response.IsErrorResponse = true;
                     response.ErrorMessage = errorMessage;
                     return Ok(response);
                 }
 
-                logger.LogInformation("Successfully created GitLab issue for {repo} with number {number}", repository.Name, issue.IssueId);
+                logger.LogInformation("Successfully created GitLab issue for {repo} with number {number}", repository.GetDisplayName(), issue.IssueId);
                 response.Issue = issue;
                 return Ok(response);
             }
@@ -500,13 +500,13 @@ namespace ChasmaWebApi.Controllers
             {
                 if (!applicationControlService.TryGetMembers(repository, out List<GitLabProjectMember> projectMembers, out long projectId, out string errorMessage))
                 {
-                    logger.LogError("Failed to get GitLab project members for {repo} because: {error}", repository.Name, errorMessage);
+                    logger.LogError("Failed to get GitLab project members for {repo} because: {error}", repository.GetDisplayName(), errorMessage);
                     response.IsErrorResponse = true;
                     response.ErrorMessage = errorMessage;
                     return Ok(response);
                 }
 
-                logger.LogInformation("Successfully retrieved members for {repo}.", repository.Name);
+                logger.LogInformation("Successfully retrieved members for {repo}.", repository.GetDisplayName());
                 response.ProjectMembers = projectMembers;
                 response.ProjectId = projectId;
                 return Ok(response);

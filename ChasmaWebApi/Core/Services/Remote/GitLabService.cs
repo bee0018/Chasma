@@ -50,7 +50,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 List<Job>? pipelineJobs = pipelineTask.Result;
                 if (pipelineJobs == null)
                 {
-                    errorMessage = $"Failed to fetch pipeline jobs for {repository.Name}. Check server logs for more information.";
+                    errorMessage = $"Failed to fetch pipeline jobs for {repository.GetDisplayName()}. Check server logs for more information.";
                     return false;
                 }
 
@@ -125,8 +125,8 @@ namespace ChasmaWebApi.Core.Services.Remote
                 (List<Membership> Members, long ProjectId)? membershipResult = responseTask.Result;
                 if (membershipResult == null)
                 {
-                    errorMessage = $"Failed to get members in {repository.Name}. Review server logs for more information.";
-                    logger.LogError("Could not get members in {repo}. Sending error response.", repository.Name);
+                    errorMessage = $"Failed to get members in {repository.GetDisplayName()}. Review server logs for more information.";
+                    logger.LogError("Could not get members in {repo}. Sending error response.", repository.GetDisplayName());
                     return false;
                 }
 
@@ -147,7 +147,7 @@ namespace ChasmaWebApi.Core.Services.Remote
             catch (Exception e)
             {
                 errorMessage = $"Error when trying to get members. Review server logs for more information.";
-                logger.LogError("Error when trying to get members in {repo} project. Error: {error}", repository.Name, e);
+                logger.LogError("Error when trying to get members in {repo} project. Error: {error}", repository.GetDisplayName(), e);
                 return false;
             }
         }

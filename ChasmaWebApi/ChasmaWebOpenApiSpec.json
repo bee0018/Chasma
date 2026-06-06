@@ -856,6 +856,38 @@
         }
       }
     },
+    "/api/RepositoryConfiguration/changeRepositoryDisplayName": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_ChangeRepositoryDisplayName",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRepositoryDisplayNameRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRepositoryDisplayNameResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryStatus/gitStatus": {
       "post": {
         "tags": [
@@ -2870,6 +2902,10 @@
           },
           "hostPlatform": {
             "$ref": "#/components/schemas/RemoteHostPlatform"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -3226,6 +3262,34 @@
           },
           "recurseSubmodules": {
             "type": "boolean"
+          }
+        }
+      },
+      "ChangeRepositoryDisplayNameResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repository": {
+                "$ref": "#/components/schemas/LocalGitRepository"
+              }
+            }
+          }
+        ]
+      },
+      "ChangeRepositoryDisplayNameRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
+          },
+          "newName": {
+            "type": "string"
           }
         }
       },

@@ -36,13 +36,18 @@ const GitRepoOverviewCard: React.FC<IProps> = (props) => {
             onContextMenu={props.onContextMenu}
         >
             <div className="repo-main">
-                <div className="repo-name">{props.repository.name}</div>
+                <div className="repo-name">{props.repository.displayName ? props.repository.displayName : props.repository.name}</div>
                 <div className="repo-meta">
-                    <span>ID: {props.repository.id}</span>
-                    <span>Owner: {props.repository.owner}</span>
-                    <span>
-                        Host Platform: {props.repository.hostPlatform ? RemoteHostPlatform[props.repository.hostPlatform] : "Unknown"}
-                    </span>
+                    <span><b>ID:</b> {props.repository.id}</span>
+                </div>
+                <div className="repo-meta">
+                    <span><b>Name:</b> {props.repository.name}</span>
+                </div>
+                <div className="repo-meta">
+                    <span><b>Owner:</b> {props.repository.owner}</span>
+                </div>
+                <div className="repo-meta">
+                    <span><b>Host Platform:</b> {props.repository.hostPlatform ? RemoteHostPlatform[props.repository.hostPlatform] : "Unknown"}</span>
                 </div>
             </div>
 
