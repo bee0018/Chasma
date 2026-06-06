@@ -218,7 +218,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         <>
             <div>
                 <div>
-                    <h1>Manage Git. Effortlessly.</h1>
+                    <h1>Your Repositories, Monitored & Mastered 🕹️</h1>
                     <p>{`${user?.userName}, manage any of the registered repositories found on your filesystem.`}</p>
                 </div>
                 <div>
