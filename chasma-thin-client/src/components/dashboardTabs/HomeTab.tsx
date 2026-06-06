@@ -7,7 +7,7 @@ import {
 } from "../../API/ChasmaWebApiClient";
 import { useCacheStore } from "../../managers/CacheManager";
 import { configClient } from "../../managers/ApiClientManager";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import ChangeRepositoryDisplayNameModal from "../modals/ChangeRepositoryDisplayNameModal";
 
@@ -16,7 +16,7 @@ import ChangeRepositoryDisplayNameModal from "../modals/ChangeRepositoryDisplayN
  */
 interface IHomeTabProps {
     /** The repository version trigger. **/
-    reposVersion: number;
+    reposVersion?: number;
 }
 
 /**
@@ -42,9 +42,15 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
     /** Gets or sets the repository being edited. */
     const [activeRenameRepo, setActiveRenameRepo] = useState<LocalGitRepository | null>(null);
 
+    /** Gets the outlet context of the browser. */
+    const outletContext = useOutletContext<{ reposVersion?: number } | null>();
+
+    /** Gets the current repository version. */
+    const currentReposVersion = outletContext?.reposVersion ?? props.reposVersion ?? 0;
+
     useEffect(() => {
         updateUserRepositoryConfiguration().catch(console.error);
-    }, [props.reposVersion]);
+    }, [currentReposVersion]);
 
     /**
      * Updates the repository configuration when the repositories are updated in the background.
