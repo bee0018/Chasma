@@ -865,13 +865,13 @@ const RepositoryStatusPage: React.FC = () => {
                                         {contextMenu.statusElement && contextMenu.statusElement.isStaged ? "Unstage" : "Stage"}
                                     </li>
                                     <li onClick={() => handleGitRestoreRequest(contextMenu?.statusElement)}>
-                                        Restore
+                                        Undo Changes
                                     </li>
                                     <li onClick={() => handleGitRmRequest(contextMenu.statusElement)}>
-                                        Delete
+                                        Delete File
                                     </li>
                                     <li onClick={() => setIsAddingStash(true)}>
-                                        View Stash Options
+                                        Stash Changes
                                     </li>
                                 </ul>
                             </div>
