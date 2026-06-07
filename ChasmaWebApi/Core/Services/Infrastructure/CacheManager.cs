@@ -28,4 +28,15 @@ public class CacheManager : ICacheManager
 
     // <inheritdoc />
     public ConcurrentDictionary<int, WorkContextSnapshot> WorkContextSnapshots { get; } = new();
+
+    // <inheritdoc />
+    public void ClearCache()
+    {
+        Repositories.Clear();
+        WorkingDirectories.Clear();
+        Users.Clear();
+        GitHubPullRequests.Clear();
+        GitLabMergeRequests.Clear();
+        WorkContextSnapshots.Clear();
+    }
 }

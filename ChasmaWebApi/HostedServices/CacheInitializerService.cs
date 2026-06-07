@@ -71,11 +71,7 @@ namespace ChasmaWebApi.HostedServices
         public Task StopAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation("Stopping the CacheInitializer hosted service and clearing cache.");
-            cacheManager.WorkingDirectories.Clear();
-            cacheManager.Repositories.Clear();
-            cacheManager.Users.Clear();
-            cacheManager.GitHubPullRequests.Clear();
-            cacheManager.GitLabMergeRequests.Clear();
+            cacheManager.ClearCache();
             PullRequestPollTimer?.Dispose();
             MergeRequestPollTimer?.Dispose();
             logger.LogInformation("Cache cleared successfully.");

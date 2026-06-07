@@ -39,4 +39,9 @@ public interface ICacheManager
     /// Gets the mapping of work context snapshot identifiers to work context snapshots for the development workspaces in the system.
     /// </summary>
     ConcurrentDictionary<int, WorkContextSnapshot> WorkContextSnapshots { get; }
+
+    /// <summary>
+    /// Clears all cached resources from the cache manager.
+    /// </summary>
+    void ClearCache();
 }
