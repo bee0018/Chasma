@@ -25,7 +25,7 @@ namespace ChasmaWebApi.Core.Services.Index
         /// <summary>
         /// The lock object used for concurrency.
         /// </summary>
-        private readonly object lockObject = new();
+        private readonly Lock lockObject = new();
 
         #region Constructor
 
@@ -595,7 +595,7 @@ namespace ChasmaWebApi.Core.Services.Index
                 CloneOptions cloneOptions = new()
                 {
                     RecurseSubmodules = blueprint.RecurseSubmodules,
-                    CredentialsProvider = (_url, _user, _cred) => GetUserPasswordCredentials(blueprint, apiConfiguration, apiAccessToken, remotePlatformUsername),
+                    CredentialsProvider = (_url, _user, _cred) => GetUserPasswordCredentials(apiAccessToken, remotePlatformUsername),
                 };
                 Repository.Clone(sourceUrl, workingDirectory, cloneOptions);
                 RepositoryAdditionResult additionResult = RegisterLocalRepository(workingDirectory, userId, out NewRepository clonedRepo);
@@ -620,12 +620,10 @@ namespace ChasmaWebApi.Core.Services.Index
         /// <summary>
         /// Gets the user-password credentials for HTTPS git cloning.
         /// </summary>
-        /// <param name="blueprint">The git cloning blueprint details.</param>
-        /// <param name="apiConfiguration">The API configuration.</param>
         /// <param name="apiAccessToken">The remote host platform API personal access token.</param>
         /// <param name="remotePlatformUsername">The remote host platform username (e.g., GitHub login username).</param>
         /// <returns>The user-password credentials.</returns>
-        private static UsernamePasswordCredentials GetUserPasswordCredentials(GitCloneBlueprint blueprint, ChasmaWebApiConfigurations apiConfiguration, string apiAccessToken, string remotePlatformUsername)
+        private static UsernamePasswordCredentials GetUserPasswordCredentials(string apiAccessToken, string remotePlatformUsername)
         {
             // If we don't have an global API token, pass null to try an anonymous public clone.
             if (string.IsNullOrEmpty(apiAccessToken))
