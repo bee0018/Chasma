@@ -9,6 +9,11 @@ namespace ChasmaWebApi.Data.Responses.Status
     public class GitStatusResponse : ResponseBase
     {
         /// <summary>
+        /// Gets or sets the unique identifier of the repository for which the status is being reported.
+        /// </summary>
+        public string RepositoryId { get; set; }
+
+        /// <summary>
         /// Gets or sets the results of the 'git status' command for the repository.
         /// </summary>
         public List<RepositoryStatusElement> StatusElements { get; set; } = new();

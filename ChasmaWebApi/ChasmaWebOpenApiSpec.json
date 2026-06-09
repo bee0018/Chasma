@@ -3302,6 +3302,9 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
               "statusElements": {
                 "type": "array",
                 "items": {

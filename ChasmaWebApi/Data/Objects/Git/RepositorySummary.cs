@@ -8,6 +8,11 @@ namespace ChasmaWebApi.Data.Objects.Git
     public class RepositorySummary
     {
         /// <summary>
+        /// Gets or sets the unique identifier of the repository for which the status is being reported.
+        /// </summary>
+        public string RepositoryId { get; set; }
+
+        /// <summary>
         /// Gets or sets the list of status elements for the repository.
         /// </summary>
         public List<RepositoryStatusElement> StatusElements { get; set; } = new();

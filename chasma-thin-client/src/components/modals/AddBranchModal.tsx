@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 
-/** The properties to handle commit messages. **/
+/** The properties to handle adding branches messages. **/
 interface IAddBranchModalProps {
     /** The confirmation action of the close function. **/
     onClose: () => void;

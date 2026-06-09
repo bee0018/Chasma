@@ -122,6 +122,7 @@ namespace ChasmaWebApi.Core.Services.Git
 
                 RepositorySummary repositorySummary = new()
                 {
+                    RepositoryId = repoKey,
                     StatusElements = statusElements,
                     CommitsAhead = aheadCount,
                     CommitsBehind = behindCount,
