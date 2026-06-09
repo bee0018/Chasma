@@ -1,14 +1,14 @@
-﻿import React, {useEffect, useMemo, useState} from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
     GetStashDetailsRequest,
     GetStashListRequest,
     PatchEntry,
     StashEntry
 } from "../../../API/ChasmaWebApiClient";
-import {parseUnifiedDiff} from "../../../managers/DiffViewerManager";
+import { parseUnifiedDiff } from "../../../managers/DiffViewerManager";
 import ApplyStashModal from "../../modals/ApplyStashModal";
 import DeleteStashModal from "../../modals/DeleteStashModal";
-import {stashClient} from "../../../managers/ApiClientManager";
+import { stashClient } from "../../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../../managers/CacheManager";
 import { handleApiError } from "../../../managers/TransactionHandlerManager";
@@ -72,7 +72,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
     /** Gets or sets the value indicating whether the parsed diff is too big. */
     const [parsedDiffTooBig, setParsedDiffTooBig] = useState(false);
 
-     /** Defines the maximum raw diff size. 2MB. */
+    /** Defines the maximum raw diff size. 2MB. */
     const MAX_RAW_DIFF_SIZE = 2_000_000;
 
     /** Gets the maximum parsed lines to render. */
@@ -91,7 +91,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
      * Handles the event when the user selects a patch entry.
      * @param patchEntry The entry to view the diff of.
      */
-    const handleSelectedPatchEntry = (patchEntry : PatchEntry | null) => {
+    const handleSelectedPatchEntry = (patchEntry: PatchEntry | null) => {
         setSelectedPatchEntry(patchEntry);
         if (patchEntry?.diff) {
             setRawDiff(patchEntry.diff)
@@ -189,7 +189,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
         setRemoveStashIndex(index);
         setIsRemovingStash(true);
     }
-    
+
     /** The parsed unified diff. */
     const parsedDiff = useMemo(() => {
         if (!rawDiff) {
@@ -236,22 +236,22 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                             {stashEntries ? (
                                 <table className="status-table">
                                     <thead>
-                                    <tr>
-                                        <th>Index</th>
-                                        <th>Title</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Index</th>
+                                            <th>Title</th>
+                                        </tr>
                                     </thead>
                                     {stashEntries?.map((element, index) => (
                                         <tbody key={index}>
-                                        <tr className={selectedStashEntry?.index === element.index ? "selected" : ""}>
-                                            <td>{element.index}</td>
-                                            <td
-                                                onClick={() => handleSelectedStash(element)}
-                                                onContextMenu={e => handleStashEntryContextMenu(e, element)}
-                                            >
-                                                {element.stashMessage}
-                                            </td>
-                                        </tr>
+                                            <tr className={selectedStashEntry?.index === element.index ? "selected" : ""}>
+                                                <td>{element.index}</td>
+                                                <td
+                                                    onClick={() => handleSelectedStash(element)}
+                                                    onContextMenu={e => handleStashEntryContextMenu(e, element)}
+                                                >
+                                                    {element.stashMessage}
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     ))}
                                 </table>
@@ -263,17 +263,17 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                             {patchEntries ? (
                                 <table className="status-table">
                                     <thead>
-                                    <tr>
-                                        <th>File</th>
-                                    </tr>
+                                        <tr>
+                                            <th>File</th>
+                                        </tr>
                                     </thead>
                                     {patchEntries?.map((element, index) => (
                                         <tbody key={index}>
-                                        <tr className={selectedPatchEntry?.filePath === element.filePath ? "selected" : ""}>
-                                            <td onClick={() => handleSelectedPatchEntry(element)}>
-                                                {element.filePath}
-                                            </td>
-                                        </tr>
+                                            <tr className={selectedPatchEntry?.filePath === element.filePath ? "selected" : ""}>
+                                                <td onClick={() => handleSelectedPatchEntry(element)}>
+                                                    {element.filePath}
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     ))}
                                 </table>
@@ -303,7 +303,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
 
                     {/* Right side: Diff viewer */}
                     <div className="right-panel">
-                        {parsedDiffTooBig && <p style={{textAlign: "center", color: "yellow"}}>Parsed diff too long, showing only first 5000 lines.</p>}
+                        {parsedDiffTooBig && <p style={{ textAlign: "center", color: "yellow" }}>Parsed diff too long, showing only first 5000 lines.</p>}
                         <div className="diff-toolbar">
                             <button
                                 className="submit-button"
@@ -325,7 +325,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                             <div className={`diff-viewer ${isSplitView ? "diff-side-by-side" : ""}`}>
                                 {!isSplitView && (
                                     <div className="diff-panel"
-                                        style={{overflow: "hidden"}}>
+                                        style={{ overflow: "hidden" }}>
                                         <div className="diff-panel-header">Unified Diff: {selectedPatchEntry?.filePath}</div>
                                         <Virtuoso
                                             totalCount={safeParsedDiff.length}
@@ -333,19 +333,18 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                                                 const line = safeParsedDiff[index];
                                                 return (
                                                     <div
-                                                        className={`diff-line ${
-                                                            line.type === "add"
-                                                            ? "diff-added"
-                                                            : line.type === "remove"
-                                                            ? "diff-removed"
-                                                            : ""}`}>
-                                                                <span className="diff-line-number">
-                                                                    {line.oldLineNumber ?? ""}
-                                                                </span>
-                                                                <span className="diff-line-number">
-                                                                    {line.newLineNumber ?? ""}
-                                                                </span>
-                                                                <span className="diff-code">{line.content}</span>
+                                                        className={`diff-line ${line.type === "add"
+                                                                ? "diff-added"
+                                                                : line.type === "remove"
+                                                                    ? "diff-removed"
+                                                                    : ""}`}>
+                                                        <span className="diff-line-number">
+                                                            {line.oldLineNumber ?? ""}
+                                                        </span>
+                                                        <span className="diff-line-number">
+                                                            {line.newLineNumber ?? ""}
+                                                        </span>
+                                                        <span className="diff-code">{line.content}</span>
                                                     </div>
                                                 );
                                             }}
@@ -354,53 +353,53 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                                 )}
                                 {isSplitView && (
                                     <>
-                                        <div className="diff-panel">
-                                            <div className="diff-panel-header">Original: {selectedPatchEntry?.filePath}</div>
-                                            <Virtuoso
-                                                style={{ height: "600px" }}
-                                                totalCount={safeParsedDiff.length}
-                                                itemContent={(index: number) => {
-                                                    const line = safeParsedDiff[index];
-                                                    return (
-                                                    <div
-                                                    className={`diff-line ${
-                                                    line.type === "remove" ? "diff-removed" : ""
-                                                    }`}
-                                                    >
-                                                    <span className="diff-line-number">
-                                                    {line.oldLineNumber ?? ""}
-                                                    </span>
-                                                    <span className="diff-code">
-                                                    {line.type === "add" ? "" : line.content}
-                                                    </span>
-                                                    </div>
-                                                    );
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="diff-panel">
-                                            <div className="diff-panel-header">Modified: {selectedPatchEntry?.filePath}</div>
-                                            <Virtuoso
-                                                style={{ height: "600px" }}
-                                                totalCount={safeParsedDiff.length}
-                                                itemContent={(index: number) => {
-                                                    const line = safeParsedDiff[index];
-                                                    return (
-                                                        <div
-                                                            className={`diff-line ${
-                                                                line.type === "add" ? "diff-added" : ""
-                                                            }`}
-                                                        >
-                                                            <span className="diff-line-number">
-                                                                {line.newLineNumber ?? ""}
-                                                            </span>
-                                                            <span className="diff-code">
-                                                                {line.type === "remove" ? "" : line.content}
-                                                            </span>
-                                                        </div>
-                                                    );
-                                                }}
-                                            />
+                                        <div style={{ display: "flex", gap: "10px", height: "100%", width: "100%" }}>
+                                            <div className="diff-panel" style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
+                                                <div className="diff-panel-header">Original: {selectedPatchEntry?.filePath}</div>
+                                                <Virtuoso
+                                                    style={{ flex: 1, height: "100%" }}
+                                                    totalCount={safeParsedDiff.length}
+                                                    itemContent={(index: number) => {
+                                                        const line = safeParsedDiff[index];
+                                                        return (
+                                                            <div
+                                                                className={`diff-line ${line.type === "remove" ? "diff-removed" : ""
+                                                                    }`}
+                                                            >
+                                                                <span className="diff-line-number">
+                                                                    {line.oldLineNumber ?? ""}
+                                                                </span>
+                                                                <span className="diff-code">
+                                                                    {line.type === "add" ? "" : line.content}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="diff-panel" style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
+                                                <div className="diff-panel-header">Modified: {selectedPatchEntry?.filePath}</div>
+                                                <Virtuoso
+                                                    style={{ flex: 1, height: "100%" }}
+                                                    totalCount={safeParsedDiff.length}
+                                                    itemContent={(index: number) => {
+                                                        const line = safeParsedDiff[index];
+                                                        return (
+                                                            <div
+                                                                className={`diff-line ${line.type === "add" ? "diff-added" : ""
+                                                                    }`}
+                                                            >
+                                                                <span className="diff-line-number">
+                                                                    {line.newLineNumber ?? ""}
+                                                                </span>
+                                                                <span className="diff-code">
+                                                                    {line.type === "remove" ? "" : line.content}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
                                     </>
                                 )}
