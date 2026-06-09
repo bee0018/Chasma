@@ -176,14 +176,9 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Load git status every 2.5s **/
     useEffect(() => {
-        if (!repoId || isSwitchingStatusPages) return;
+        if (!repoId) return;
         handleGitStatusRequest();
         const interval = setInterval(() => {
-            if (repoId !== selectedFile?.repositoryId) {
-                // Do not try to get status for a repository that we are not currently managing.
-                return;
-            }
-
             handleGitStatusRequest();
             if (selectedFile !== null) {
                 handleGetGitDiffRequest(selectedFile, selectedFile.isStaged)
@@ -194,6 +189,8 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Handles the request to perform a 'git status' on the selected repository. **/
     async function handleGitStatusRequest() {
+        if (isSwitchingStatusPages) return;
+
         try {
             const request = new GitStatusRequest();
             request.repositoryId = repoId;
@@ -524,6 +521,15 @@ const RepositoryStatusPage: React.FC = () => {
         }
 
         setSelectedFiles(newSelection);
+    };
+
+    /**
+     * Handles the event when the user wants to switch to another status view.
+     * @param url The url to switch to.
+     */
+    const handleRepositoryStatusSwitch = (url: string) => {
+        window.location.href = url;
+        setIsSwitchingStatusPages(false);
     };
 
     useEffect(() => {
@@ -1218,7 +1224,8 @@ const RepositoryStatusPage: React.FC = () => {
             {isSwitchingStatusPages &&
                 <RepositoryStatusSwitcher
                     onClose={() => setIsSwitchingStatusPages(false)}
-                    onSwitch={() => window.location.reload()} />
+                    onSwitch={handleRepositoryStatusSwitch}
+                />
             }
         </div>
     );

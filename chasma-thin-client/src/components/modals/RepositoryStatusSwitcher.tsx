@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useCacheStore } from "../../managers/CacheManager";
-import { useNavigate } from "react-router-dom";
 import { LocalGitRepository } from "../../API/ChasmaWebApiClient";
 
 /** The properties to handle commit messages. **/
@@ -9,7 +8,7 @@ interface IRepositoryStatusSwitcher {
     onClose: () => void;
 
     /** The action to invoke when switching repositories. */
-    onSwitch: () => void;
+    onSwitch: (url: string) => void;
 }
 
 /**
@@ -26,9 +25,6 @@ const RepositoryStatusSwitcher: React.FC<IRepositoryStatusSwitcher> = (props: IR
 
     /** The cached repositories belonging to the logged-in user. **/
     const repositories = useCacheStore((state) => state.repositories);
-
-    /** Gets the function to navigate to different pages. */
-    const navigate = useNavigate();
 
     /**
      * Handles the event when the user switches repositories.
@@ -54,8 +50,7 @@ const RepositoryStatusSwitcher: React.FC<IRepositoryStatusSwitcher> = (props: IR
             return;
         }
 
-        navigate(`/status/${selectedRepository?.name}/${selectedRepository?.id}`);
-        props.onSwitch();
+        props.onSwitch(`/status/${selectedRepository?.name}/${selectedRepository?.id}`);
     };
 
     return (
