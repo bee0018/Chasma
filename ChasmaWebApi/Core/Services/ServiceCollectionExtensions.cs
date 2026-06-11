@@ -16,6 +16,7 @@ using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace ChasmaWebApi.Core.Services
@@ -38,7 +39,17 @@ namespace ChasmaWebApi.Core.Services
         /// <returns>The configured web application builder.</returns>
         public static WebApplicationBuilder SetupBuilder(this WebApplicationBuilder builder, ChasmaWebApiConfigurations webApiConfigurations)
         {
-            builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(webApiConfigurations.BindingPort));
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                X509Certificate2 localCertificate = CertificateUtility.GetOrCreateLocalCertificate();
+                int httpPort = webApiConfigurations.BindingPort;
+                int httpsPort = webApiConfigurations.SecureBindingPort;
+                options.ListenLocalhost(httpPort);
+                options.ListenLocalhost(httpsPort, listenOptions =>
+                {
+                    listenOptions.UseHttps(localCertificate);
+                });
+            });
             builder.WebHost.UseWebRoot("wwwroot");
             builder.Host.UseSerilog();
             if (OperatingSystem.IsWindows())

@@ -18,6 +18,12 @@ namespace ChasmaWebApi
         public int BindingPort { get; set; }
 
         /// <summary>
+        /// Gets or sets where the port to listens on for HTTPS connections.
+        /// </summary>
+        [XmlElement("secureBindingPort")]
+        public int SecureBindingPort { get; set; }
+
+        /// <summary>
         /// Gets or sets the JWT secret key.
         /// </summary>
         [XmlElement("jwtSecretKey")]
@@ -207,6 +213,11 @@ namespace ChasmaWebApi
             if (GitLabSshPassphrase != newConfig.GitLabSshPassphrase)
             {
                 GitLabSshPassphrase = newConfig.GitLabSshPassphrase;
+            }
+
+            if (SecureBindingPort != newConfig.SecureBindingPort)
+            {
+                SecureBindingPort = newConfig.SecureBindingPort;
             }
         }
         

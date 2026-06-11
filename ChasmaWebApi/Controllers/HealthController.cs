@@ -33,6 +33,7 @@ public class HealthController : ControllerBase
     /// <returns>A heartbeat message.</returns>
     [HttpGet]
     [Route("heartbeat")]
+    [AllowAnonymous]
     public ActionResult<HeartbeatMessage> GetHeartbeat()
     {
         logger.LogTrace("Received request to get heartbeat at {now}.", DateTimeOffset.Now);

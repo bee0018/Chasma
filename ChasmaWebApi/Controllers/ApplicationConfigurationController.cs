@@ -90,6 +90,7 @@ namespace ChasmaWebApi.Controllers
             GetApiConfigMessage response = new()
             {
                 BindingPort = currentConfig.BindingPort,
+                SecureBindingPort = currentConfig.SecureBindingPort,
                 JwtSecretKeyConfigured = !string.IsNullOrEmpty(currentConfig.JwtSecretKey) && currentConfig.JwtSecretKey != ChasmaWebApiConfigurations.DefaultJwtSecretKey && IsJwtSecretKeyValid(currentConfig.JwtSecretKey),
                 GitHubApiTokenConfigured = !string.IsNullOrEmpty(currentConfig.GitHubApiToken),
                 GitLabApiTokenConfigured = !string.IsNullOrEmpty(currentConfig.GitLabApiToken),
@@ -171,9 +172,10 @@ namespace ChasmaWebApi.Controllers
                 }
             }
 
-            response.StaticConfigurationsChanged = currentConfig.BindingPort != newConfig.BindingPort 
+            response.StaticConfigurationsChanged = currentConfig.BindingPort != newConfig.BindingPort
                 || currentConfig.JwtSecretKey != newConfig.JwtSecretKey
-                || currentConfig.GlobalWorkspacePath != newConfig.GlobalWorkspacePath;
+                || currentConfig.GlobalWorkspacePath != newConfig.GlobalWorkspacePath
+                || currentConfig.SecureBindingPort != newConfig.SecureBindingPort;
             applicationControlService.UpdateApiConfiguration(configFilePath, newConfig, currentConfig);
             logger.LogInformation("Successfully processed {request}. Sending success response.", requestName);
             return Ok(response);
@@ -202,6 +204,11 @@ namespace ChasmaWebApi.Controllers
             if (string.IsNullOrEmpty(config.GlobalWorkspacePath))
             {
                 invalidElements.Add("globalWorkspacePath");
+            }
+
+            if (config.SecureBindingPort <= 0 || config.SecureBindingPort > 65535)
+            {
+                invalidElements.Add("secureBindingPort");
             }
 
             return invalidElements;
