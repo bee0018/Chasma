@@ -1833,6 +1833,10 @@
               "gitLabSshPassphrase": {
                 "type": "string",
                 "nullable": true
+              },
+              "secureBindingPort": {
+                "type": "integer",
+                "format": "int32"
               }
             }
           }
@@ -1904,6 +1908,10 @@
             "additionalProperties": false,
             "properties": {
               "bindingPort": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "secureBindingPort": {
                 "type": "integer",
                 "format": "int32"
               },

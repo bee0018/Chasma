@@ -38,10 +38,10 @@ try
                 throw new Exception("Failed to load configuration. Please ensure the configuration file is present and valid.");
             }
 
-            if (IsPortInUse(webApiConfigurations.BindingPort) && await IsOurApiRunning(webApiConfigurations.BindingPort))
+            if (IsPortInUse(webApiConfigurations.SecureBindingPort) && await IsOurApiRunning(webApiConfigurations.SecureBindingPort))
             {
                 // An instance of the API is already running on the specified port, so we can skip starting a new one and just open the browser to the existing instance.
-                LaunchStartupGate(webApiConfigurations.BindingPort);
+                LaunchStartupGate(webApiConfigurations.SecureBindingPort);
                 return;
             }
 
@@ -54,7 +54,7 @@ try
             WebApplication app = builder.Build();
             await app.UseApplicationServices();
             await app.StartAsync();
-            LaunchStartupGate(webApiConfigurations.BindingPort);
+            LaunchStartupGate(webApiConfigurations.SecureBindingPort);
             await app.WaitForShutdownAsync();
             return;
         }
@@ -72,7 +72,7 @@ try
                 return;
             }
 
-            Log.Warning("Port {Port} is already in use. Attempting to use a different port...", webApiConfigurations.BindingPort);
+            Log.Warning("Port {Port} is already in use. Attempting to use a different port...", webApiConfigurations.SecureBindingPort);
             HandlePortBindingFailure(webApiConfigurations);
             attempts++;
         }
@@ -99,8 +99,7 @@ static bool IsPortInUse(int port)
 {
     IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
     IPEndPoint[] tcpListeners = ipProperties.GetActiveTcpListeners();
-    IPEndPoint[] udpListeners = ipProperties.GetActiveUdpListeners();
-    return tcpListeners.Any(i => i.Port == port) || udpListeners.Any(i => i.Port == port);
+    return tcpListeners.Any(i => i.Port == port);
 }
 
 /// <summary>
@@ -118,7 +117,7 @@ static async void LaunchStartupGate(int port)
             Thread.Sleep(1000);
             ProcessStartInfo startInfo = new()
             {
-                FileName = $"http://localhost:{port}",
+                FileName = $"https://localhost:{port}",
                 UseShellExecute = true
             };
             Process.Start(startInfo);
@@ -165,8 +164,13 @@ static async Task<bool> IsOurApiRunning(int port)
 {
     try
     {
-        using HttpClient client = new();
-        HttpResponseMessage response = await client.GetAsync($"https://localhost:{port}/api/Health/heartbeat"); // or version endpoint
+        using HttpClientHandler handler = new()
+        {
+            ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+        };
+        using HttpClient client = new(handler);
+        client.Timeout = TimeSpan.FromSeconds(2);
+        HttpResponseMessage response = await client.GetAsync($"https://localhost:{port}/api/Health/heartbeat");
         return response.IsSuccessStatusCode;
     }
     catch
@@ -182,7 +186,7 @@ static async Task<bool> IsOurApiRunning(int port)
 static void HandlePortBindingFailure(ChasmaWebApiConfigurations config)
 {
     int freePort = GetFreePort();
-    config.BindingPort = freePort;
+    config.SecureBindingPort = freePort;
     string xmlText = ChasmaXmlBase.GenerateXml(config);
     string configFilePath = ChasmaWebApiConfigurations.GetConfigXmlFilePath();
     File.WriteAllText(configFilePath, xmlText, Encoding.UTF8);

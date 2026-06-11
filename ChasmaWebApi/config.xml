@@ -7,6 +7,7 @@
 	<gitHubSshPrivateKeyPath/>
 	<gitHubSshPassphrase/>
 	<githubApiToken/>
+	<secureBindingPort>7200</secureBindingPort>
 	<workflowRunReportThreshold>30</workflowRunReportThreshold>
 	<gitHubPullRequestScanIntervalSeconds>20</gitHubPullRequestScanIntervalSeconds>
 	<gitLabUsername/>

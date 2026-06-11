@@ -25,8 +25,14 @@ export const AppSetupPage: React.FC = () => {
     /** Gets or sets the API binding port. */
     const [bindingPort, setBindingPort] = useState<string | undefined>(undefined);
 
+    /** Gets or sets the secure API binding port. */
+    const [secureBindingPort, setSecureBindingPort] = useState<string | undefined>(undefined);
+
     /** Gets or sets a value indicating whether the binding port is valid. */
-    const [portIsValid, setPortIsValid] = useState<boolean | undefined>(undefined);
+    const [bindingPortIsValid, setBindingPortIsValid] = useState<boolean | undefined>(undefined);
+
+    /** Gets or sets a value indicating whether the binding secured port is valid. */
+    const [secureBindingPortIsValid, setSecureBindingPortIsValid] = useState<boolean | undefined>(undefined);
 
     /** Gets or sets the GitHub API access token. */
     const [gitHubApiToken, setGitHubApiToken] = useState<string | undefined>(undefined);
@@ -89,7 +95,14 @@ export const AppSetupPage: React.FC = () => {
     function validateBindingPort(value: string | undefined): void {
         const num = Number(value);
         const isValidPortNumber = isValidInteger(value) && num >= 0 && num <= 65356
-        setPortIsValid(isValidPortNumber);
+        setBindingPortIsValid(isValidPortNumber);
+    };
+
+    /** Gets a flag indicating whether secure binding port is valid. **/
+    function validateSecureBindingPort(value: string | undefined): void {
+        const num = Number(value);
+        const isValidPortNumber = isValidInteger(value) && num >= 0 && num <= 65356
+        setSecureBindingPortIsValid(isValidPortNumber);
     };
 
     /**
@@ -153,6 +166,24 @@ export const AppSetupPage: React.FC = () => {
             return;
         }
 
+        if (isBlankOrUndefined(secureBindingPort)) {
+            setNotification({
+                title: "Could not apply configurations!",
+                message: "'secureBindingPort' must be populated!",
+                isError: true,
+            });
+            return;
+        }
+
+        if (!isValidInteger(secureBindingPort)) {
+            setNotification({
+                title: "Could not apply configurations!",
+                message: "'secureBindingPort' must be a valid integer!",
+                isError: true,
+            });
+            return;
+        }
+
         if (isBlankOrUndefined(globalWorkspacePath)) {
             setNotification({
                 title: "Could not apply configurations!",
@@ -172,6 +203,7 @@ export const AppSetupPage: React.FC = () => {
         setDisableSendButton(true);
         const config = new ChasmaWebApiConfigurations();
         config.jwtSecretKey = jwtSecretKey;
+        config.secureBindingPort = safeNumber(secureBindingPort);
         config.bindingPort = safeNumber(bindingPort);
         config.gitHubApiToken = gitHubApiToken;
         config.workflowRunReportThreshold = safeNumber(workflowRunReportThreshold);
@@ -289,7 +321,13 @@ export const AppSetupPage: React.FC = () => {
                 setBindingPort(String(response.bindingPort));
                 const port = response.bindingPort;
                 if (port && port > 0 && port <= 65535) {
-                    setPortIsValid(true);
+                    setBindingPortIsValid(true);
+                }
+
+                setSecureBindingPort(String(response.secureBindingPort));
+                const securePort = response.secureBindingPort;
+                if (securePort && securePort > 0 && securePort <= 65535) {
+                    setSecureBindingPortIsValid(true);
                 }
 
                 setGitHubApiTokenIsConfigured(response.gitHubApiTokenConfigured);
@@ -328,14 +366,48 @@ export const AppSetupPage: React.FC = () => {
             </button>
             <h1 className="page-title">System Settings</h1>
 
-            {/* Binding Port */}
+            {/* Secure Binding Port */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
                     <span className="xml-name">App Port Number</span>
                     <span className="xml-type">Numbers only</span>
                     <span className="xml-required">Required</span>
                 </div>
-                <p>The network port where this application will run. If you aren't sure, the default port 5000 usually works perfectly.</p>
+                <p>The HTTPS network port where this application will run. If you aren't sure, the default port 7200 usually works perfectly.</p>
+                <input
+                    type="text"
+                    className="input-field"
+                    placeholder="e.g., 7200"
+                    value={secureBindingPort}
+                    onChange={(e) => {
+                        setSecureBindingPort(e.target.value);
+                        validateSecureBindingPort(e.target.value);
+                    }}
+                    required />
+                <button
+                    className="stage-button stage"
+                    onClick={() => {
+                        setSecureBindingPort("7200");
+                        setSecureBindingPortIsValid(true);
+                    }}
+                >
+                    Use Default (7200)
+                </button>
+                {!secureBindingPortIsValid && (
+                    <div className="password-error">
+                        Please enter a valid port number between 0 and 65535.
+                    </div>
+                )}
+            </div>
+
+            {/* Binding Port */}
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">Fallback App Port Number</span>
+                    <span className="xml-type">Numbers only</span>
+                    <span className="xml-required">Required</span>
+                </div>
+                <p>The fallback network port where this application will run. If you aren't sure, the default port 5000 usually works perfectly.</p>
                 <input
                     type="text"
                     className="input-field"
@@ -350,12 +422,12 @@ export const AppSetupPage: React.FC = () => {
                     className="stage-button stage"
                     onClick={() => {
                         setBindingPort("5000");
-                        setPortIsValid(true);
+                        setBindingPortIsValid(true);
                     }}
                 >
                     Use Default (5000)
                 </button>
-                {!portIsValid && (
+                {!bindingPortIsValid && (
                     <div className="password-error">
                         Please enter a valid port number between 0 and 65535.
                     </div>

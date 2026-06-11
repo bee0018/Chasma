@@ -142,12 +142,6 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div
                     className="tab"
-                    onClick={() => window.open("/help", "_blank")}>
-                    <span className="username">Help</span>
-                    <span className="profile-icon">💡</span>
-                </div>
-                <div
-                    className="tab"
                     onClick={() => navigate('/setup')}>
                     System Settings ⚙️
                 </div>
@@ -155,6 +149,12 @@ const Dashboard: React.FC = () => {
                     className="tab"
                     onClick={handleOpenServerLogsRequest}>
                     Open Server Logs 🔍
+                </div>
+                <div
+                    className="tab"
+                    onClick={() => window.open("/help", "_blank")}>
+                    <span className="username">Help</span>
+                    <span className="profile-icon">💡</span>
                 </div>
                 <div
                     className="sidebar-help"
