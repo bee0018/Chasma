@@ -112,7 +112,7 @@ namespace ChasmaWebApi.Core.Services.Control
 
         #endregion
 
-        #region Shell Interactions 
+        #region Shell Interactions
 
         // <inheritdoc />
         public List<BatchCommandEntryResult> RunBatchShellCommands(IEnumerable<BatchCommandEntry> entries)
@@ -124,6 +124,12 @@ namespace ChasmaWebApi.Core.Services.Control
         public List<ShellCommandResult> RunShellCommands(string workingDirectory, IEnumerable<string> shellCommands)
         {
             return shellExecutionService.ExecuteShellCommands(workingDirectory, shellCommands);
+        }
+
+        // <inheritdoc />
+        public bool TryOpenApplicationLogs(out string errorMessage)
+        {
+            return shellExecutionService.TryOpenApiLogs(out errorMessage);
         }
 
         #endregion

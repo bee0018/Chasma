@@ -122,5 +122,34 @@ namespace ChasmaWebApi.Core.Services.Infrastructure
 
             return results;
         }
+
+        // <inheritdoc/>
+        public bool TryOpenApiLogs(out string errorMessage)
+        {
+            string command;
+            if (OperatingSystem.IsWindows())
+            {
+                command = "start";
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                command = "xdg-open";
+            }
+            else
+            {
+                errorMessage = "Unsupported operating system for opening API logs.";
+                Logger.LogError("{errorMessage}. Sending error response.", errorMessage);
+                return false;
+            }
+
+            string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Emryce", "logs");
+            if (!ShellUtility.TryExecuteShellCommand($"{command} {logPath}", logPath, out errorMessage))
+            {
+                Logger.LogError("Failed to open API logs: {errorMessage}. Sending error response.", errorMessage);
+                return false;
+            }
+
+            return true;
+        }
     }
 }

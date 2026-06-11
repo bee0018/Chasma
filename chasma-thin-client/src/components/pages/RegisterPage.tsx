@@ -1,9 +1,9 @@
-import React, {useState} from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from "../logos/emryce-logo-withBg.svg";
-import {AddUserRequest} from "../../API/ChasmaWebApiClient";
-import {useCacheStore} from "../../managers/CacheManager";
-import {userClient} from "../../managers/ApiClientManager";
+import { AddUserRequest } from "../../API/ChasmaWebApiClient";
+import { useCacheStore } from "../../managers/CacheManager";
+import { shellClient, userClient } from "../../managers/ApiClientManager";
 import { handleApiError } from '../../managers/TransactionHandlerManager';
 import { validatePassword } from '../../stringHelperUtil';
 
@@ -42,8 +42,8 @@ const RegisterPage: React.FC = () => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** Flag indicating whether the passwords match. **/
     const passwordsMatch = password === confirmPassword;
@@ -96,17 +96,45 @@ const RegisterPage: React.FC = () => {
         }
     }
 
+    /**
+     * Handles the event when the user wants to open server logs.
+    */
+    const handleOpenServerLogsRequest = async () => {
+        try {
+            const response = await shellClient.openApiLogs();
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Failed to open server logs.",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+        } catch (error) {
+            setNotification({
+                title: "Error opening server logs!",
+                message: "Verify console logs for more information.",
+                isError: true,
+            });
+        }
+    };
+
     return (
         <div className="login-page">
             <button
                 className="help-button"
                 onClick={() => window.open("help", "_blank")}>
-                    Help
+                Help
             </button>
-             <button
+            <button
+                className="open-logs-button"
+                onClick={handleOpenServerLogsRequest}>
+                Open Logs
+            </button>
+            <button
                 className="config-button"
                 onClick={() => navigate("/setup")}>
-                    System Settings
+                System Settings
             </button>
             <div className="login-card">
                 <div className="login-logo">
@@ -158,25 +186,25 @@ const RegisterPage: React.FC = () => {
                         >
                             {showPassword ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#22d3ee">
-                                    <path d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12c-2.761 0-5-2.239-5-5s2.239-5 5-5 5 2.239 5 5-2.239 5-5 5zm0-8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z"/>
+                                    <path d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12c-2.761 0-5-2.239-5-5s2.239-5 5-5 5 2.239 5 5-2.239 5-5 5zm0-8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
                                 </svg>
                             ) : (
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#22d3ee">
-                                    <path d="M12 5c-7 0-11 7-11 7s4 7 11 7c2.386 0 4.574-.715 6.465-1.915l1.489 1.489 1.414-1.414-1.487-1.488c.89-1.034 1.533-2.222 1.533-3.572 0-7-11-7-11-7zm0 12c-2.761 0-5-2.239-5-5 0-.495.088-.965.24-1.402l6.162 6.162c-.437.152-.907.24-1.402.24zm3.76-3.598l-6.162-6.162c.437-.152.907-.24 1.402-.24 2.761 0 5 2.239 5 5 0 .495-.088.965-.24 1.402z"/>
+                                    <path d="M12 5c-7 0-11 7-11 7s4 7 11 7c2.386 0 4.574-.715 6.465-1.915l1.489 1.489 1.414-1.414-1.487-1.488c.89-1.034 1.533-2.222 1.533-3.572 0-7-11-7-11-7zm0 12c-2.761 0-5-2.239-5-5 0-.495.088-.965.24-1.402l6.162 6.162c-.437.152-.907.24-1.402.24zm3.76-3.598l-6.162-6.162c.437-.152.907-.24 1.402-.24 2.761 0 5 2.239 5 5 0 .495-.088.965-.24 1.402z" />
                                 </svg>
                             )}
                         </button>
                     </div>
                     {!passwordIsValid && password && (
                         <div className="password-error">
-                        <p>Password needs to meet the following requirements:</p>
-                        <ul>
-                            <li>At least 1 lowercase character</li>
-                            <li>At least 1 uppercase character</li>
-                            <li>At least 1 symbol</li>
-                            <li>At least 1 digit</li>
-                            <li>At least 10 or more characters</li>
-                        </ul>
+                            <p>Password needs to meet the following requirements:</p>
+                            <ul>
+                                <li>At least 1 lowercase character</li>
+                                <li>At least 1 uppercase character</li>
+                                <li>At least 1 symbol</li>
+                                <li>At least 1 digit</li>
+                                <li>At least 10 or more characters</li>
+                            </ul>
                         </div>
                     )}
                     {passwordIsValid && password && (
@@ -201,11 +229,11 @@ const RegisterPage: React.FC = () => {
                         >
                             {showConfirmPassword ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#22d3ee">
-                                    <path d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12c-2.761 0-5-2.239-5-5s2.239-5 5-5 5 2.239 5 5-2.239 5-5 5zm0-8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z"/>
+                                    <path d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12c-2.761 0-5-2.239-5-5s2.239-5 5-5 5 2.239 5 5-2.239 5-5 5zm0-8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
                                 </svg>
                             ) : (
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#22d3ee">
-                                    <path d="M12 5c-7 0-11 7-11 7s4 7 11 7c2.386 0 4.574-.715 6.465-1.915l1.489 1.489 1.414-1.414-1.487-1.488c.89-1.034 1.533-2.222 1.533-3.572 0-7-11-7-11-7zm0 12c-2.761 0-5-2.239-5-5 0-.495.088-.965.24-1.402l6.162 6.162c-.437.152-.907.24-1.402.24zm3.76-3.598l-6.162-6.162c.437-.152.907-.24 1.402-.24 2.761 0 5 2.239 5 5 0 .495-.088.965-.24 1.402z"/>
+                                    <path d="M12 5c-7 0-11 7-11 7s4 7 11 7c2.386 0 4.574-.715 6.465-1.915l1.489 1.489 1.414-1.414-1.487-1.488c.89-1.034 1.533-2.222 1.533-3.572 0-7-11-7-11-7zm0 12c-2.761 0-5-2.239-5-5 0-.495.088-.965.24-1.402l6.162 6.162c-.437.152-.907.24-1.402.24zm3.76-3.598l-6.162-6.162c.437-.152.907-.24 1.402-.24 2.761 0 5 2.239 5 5 0 .495-.088.965-.24 1.402z" />
                                 </svg>
                             )}
                         </button>
@@ -220,7 +248,7 @@ const RegisterPage: React.FC = () => {
                             Passwords match! Good to go!
                         </div>
                     )}
-                    <br/>
+                    <br />
                     <button
                         type="submit"
                         className="submit-button"
@@ -229,9 +257,9 @@ const RegisterPage: React.FC = () => {
                         Register
                     </button>
                 </form>
-                <p style={{marginTop: '15px', color: '#aaa', textAlign: 'center'}}>
+                <p style={{ marginTop: '15px', color: '#aaa', textAlign: 'center' }}>
                     Already have an account?{' '}
-                    <Link to="/login" style={{color: '#00bfff', textDecoration: 'none'}}>
+                    <Link to="/login" style={{ color: '#00bfff', textDecoration: 'none' }}>
                         Login here
                     </Link>
                 </p>

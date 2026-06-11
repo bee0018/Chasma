@@ -140,5 +140,25 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
         }
+
+        /// <summary>
+        /// Opens the API server logs in the system's default text editor for the user to view.
+        /// </summary>
+        /// <returns>The response to open server logs.</returns>
+        [HttpGet]
+        [Route("openApiLogs")]
+        [AllowAnonymous]
+        public ActionResult<OpenApiServerLogsResponse> OpenApiLogs()
+        {
+            OpenApiServerLogsResponse response = new();
+            if (!applicationControlService.TryOpenApplicationLogs(out string errorMessage))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"Failed to open API logs: {errorMessage}";
+                logger.LogError(errorMessage);
+            }
+
+            return Ok(response);
+        }
     }
 }

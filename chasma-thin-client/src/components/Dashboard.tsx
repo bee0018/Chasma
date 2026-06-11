@@ -3,6 +3,7 @@ import { useCacheStore } from "../managers/CacheManager";
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import IncludeRepositoryModal from "./modals/IncludeRepositoryModal";
 import LogoutModal from './modals/LogoutModal';
+import { shellClient } from '../managers/ApiClientManager';
 
 /**
  * Initializes a new instance of the Dashboard class.
@@ -51,6 +52,29 @@ const Dashboard: React.FC = () => {
             isError: false,
         });
     }
+
+    /**
+     * Handles the event when the user wants to open server logs.
+    */
+    const handleOpenServerLogsRequest = async () => {
+        try {
+            const response = await shellClient.openApiLogs();
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Failed to open server logs.",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+        } catch (error) {
+            setNotification({
+                title: "Error opening server logs!",
+                message: "Verify console logs for more information.",
+                isError: true,
+            });
+        }
+    };
 
     return (
         <div className="dashboard-container">
@@ -128,6 +152,11 @@ const Dashboard: React.FC = () => {
                     System Settings ⚙️
                 </div>
                 <div
+                    className="tab"
+                    onClick={handleOpenServerLogsRequest}>
+                    Open Server Logs 🔍
+                </div>
+                <div
                     className="sidebar-help"
                     onClick={() => setIsLoggingOut(true)}>
                     <span className="username">Logout ⏻</span>
@@ -136,7 +165,7 @@ const Dashboard: React.FC = () => {
 
             <main className="content">
                 <div className="panel-card">
-                    <Outlet context={{ reposVersion }} /> 
+                    <Outlet context={{ reposVersion }} />
                 </div>
             </main>
 
