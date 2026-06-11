@@ -21,5 +21,12 @@ namespace ChasmaWebApi.Core.Interfaces.Infrastructure
         /// <param name="entries">The entries to execute batch commands for.</param>
         /// <returns>The results of the batch commands.</returns>
         List<BatchCommandEntryResult> ExecuteShellCommandsInBatch(IEnumerable<BatchCommandEntry> entries);
+
+        /// <summary>
+        /// Tries to open the API logs in the system shell.
+        /// </summary>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if successfully opened the logs; false otherwise.</returns>
+        bool TryOpenApiLogs(out string errorMessage);
     }
 }

@@ -392,5 +392,12 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="newRepositories">The clone git repositories.</param>
         /// <returns>The list of repository addition results.</returns>
         List<RepositoryAdditionResult> CloneGitRepositories(IEnumerable<GitCloneBlueprint> blueprints, int userId, out List<NewRepository> newRepositories);
+
+        /// <summary>
+        /// Tries to open the API logs in the system shell.
+        /// </summary>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if successfully opened the logs; false otherwise.</returns>
+        bool TryOpenApplicationLogs(out string errorMessage);
     }
 }

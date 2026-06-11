@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from "../logos/emryce-logo-withBg.svg";
-import {LoginRequest} from "../../API/ChasmaWebApiClient";
-import {useCacheStore} from "../../managers/CacheManager";
-import {userClient} from "../../managers/ApiClientManager";
+import { LoginRequest } from "../../API/ChasmaWebApiClient";
+import { useCacheStore } from "../../managers/CacheManager";
+import { shellClient, userClient } from "../../managers/ApiClientManager";
 
 /**
  * Creates a new instance of the Login Page class.
@@ -32,7 +32,7 @@ const LoginPage: React.FC = () => {
         if (disabledSendButton) {
             return;
         }
-        
+
         e.preventDefault();
         setDisableSendButton(true);
         setNotification({
@@ -80,19 +80,47 @@ const LoginPage: React.FC = () => {
                 isError: true,
             });
         }
-    }
+    };
+
+    /**
+     * Handles the event when the user wants to open server logs.
+     */
+    const handleOpenServerLogsRequest = async () => {
+        try {
+            const response = await shellClient.openApiLogs();
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Failed to open server logs.",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+        } catch (error) {
+            setNotification({
+                title: "Error opening server logs!",
+                message: "Verify console logs for more information.",
+                isError: true,
+            });
+        }
+    };
 
     return (
         <div className="login-page">
             <button
                 className="help-button"
                 onClick={() => window.open("help", "_blank")}>
-                    Help
+                Help
+            </button>
+            <button
+                className="open-logs-button"
+                onClick={handleOpenServerLogsRequest}>
+                Open Logs
             </button>
             <button
                 className="config-button"
                 onClick={() => navigate("/setup")}>
-                    System Settings
+                System Settings
             </button>
             <div className="login-card">
                 <div className="login-logo">
@@ -120,7 +148,7 @@ const LoginPage: React.FC = () => {
                         type="submit"
                         className="submit-button"
                         disabled={disabledSendButton}>
-                            Login
+                        Login
                     </button>
                 </form>
                 <p className="login-footer">
