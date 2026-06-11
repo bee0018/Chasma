@@ -212,7 +212,6 @@ namespace ChasmaWebApi.Core.Services.Git
             using Repository repo = new(filePath);
             Signature author = new(fullName, email, DateTimeOffset.Now);
             repo.Commit(commitMessage, author, author);
-
         }
 
         // <inheritdoc />

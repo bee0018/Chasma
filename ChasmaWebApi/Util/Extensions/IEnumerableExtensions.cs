@@ -23,5 +23,23 @@
 
             return -1;
         }
+
+        /// <summary>
+        /// Removes all elements from the collection that meet the conditions defined by the specified predicate.
+        /// </summary>
+        /// <typeparam name="T">The type of object to remove.</typeparam>
+        /// <param name="collection">The collection to remove elements from.</param>
+        /// <param name="predicate">The equality predicate to match the element with.</param>
+        public static void RemoveWhere<T>(this ICollection<T> collection, Func<T, bool> predicate)
+        {
+            List<T> copiedList = [.. collection];
+            foreach (T item in copiedList)
+            {
+                if (predicate(item))
+                {
+                    collection.Remove(item);
+                }
+            }
+        }
     }
 }

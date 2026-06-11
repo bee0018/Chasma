@@ -3,6 +3,7 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Util;
+using ChasmaWebApi.Util.Extensions;
 using LibGit2Sharp;
 using System.Diagnostics;
 
@@ -428,29 +429,11 @@ namespace ChasmaWebApi.Core.Services.Git
 
             if (repository.HostPlatform == RemoteHostPlatform.GitHub)
             {
-                List<long> pullRequestNumbersToDelete = CacheManager.GitHubPullRequests.Values
-                    .Where(i => i.BranchName == branchName)
-                    .Select(i => i.Number)
-                    .ToList();
-                foreach (long prNumber in pullRequestNumbersToDelete)
-                {
-                    CacheManager.GitHubPullRequests.TryRemove(prNumber, out _);
-                }
+                CacheManager.GitHubPullRequests.RemoveWhere(i => i.Value.BranchName == branchName);
             }
             else if (repository.HostPlatform == RemoteHostPlatform.GitLab)
             {
-                List<long> mergeRequestIids = CacheManager.GitLabMergeRequests.Values
-                    .Where(i => i.BranchName == branchName)
-                    .Select(i => i.Number)
-                    .ToList();
-                foreach (long iid in mergeRequestIids)
-                {
-                    CacheManager.GitLabMergeRequests.TryRemove(iid, out _);
-                }
-            }
-            else if (repository.HostPlatform == RemoteHostPlatform.Bitbucket)
-            {
-
+                CacheManager.GitLabMergeRequests.RemoveWhere(i => i.Value.BranchName == branchName);
             }
             else
             {
