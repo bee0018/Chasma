@@ -110,6 +110,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
+            response.RepositoryId = summary.RepositoryId;
             response.StatusElements = summary.StatusElements;
             response.CommitsAhead = summary.CommitsAhead;
             response.CommitsBehind = summary.CommitsBehind;

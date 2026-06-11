@@ -35,6 +35,7 @@ import ExecuteShellCommandsPage from "./statusComponents/ExecuteShellCommandsPag
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { Virtuoso } from "react-virtuoso";
 import PullModal from "../modals/PullModal";
+import RepositoryStatusSwitcher from "../modals/RepositoryStatusSwitcher";
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -155,6 +156,9 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets the value indicating whether the parsed diff is too big. */
     const [parsedDiffTooBig, setParsedDiffTooBig] = useState(false);
 
+    /** Gets or sets a flag indicating whether the user switching repositories. **/
+    const [isSwitchingStatusPages, setIsSwitchingStatusPages] = useState(false);
+
     /** Gets or sets the context menu. **/
     const [contextMenu, setContextMenu] = useState<{
         mouseX: number;
@@ -181,10 +185,12 @@ const RepositoryStatusPage: React.FC = () => {
             }
         }, 2500);
         return () => clearInterval(interval);
-    }, [repoId, selectedFile]);
+    }, [repoId, selectedFile, isSwitchingStatusPages]);
 
     /** Handles the request to perform a 'git status' on the selected repository. **/
     async function handleGitStatusRequest() {
+        if (isSwitchingStatusPages) return;
+
         try {
             const request = new GitStatusRequest();
             request.repositoryId = repoId;
@@ -196,6 +202,11 @@ const RepositoryStatusPage: React.FC = () => {
                     message: response.errorMessage,
                     isError: true,
                 });
+                return;
+            }
+
+            if (repoId !== response.repositoryId) {
+                // We are ignoring statuses that are not relevant to the current page we are on.
                 return;
             }
 
@@ -275,7 +286,7 @@ const RepositoryStatusPage: React.FC = () => {
      * @param isStaged Flag indicating whether the file is in the staging area.
      */
     async function handleGetGitDiffRequest(file: RepositoryStatusElement | null, isStaged: boolean | undefined) {
-        if (!repoId || file === null) return;
+        if (!repoId || file === null || repoId !== file.repositoryId) return;
 
         const request = new GitDiffRequest();
         request.repositoryId = repoId;
@@ -512,6 +523,15 @@ const RepositoryStatusPage: React.FC = () => {
         setSelectedFiles(newSelection);
     };
 
+    /**
+     * Handles the event when the user wants to switch to another status view.
+     * @param url The url to switch to.
+     */
+    const handleRepositoryStatusSwitch = (url: string) => {
+        window.location.href = url;
+        setIsSwitchingStatusPages(false);
+    };
+
     useEffect(() => {
         const closeMenu = () => setContextMenu(null);
         window.addEventListener("click", closeMenu);
@@ -532,7 +552,10 @@ const RepositoryStatusPage: React.FC = () => {
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
-                <div className="sidebar-profile">
+                <div
+                    className="sidebar-profile"
+                    onClick={() => setIsSwitchingStatusPages(true)}
+                >
                     <span className="profile-icon">📁</span>
                     <span>{repoName}</span>
                 </div>
@@ -1197,6 +1220,12 @@ const RepositoryStatusPage: React.FC = () => {
                     repositoryId={repoId}
                     isSafeMode={isSafeMode}
                     user={user} />
+            }
+            {isSwitchingStatusPages &&
+                <RepositoryStatusSwitcher
+                    onClose={() => setIsSwitchingStatusPages(false)}
+                    onSwitch={handleRepositoryStatusSwitch}
+                />
             }
         </div>
     );
