@@ -219,6 +219,11 @@ const RepositoryStatusPage: React.FC = () => {
             setOpenPullRequests(response.pullRequests);
             setLastUpdated(response.lastUpdated);
         } catch (e) {
+            if (e instanceof TypeError) {
+                // Not going to handle non-API/nswag related exceptions.
+                return;
+            }
+            
             const errorNotification = handleApiError(e, navigate, "Failed to perform 'git status' operation!", "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
         }
