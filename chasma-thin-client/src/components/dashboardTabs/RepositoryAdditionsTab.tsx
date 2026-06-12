@@ -9,12 +9,15 @@ import {configClient} from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { isBlankOrUndefined } from "../../stringHelperUtil";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new RepositoryAdditionsTab class.
  * @constructor
  */
 const RepositoryAdditionsTab: React.FC = () => {
+    useDocumentTitle("Add Repositories");
+
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 

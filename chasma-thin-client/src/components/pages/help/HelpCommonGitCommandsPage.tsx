@@ -1,5 +1,6 @@
 ﻿import React, { useState } from "react";
 import {GitCommand} from "../../types/CustomTypes";
+import { useDocumentTitle } from "../../../util/useDocumentTitle";
 
 /** The git commands to display. **/
 const gitCommands: GitCommand[] = [
@@ -81,6 +82,8 @@ const gitCommands: GitCommand[] = [
  * @constructor
  */
 const HelpCommonGitCommandsPage: React.FC = () => {
+    useDocumentTitle("Git Commands");
+    
     /** Gets or sets the expanded indexes. **/
     const [expandedIndexes, setExpandedIndexes] = useState<number[]>([]);
 

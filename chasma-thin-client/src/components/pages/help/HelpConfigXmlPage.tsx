@@ -6,7 +6,7 @@ import { useDocumentTitle } from "../../../util/useDocumentTitle";
  * @constructor
  */
 const HelpConfigXmlPage: React.FC = () => {
-    useDocumentTitle("Help");
+    useDocumentTitle("Configuration Help");
     return (
         <section id="config-xml" className="panel-card">
             <h2>Config File – XML Attributes</h2>

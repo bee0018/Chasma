@@ -6,12 +6,15 @@ import { useCacheStore } from "../../managers/CacheManager";
 import { shellClient, userClient } from "../../managers/ApiClientManager";
 import { handleApiError } from '../../managers/TransactionHandlerManager';
 import { validatePassword } from '../../stringHelperUtil';
+import { useDocumentTitle } from '../../util/useDocumentTitle';
 
 /**
  * Initializes a new instance of the Register Page class.
  * @constructor
  */
 const RegisterPage: React.FC = () => {
+    useDocumentTitle("Register");
+
     /** Gets or sets the name of the user. **/
     const [name, setName] = useState('');
 

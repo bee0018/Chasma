@@ -4,12 +4,15 @@ import logo from "../logos/emryce-logo-withBg.svg";
 import { LoginRequest } from "../../API/ChasmaWebApiClient";
 import { useCacheStore } from "../../managers/CacheManager";
 import { shellClient, userClient } from "../../managers/ApiClientManager";
+import { useDocumentTitle } from '../../util/useDocumentTitle';
 
 /**
  * Creates a new instance of the Login Page class.
  * @constructor
  */
 const LoginPage: React.FC = () => {
+    useDocumentTitle("Sign In");
+    
     /** Gets or sets the username of the user. **/
     const [userName, setUserName] = useState('');
 

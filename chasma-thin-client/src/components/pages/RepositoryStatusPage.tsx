@@ -36,12 +36,13 @@ import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { Virtuoso } from "react-virtuoso";
 import PullModal from "../modals/PullModal";
 import RepositoryStatusSwitcher from "../modals/RepositoryStatusSwitcher";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new instance of the Repository Status Page class.
  * @constructor
  */
-const RepositoryStatusPage: React.FC = () => {
+const RepositoryStatusPage: React.FC = () => {    
     /** The repository name and identifier from the url. **/
     const { repoName, repoId } = useParams<{ repoName: string; repoId: string }>();
 
@@ -149,6 +150,7 @@ const RepositoryStatusPage: React.FC = () => {
 
     /** Gets the selected repository instance. **/
     const selectedRepo = useCacheStore((state) => state.repositories.find(i => i.id === repoId));
+    useDocumentTitle(`${selectedRepo?.displayName ? selectedRepo.displayName : selectedRepo?.name} Repository Status`);
 
     /** Sets the notification modal. */
     const setNotification = useCacheStore(state => state.setNotification);

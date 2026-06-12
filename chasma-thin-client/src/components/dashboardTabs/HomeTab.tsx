@@ -10,6 +10,7 @@ import { configClient } from "../../managers/ApiClientManager";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import ChangeRepositoryDisplayNameModal from "../modals/ChangeRepositoryDisplayNameModal";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * The properties of the Home Tab.
@@ -24,6 +25,8 @@ interface IHomeTabProps {
  * @constructor Initializes a new instance of the HomeTab.
  */
 const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
+    useDocumentTitle("Home");
+    
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 

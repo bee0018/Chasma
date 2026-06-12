@@ -7,12 +7,15 @@ import { useCacheStore } from "../../managers/CacheManager";
 import { useNavigate } from "react-router-dom";
 import { statusClient } from "../../managers/ApiClientManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new ApplySnapshotsTab class.
  * @constructor
  */
 const ApplySnapshotsTab: React.FC = () => {
+    useDocumentTitle("Snapshots");
+
     /** Gets or sets the snapshot view mode. **/
     const [snapshotViewMode, setSnapshotViewMode] = useState<SnapshotMode>("add");
 
