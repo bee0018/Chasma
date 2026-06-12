@@ -17,12 +17,15 @@ import {dryRunClient} from "../../managers/ApiClientManager";
 import SimulationEntryRow from "./rows/SimulationEntryRow";
 import { useNavigate } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new MultiDryRunSimulationTab class.
  * @constructor
  */
 const MultiDryRunSimulationTab: React.FC = () => {
+    useDocumentTitle("Simulations");
+
     /** Cached repositories. **/
     const repositories = useCacheStore((state) => state.repositories);
 

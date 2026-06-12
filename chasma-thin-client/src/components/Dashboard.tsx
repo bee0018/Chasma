@@ -132,7 +132,7 @@ const Dashboard: React.FC = () => {
                     className={`tab ${isActive("apiStatus")}`}
                     onClick={() => navigate("apiStatus")}
                 >
-                    API Status 🔌
+                    Server Status 🔌
                 </div>
                 <div
                     className="tab"

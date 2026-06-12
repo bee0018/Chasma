@@ -4,12 +4,15 @@ import {healthClient} from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new ApiStatusTab.
  * @constructor
  */
 const ApiStatusTab: React.FC = () => {
+    useDocumentTitle("Server Status");
+
     /** Gets or sets the heartbeat status. **/
     const [heartbeat, setHeartbeat] = useState<HeartbeatStatus | undefined>(undefined);
 
@@ -33,9 +36,9 @@ const ApiStatusTab: React.FC = () => {
 
     /** Gets the heartbeat display text. **/
     function getHeartbeatDisplayText() {
-        if (heartbeat === undefined) return "Checking API heartbeat...";
-        if (heartbeat === HeartbeatStatus.Ok) return "Web API is online and responding.";
-        return "Web API is currently offline.";
+        if (heartbeat === undefined) return "Checking server heartbeat...";
+        if (heartbeat === HeartbeatStatus.Ok) return "Emryce server is online and responding.";
+        return "Emryce server is currently offline.";
     }
 
     useEffect(() => {
@@ -60,7 +63,7 @@ const ApiStatusTab: React.FC = () => {
     return (
         <div className="dashboard-card api-status-card">
             <div className="card-header">
-                <h2 className="card-title">API Status</h2>
+                <h2 className="card-title">Server Status</h2>
                 <span className={`status-pill ${getHeartbeatStatusClass()}`}>
                     {heartbeat === HeartbeatStatus.Ok ? "Online" : heartbeat === undefined ? "Checking" : "Offline"}
                 </span>

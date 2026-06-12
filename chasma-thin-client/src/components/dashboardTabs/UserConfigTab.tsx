@@ -5,12 +5,15 @@ import { CheckUsernameAvailabilityRequest, ModifyUserRequest } from "../../API/C
 import { userClient } from "../../managers/ApiClientManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useNavigate } from "react-router-dom";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new UserConfigTab class.
  * @constructor
  */
 const UserConfigTab: React.FC = () => {
+    useDocumentTitle("User Configuration");
+    
     /** Gets the logged-in user. */
     const user = useCacheStore(state => state.user);
 

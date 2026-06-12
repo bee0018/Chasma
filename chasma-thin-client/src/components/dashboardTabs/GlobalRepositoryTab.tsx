@@ -6,12 +6,15 @@ import { GlobalViewMode } from "../types/CustomTypes";
 import { useCacheStore } from "../../managers/CacheManager";
 import { useNavigate } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new instance of the GlobalPullRequestTab component
  * @constructor
  */
 const GlobalRepositoryTab: React.FC = () => {
+    useDocumentTitle("Global");
+
     /** Gets or sets the global pull requests. */
     const [pullRequests, setPullRequests] = useState<RemotePullRequest[]>([]);
 

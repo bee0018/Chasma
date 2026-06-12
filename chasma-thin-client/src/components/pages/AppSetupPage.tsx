@@ -4,12 +4,15 @@ import { isBlankOrUndefined } from "../../stringHelperUtil";
 import { ChasmaWebApiConfigurations, ModifyApiConfigRequest } from "../../API/ChasmaWebApiClient";
 import { appConfigClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new instance of the parent AppSetupPage class.
  * @constructor
  */
 export const AppSetupPage: React.FC = () => {
+    useDocumentTitle("System Settings");
+    
     /** Sets the notification modal. */
     const setNotification = useCacheStore(state => state.setNotification);
 

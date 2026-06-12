@@ -12,12 +12,15 @@ import {isBlankOrUndefined} from "../../stringHelperUtil";
 import {shellClient} from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new BatchOperationsTab class.
  * @constructor
  */
 const BatchOperationsTab: React.FC = () => {
+    useDocumentTitle("Batch Operations");
+
     /** Cached repositories. **/
     const repositories = useCacheStore((state) => state.repositories);
 

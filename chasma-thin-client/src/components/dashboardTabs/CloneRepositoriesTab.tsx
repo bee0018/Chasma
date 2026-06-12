@@ -9,12 +9,15 @@ import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useNavigate } from "react-router-dom";
 import { appConfigClient, configClient } from "../../managers/ApiClientManager";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new instance of the CloneRepositoriesTab component
  * @constructor
  */
 const CloneRepositoriesTab: React.FC = () => {
+    useDocumentTitle("Clone Repositories");
+    
     /** Gets or sets the git clone blueprint entries. */
     const [cloneEntries, setCloneEntries] = useState<
         { id: string; blueprint: GitCloneBlueprint }[]
