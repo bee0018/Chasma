@@ -94,7 +94,7 @@ const RegisterPage: React.FC = () => {
             navigate('/home');
         } catch (error) {
             setDisableSendButton(false);
-            const errorNotification = handleApiError(error, navigate, "Error adding user!", "Review server logs for more information.");
+            const errorNotification = await handleApiError(error, navigate, "Error adding user!", "Review server logs for more information.");
             setNotification(errorNotification);
         }
     }

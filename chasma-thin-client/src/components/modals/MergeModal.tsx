@@ -107,7 +107,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
             setErrorMessage("Error occurred while attempting to merge changes. Check error logs.");
             setTitle("Error finishing merge!");
             setSuccessfullyMerged(false);
-            const errorNotification = handleApiError(e, navigate, "Error finishing merge!", "Error occurred while attempting to merge changes. Check error logs.");
+            const errorNotification = await handleApiError(e, navigate, "Error finishing merge!", "Error occurred while attempting to merge changes. Check error logs.");
             setNotification(errorNotification);
         }
         finally {
@@ -148,7 +148,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
             setErrorMessage("Error occurred while attempting to simulate merging changes. Check error logs.");
             setTitle("Error simulating merge operation");
             setSuccessfullyMerged(false);
-            const errorNotification = handleApiError(e, navigate, "Error simulating merge operation!", "Error occurred while attempting to simulate merging changes. Check error logs.");
+            const errorNotification = await handleApiError(e, navigate, "Error simulating merge operation!", "Error occurred while attempting to simulate merging changes. Check error logs.");
             setNotification(errorNotification);
         }
         finally {
@@ -176,7 +176,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
         }
         catch (e) {
             setErrorMessage("Error occurred while fetching branches. Check console logs.");
-            const errorNotification = handleApiError(e, navigate, "Could not fetch branches!", "Error occurred while fetching branches. Check console logs.");
+            const errorNotification = await handleApiError(e, navigate, "Could not fetch branches!", "Error occurred while fetching branches. Check console logs.");
             setNotification(errorNotification);
         }
     }

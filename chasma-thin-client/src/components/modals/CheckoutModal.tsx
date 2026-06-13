@@ -70,7 +70,7 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
         catch (e) {
             setTitle("Could not check out branch!")
             setErrorMessage("Check console logs for more information.");
-            const errorNotification = handleApiError(e, navigate, "Could not check out branch!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Could not check out branch!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
         finally {
@@ -107,7 +107,7 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
         catch (e) {
             setTitle("Cannot get branches!")
             setErrorMessage("Error occurred while fetching branches. Check console logs.");
-            const errorNotification = handleApiError(e, navigate, "Cannot get branches!", "Error occurred while fetching branches. Check console logs.");
+            const errorNotification = await handleApiError(e, navigate, "Cannot get branches!", "Error occurred while fetching branches. Check console logs.");
             setNotification(errorNotification);
         }
     }

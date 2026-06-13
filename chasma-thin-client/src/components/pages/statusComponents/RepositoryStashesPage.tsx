@@ -128,7 +128,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                 handleSelectedPatchEntry(firstPatchEntry);
             }
         } catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Error getting stash details!", "Review internal server and console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error getting stash details!", "Review internal server and console logs for more information.");
             setNotification(errorNotification);
         }
     }
@@ -167,7 +167,7 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
             setStashEntries(response.stashList)
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Error getting stash list!", "Review internal server and console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error getting stash list!", "Review internal server and console logs for more information.");
             setNotification(errorNotification);
         }
     };

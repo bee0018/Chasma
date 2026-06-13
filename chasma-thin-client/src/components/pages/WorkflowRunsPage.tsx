@@ -103,7 +103,7 @@ const WorkflowRunsPage: React.FC = () => {
                 isError: response.isErrorResponse,
             });
         } catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Failed to retrieve workflows!", "An internal server error has occurred. Review logs.");
+            const errorNotification = await handleApiError(e, navigate, "Failed to retrieve workflows!", "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
         }
     }
@@ -133,7 +133,7 @@ const WorkflowRunsPage: React.FC = () => {
                 isError: response.isErrorResponse,
             });
         } catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Failed to retrieve pipeline jobs!", "An internal server error has occurred. Review logs.");
+            const errorNotification = await handleApiError(e, navigate, "Failed to retrieve pipeline jobs!", "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
         }
     }

@@ -359,6 +359,46 @@
         }
       }
     },
+    "/api/Health/restart": {
+      "post": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "Health_RestartApplication",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Health/stopApplication": {
+      "post": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "Health_StopApplication",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Remote/getGlobalPullRequestStatuses": {
       "get": {
         "tags": [

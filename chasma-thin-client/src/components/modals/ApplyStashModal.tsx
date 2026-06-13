@@ -80,7 +80,7 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
             setTitle("Error applying stash!");
             setDisableSendButton(false);
             setErrorMessage("An error occurred when attempting to stash changes. Review console and internal server logs.");
-            const errorNotification = handleApiError(e, navigate, "Error applying stash!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
+            const errorNotification = await handleApiError(e, navigate, "Error applying stash!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
             setNotification(errorNotification);
         }
     };

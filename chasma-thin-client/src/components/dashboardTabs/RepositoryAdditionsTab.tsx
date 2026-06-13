@@ -109,7 +109,7 @@ const RepositoryAdditionsTab: React.FC = () => {
             isError: false,
         });
         } catch (error) {
-            const errorNotification = handleApiError(error, navigate, "Failed to add repositories!", "Error adding repositories. Check console logs for more information.");
+            const errorNotification = await handleApiError(error, navigate, "Failed to add repositories!", "Error adding repositories. Check console logs for more information.");
             setNotification(errorNotification);
         }
         finally {

@@ -82,7 +82,7 @@ const ChangeRepositoryDisplayNameModal: React.FC<IChangeRepositoryDisplayNameMod
             setTitle("Error changing display name!")
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyChanged(false);
-            const errorNotification = handleApiError(error, navigate, "Error changing display name!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(error, navigate, "Error changing display name!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
         finally {

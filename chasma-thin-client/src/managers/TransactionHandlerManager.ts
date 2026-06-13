@@ -1,6 +1,7 @@
 import { NavigateFunction } from "react-router-dom";
-import { ApiException } from "../API/ChasmaWebApiClient";
+import { ApiException, HeartbeatStatus } from "../API/ChasmaWebApiClient";
 import { useCacheStore } from "./CacheManager";
+import { healthClient } from "./ApiClientManager";
 
 /**
  * Handles the exception from the backend API.
@@ -10,7 +11,17 @@ import { useCacheStore } from "./CacheManager";
  * @param errorMessage The API error message.
  * @returns 
  */
-export function handleApiError(error: unknown, navigate: NavigateFunction, title?: string, errorMessage?: string) {
+export async function handleApiError(error: unknown, navigate: NavigateFunction, title?: string, errorMessage?: string) {
+    const heartbeatReceived = await getServerHeartbeat();
+    if (!heartbeatReceived) {
+        useCacheStore.getState().clearCache();
+        return {
+            title: "Server is not running!",
+            message: "Please restart application.",
+            isError: true
+        };
+    }
+
     console.error(error);
     if (error instanceof ApiException) {
         if (error.status === 401) {
@@ -45,3 +56,22 @@ export function handleApiError(error: unknown, navigate: NavigateFunction, title
         isError: true
     };
 }
+
+/**
+ * Gets the heartbeat from the server.
+ * @returns True if heartbeat with status 'Ok'; false otherwise.
+ */
+const getServerHeartbeat = async () => {
+    try {
+        const response = await healthClient.getHeartbeat();
+        if (response.status === HeartbeatStatus.Ok) {
+            return true;
+        }
+
+        console.error("Server is in Error state. Please review server logs and/or restart application.")
+        return false;
+    } catch (error) {
+        console.error("Server is not running and cannot process requests. Please restart application.");
+        return false;
+    }
+};

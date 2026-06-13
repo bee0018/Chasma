@@ -162,7 +162,7 @@ const ApplySnapshotsTab: React.FC = () => {
                 isError: false,
             });
         } catch (error) {
-            const errorNotification = handleApiError(error, navigate, "Error adding workspace snapshot!", "Check server logs for more information.");
+            const errorNotification = await handleApiError(error, navigate, "Error adding workspace snapshot!", "Check server logs for more information.");
             setNotification(errorNotification);
         }
     };
@@ -214,7 +214,7 @@ const ApplySnapshotsTab: React.FC = () => {
                 isError: false,
             });
         } catch (error) {
-            const errorNotification = handleApiError(error, navigate, "Error loading workspace snapshot!", "Check server logs for more information.");
+            const errorNotification = await handleApiError(error, navigate, "Error loading workspace snapshot!", "Check server logs for more information.");
             setNotification(errorNotification);
         }
     };
@@ -240,7 +240,7 @@ const ApplySnapshotsTab: React.FC = () => {
             response.snapshotIds?.forEach(id => useCacheStore.getState().deleteSnapshot(id));
             setSelectedSnapshot(undefined);
         } catch (error) {
-            const errorNotification = handleApiError(error, navigate);
+            const errorNotification = await handleApiError(error, navigate);
             setNotification(errorNotification);
         }
     };

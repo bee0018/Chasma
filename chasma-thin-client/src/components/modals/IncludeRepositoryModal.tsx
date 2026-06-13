@@ -56,7 +56,7 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
             }
         } catch (e) {
             setErrorMessage("Error occurred while fetching branches. Check console logs.");
-            const errorNotification = handleApiError(e, navigate, "Could not ignore repository!", "Error occurred while fetching branches. Check console logs.");
+            const errorNotification = await handleApiError(e, navigate, "Could not ignore repository!", "Error occurred while fetching branches. Check console logs.");
             setNotification(errorNotification);
         }
     }
@@ -94,7 +94,7 @@ const IncludeRepositoryModal: React.FC<IIncludeRepositoryModalProps> = (props: I
             props.onRepositoriesUpdated();
         } catch (e) {
             setErrorMessage("Error including repository. Check console logs.");
-            const errorNotification = handleApiError(e, navigate, "Error including repository!", "Error including repository. Check console logs.");
+            const errorNotification = await handleApiError(e, navigate, "Error including repository!", "Error including repository. Check console logs.");
             setNotification(errorNotification);
         }
         finally {

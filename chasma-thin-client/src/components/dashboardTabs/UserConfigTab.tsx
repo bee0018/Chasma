@@ -143,7 +143,7 @@ const UserConfigTab: React.FC = () => {
             setFullName(response.user?.name);
             setLastSavedUsername(response.user?.userName);
         } catch (error) {
-            const errorNotification = handleApiError(error, navigate, "Error modifying user!", "An error occurred when attempting to modify user. Review console and internal server logs.");
+            const errorNotification = await handleApiError(error, navigate, "Error modifying user!", "An error occurred when attempting to modify user. Review console and internal server logs.");
             setNotification(errorNotification);
         }
     };
@@ -159,7 +159,7 @@ const UserConfigTab: React.FC = () => {
             const response = await userClient.checkUserNameAvailability(request);
             setUsernameValidationError(response.errorMessage);
         } catch (error) {
-            const errorNotification = handleApiError(error, navigate, "Error checking username!", "An error occurred when attempting to check user name. Review console and internal server logs.");
+            const errorNotification = await handleApiError(error, navigate, "Error checking username!", "An error occurred when attempting to check user name. Review console and internal server logs.");
             setNotification(errorNotification);
         }
     };

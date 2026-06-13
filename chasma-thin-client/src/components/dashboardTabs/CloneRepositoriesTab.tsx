@@ -118,7 +118,7 @@ const CloneRepositoriesTab: React.FC = () => {
                 isError: false,
             });
         } catch (error) {
-            const errorNotification = handleApiError(error, navigate);
+            const errorNotification = await handleApiError(error, navigate);
             setNotification(errorNotification);
         } finally {
             setDisableSendButton(false);

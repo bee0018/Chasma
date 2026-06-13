@@ -1,5 +1,31 @@
-﻿.api-status-card {
-    max-width: 520px;
+﻿/* Symmetrical Stacked Framework Configuration */
+.status-dashboard-grid {
+    display: flex;
+    flex-direction: column;       /* Aligns your cards vertically on top of each other */
+    align-items: center;          /* Centers the stack cleanly within your primary screen view */
+    width: 100%;
+    max-width: 100%;
+}
+
+/* ==========================================================================
+   New Horizontal Separator Line Style
+   ========================================================================== */
+.card-spacer-line {
+    width: 100%;
+    max-width: 520px;             /* Perfectly matches the width of the cards above and below */
+    border: 0;
+    height: 1px;
+    background: #1e293b;          /* Matches your original subtle card border color scheme */
+    margin: 24px 0;               /* Ensures completely uniform, equal padding between elements */
+}
+
+/* ==========================================================================
+   Top Module: Server Status Card Parameters (Preserved)
+   ========================================================================= */
+
+.api-status-card {
+    width: 100%;
+    max-width: 520px;             /* Establishes your foundational layout size target */
 }
 
 .card-header {
@@ -50,17 +76,9 @@
     border-radius: 50%;
 }
 
-.status-indicator.status-online {
-    background: #22d3ee;
-}
-
-.status-indicator.status-offline {
-    background: #ef4444;
-}
-
-.status-indicator.status-unknown {
-    background: #9ca3af;
-}
+.status-indicator.status-online { background: #22d3ee; }
+.status-indicator.status-offline { background: #ef4444; }
+.status-indicator.status-unknown { background: #9ca3af; }
 
 .status-text {
     color: #d1d5db;
@@ -73,11 +91,6 @@
     gap: 10px;
 }
 
-.input-field.subtle {
-    font-size: 0.8rem;
-    color: #9ca3af;
-}
-
 .api-status-input-field {
     width: 100%;
     padding: 14px 16px;
@@ -88,4 +101,105 @@
     color: #e5e7eb;
     font-size: 0.95rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.api-status-input-field.subtle {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+/* ==========================================================================
+   Bottom Module: Power Options Card Parameters (Symmetrically Matched)
+   ========================================================================= */
+
+.power-config-card {
+    width: 100%;
+    max-width: 520px;             /* Mirrors the exact sizing block limits of the Server card */
+    background: transparent;
+}
+
+.power-config-card .card-body {
+    padding-top: 4px;
+}
+
+.power-description {
+    font-size: 0.9rem;
+    color: #d1d5db;
+    line-height: 1.4;
+    margin: 0 0 16px 0;
+}
+
+.action-button-vertical-group {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.btn-power {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-power:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-power:active:not(:disabled) {
+    transform: scale(0.99);
+}
+
+.btn-power-restart {
+    background: #1f2937;
+    color: #e5e7eb;
+    border-color: #1e293b;
+}
+
+.btn-power-restart:not(:disabled):hover {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.btn-power-stop {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btn-power-stop:not(:disabled):hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+.power-inline-feedback {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.feedback-dot {
+    width: 6px;
+    height: 6px;
+    background: #22d3ee;
+    border-radius: 50%;
+}
+
+.animate-pulse {
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
 }
