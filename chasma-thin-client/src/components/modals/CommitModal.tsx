@@ -80,7 +80,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
             setTitle("Error committing changes!")
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyCommitted(false);
-            const errorNotification = handleApiError(e, navigate, "Error committing changes!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error committing changes!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
         finally {

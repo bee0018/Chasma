@@ -58,7 +58,7 @@ const GlobalRepositoryTab: React.FC = () => {
             }
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Could not retrieve pull requests!", "Check internal server logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Could not retrieve pull requests!", "Check internal server logs for more information.");
             setNotification(errorNotification);
         }
     };
@@ -98,7 +98,7 @@ const GlobalRepositoryTab: React.FC = () => {
         }
         catch (e)
         {
-            const errorNotification = handleApiError(e, navigate, "Error getting branch sync status!", "Review console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error getting branch sync status!", "Review console logs for more information.");
             setNotification(errorNotification);
             setDisableSendButton(false);
         }

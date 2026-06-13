@@ -64,7 +64,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             const message = await configClient.getLocalGitRepositories(userId);
             useCacheStore.getState().setRepositories(message.repositories);
         } catch (e) {
-            const errorNotification = handleApiError(e, navigate);
+            const errorNotification = await handleApiError(e, navigate);
             setNotification(errorNotification);
         }
     };
@@ -78,7 +78,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                 useCacheStore.getState().setRepositories(message.repositories);
             }
             catch (e) {
-                const errorNotification = handleApiError(e, navigate);
+                const errorNotification = await handleApiError(e, navigate);
                 setNotification(errorNotification);
             }
         };
@@ -144,7 +144,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             setDisableSendButton(false);
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate);
+            const errorNotification = await handleApiError(e, navigate);
             setNotification(errorNotification);
             setDisableSendButton(false);
         }
@@ -169,13 +169,13 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
 
             useCacheStore.getState().deleteRepository(repoId);
         } catch (e) {
-            handleRepoDeletionError("Review server logs for more information.");
+            await handleRepoDeletionError("Review server logs for more information.");
         }
     };
 
     /** Handles the event when there is an error deleting a repository. **/
-    const handleRepoDeletionError = (errorMessage: string | undefined) => {
-        const errorNotification = handleApiError(errorMessage, navigate, "Could not delete repository!", "Review server logs for more information.");
+    const handleRepoDeletionError = async (errorMessage: string | undefined) => {
+        const errorNotification = await handleApiError(errorMessage, navigate, "Could not delete repository!", "Review server logs for more information.");
         setNotification(errorNotification);
     }
 
@@ -202,7 +202,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             useCacheStore.getState().setRepositories(response.includedRepositories);
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Repository ignore action failed!", "Review server logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Repository ignore action failed!", "Review server logs for more information.");
             setNotification(errorNotification);
         }
     };

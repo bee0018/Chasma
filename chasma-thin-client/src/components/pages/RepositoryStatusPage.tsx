@@ -226,7 +226,7 @@ const RepositoryStatusPage: React.FC = () => {
                 return;
             }
             
-            const errorNotification = handleApiError(e, navigate, "Failed to perform 'git status' operation!", "An internal server error has occurred. Review logs.");
+            const errorNotification = await handleApiError(e, navigate, "Failed to perform 'git status' operation!", "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
         }
     }
@@ -273,7 +273,7 @@ const RepositoryStatusPage: React.FC = () => {
 
             setDisableStageActionSending(false);
         } catch (e) {
-            const errorNotification = handleApiError(e, navigate, `Failed to perform '${stagingAction ? "stage" : "unstage"}' operation!`, "An internal server error has occurred. Review logs.");
+            const errorNotification = await handleApiError(e, navigate, `Failed to perform '${stagingAction ? "stage" : "unstage"}' operation!`, "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
             setDisableStageActionSending(false);
         }
@@ -309,7 +309,7 @@ const RepositoryStatusPage: React.FC = () => {
 
             setRawDiff(response.diffContent!);
         } catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Failed to get diff!", "An internal server error has occurred. Open terminal and run 'git diff' on the selected file.");
+            const errorNotification = await handleApiError(e, navigate, "Failed to get diff!", "An internal server error has occurred. Open terminal and run 'git diff' on the selected file.");
             setNotification(errorNotification);
         }
     }
@@ -350,7 +350,7 @@ const RepositoryStatusPage: React.FC = () => {
             setSelectedFile(null);
         } catch (e) {
             setDisableBulkStagingRequestSending(false);
-            const errorNotification = handleApiError(e, navigate, "Error performing bulk staging operation!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error performing bulk staging operation!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
     }
@@ -381,7 +381,7 @@ const RepositoryStatusPage: React.FC = () => {
             setSelectedFile(null);
         } catch (error) {
             setDisableRestoreRequestSending(false);
-            const errorNotification = handleApiError(error, navigate, "Error performing 'git restore'!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(error, navigate, "Error performing 'git restore'!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
     };
@@ -412,7 +412,7 @@ const RepositoryStatusPage: React.FC = () => {
             setSelectedFile(null);
         } catch (error) {
             setDisableDeleteFileSending(false);
-            const errorNotification = handleApiError(error, navigate, "Error performing 'git rm'!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(error, navigate, "Error performing 'git rm'!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
     };

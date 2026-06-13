@@ -118,7 +118,7 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
             setTitle("Error Creating Issue");
             setSuccessfullyCreatedIssue(false);
             setErrorMessage("An internal server error occurred. Please try again after correcting fields.");
-            const errorNotification = handleApiError(e, navigate, "Error Creating Issue!", "An internal server error occurred. Please try again after correcting fields.");
+            const errorNotification = await handleApiError(e, navigate, "Error Creating Issue!", "An internal server error occurred. Please try again after correcting fields.");
             setNotification(errorNotification);
         }
     };
@@ -153,7 +153,7 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
             performSuccessAction(response.issue.url, response.issue.issueId);
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Error creating issue!", "Review the console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error creating issue!", "Review the console logs for more information.");
             setNotification(errorNotification);
         }
     }
@@ -253,7 +253,7 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
             }
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Error fetching GitLab project members!", "Review the console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error fetching GitLab project members!", "Review the console logs for more information.");
             setNotification(errorNotification);
         }
     };

@@ -88,7 +88,7 @@ const PullModal: React.FC<IPullModalProps> = (props: IPullModalProps) => {
             setTitle("Could not pull changes!");
             setSuccessfullyPulled(false);
             setErrorMessage("An internal server error has occurred. Review logs.");
-            const errorNotification = handleApiError(e, navigate, "Could not pull changes!", "An internal server error has occurred. Review logs.");
+            const errorNotification = await handleApiError(e, navigate, "Could not pull changes!", "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
         }
     };
@@ -125,7 +125,7 @@ const PullModal: React.FC<IPullModalProps> = (props: IPullModalProps) => {
         } catch (e) {
             setTitle("Error during pull simulation!");
             setErrorMessage("An internal server error has occurred. Review logs.");
-            const errorNotification = handleApiError(e, navigate, "Could not simulate pull simulation!", "An internal server error has occurred. Review logs.");
+            const errorNotification = await handleApiError(e, navigate, "Could not simulate pull simulation!", "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
         }
     }

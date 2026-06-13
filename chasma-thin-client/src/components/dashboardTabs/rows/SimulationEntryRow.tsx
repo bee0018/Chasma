@@ -162,7 +162,7 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
             }
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate);
+            const errorNotification = await handleApiError(e, navigate);
             setNotification(errorNotification);
         }
     }

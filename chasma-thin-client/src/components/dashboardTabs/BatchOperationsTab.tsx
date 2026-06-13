@@ -204,7 +204,7 @@ const BatchOperationsTab: React.FC = () => {
             });
             setDisableSendButton(false);
         } catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Error executing batch shell operation failed!", "Review server logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error executing batch shell operation failed!", "Review server logs for more information.");
             setNotification(errorNotification);
             setDisableSendButton(false);
         }

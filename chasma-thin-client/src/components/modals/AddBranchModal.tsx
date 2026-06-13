@@ -97,7 +97,7 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
             setTitle("Error creating branch!")
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyAdded(false);
-            const errorNotification = handleApiError(e, navigate, "Error creating branch!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error creating branch!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
         finally {
@@ -136,7 +136,7 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
             setTitle("Error creating branch!")
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyAdded(false);
-            const errorNotification = handleApiError(e, navigate, "Error creating branch!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error creating branch!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
         finally {

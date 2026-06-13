@@ -176,7 +176,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
             return true;
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Error performing pull simulation!", "Review server logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error performing pull simulation!", "Review server logs for more information.");
             setNotification(errorNotification);
             return false;
         }
@@ -209,7 +209,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
             return true;
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Error performing add branch simulation!", "Review server logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error performing add branch simulation!", "Review server logs for more information.");
             setNotification(errorNotification);
             return false;
         }
@@ -242,7 +242,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
             return true;
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Error performing merge simulation!", "Review server logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error performing merge simulation!", "Review server logs for more information.");
             setNotification(errorNotification);
             return false;
         }

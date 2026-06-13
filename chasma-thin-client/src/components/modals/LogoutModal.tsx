@@ -73,7 +73,7 @@ const LogoutModal: React.FC<ILogoutModalProps> = (props: ILogoutModalProps) => {
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyLoggedOut(false);
             setDisableSendButton(false);
-            const errorNotification = handleApiError(e, navigate, "Could not logout!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Could not logout!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
     };

@@ -72,7 +72,7 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
             setTitle("Error deleting stash!");
             setErrorMessage("An error occurred when attempting to stash changes. Review console and internal server logs.");
             setDisableSendButton(false);
-            const errorNotification = handleApiError(e, navigate, "Error deleting stash!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
+            const errorNotification = await handleApiError(e, navigate, "Error deleting stash!", "An error occurred when attempting to stash changes. Review console and internal server logs.");
             setNotification(errorNotification);
         }
     };

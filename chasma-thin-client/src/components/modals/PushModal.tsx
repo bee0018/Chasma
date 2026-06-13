@@ -73,7 +73,7 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyPushed(false);
             setDisableSendButton(false);
-            const errorNotification = handleApiError(e, navigate, "Could not push changes!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Could not push changes!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
     };

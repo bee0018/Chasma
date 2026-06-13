@@ -149,7 +149,7 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                 setErrorMessage("Error occurred while creating Pull Request. Check error logs.");
                 setTitle("Error creating Pull Request");
                 setSuccessfullyCreated(false);
-                const errorNotification = handleApiError(e, navigate, "Error creating Pull Request!", "Error occurred while creating Pull Request. Check error logs.");
+                const errorNotification = await handleApiError(e, navigate, "Error creating Pull Request!", "Error occurred while creating Pull Request. Check error logs.");
                 setNotification(errorNotification);
             }
         };
@@ -194,7 +194,7 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                 setErrorMessage("Error occurred while creating Pull Request. Check error logs.");
                 setTitle("Error creating Pull Request");
                 setSuccessfullyCreated(false);
-                const errorNotification = handleApiError(e, navigate, "Error creating Pull Request!", "Error occurred while creating Pull Request. Check error logs.");
+                const errorNotification = await handleApiError(e, navigate, "Error creating Pull Request!", "Error occurred while creating Pull Request. Check error logs.");
                 setNotification(errorNotification);
             }
         };
@@ -221,7 +221,7 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
             }
             catch (e) {
                 setErrorMessage("Error occurred while fetching branches. Check console logs.");
-                const errorNotification = handleApiError(e, navigate, "Error fetching associated branches!", "Error occurred while fetching branches. Check console logs.");
+                const errorNotification = await handleApiError(e, navigate, "Error fetching associated branches!", "Error occurred while fetching branches. Check console logs.");
                 setNotification(errorNotification);
             }
         }
@@ -252,7 +252,7 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
             setProjectId(response.projectId);
         }
         catch (e) {
-            const errorNotification = handleApiError(e, navigate, "Error fetching GitLab project members!", "Review the console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error fetching GitLab project members!", "Review the console logs for more information.");
             setNotification(errorNotification);
         }
     };

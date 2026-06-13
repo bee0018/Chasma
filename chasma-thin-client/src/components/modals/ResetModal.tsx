@@ -77,7 +77,7 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
             setTitle("Error resetting changes!");
             setErrorMessage("An error occurred when attempting to reset changes. Review console and internal server logs.");
             setDisableSendButton(false);
-            const errorNotification = handleApiError(e, navigate, "Error resetting changes!", "An error occurred when attempting to reset changes. Review console and internal server logs.");
+            const errorNotification = await handleApiError(e, navigate, "Error resetting changes!", "An error occurred when attempting to reset changes. Review console and internal server logs.");
             setNotification(errorNotification);
         }
     };

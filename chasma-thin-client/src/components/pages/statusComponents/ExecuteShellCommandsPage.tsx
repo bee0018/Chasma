@@ -104,7 +104,7 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
                setOutput([])
                setErrorMessage("Error executing shell commands. Check console logs for more information.")
                setDisableSendButton(false);
-               const errorNotification = handleApiError(e, navigate, "Could not execute commands!", "Error executing shell commands. Check console logs for more information.");
+               const errorNotification = await handleApiError(e, navigate, "Could not execute commands!", "Error executing shell commands. Check console logs for more information.");
                setNotification(errorNotification);
            }}, [rows, props.repositoryId]);
     

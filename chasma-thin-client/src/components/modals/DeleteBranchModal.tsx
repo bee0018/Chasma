@@ -61,7 +61,7 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
         }
         catch (e) {
             setErrorMessage("Error occurred while fetching branches. Check console logs.");
-            const errorNotification = handleApiError(e, navigate, "Error occurred while fetching branches!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error occurred while fetching branches!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
     }
@@ -90,7 +90,7 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
             setTitle("Error deleting branch!")
             setErrorMessage("Check console logs for more information.");
             setSuccessfullyDeleted(false);
-            const errorNotification = handleApiError(e, navigate, "Error deleting branch!", "Check console logs for more information.");
+            const errorNotification = await handleApiError(e, navigate, "Error deleting branch!", "Check console logs for more information.");
             setNotification(errorNotification);
         }
         finally {
