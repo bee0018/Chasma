@@ -59,6 +59,7 @@ public class HealthController : ControllerBase
     /// <returns>The message to restarting the application.</returns>
     [HttpPost]
     [Route("restart")]
+    [AllowAnonymous]
     public ActionResult<HeartbeatMessage> RestartApplication()
     {
         HeartbeatMessage heartbeatMessage;

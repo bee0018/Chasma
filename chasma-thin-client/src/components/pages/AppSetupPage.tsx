@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useCacheStore } from "../../managers/CacheManager";
 import { isBlankOrUndefined } from "../../stringHelperUtil";
 import { ChasmaWebApiConfigurations, ModifyApiConfigRequest } from "../../API/ChasmaWebApiClient";
-import { appConfigClient } from "../../managers/ApiClientManager";
+import { appConfigClient, healthClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
 
@@ -359,17 +359,59 @@ export const AppSetupPage: React.FC = () => {
         getApiConfig().catch(e => console.error(e));
     }, []);
 
+    /**
+         * Handles the event when the user wants to restart the application.
+         */
+    const handleRestartApplication = async () => {
+        if (window.confirm("Are you sure you want to restart Emryce?")) {
+            setNotification({
+                title: "Sending restart signal...",
+                message: "Will launch new instance when system restarts.",
+                isError: false,
+                loading: true,
+            });
+            try {
+                await healthClient.restartApplication();
+                setTimeout(() => {
+                    useCacheStore.getState().clearCache();
+                }, 4000);
+                setTimeout(() => {
+                    window.location.href = "about:blank";
+                }, 100);
+            } catch (error) {
+                setNotification({
+                    title: "Failed to restart!",
+                    message: "Review server logs for more information.",
+                    isError: true,
+                });
+            }
+        }
+    };
+
     return (
         <div className="panel-card">
             {user === null &&
+                <>
                 <button
                     className="continue-button"
                     onClick={handleNavigation}
                 >
                     Continue to Login →
                 </button>
+                <button
+                    className="restart-button"
+                    onClick={handleRestartApplication}
+                >
+                    Restart ↺
+                </button>
+                </>
             }
-            <h1 className="page-title">System Settings</h1>
+
+            <div className="workflow-page-header" style={{ marginTop: "55px" }}>
+                <h1>System Settings</h1>
+                <p>Architecting the environment, one variable at a time 🧩</p>
+            </div>
+            <br />
 
             {/* Secure Binding Port */}
             <div className="xml-attr">
