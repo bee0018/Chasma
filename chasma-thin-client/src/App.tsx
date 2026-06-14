@@ -29,6 +29,7 @@ import GlobalRepositoryTab from './components/dashboardTabs/GlobalRepositoryTab'
 import ApplySnapshotsTab from './components/dashboardTabs/ApplySnapshotsTab';
 import ApiStatusTab from './components/dashboardTabs/ApiStatusTab';
 import HomeTab from './components/dashboardTabs/HomeTab';
+import ForgotPasswordPage from './components/pages/ForgotPasswordPage';
 
 function App() {
     /** The notification modal to display in the application. */
@@ -149,6 +150,7 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/setup" element={<AppSetupPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/home" element={<Dashboard />}>
                     <Route index element={<HomeTab />} />
                     <Route path="userConfig" element={<UserConfigTab />} />

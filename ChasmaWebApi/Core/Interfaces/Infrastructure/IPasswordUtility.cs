@@ -1,4 +1,6 @@
-﻿namespace ChasmaWebApi.Core.Interfaces.Infrastructure
+﻿using ChasmaWebApi.Data.Models;
+
+namespace ChasmaWebApi.Core.Interfaces.Infrastructure
 {
     /// <summary>
     /// Defines the members of the password utility interface.
@@ -28,5 +30,27 @@
         /// <param name="password">The plain text password to validate.</param>
         /// <returns>True if the password meets the strength requirements; false otherwise. </returns>
         bool IsPasswordValid(string password);
+
+        /// <summary>
+        /// Gets the security question for the user account that is randomly selected.
+        /// </summary>
+        /// <param name="user">The user.</param>
+        /// <returns>The randomly selected security question.</returns>
+        string GetRandomSecurityQuestion(UserAccountModel user);
+
+        /// <summary>
+        /// Gets the security answer for the user account that is randomly selected.
+        /// </summary>
+        /// <param name="user">The user to validate.</param>
+        /// <param name="securityQuestion">The security question to validate.</param>
+        /// <param name="plainTextSecurityAnswer">The security question's answer in plain text.</param>
+        /// <returns>True if the security question is valid; false otherwise.</returns>
+        bool VerifySecurityQuestionAnswer(UserAccountModel user, string securityQuestion, string plainTextSecurityAnswer);
+
+        /// <summary>
+        /// Gets the list of security questions for the user account, categorized by type (fact-based, personal favorite, family and relationship).
+        /// </summary>
+        /// <returns>The list of security questions.</returns>
+        (List<string> FactBasedQuestions, List<string> PersonalFavoriteQuestions, List<string> FamilyAndRelationshipQuestions) GetSecurityQuestions();
     }
 }

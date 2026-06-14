@@ -59,5 +59,59 @@ namespace ChasmaWebApi.Data.Models
         /// </summary>
         [Column("refreshTokenExpiration")]
         public DateTime RefreshTokenExpiration { get; set; }
+
+        /// <summary>
+        /// Gets or sets the first security question for account recovery.
+        /// </summary>
+        [Column("first_security_question")]
+        public string FirstSecurityQuestion { get; set; }
+
+        /// <summary>
+        /// Gets or sets the answer to the first security question.
+        /// </summary>
+        [Column("first_security_answer")]
+        public string FirstSecurityAnswer { get; set; }
+
+        /// <summary>
+        /// Gets or sets the salt used for hashing the answer to the first security question.
+        /// </summary>
+        [Column("first_security_answer_salt")]
+        public byte[] FirstSecurityAnswerSalt { get; set; }
+
+        /// <summary>
+        /// Gets or sets the second security question for account recovery.
+        /// </summary>
+        [Column("second_security_question")]
+        public string SecondSecurityQuestion { get; set; }
+
+        /// <summary>
+        /// Gets or sets the answer to the second security question.
+        /// </summary>
+        [Column("second_security_answer")]
+        public string SecondSecurityAnswer { get; set; }
+
+        /// <summary>
+        /// Gets or sets the salt used for hashing the answer to the second security question.
+        /// </summary>
+        [Column("second_security_answer_salt")]
+        public byte[] SecondSecurityAnswerSalt { get; set; }
+
+        /// <summary>
+        /// Gets or sets the third security question for account recovery.
+        /// </summary>
+        [Column("third_security_question")]
+        public string ThirdSecurityQuestion { get; set; }
+
+        /// <summary>
+        /// Gets or sets the answer to the third security question.
+        /// </summary>
+        [Column("third_security_answer")]
+        public string ThirdSecurityAnswer { get; set; }
+
+        /// <summary>
+        /// Gets or sets the salt used for hashing the answer to the third security question.
+        /// </summary>
+        [Column("third_security_answer_salt")]
+        public byte[] ThirdSecurityAnswerSalt { get; set; }
     }
 }

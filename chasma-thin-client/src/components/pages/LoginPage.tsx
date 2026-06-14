@@ -139,14 +139,21 @@ const LoginPage: React.FC = () => {
                         onChange={(e) => setUserName(e.target.value)}
                         required
                     />
-                    <input
-                        type="password"
-                        className="input-field"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
+                    <div className="password-container">
+                        <input
+                            type="password"
+                            className="input-field"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                        <div className="forgot-password-wrapper">
+                            <Link to="/forgot-password" className="forgot-password-link">
+                                Forgot password?
+                            </Link>
+                        </div>
+                    </div>
                     <button
                         type="submit"
                         className="submit-button"
