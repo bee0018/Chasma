@@ -32,15 +32,11 @@ try
             ChasmaWebApiConfigurations.IsDevelopmentMode = builder.Environment.IsDevelopment();
             HandleConfigurationFileSetup(appDataDirectory);
             string configFilePath = ChasmaWebApiConfigurations.GetConfigXmlFilePath();
-            webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
-            if (webApiConfigurations == null)
-            {
-                throw new Exception("Failed to load configuration. Please ensure the configuration file is present and valid.");
-            }
-
+            webApiConfigurations = ChasmaXmlBase.DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath) ?? throw new Exception("Failed to load configuration. Please ensure the configuration file is present and valid.");
             if (IsPortInUse(webApiConfigurations.SecureBindingPort) && await IsOurApiRunning(webApiConfigurations.SecureBindingPort))
             {
                 // An instance of the API is already running on the specified port, so we can skip starting a new one and just open the browser to the existing instance.
+                Log.Information("An instance of Emryce is already running on port {Port}. Opening browser to the existing instance...", webApiConfigurations.SecureBindingPort);
                 LaunchStartupGate(webApiConfigurations.SecureBindingPort);
                 return;
             }
@@ -54,7 +50,7 @@ try
             WebApplication app = builder.Build();
             await app.UseApplicationServices();
             await app.StartAsync();
-            LaunchStartupGate(webApiConfigurations.SecureBindingPort);
+            await Task.Run(() => LaunchStartupGate(webApiConfigurations.SecureBindingPort));
             await app.WaitForShutdownAsync();
             return;
         }
@@ -107,23 +103,19 @@ static bool IsPortInUse(int port)
 /// Note: The startup gate is responsible for prompting the user to setup the application or directly to login.
 /// </summary>
 /// <param name="port">The port to launch application from.</param>
-static async void LaunchStartupGate(int port)
+static void LaunchStartupGate(int port)
 {
-    // Open the default browser after a short delay to ensure the server is up and running.
-    await Task.Run(() =>
+    try
     {
-        try
+        Thread.Sleep(1000);
+        ProcessStartInfo startInfo = new()
         {
-            Thread.Sleep(1000);
-            ProcessStartInfo startInfo = new()
-            {
-                FileName = $"https://localhost:{port}",
-                UseShellExecute = true
-            };
-            Process.Start(startInfo);
-        }
-        catch { }
-    });
+            FileName = $"https://localhost:{port}",
+            UseShellExecute = true
+        };
+        Process.Start(startInfo);
+    }
+    catch { }
 }
 
 /// <summary>
