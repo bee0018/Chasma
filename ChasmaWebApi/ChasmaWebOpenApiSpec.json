@@ -1779,6 +1779,122 @@
           }
         }
       }
+    },
+    "/api/User/getSecurityQuestions": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_GetSecurityQuestions",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSecurityQuestionsMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/getRandomSecurityQuestion": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_GetRandomSecurityQuestion",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetRandomSecurityQuestionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRandomSecurityQuestionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/validateSecurityQuestionAnswer": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_ValidateSecurityQuestionAnswer",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateSecurityAnswerRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateSecurityAnswerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/resetPassword": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "User_ResetPassword",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4488,6 +4604,24 @@
           },
           "password": {
             "type": "string"
+          },
+          "firstSecurityQuestion": {
+            "type": "string"
+          },
+          "firstSecurityAnswer": {
+            "type": "string"
+          },
+          "secondSecurityQuestion": {
+            "type": "string"
+          },
+          "secondSecurityAnswer": {
+            "type": "string"
+          },
+          "thirdSecurityQuestion": {
+            "type": "string"
+          },
+          "thirdSecurityAnswer": {
+            "type": "string"
           }
         }
       },
@@ -4639,6 +4773,114 @@
             }
           }
         ]
+      },
+      "GetSecurityQuestionsMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "securityQuestionsFirstSet": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "securityQuestionsSecondSet": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "securityQuestionsThirdSet": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GetRandomSecurityQuestionResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "securityQuestion": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "GetRandomSecurityQuestionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userName": {
+            "type": "string"
+          }
+        }
+      },
+      "ValidateSecurityAnswerResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "isAnswerValid": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "ValidateSecurityAnswerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "securityQuestion": {
+            "type": "string"
+          },
+          "securityAnswer": {
+            "type": "string"
+          }
+        }
+      },
+      "ResetPasswordResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "successfullyReset": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
       }
     }
   }

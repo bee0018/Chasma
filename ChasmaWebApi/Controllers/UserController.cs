@@ -1,10 +1,13 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
+using ChasmaWebApi.Data.Messages.Application;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Requests.Configuration;
+using ChasmaWebApi.Data.Requests.Infrastructure;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
+using ChasmaWebApi.Data.Responses.Infrastructure;
 using ChasmaWebApi.Data.Responses.Status;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -210,6 +213,60 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
+            string firstSecurityQuestion = request.FirstSecurityQuestion;
+            if (string.IsNullOrEmpty(firstSecurityQuestion))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Must have a first security question selected.";
+                logger.LogError("The first security question has not been selecting when adding a new user. Sending error response");
+                return Ok(response);
+            }
+
+            string firstSecurityAnswer = request.FirstSecurityAnswer;
+            if (string.IsNullOrEmpty(firstSecurityAnswer))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Must have a first security answer populated.";
+                logger.LogError("The first security answer has not been populated when adding a new user. Sending error response");
+                return Ok(response);
+            }
+
+            string secondSecurityQuestion = request.SecondSecurityQuestion;
+            if (string.IsNullOrEmpty(secondSecurityQuestion))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Must have a second security question selected.";
+                logger.LogError("The second security question has not been selecting when adding a new user. Sending error response");
+                return Ok(response);
+            }
+
+            string secondSecurityAnswer = request.SecondSecurityAnswer;
+            if (string.IsNullOrEmpty(secondSecurityAnswer))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Must have a second security answer populated.";
+                logger.LogError("The second security answer has not been populated when adding a new user. Sending error response");
+                return Ok(response);
+            }
+
+            string thirdSecurityQuestion = request.ThirdSecurityQuestion;
+            if (string.IsNullOrEmpty(thirdSecurityQuestion))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Must have a third security question selected.";
+                logger.LogError("The third security question has not been selecting when adding a new user. Sending error response");
+                return Ok(response);
+            }
+
+            string thirdSecurityAnswer = request.ThirdSecurityAnswer;
+            if (string.IsNullOrEmpty(thirdSecurityAnswer))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Must have a third security answer populated.";
+                logger.LogError("The third security answer has not been populated when adding a new user. Sending error response");
+                return Ok(response);
+            }
+
             if (await applicationDbContext.UserAccounts.AnyAsync(u => u.UserName == request.UserName))
             {
                 response.IsErrorResponse = true;
@@ -227,6 +284,9 @@ namespace ChasmaWebApi.Controllers
             }
 
             (string hashedPassword, byte[] salt) = passwordUtility.HashPassword(password);
+            (string firstHashedAnswer, byte[] firstAnswerSalt) = passwordUtility.HashPassword(firstSecurityAnswer);
+            (string secondHashedAnswer, byte[] secondAnswerSalt) = passwordUtility.HashPassword(secondSecurityAnswer);
+            (string thirdHashedAnswer, byte[] thirdAnswerSalt) = passwordUtility.HashPassword(thirdSecurityAnswer);
             UserAccountModel account = new()
             {
                 Name = request.Name,
@@ -236,6 +296,15 @@ namespace ChasmaWebApi.Controllers
                 Salt = salt,
                 RefreshToken = GenerateRefreshToken(),
                 RefreshTokenExpiration = DateTime.UtcNow.AddDays(7),
+                FirstSecurityQuestion = firstSecurityQuestion,
+                FirstSecurityAnswer = firstHashedAnswer,
+                FirstSecurityAnswerSalt = firstAnswerSalt,
+                SecondSecurityQuestion = secondSecurityQuestion,
+                SecondSecurityAnswer = secondHashedAnswer,
+                SecondSecurityAnswerSalt = secondAnswerSalt,
+                ThirdSecurityQuestion = thirdSecurityQuestion,
+                ThirdSecurityAnswer = thirdHashedAnswer,
+                ThirdSecurityAnswerSalt = thirdAnswerSalt,
             };
             try
             {
@@ -544,13 +613,189 @@ namespace ChasmaWebApi.Controllers
             return Ok(response);
         }
 
-        #region Private Methods
+        /// <summary>
+        /// Gets the security questions available in the system for validating users during password reset.
+        /// </summary>
+        /// <returns>The message containing the security questions.</returns>
+        [HttpGet]
+        [Route("getSecurityQuestions")]
+        [AllowAnonymous]
+        public ActionResult<GetSecurityQuestionsMessage> GetSecurityQuestions()
+        {
+            (List<string> FactBasedQuestions, List<string> PersonalFavoriteQuestions, List<string> FamilyAndRelationshipQuestions) = passwordUtility.GetSecurityQuestions();
+            GetSecurityQuestionsMessage response = new()
+            {
+                SecurityQuestionsFirstSet = FactBasedQuestions,
+                SecurityQuestionsSecondSet = PersonalFavoriteQuestions,
+                SecurityQuestionsThirdSet = FamilyAndRelationshipQuestions,
+            };
+            return Ok(response);
+        }
 
         /// <summary>
-        /// Generates the access token for the user.
+        /// Gets a random security question for the specified user to be used for validating the user during password reset.
         /// </summary>
-        /// <param name="account">The user to provide the access token for.</param>
-        /// <returns>The generate token.</returns>
+        /// <param name="request">The request to get a random security question.</param>
+        /// <returns>The response to getting a random security question.</returns>
+        [HttpPost]
+        [Route("getRandomSecurityQuestion")]
+        [AllowAnonymous]
+        public async Task<ActionResult<GetRandomSecurityQuestionResponse>> GetRandomSecurityQuestion([FromBody] GetRandomSecurityQuestionRequest request)
+        {
+            GetRandomSecurityQuestionResponse response = new();
+            string username = request.UserName;
+            if (string.IsNullOrEmpty(username))
+            {
+                logger.LogError("Null or empty username received for {request}. Sending error response.", nameof(GetRandomSecurityQuestionRequest));
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Username must be provided.";
+                return Ok(response);
+            }
+
+            UserAccountModel user = await applicationDbContext.UserAccounts.FirstOrDefaultAsync(u => u.UserName == username);
+            if (user == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid username.";
+                logger.LogError("Username {username} does not exist. Sending error response", request.UserName);
+                return Ok(response);
+            }
+
+            response.SecurityQuestion = passwordUtility.GetRandomSecurityQuestion(user);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Validates the answer to the security question for the specified user during password reset.
+        /// </summary>
+        /// <param name="request">The request to validate a security answer.</param>
+        /// <returns>The response to validating a security answer.</returns>
+        [HttpPost]
+        [Route("validateSecurityQuestionAnswer")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ValidateSecurityAnswerResponse>> ValidateSecurityQuestionAnswer([FromBody] ValidateSecurityAnswerRequest request)
+        {
+            ValidateSecurityAnswerResponse response = new();
+            string username = request.UserName;
+            if (string.IsNullOrEmpty(username))
+            {
+                logger.LogError("Null or empty username received for {request}. Sending error response.", nameof(ValidateSecurityAnswerResponse));
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Username must be provided.";
+                return Ok(response);
+            }
+
+            string securityQuestion = request.SecurityQuestion;
+            if (string.IsNullOrEmpty(securityQuestion))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Security question must be populated.";
+                logger.LogError("No security question provided when trying validate security question or {username}. Sending error response", username);
+                return Ok(response);
+            }
+
+            string plainTextSecurityAnswer = request.SecurityAnswer;
+            if (string.IsNullOrEmpty(plainTextSecurityAnswer))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Security answer must be populated.";
+                logger.LogError("No security answer provided when trying validate security answer or {username}. Sending error response", username);
+                return Ok(response);
+            }
+
+            UserAccountModel user = await applicationDbContext.UserAccounts.FirstOrDefaultAsync(u => u.UserName == username);
+            if (user == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid username.";
+                logger.LogError("Username {username} does not exist. Sending error response", request.UserName);
+                return Ok(response);
+            }
+
+            bool isAnswerValid = passwordUtility.VerifySecurityQuestionAnswer(user, securityQuestion, plainTextSecurityAnswer);
+            if (!isAnswerValid)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Incorrect answer to security question.";
+                logger.LogError("Incorrect answer provided for username {username}. Sending error response.", request.UserName);
+                return Ok(response);
+            }
+
+            response.IsAnswerValid = true;
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Resets the password for the specified user account after validating the answers to the security questions.
+        /// </summary>
+        /// <param name="request">The reset password request.</param>
+        /// <returns>The response to resetting a password.</returns>
+        [HttpPost]
+        [Route("resetPassword")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ResetPasswordResponse>> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            ResetPasswordResponse response = new();
+            string requestName = nameof(ResetPasswordRequest);
+            if (request == null)
+            {
+                logger.LogError("Null {request} recieved. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid request received.";
+                return BadRequest(response);
+            }
+
+            string password = request.Password;
+            if (!passwordUtility.IsPasswordValid(password))
+            {
+                logger.LogError("Failed to reset password. Password provided does not meet complexity requirements. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Password does not meet complexity requirements.";
+                return Ok(response);
+            }
+
+            string username = request.UserName;
+            if (string.IsNullOrEmpty(username))
+            {
+                logger.LogError("Null or empty username received for {request}. Sending error response.", nameof(ResetPasswordRequest));
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Username must be provided.";
+                return Ok(response);
+            }
+
+            UserAccountModel user = await applicationDbContext.UserAccounts.FirstOrDefaultAsync(u => u.UserName == username);
+            if (user == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid username.";
+                logger.LogError("Username {username} does not exist. Sending error response", username);
+                return Ok(response);
+            }
+
+            if (passwordUtility.VerifyPassword(password, user.Salt, user.Password))
+            {
+                logger.LogError("Failed to reset password because the incoming password was the same as the existing password. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The new password cannot be the same as the old.";
+                return Ok(response);
+            }
+
+            (string hashedPassword, byte[] salt) = passwordUtility.HashPassword(password);
+            user.Password = hashedPassword;
+            user.Salt = salt;
+            await applicationDbContext.SaveChangesAsync();
+
+            response.SuccessfullyReset = true;
+            return Ok(response);
+        }
+
+        #region Private Methods
+
+            /// <summary>
+            /// Generates the access token for the user.
+            /// </summary>
+            /// <param name="account">The user to provide the access token for.</param>
+            /// <returns>The generate token.</returns>
         private static string GenerateAccessToken(UserAccountModel account)
         {
             List<Claim> claims =

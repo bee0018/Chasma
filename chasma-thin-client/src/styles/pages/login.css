@@ -209,3 +209,25 @@
     outline: 2px solid #22d3ee;
     outline-offset: 2px;
 }
+
+.password-container {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.forgot-password-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+}
+
+.forgot-password-link {
+    font-size: 0.85rem;
+    color: #22d3ee;
+    text-decoration: none;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
