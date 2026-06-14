@@ -12,7 +12,7 @@ import { useDocumentTitle } from "../../util/useDocumentTitle";
  */
 export const AppSetupPage: React.FC = () => {
     useDocumentTitle("System Settings");
-    
+
     /** Sets the notification modal. */
     const setNotification = useCacheStore(state => state.setNotification);
 
@@ -361,12 +361,14 @@ export const AppSetupPage: React.FC = () => {
 
     return (
         <div className="panel-card">
-            <button
-                className="continue-button"
-                onClick={handleNavigation}
-            >
-                {user === null ? "Continue to Login" : "Home"} →
-            </button>
+            {user === null &&
+                <button
+                    className="continue-button"
+                    onClick={handleNavigation}
+                >
+                    Continue to Login →
+                </button>
+            }
             <h1 className="page-title">System Settings</h1>
 
             {/* Secure Binding Port */}
