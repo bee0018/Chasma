@@ -7,9 +7,7 @@ import LoginPage from "./components/pages/LoginPage";
 import RegisterPage from "./components/pages/RegisterPage";
 import HelpPage from "./components/pages/HelpPage";
 import HelpConfigXmlPage from "./components/pages/help/HelpConfigXmlPage";
-import HelpApiStartPage from "./components/pages/help/HelpApiStartPage";
 import HelpFrequentlyAskedQuestionsPage from "./components/pages/help/HelpFrequentlyAskedQuestionsPage";
-import HelpRepoContextMenuPage from "./components/pages/help/HelpRepoContextMenuPage";
 import HelpGitHubApiIntegrationsPage from "./components/pages/help/HelpGitHubApiIntegrationsPage";
 import HelpCommonGitCommandsPage from "./components/pages/help/HelpCommonGitCommandsPage";
 import HelpGitLabApiIntegrationPage from "./components/pages/help/HelpGitLabApiIntegrationPage";
@@ -165,9 +163,7 @@ function App() {
                 </Route>
                 <Route path="/help" element={<HelpPage />}>
                     <Route path="config" element={<HelpConfigXmlPage />} />
-                    <Route path="api-start" element={<HelpApiStartPage />} />
                     <Route path="faq" element={<HelpFrequentlyAskedQuestionsPage />} />
-                    <Route path="context-menu" element={<HelpRepoContextMenuPage />} />
                     <Route path="github-api" element={<HelpGitHubApiIntegrationsPage />} />
                     <Route path="gitlab-api" element={<HelpGitLabApiIntegrationPage />} />
                     <Route path="git-commands" element={<HelpCommonGitCommandsPage />} />

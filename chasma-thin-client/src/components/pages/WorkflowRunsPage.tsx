@@ -10,6 +10,7 @@ import {useNavigate, useParams} from "react-router-dom";
 import {remoteClient} from "../../managers/ApiClientManager";
 import {useCacheStore} from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import { useDocumentTitle } from "../../util/useDocumentTitle";
 
 /**
  * Initializes a new instance of the WorkflowRunsPage.
@@ -21,6 +22,7 @@ const WorkflowRunsPage: React.FC = () => {
 
     /** Gets the selected repository. **/
     const selectedRepo = useCacheStore(state => state.repositories.find(i => i.id === repoId));
+    useDocumentTitle(`${selectedRepo?.displayName ? selectedRepo.displayName : selectedRepo?.name} Builds`);
 
     /** Gets or sets the GitHub workflow results. **/
     const [workflows, setWorkflows] = useState<WorkflowRunResult[] | undefined>(undefined);
