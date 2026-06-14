@@ -161,6 +161,7 @@ function App() {
                     <Route path="global" element={<GlobalRepositoryTab />} />
                     <Route path="snapshots" element={<ApplySnapshotsTab />} />
                     <Route path="apiStatus" element={<ApiStatusTab />} />
+                    <Route path="setup" element={<AppSetupPage />} />
                 </Route>
                 <Route path="/help" element={<HelpPage />}>
                     <Route path="config" element={<HelpConfigXmlPage />} />

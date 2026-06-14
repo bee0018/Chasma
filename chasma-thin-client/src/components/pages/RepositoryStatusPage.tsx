@@ -42,7 +42,7 @@ import { useDocumentTitle } from "../../util/useDocumentTitle";
  * Initializes a new instance of the Repository Status Page class.
  * @constructor
  */
-const RepositoryStatusPage: React.FC = () => {    
+const RepositoryStatusPage: React.FC = () => {
     /** The repository name and identifier from the url. **/
     const { repoName, repoId } = useParams<{ repoName: string; repoId: string }>();
 
@@ -176,6 +176,15 @@ const RepositoryStatusPage: React.FC = () => {
         setActiveTab(tab);
     };
 
+    /** Gets or sets a value indicating whether the repository actions tab is open. */
+    const [isRepoActionsOpen, setIsRepoActionsOpen] = useState<boolean>(false);
+
+    /** Gets or sets a value indicating whether the branch actions tab is open. */
+    const [isBranchOptionsOpen, setIsBranchOptionsOpen] = useState<boolean>(false);
+
+    /** Gets or sets a value indicating whether the remote actions tab is open. */
+    const [isRemoteOptionsOpen, setIsRemoteOptionsOpen] = useState<boolean>(false);
+
     /** Load git status every 2.5s **/
     useEffect(() => {
         if (!repoId) return;
@@ -225,7 +234,7 @@ const RepositoryStatusPage: React.FC = () => {
                 // Not going to handle non-API/nswag related exceptions.
                 return;
             }
-            
+
             const errorNotification = await handleApiError(e, navigate, "Failed to perform 'git status' operation!", "An internal server error has occurred. Review logs.");
             setNotification(errorNotification);
         }
@@ -573,31 +582,74 @@ const RepositoryStatusPage: React.FC = () => {
                 >
                     Repo Status 📊
                 </div>
-                <div
-                    className="tab"
-                    onClick={() => setIsPullingChanges(true)}
-                >
-                    Pull ⬇️
-                </div>
                 {!isSafeMode &&
                     <>
-                        <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
-                        <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>
-                        <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>
                         <div
                             className={`tab ${activeTab === "stashes" ? "active" : ""}`}
                             onClick={() => handleTabClick("stashes")}
                         >
                             Stashes🗄️
                         </div>
-                        <div className="tab" onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
+                        <div
+                            className={`tab ${activeTab === "shell" ? "active" : ""}`}
+                            onClick={() => handleTabClick("shell")}>
+                            Custom Shell Commands🖥️
+                        </div>
                     </>
                 }
-                <div className="tab" onClick={() => setIsAddingBranch(true)}>Add Branch ➕</div>
-                <div className="tab" onClick={() => setIsMergingBranch(true)}>Merge 🔀</div>
-                {!isSafeMode &&
+                <div
+                    className="sidebar-section-header"
+                    onClick={() => setIsRepoActionsOpen(!isRepoActionsOpen)}
+                >
+                    <span>Repo Actions</span>
+                    <span className={`arrow ${isRepoActionsOpen ? "open" : ""}`}>▶</span>
+                </div>
+                {isRepoActionsOpen && (
+                    <div className="sidebar-section-content">
+                        <div
+                            className="tab"
+                            onClick={() => setIsPullingChanges(true)}
+                        >
+                            Pull ⬇️
+                        </div>
+
+                        {!isSafeMode &&
+                            <>
+                                <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
+                                <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>
+                                <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>
+                            </>
+                        }
+                    </div>
+                )}
+                <div
+                    className="sidebar-section-header"
+                    onClick={() => setIsBranchOptionsOpen(!isBranchOptionsOpen)}
+                >
+                    <span>Branch Actions</span>
+                    <span className={`arrow ${isBranchOptionsOpen ? "open" : ""}`}>▶</span>
+                </div>
+                {isBranchOptionsOpen && (
+                    <div className="sidebar-section-content">
+                        <div className="tab" onClick={() => setIsAddingBranch(true)}>Add Branch ➕</div>
+                        <div className="tab" onClick={() => setIsMergingBranch(true)}>Merge 🔀</div>
+                        {!isSafeMode &&
+                            <>
+                                <div className="tab" onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
+                                <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
+                            </>
+                        }
+                    </div>
+                )}
+                <div
+                    className="sidebar-section-header"
+                    onClick={() => setIsRemoteOptionsOpen(!isRemoteOptionsOpen)}
+                >
+                    <span>Remote Actions</span>
+                    <span className={`arrow ${isRemoteOptionsOpen ? "open" : ""}`}>▶</span>
+                </div>
+                {isRemoteOptionsOpen && !isSafeMode &&
                     <>
-                        <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
                         {user?.permissions
                             && user.permissions.isUsingGitHubApi
                             && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
@@ -638,12 +690,6 @@ const RepositoryStatusPage: React.FC = () => {
                                 Create GitLab Issue🐛
                             </div>
                         }
-                        <div
-                            className={`tab ${activeTab === "shell" ? "active" : ""}`}
-                            style={{ marginTop: "20px" }}
-                            onClick={() => handleTabClick("shell")}>
-                            Custom Shell Commands🖥️
-                        </div>
                     </>
                 }
             </aside>
