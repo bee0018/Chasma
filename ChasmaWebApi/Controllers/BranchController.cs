@@ -1,6 +1,7 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
+using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
@@ -110,7 +111,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            if (request.IsCheckingOutNewBranch && !applicationControlService.TryCheckoutBranch(workingDirectory, branchName, out string checkoutErrorMessage))
+            if (request.IsCheckingOutNewBranch && !applicationControlService.TryCheckoutBranch(workingDirectory, branchName, BranchCheckoutMode.Default, null, user, out string checkoutErrorMessage))
             {
                 logger.LogError("Successfully created branch but failed to checkout to new branch {branchName} for repository {repoId}. Reason: {reason}", branchName, repoId, checkoutErrorMessage);
                 response.IsErrorResponse = true;
@@ -206,9 +207,28 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
+            {
+                logger.LogError("Invalid {request}. User with identifier {id} does not exist. Sending error response.", nameof(GitCheckoutRequest), userId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid request. Could not find user.";
+                return Ok(response);
+            }
+
+            BranchCheckoutMode checkoutMode = request.CheckoutMode;
+            string stashMessage = request.StashMessage;
+            if (checkoutMode == BranchCheckoutMode.StashOnly && string.IsNullOrEmpty(stashMessage))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Stash message must be populated when checkout mode is StashOnly. Cannot checkout branch.";
+                logger.LogError("Checkout mode is StashOnly but stash message is null or empty. Sending error response");
+                return Ok(response);
+            }
+
             try
             {
-                if (!applicationControlService.TryCheckoutBranch(workingDirectory, request.BranchName, out string errorMessage))
+                if (!applicationControlService.TryCheckoutBranch(workingDirectory, request.BranchName, checkoutMode, stashMessage, user, out string errorMessage))
                 {
                     response.IsErrorResponse = true;
                     response.ErrorMessage = $"Failed to checkout branch to repo: {repoId}. {errorMessage}";

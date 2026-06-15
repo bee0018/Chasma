@@ -185,6 +185,9 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets a value indicating whether the remote actions tab is open. */
     const [isRemoteOptionsOpen, setIsRemoteOptionsOpen] = useState<boolean>(false);
 
+    /** Gets or sets a value indicating whether the stashes and automation actions tab is open. */
+    const [isStashesAndAutomationOptionsOpen, setIsStashesAndAutomationOptionsOpen] = useState<boolean>(false);
+
     /** Load git status every 2.5s **/
     useEffect(() => {
         if (!repoId) return;
@@ -582,21 +585,33 @@ const RepositoryStatusPage: React.FC = () => {
                 >
                     Repo Status 📊
                 </div>
-                {!isSafeMode &&
-                    <>
-                        <div
-                            className={`tab ${activeTab === "stashes" ? "active" : ""}`}
-                            onClick={() => handleTabClick("stashes")}
-                        >
-                            Stashes🗄️
-                        </div>
-                        <div
-                            className={`tab ${activeTab === "shell" ? "active" : ""}`}
-                            onClick={() => handleTabClick("shell")}>
-                            Custom Shell Commands🖥️
-                        </div>
-                    </>
-                }
+
+                <div
+                    className="sidebar-section-header"
+                    onClick={() => setIsStashesAndAutomationOptionsOpen(!isStashesAndAutomationOptionsOpen)}
+                >
+                    <span>Stashes & Automation</span>
+                    <span className={`arrow ${isStashesAndAutomationOptionsOpen ? "open" : ""}`}>▶</span>
+                </div>
+                {isStashesAndAutomationOptionsOpen && (
+                    <div className="sidebar-section-content">
+                        {!isSafeMode &&
+                            <>
+                                <div
+                                    className={`tab ${activeTab === "stashes" ? "active" : ""}`}
+                                    onClick={() => handleTabClick("stashes")}
+                                >
+                                    Stashes🗄️
+                                </div>
+                                <div
+                                    className={`tab ${activeTab === "shell" ? "active" : ""}`}
+                                    onClick={() => handleTabClick("shell")}>
+                                    Custom Shell Commands🖥️
+                                </div>
+                            </>
+                        }
+                    </div>
+                )}
                 <div
                     className="sidebar-section-header"
                     onClick={() => setIsRepoActionsOpen(!isRepoActionsOpen)}

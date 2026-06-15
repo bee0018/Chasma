@@ -177,9 +177,9 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public bool TryCheckoutBranch(string workingDirectory, string branchName, out string errorMessage)
+        public bool TryCheckoutBranch(string workingDirectory, string branchName, BranchCheckoutMode checkoutMode, string? stashMessage, ApplicationUser user, out string errorMessage)
         {
-            return gitBranchService.TryCheckoutBranch(workingDirectory, branchName, out errorMessage);
+            return gitBranchService.TryCheckoutBranch(workingDirectory, branchName, checkoutMode, stashMessage, out errorMessage, user);
         }
 
         // <inheritdoc />

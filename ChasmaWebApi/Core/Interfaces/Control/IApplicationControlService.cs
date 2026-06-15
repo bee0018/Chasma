@@ -79,9 +79,12 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// </summary>
         /// <param name="workingDirectory">The working directory of the repository.</param>
         /// <param name="branchName">The branch to checkout.</param>
+        /// <param name="checkoutMode">The branch checkout mode to determine how to handle uncommitted changes when checking out a branch.</param>
+        /// <param name="stashMessage">The stash message to use if stashing is needed when checking out the branch.</param>
+        /// <param name="user">The user performing the branch checkout.</param>
         /// <param name="errorMessage">The error message if there an issue checking out the branch.</param>
         /// <returns>True if the branch is checked out; false otherwise.</returns>
-        bool TryCheckoutBranch(string workingDirectory, string branchName, out string errorMessage);
+        bool TryCheckoutBranch(string workingDirectory, string branchName, BranchCheckoutMode checkoutMode, string? stashMessage, ApplicationUser user, out string errorMessage);
 
         /// <summary>
         /// Gets the list of all branches in the specified repository.

@@ -1,9 +1,10 @@
-﻿import {GitBranchRequest, GitCheckoutRequest} from "../../API/ChasmaWebApiClient";
-import React, {useEffect, useState} from "react";
-import {branchClient} from "../../managers/ApiClientManager";
+﻿import { BranchCheckoutMode, GitBranchRequest, GitCheckoutRequest } from "../../API/ChasmaWebApiClient";
+import React, { useEffect, useState } from "react";
+import { branchClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import Checkbox from "../Checkbox";
 
 /**
  * The members of the checkout modal.
@@ -46,14 +47,32 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
+
+    /** Gets the logged-in user. */
+    const user = useCacheStore(state => state.user);
+
+    /** Gets or sets the branch checkout mode. */
+    const [branchCheckoutMode, setBranchCheckoutMode] = useState<BranchCheckoutMode>(BranchCheckoutMode.Default);
+
+    /** Gets or sets the stash message the user has input. **/
+    const [stashMessage, setStashMessage] = useState<string | undefined>(undefined);
 
     /** Handles the event when the user requests to check out changes. **/
     const handleCheckoutChangesRequest = async () => {
+        if (branchCheckoutMode === BranchCheckoutMode.StashOnly && (!stashMessage || stashMessage.length === 0)) {
+            setErrorMessage("Must include a stash message.");
+            setTitle("Could not check out branch!");
+            return;
+        }
+
         const request = new GitCheckoutRequest();
         request.repositoryId = props.repositoryId;
         request.branchName = branchName;
+        request.userId = user?.userId;
+        request.checkoutMode = branchCheckoutMode;
+        request.stashMessage = stashMessage;
         try {
             const response = await branchClient.checkoutBranch(request);
             if (response.isErrorResponse) {
@@ -168,26 +187,63 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
                     </div>
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
+                    <div style={{ justifySelf: "left", display: "grid", rowGap: "8px", marginBottom: "8px" }}>
+                        <Checkbox
+                            label={"Default"}
+                            onBoxChecked={() => setBranchCheckoutMode(BranchCheckoutMode.Default)}
+                            checked={branchCheckoutMode === BranchCheckoutMode.Default}
+                            tooltip="The default git checkout behavior."
+                        />
+                        <Checkbox
+                            label={"Stash Only"}
+                            onBoxChecked={() => setBranchCheckoutMode(BranchCheckoutMode.StashOnly)}
+                            checked={branchCheckoutMode === BranchCheckoutMode.StashOnly}
+                            tooltip="Save your current workspace and start fresh."
+                        />
+                        <Checkbox
+                            label={"Keep Changes"}
+                            onBoxChecked={() => setBranchCheckoutMode(BranchCheckoutMode.KeepChanges)}
+                            checked={branchCheckoutMode === BranchCheckoutMode.KeepChanges}
+                            tooltip="Transfer your changes from your current branch to the branch you're switching to."
+                        />
+                        <Checkbox
+                            label={"Discard Changes"}
+                            onBoxChecked={() => setBranchCheckoutMode(BranchCheckoutMode.DiscardAll)}
+                            checked={branchCheckoutMode === BranchCheckoutMode.DiscardAll}
+                            tooltip="Discard all your current changes in your workspace."
+                        />
+                    </div>
+                    <br />
                     {branchesList && branchesList.length > 0 && (
                         <select value={branchName}
-                                onChange={(e) => setBranchName(e.target.value)}
-                                className="modal-input-field"
+                            onChange={(e) => setBranchName(e.target.value)}
+                            className="modal-input-field"
                         >
                             {branchesList.map((branch) => (
                                 <option key={branch} value={branch}>{branch}</option>
                             ))}
                         </select>
                     )}
-                    <br/>
+                    <br />
+                    {branchCheckoutMode === BranchCheckoutMode.StashOnly &&
+                        <>
+                            <input className="modal-input-field"
+                                placeholder="Enter Stash Title:"
+                                value={stashMessage}
+                                onChange={(e) => setStashMessage(e.target.value)} />
+
+                            <br />
+                        </>
+                    }
                     <div className="modal-actions">
                         <button className="modal-button primary"
-                                disabled={checkoutRequestSent}
-                                onClick={handleCheckoutChangesRequest}
+                            disabled={checkoutRequestSent}
+                            onClick={handleCheckoutChangesRequest}
                         >
                             Checkout
                         </button>
                         <button className="modal-button secondary"
-                                onClick={props.onClose}
+                            onClick={props.onClose}
                         >
                             Close
                         </button>

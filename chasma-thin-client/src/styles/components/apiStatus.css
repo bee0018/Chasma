@@ -1,31 +1,23 @@
-﻿/* Symmetrical Stacked Framework Configuration */
-.status-dashboard-grid {
+﻿.status-dashboard-grid {
     display: flex;
-    flex-direction: column;       /* Aligns your cards vertically on top of each other */
-    align-items: center;          /* Centers the stack cleanly within your primary screen view */
+    flex-direction: column;
+    align-items: center;
     width: 100%;
     max-width: 100%;
 }
 
-/* ==========================================================================
-   New Horizontal Separator Line Style
-   ========================================================================== */
 .card-spacer-line {
     width: 100%;
-    max-width: 520px;             /* Perfectly matches the width of the cards above and below */
+    max-width: 520px;
     border: 0;
     height: 1px;
-    background: #1e293b;          /* Matches your original subtle card border color scheme */
-    margin: 24px 0;               /* Ensures completely uniform, equal padding between elements */
+    background: #1e293b;
+    margin: 24px 0;
 }
-
-/* ==========================================================================
-   Top Module: Server Status Card Parameters (Preserved)
-   ========================================================================= */
 
 .api-status-card {
     width: 100%;
-    max-width: 520px;             /* Establishes your foundational layout size target */
+    max-width: 520px;
 }
 
 .card-header {
@@ -108,13 +100,9 @@
     color: #9ca3af;
 }
 
-/* ==========================================================================
-   Bottom Module: Power Options Card Parameters (Symmetrically Matched)
-   ========================================================================= */
-
 .power-config-card {
     width: 100%;
-    max-width: 520px;             /* Mirrors the exact sizing block limits of the Server card */
+    max-width: 520px;
     background: transparent;
 }
 

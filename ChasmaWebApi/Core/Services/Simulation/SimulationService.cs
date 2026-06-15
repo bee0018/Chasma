@@ -119,7 +119,7 @@ namespace ChasmaWebApi.Core.Services.Simulation
                     simulatedPullResult.CommitsToPull = commitEntries;
                     string tempBranchName = $"temp-dry-run-{Guid.NewGuid():N}";
                     tempBranch = repo.CreateBranch(tempBranchName, localBranch.Tip);
-                    if (!GitBranchService.TryCheckoutBranch(workingDirectory, tempBranchName, out string checkoutError))
+                    if (!GitBranchService.TryCheckoutBranch(workingDirectory, tempBranchName, BranchCheckoutMode.Default, null, out string checkoutError))
                     {
                         Logger.LogError("Failed to checkout temporary branch {tempBranch} for repository {repoId} during git pull simulation. Error: {error}", tempBranchName, repoId, checkoutError);
                         DryRunHelper.FailSimulationResult(simulatedPullResult, $"Failed to checkout temporary branch for simulating pull: {checkoutError}");
@@ -144,7 +144,7 @@ namespace ChasmaWebApi.Core.Services.Simulation
                         simulatedPullResult.IsSuccessful = true;
                     }
 
-                    if (!GitBranchService.TryCheckoutBranch(workingDirectory, friendlyBranchName, out string error))
+                    if (!GitBranchService.TryCheckoutBranch(workingDirectory, friendlyBranchName, BranchCheckoutMode.Default, null, out string error))
                     {
                         Logger.LogError("Failed to checkout back to original branch {branchName} for repository {repoId} after git pull simulation. Error: {error}", friendlyBranchName, repoId, error);
                         DryRunHelper.FailSimulationResult(simulatedPullResult, $"Failed to checkout back to original branch after simulating pull: {error}");
@@ -161,7 +161,7 @@ namespace ChasmaWebApi.Core.Services.Simulation
                     Logger.LogError("Failed to simulate git pull for repository {repoId}: {message}.", repoId, e);
                     DryRunHelper.FailSimulationResult(simulatedPullResult, "Pull would fail due to conflicts. Ensure local changes will merge into tracked branch successfully.");
                     dryRunResults.Add(simulatedPullResult);
-                    if (!GitBranchService.TryCheckoutBranch(workingDirectory, friendlyBranchName, out string checkoutError))
+                    if (!GitBranchService.TryCheckoutBranch(workingDirectory, friendlyBranchName, BranchCheckoutMode.Default, null, out string checkoutError))
                     {
                         Logger.LogError("Failed to revert back to {originalBranch} for repository {repoId} during git pull simulation. Error: {error}", friendlyBranchName, repoId, checkoutError);
                         DryRunHelper.FailSimulationResult(simulatedPullResult, $"Failed to revert to {friendlyBranchName} for simulating pull: {checkoutError}");

@@ -1,4 +1,7 @@
-﻿namespace ChasmaWebApi.Core.Interfaces.Git
+﻿using ChasmaWebApi.Data.Objects.Application;
+using ChasmaWebApi.Data.Objects.Git;
+
+namespace ChasmaWebApi.Core.Interfaces.Git
 {
     /// <summary>
     /// Interface containing the members on the Git branch service, which is responsible for handling Git branch-level operations such as fetching branches and commits from a repository.
@@ -30,9 +33,12 @@
         /// </summary>
         /// <param name="workingDirectory">The working directory of the repository.</param>
         /// <param name="branchName">The branch to checkout.</param>
+        /// <param name="checkoutMode">The branch checkout mode to determine how to handle uncommitted changes when checking out a branch.</param>
+        /// <param name="stashMessage">The stash message to use if stashing is needed when checking out the branch.</param>
         /// <param name="errorMessage">The error message if there an issue checking out the branch.</param>
+        /// <param name="user">The user performing the branch checkout.</param>
         /// <returns>True if the branch is checked out; false otherwise.</returns>
-        bool TryCheckoutBranch(string workingDirectory, string branchName, out string errorMessage);
+        bool TryCheckoutBranch(string workingDirectory, string branchName, BranchCheckoutMode checkoutMode, string? stashMessage, out string errorMessage, ApplicationUser user = null);
 
         /// <summary>
         /// Gets the list of all branches in the specified repository.

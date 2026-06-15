@@ -574,7 +574,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 {
                     using Repository repo = new(workingDirectory);
                     repo.Reset(ResetMode.Hard);
-                    if (!GitBranchService.TryCheckoutBranch(workingDirectory, repoEntry.BranchName, out errorMessage))
+                    if (!GitBranchService.TryCheckoutBranch(workingDirectory, repoEntry.BranchName, BranchCheckoutMode.Default, null, out errorMessage))
                     {
                         errorMessage = $"Cannot load snapshot for this {repository.GetDisplayName()} because: {errorMessage}.";
                         Logger.LogError(errorMessage);
