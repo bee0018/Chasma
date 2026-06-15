@@ -25,9 +25,14 @@ namespace ChasmaWebApi.Core.Services.Git
         private readonly ICacheManager CacheManager;
 
         /// <summary>
+        /// The Git stash service, which is responsible for stashing changes when necessary during Git operations such as checking out a branch with uncommitted changes.
+        /// </summary>
+        private readonly IGitStashService GitStashService;
+
+        /// <summary>
         /// The lock object used for concurrency.
         /// </summary>
-        private readonly object lockObject = new();
+        private readonly Lock lockObject = new();
 
         #region Constructor
 
@@ -36,10 +41,12 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         /// <param name="logger">The logger to use for logging diagnostic and operational information within the service.</param>
         /// <param name="cacheManager">The cache manager to use for managing cached data to optimize performance of Git operations.</param>
-        public GitBranchService(ILogger<GitBranchService> logger, ICacheManager cacheManager)
+        /// <param name="stashService">The Git stash service to use for stashing changes when necessary during Git operations.</param>
+        public GitBranchService(ILogger<GitBranchService> logger, ICacheManager cacheManager, IGitStashService stashService)
         {
             Logger = logger;
             CacheManager = cacheManager;
+            GitStashService = stashService;
         }
 
         #endregion
@@ -89,23 +96,52 @@ namespace ChasmaWebApi.Core.Services.Git
         }
 
         // <inheritdoc />
-        public bool TryCheckoutBranch(string workingDirectory, string branchName, out string errorMessage)
+        public bool TryCheckoutBranch(string workingDirectory, string branchName, BranchCheckoutMode checkoutMode, string? stashMessage, out string errorMessage, ApplicationUser user = null)
         {
             errorMessage = string.Empty;
+            StashModifiers stashMode = StashModifiers.Default | StashModifiers.IncludeUntracked;
+            if (user == null)
+            {
+                user = new ApplicationUser()
+                {
+                    Email = "Emryce.bot@emryce.com",
+                    Name = "Emryce-Bot",
+                };
+            }
+
+            if (checkoutMode == BranchCheckoutMode.StashOnly && !GitStashService.TryAddStash(workingDirectory, user, stashMessage, stashMode, out errorMessage))
+            {
+                Logger.LogError("Failed to stash changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
+                return false;
+            }
+
+            string stashMessageToBePopped = $"Stash for branch checkout of {branchName} at {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss}";
+            if (checkoutMode == BranchCheckoutMode.KeepChanges && !GitStashService.TryAddStash(workingDirectory, user, stashMessageToBePopped, stashMode, out errorMessage))
+            {
+                Logger.LogError("Failed to stash changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
+                return false;
+            }
+
+            if (checkoutMode == BranchCheckoutMode.DiscardAll && (!ShellUtility.TryExecuteShellCommand("git restore --staged .", workingDirectory, out errorMessage) || !ShellUtility.TryExecuteShellCommand("git restore .", workingDirectory, out errorMessage)))
+            {
+                Logger.LogError("Failed to discard changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
+                return false;
+            }
+
             try
             {
                 using Repository repo = new(workingDirectory);
                 Commands.Checkout(repo, branchName);
+                if (checkoutMode == BranchCheckoutMode.KeepChanges && !GitStashService.TryPopStash(workingDirectory, out errorMessage))
+                {
+                    Logger.LogError("Failed to pop stashed changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
+                    return false;
+                }
+
                 return true;
             }
             catch (Exception e)
             {
-                Logger.LogWarning(e, "Failed to checkout branch {branchName} for repository at {workingDirectory}. Attempting manual checkout.", branchName, workingDirectory);
-                if (ShellUtility.TryExecuteShellCommand($"git checkout {branchName}", workingDirectory, out errorMessage))
-                {
-                    return true;
-                }
-
                 errorMessage = $"Failed to checkout branch {branchName} for repository at {workingDirectory}. Check server logs for more information.";
                 Logger.LogError(e, errorMessage);
                 return false;

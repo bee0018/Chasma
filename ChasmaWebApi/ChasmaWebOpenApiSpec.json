@@ -2222,11 +2222,38 @@
               "repositoryId": {
                 "type": "string"
               },
+              "userId": {
+                "type": "integer",
+                "format": "int32"
+              },
               "branchName": {
                 "type": "string"
+              },
+              "checkoutMode": {
+                "$ref": "#/components/schemas/BranchCheckoutMode"
+              },
+              "stashMessage": {
+                "type": "string",
+                "nullable": true
               }
             }
           }
+        ]
+      },
+      "BranchCheckoutMode": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Default",
+          "StashOnly",
+          "KeepChanges",
+          "DiscardAll"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
         ]
       },
       "GitBranchResponse": {
