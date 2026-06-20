@@ -83,6 +83,58 @@
         }
       }
     },
+    "/api/ApplicationConfiguration/getManifest": {
+      "get": {
+        "tags": [
+          "ApplicationConfiguration"
+        ],
+        "operationId": "ApplicationConfiguration_GetSystemManifest",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemManifest"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ApplicationConfiguration/applyUpdate": {
+      "post": {
+        "tags": [
+          "ApplicationConfiguration"
+        ],
+        "operationId": "ApplicationConfiguration_ApplySystemUpdate",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyUpdateRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyUpdateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Branch/addBranch": {
       "post": {
         "tags": [
@@ -2131,6 +2183,53 @@
             }
           }
         ]
+      },
+      "SystemManifest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "releaseDate": {
+            "type": "string"
+          },
+          "criticalUpdate": {
+            "type": "boolean"
+          },
+          "downloadUrl": {
+            "type": "string"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "changeLog": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ApplyUpdateResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ApplyUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "systemManifest": {
+            "$ref": "#/components/schemas/SystemManifest"
+          }
+        }
       },
       "AddNewBranchResponse": {
         "allOf": [

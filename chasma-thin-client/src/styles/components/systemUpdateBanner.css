@@ -1,0 +1,87 @@
+.banner-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  font-family: sans-serif;
+  font-size: 0.95rem;
+  
+  background: rgba(2, 6, 23, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  
+  transition: all 0.2s ease;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+}
+
+.banner-close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.banner-info {
+  color: #22d3ee;
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.15), 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.banner-info .banner-close-btn {
+  color: rgba(34, 211, 238, 0.6);
+}
+.banner-info .banner-close-btn:hover {
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.1);
+}
+
+.banner-success {
+  color: #4ade80;
+  box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.15), 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.banner-success .banner-close-btn {
+  color: rgba(74, 222, 128, 0.6);
+}
+.banner-success .banner-close-btn:hover {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.banner-warning {
+  color: #a855f7;
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.15), 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.banner-warning .banner-close-btn {
+  color: rgba(168, 85, 247, 0.6);
+}
+.banner-warning .banner-close-btn:hover {
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.banner-error {
+  color: #f87171;
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.15), 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.banner-error .banner-close-btn {
+  color: rgba(248, 113, 113, 0.6);
+}
+.banner-error .banner-close-btn:hover {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}

@@ -41,9 +41,10 @@ try
                 return;
             }
 
-            Log.Information("Starting Emryce...");
-            Log.Information("Environment: {Env}", builder.Environment.EnvironmentName);
-            Log.Information("Using config file: {ConfigPath}", configFilePath);
+            string launchPropmpt = "Starting Emryce..." +
+                $"\nEnvironment: {builder.Environment.EnvironmentName}" +
+                $"\nUsing config file: {configFilePath}";
+            Log.Information(launchPropmpt);
 
             builder.SetupBuilder(webApiConfigurations);
             builder.Services.AddApplicationServices(webApiConfigurations);

@@ -1,7 +1,10 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Data.Messages.Application;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Requests.Configuration;
+using ChasmaWebApi.Data.Requests.Infrastructure;
 using ChasmaWebApi.Data.Responses.Configuration;
+using ChasmaWebApi.Data.Responses.Infrastructure;
 using ChasmaWebApi.Util;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -178,6 +181,75 @@ namespace ChasmaWebApi.Controllers
                 || currentConfig.SecureBindingPort != newConfig.SecureBindingPort;
             applicationControlService.UpdateApiConfiguration(configFilePath, newConfig, currentConfig);
             logger.LogInformation("Successfully processed {request}. Sending success response.", requestName);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Gets the system manifest.
+        /// Note: This endpoint was only created to inject the SystemManifest object in the frontend client generator.
+        /// </summary>
+        /// <returns>The system manifest response.</returns>
+        [HttpGet]
+        [Route("getManifest")]
+        public async Task<ActionResult<SystemManifest>> GetSystemManifest()
+        {
+            SystemManifest manifest = new()
+            {
+                ChangeLog = ["this is a change"],
+                Checksum = "123",
+                CriticalUpdate = true,
+                DownloadUrl = "url.com",
+                ReleaseDate = "today",
+                Version = "1.0.0",
+            };
+            return Ok(new SystemManifest());
+        }
+
+        /// <summary>
+        /// Applies the system update data and restarts the application.
+        /// </summary>
+        /// <param name="request">The request to apply an update.</param>
+        /// <returns>The response to updating application data.</returns>
+        [HttpPost]
+        [Route("applyUpdate")]
+        public ActionResult<ApplyUpdateResponse> ApplySystemUpdate([FromBody] ApplyUpdateRequest request)
+        {
+            string requestName = nameof(ApplyUpdateRequest);
+            ApplyUpdateResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Received a null {request} when trying to apply system updates. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Received a null apply update request.";
+                return BadRequest(response);
+            }
+
+            SystemManifest manifest = request.SystemManifest;
+            if (manifest == null)
+            {
+                logger.LogError("Recieved a {requestName} with null system manifest data. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "System manifest data must be provided.";
+                return Ok(response);
+            }
+
+            if (string.IsNullOrEmpty(manifest.Version))
+            {
+                logger.LogError("Recieved a {requestName} with null system manifest version data. Sending error response.", requestName);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "System manifest version must be provided.";
+                return Ok(response);
+            }
+
+            bool isDevelopmentMode = webHostEnvironment.IsDevelopment();
+            if (!applicationControlService.TryApplyUpdateAndRestartApplication(manifest, isDevelopmentMode, out string errorMessage))
+            {
+                logger.LogError("{error}. Sending error response.", errorMessage);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = errorMessage;
+                return Ok(response);
+            }
+
             return Ok(response);
         }
 

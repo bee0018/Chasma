@@ -402,5 +402,14 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if successfully opened the logs; false otherwise.</returns>
         bool TryOpenApplicationLogs(out string errorMessage);
+
+        /// <summary>
+        /// Tries to apply the system update and restarts the application.
+        /// </summary>
+        /// <param name="systemManifest">The system manifest data.</param>
+        /// <param name="isDevelopmentMode">Flag indicating whether the application is running in development mode.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the application is being updated and restarted; false otherwise.</returns>
+        bool TryApplyUpdateAndRestartApplication(SystemManifest systemManifest, bool isDevelopmentMode, out string errorMessage);
     }
 }

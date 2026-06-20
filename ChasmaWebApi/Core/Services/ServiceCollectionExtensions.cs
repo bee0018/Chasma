@@ -12,6 +12,7 @@ using ChasmaWebApi.Core.Services.Remote;
 using ChasmaWebApi.Core.Services.Simulation;
 using ChasmaWebApi.Data;
 using ChasmaWebApi.HostedServices;
+using ChasmaWebApi.Hubs;
 using ChasmaWebApi.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -69,6 +70,7 @@ namespace ChasmaWebApi.Core.Services
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, ChasmaWebApiConfigurations webApiConfigurations)
         {
             services.AddControllers();
+            services.AddSignalR();
             services.AddCors(options =>
             {
                 options.AddPolicy(devCorsPolicy, policy =>
@@ -76,7 +78,8 @@ namespace ChasmaWebApi.Core.Services
                     policy
                         .WithOrigins("http://localhost:3000")
                         .AllowAnyHeader()
-                        .AllowAnyMethod();
+                        .AllowAnyMethod()
+                        .AllowCredentials();
                 });
             });
 
@@ -118,7 +121,8 @@ namespace ChasmaWebApi.Core.Services
                     config.Version = "v1";
                 })
                 .AddDbContext<ApplicationDbContext>(options => options.UseSqlite(webApiConfigurations.GetDatabaseConnectionString()))
-                .AddHostedService<CacheInitializerService>();
+                .AddHostedService<CacheInitializerService>()
+                .AddHostedService<SystemUpdaterService>();
         }
 
         /// <summary>
@@ -151,6 +155,7 @@ namespace ChasmaWebApi.Core.Services
                 .UseSwaggerUi();
             }
 
+            app.MapHub<NotificationHub>("/notificationHub");
             app.MapControllers();
             app.MapFallbackToFile("index.html");
             return app;

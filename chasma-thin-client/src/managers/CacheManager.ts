@@ -1,5 +1,5 @@
 ﻿import { create } from "zustand";
-import { ApplicationUser, LocalGitRepository, WorkContextSnapshot } from "../API/ChasmaWebApiClient";
+import { ApplicationUser, LocalGitRepository, SystemManifest, WorkContextSnapshot } from "../API/ChasmaWebApiClient";
 import { persist } from 'zustand/middleware'
 
 interface Notification {
@@ -29,6 +29,9 @@ interface CacheState {
     /** The user's workspace snapshots. */
     workspaceSnapshots: WorkContextSnapshot[];
 
+    /** The new system update if available. */
+    newSystemUpdate: SystemManifest | undefined;
+
     /** Sets the logged-in user. **/
     setUser: (user: ApplicationUser | undefined) => void;
 
@@ -46,6 +49,9 @@ interface CacheState {
 
     /** Sets the user's workspace snapshots. **/
     setWorkspaceSnapshots: (repos: WorkContextSnapshot[] | undefined) => void;
+
+    /** Sets the new system update. */
+    setNewSystemUpdate: (newSystemUpdate: SystemManifest | undefined) => void;
 
     /** Dismisses the notificaiton from the app. */
     clearNotification: () => void;
@@ -81,12 +87,14 @@ export const useCacheStore = create<CacheState>()(
             refreshToken: undefined,
             notification: null,
             workspaceSnapshots: [],
+            newSystemUpdate: undefined,
             setUser: (user) => set({ user }),
             setRepositories: (repositories) => set({ repositories }),
             setToken: (token) => set({ token }),
             setRefreshToken: (refreshToken) => set({ refreshToken }),
             setNotification: (notification) => set({ notification }),
             setWorkspaceSnapshots: (workspaceSnapshots) => set({ workspaceSnapshots }),
+            setNewSystemUpdate: (newSystemUpdate) => set({ newSystemUpdate }),
             clearNotification: () => set({ notification: null }),
             deleteRepository: (repoId: string | undefined) => set((state) => ({
                 repositories: [...state.repositories.filter(i => i.id !== repoId)],

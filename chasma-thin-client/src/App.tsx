@@ -14,8 +14,8 @@ import HelpGitLabApiIntegrationPage from "./components/pages/help/HelpGitLabApiI
 import { useCacheStore } from './managers/CacheManager';
 import NotificationModal from './components/modals/NotificationModal';
 import { userClient } from './managers/ApiClientManager';
-import { RefreshRequest } from './API/ChasmaWebApiClient';
-import { useEffect, useRef } from 'react';
+import { RefreshRequest, SystemManifest } from './API/ChasmaWebApiClient';
+import { useEffect, useRef, useState } from 'react';
 import AppSetupPage from './components/pages/AppSetupPage';
 import StartupGate from './components/pages/gates/StartupGate';
 import UserConfigTab from './components/dashboardTabs/UserConfigTab';
@@ -28,6 +28,8 @@ import ApplySnapshotsTab from './components/dashboardTabs/ApplySnapshotsTab';
 import ApiStatusTab from './components/dashboardTabs/ApiStatusTab';
 import HomeTab from './components/dashboardTabs/HomeTab';
 import ForgotPasswordPage from './components/pages/ForgotPasswordPage';
+import * as signalR from "@microsoft/signalr";
+import { apiBaseUrl } from './environmentConstants';
 
 function App() {
     /** The notification modal to display in the application. */
@@ -41,6 +43,9 @@ function App() {
 
     /** The last activity from the user. */
     const lastActivity = useRef(Date.now());
+
+    /** The function to set the new system update data. */
+    const setNewSystemUpdate = useCacheStore(state => state.setNewSystemUpdate);
 
     /** Updates the last activity from the user. */
     function updateActivity() {
@@ -140,6 +145,26 @@ function App() {
             window.removeEventListener("scroll", updateActivity);
         };
     }, []);
+
+    useEffect(() => {
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(`${apiBaseUrl}/notificationHub`)
+            .withAutomaticReconnect()
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        connection.on("OnUpdateDownloaded", (systemManifest: SystemManifest) => {
+            setNewSystemUpdate(systemManifest);
+        });
+
+        connection
+            .start()
+            .catch((err) => console.error("SignalR Connection Error: ", err));
+        return () => {
+            connection.off("OnUpdateDownloaded");
+            connection.stop();
+        };
+    }, [setNewSystemUpdate]);
 
     return <div>
         <BrowserRouter>

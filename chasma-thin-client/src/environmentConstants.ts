@@ -1,4 +1,4 @@
 /** The Web API base URL. **/
 export const apiBaseUrl = process.env.NODE_ENV === "development"
-    ? "http://localhost:5000"
+    ? "https://localhost:7200"
     : window.location.origin;
