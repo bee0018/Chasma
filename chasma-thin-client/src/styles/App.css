@@ -10,6 +10,7 @@
 @import "components/dashboard.css";
 @import "components/gitRepoOverviewCard.css";
 @import "components/inputs.css";
+@import "components/systemUpdateBanner.css";
 
 @import "pages/batchOperationsPage.css";
 @import "pages/login.css";

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../logos/emryce-logo-withBg.svg";
 import { LoginRequest } from "../../API/ChasmaWebApiClient";
 import { useCacheStore } from "../../managers/CacheManager";
 import { shellClient, userClient } from "../../managers/ApiClientManager";
-import { useDocumentTitle } from '../../util/useDocumentTitle';
+import { useDocumentTitle } from "../../util/useDocumentTitle";
+import SystemUpdateBanner from "../application/SystemUpdateBanner";
 
 /**
  * Creates a new instance of the Login Page class.
@@ -12,21 +13,27 @@ import { useDocumentTitle } from '../../util/useDocumentTitle';
  */
 const LoginPage: React.FC = () => {
     useDocumentTitle("Sign In");
-    
+
     /** Gets or sets the username of the user. **/
-    const [userName, setUserName] = useState('');
+    const [userName, setUserName] = useState("");
 
     /** Gets or sets the password of the user. **/
-    const [password, setPassword] = useState('');
+    const [password, setPassword] = useState("");
 
     /** Gets or sets the flag indicating whether to disable the send button. */
     const [disabledSendButton, setDisableSendButton] = useState(false);
+
+    /** Gets the new system update details if available. */
+    const newSystemUpdate = useCacheStore((state) => state.newSystemUpdate);
+
+    /** Gets or sets a flag indicating whether the view should show the banner. */
+    const [showBanner, setShowBanner] = useState<boolean>(newSystemUpdate !== null);
 
     /** The navigation function. **/
     const navigate = useNavigate();
 
     /** Sets the notification modal. */
-    const setNotification = useCacheStore(state => state.setNotification);
+    const setNotification = useCacheStore((state) => state.setNotification);
 
     /**
      * Handles the request to log in a user to the system.
@@ -42,7 +49,7 @@ const LoginPage: React.FC = () => {
             title: "Logging into the system...",
             message: "Please wait while your request is being processed.",
             isError: false,
-            loading: true
+            loading: true,
         });
         try {
             const loginUserRequest = new LoginRequest();
@@ -73,13 +80,14 @@ const LoginPage: React.FC = () => {
             useCacheStore.getState().setRefreshToken(response.refreshToken);
             useCacheStore.getState().setWorkspaceSnapshots(response.snapshots);
             setDisableSendButton(false);
-            navigate('/home');
+            navigate("/home");
             setNotification(null);
         } catch (e) {
             setDisableSendButton(false);
             setNotification({
                 title: "Could not log in!",
-                message: "Verify credentials are correct. Review server and console logs for more information.",
+                message:
+                    "Verify credentials are correct. Review server and console logs for more information.",
                 isError: true,
             });
         }
@@ -110,19 +118,26 @@ const LoginPage: React.FC = () => {
 
     return (
         <div className="login-page">
+            {showBanner && (
+                <SystemUpdateBanner
+                    bannerType={"info"}
+                    message={`System update ${newSystemUpdate?.version} is available. Please update and restart to apply the latest enhancements`}
+                    onClose={() => setShowBanner(false)}
+                />
+            )}
             <button
                 className="help-button"
-                onClick={() => window.open("help", "_blank")}>
+                onClick={() => window.open("help", "_blank")}
+            >
                 Help
             </button>
             <button
                 className="open-logs-button"
-                onClick={handleOpenServerLogsRequest}>
+                onClick={handleOpenServerLogsRequest}
+            >
                 Open Logs
             </button>
-            <button
-                className="config-button"
-                onClick={() => navigate("/setup")}>
+            <button className="config-button" onClick={() => navigate("/setup")}>
                 System Settings
             </button>
             <div className="login-card">
@@ -157,17 +172,17 @@ const LoginPage: React.FC = () => {
                     <button
                         type="submit"
                         className="submit-button"
-                        disabled={disabledSendButton}>
+                        disabled={disabledSendButton}
+                    >
                         Login
                     </button>
                 </form>
                 <p className="login-footer">
-                    Don’t have an account?{" "}
-                    <Link to="/register">Register here</Link>
+                    Don’t have an account? <Link to="/register">Register here</Link>
                 </p>
             </div>
         </div>
     );
-}
+};
 
 export default LoginPage;

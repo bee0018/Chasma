@@ -34,6 +34,11 @@ public class ApplicationDbContext : DbContext
     public DbSet<RepositoryWorkContextSnapshotModel> RepositorySnapshots { get; set; }
 
     /// <summary>
+    /// Gets or sets the system updates.
+    /// </summary>
+    public DbSet<SystemManifestModel> SystemManifests { get; set; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ApplicationDbContext"/> class.
     /// </summary>
     /// <param name="options">The database context configuration options.</param>

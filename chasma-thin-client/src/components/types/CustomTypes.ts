@@ -47,3 +47,6 @@ export type GlobalViewMode = "prs" | "branchSync";
 
 /** The toggle options for saving or applying workspace snapshots. **/
 export type SnapshotMode = "add" | "apply";
+
+/** The banner type options. */
+export type BannerType = 'info' | 'success' | 'warning' | 'error';

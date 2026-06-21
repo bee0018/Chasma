@@ -12,6 +12,7 @@ using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Data.Objects.Shell;
 using ChasmaWebApi.Util;
 using LibGit2Sharp;
+using System.Diagnostics;
 using System.Text;
 
 namespace ChasmaWebApi.Core.Services.Control
@@ -108,6 +109,76 @@ namespace ChasmaWebApi.Core.Services.Control
             currentConfig.Update(newConfig);
             string xmlText = ChasmaXmlBase.GenerateXml(currentConfig);
             File.WriteAllText(configFilePath, xmlText, Encoding.UTF8);
+        }
+
+        // <inheritdoc />
+        public bool TryApplyUpdateAndRestartApplication(SystemManifest systemManifest, bool isDevelopmentMode, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                string buildArtifactPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Emryce", "Updates", systemManifest.Version);
+                IEnumerable<string> zipFiles;
+                EnumerationOptions options = new()
+                {
+                    MatchCasing = MatchCasing.CaseInsensitive,
+                    RecurseSubdirectories = false
+                };
+                if (OperatingSystem.IsWindows())
+                {
+                    zipFiles = Directory.EnumerateFiles(buildArtifactPath, "*.zip", options);
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    zipFiles = Directory.EnumerateFiles(buildArtifactPath, "*.tar", options);
+                }
+                else
+                {
+                    errorMessage = "OS is not supported for deploying updates";
+                    logger.LogError("{error}. Sending error response.", errorMessage);
+                    return false;
+                }
+
+                string zipFile = zipFiles.FirstOrDefault();
+                if (string.IsNullOrEmpty(zipFile))
+                {
+                    errorMessage = $"No download build artifacts could be found. Cannot deploy update for version {systemManifest.Version}";
+                    logger.LogError("{error}. Sending error response.", errorMessage);
+                    return false;
+                }
+
+                string currentProcessFilepath = Path.GetDirectoryName(Environment.ProcessPath);
+                string executablePath = Environment.ProcessPath;
+                int processId = Environment.ProcessId;
+                string updaterExePath = isDevelopmentMode
+                    ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EmryceUpdater", "net10.0", "EmryceUpdater.exe")
+                    : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EmryceUpdater.exe");
+                if (!File.Exists(updaterExePath))
+                {
+                    errorMessage = $"No updater file cannot be found. Cannot deploy update for version {systemManifest.Version}";
+                    logger.LogError("{error}. Sending error response.", errorMessage);
+                    return false;
+                }
+
+                ProcessStartInfo startInfo = new()
+                {
+                    FileName = updaterExePath,
+                    Arguments = $"\"{zipFile}\" \"{currentProcessFilepath}\" \"{executablePath}\" {processId}",
+                    UseShellExecute = true,
+                    Verb = "runas",
+                    WorkingDirectory = Path.GetDirectoryName(updaterExePath),
+                };
+                Process.Start(startInfo);
+                Thread.Sleep(100);
+                Environment.Exit(0);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = "Error when attempting to apply system updates. View server logs for more information";
+                logger.LogError("Recieved the following error when trying to apply system update: {message}", e.Message);
+                return false;
+            }
         }
 
         #endregion

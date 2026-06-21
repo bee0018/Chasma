@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import GitRepoOverviewCard from "../GitRepoOverviewCard";
 import {
+    ApplyUpdateRequest,
     DeleteRepositoryRequest,
     IgnoreRepositoryRequest,
     LocalGitRepository,
+    SystemManifest,
 } from "../../API/ChasmaWebApiClient";
 import { useCacheStore } from "../../managers/CacheManager";
-import { configClient } from "../../managers/ApiClientManager";
+import { appConfigClient, configClient } from "../../managers/ApiClientManager";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import ChangeRepositoryDisplayNameModal from "../modals/ChangeRepositoryDisplayNameModal";
@@ -26,7 +28,7 @@ interface IHomeTabProps {
  */
 const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
     useDocumentTitle("Home");
-    
+
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
@@ -48,8 +50,14 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
     /** Gets the outlet context of the browser. */
     const outletContext = useOutletContext<{ reposVersion?: number } | null>();
 
+    /** Gets the new system update details if available. */
+    const newSystemUpdate = useCacheStore((state) => state.newSystemUpdate);
+
     /** Gets the current repository version. */
     const currentReposVersion = outletContext?.reposVersion ?? props.reposVersion ?? 0;
+
+    /** Gets or sets a value indicating whether the application is stopping the application. */
+    const [isStopping, setIsStopping] = useState<boolean>(false);
 
     useEffect(() => {
         updateUserRepositoryConfiguration().catch(console.error);
@@ -217,12 +225,75 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         });
     };
 
+    /** Handles the event when the user wants to apply the system update. */
+    const handleApplySystemUpdateRequest = async () => {
+        if (isStopping) return;
+
+        if (window.confirm("Are you sure you want to apply the new update?")) {
+            setNotification({
+                title: "Applying updates and restarting the system...",
+                message: "System will restart shortly",
+                isError: false,
+                loading: true,
+            });
+            setIsStopping(true);
+            const request = new ApplyUpdateRequest();
+            request.systemManifest = SystemManifest.fromJS(newSystemUpdate);
+            try {
+                const response = await appConfigClient.applySystemUpdate(request);
+                if (response.isErrorResponse) {
+                    setNotification({
+                        title: "Failed to update system",
+                        message: response.errorMessage,
+                        isError: true,
+                    });
+                    return;
+                }
+
+                setTimeout(() => {
+                    useCacheStore.getState().clearCache();
+                    window.location.href = "about:blank";
+                }, 100);
+            } catch (error) {
+                if (error instanceof TypeError && error.message === "Failed to fetch") {
+                    setNotification({
+                        title: "Applying updates and restarting the system...",
+                        message: "System will not restart shortly",
+                        isError: false,
+                        loading: true,
+                    });
+                    setTimeout(() => {
+                        useCacheStore.getState().clearCache();
+                        window.location.href = "about:blank";
+                    }, 100);
+                    return;
+                }
+
+                handleApiError(error, navigate, "Error applying update!", "Review server logs for more information.");
+            }
+            finally {
+                setIsStopping(false);
+            }
+        }
+    };
+
     return (
         <>
             <div>
-                <div>
-                    <h1>Your Repositories, Monitored & Mastered 🕹️</h1>
-                    <p>{`${user?.userName}, manage any of the registered repositories found on your filesystem.`}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', width: '100%' }}>
+                    <div>
+                        <h1 style={{ margin: 0 }}>Your Repositories, Monitored & Mastered 🕹️</h1>
+                        <p style={{ margin: '8px 0 0 0' }}>{`${user?.userName}, manage any of the registered repositories found on your filesystem.`}</p>
+                    </div>
+                    {newSystemUpdate !== null &&
+                        <button
+                            className="update-button"
+                            style={{ whiteSpace: 'nowrap' }}
+                            onClick={handleApplySystemUpdateRequest}
+                        >
+                            Update
+                        </button>
+                    }
                 </div>
                 <div>
                     {localGitRepositories && localGitRepositories.length > 0 && (
