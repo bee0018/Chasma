@@ -21,14 +21,24 @@
         public bool CriticalUpdate { get; set; }
 
         /// <summary>
-        /// Gets or sets the download url.
+        /// Gets or sets the download url for the windows version of Emryce.
         /// </summary>
-        public string DownloadUrl { get; set; }
+        public string WindowsDownloadUrl { get; set; }
 
         /// <summary>
-        /// Gets or sets the checksum of the download artifact file.
+        /// Gets or sets the download url for the linux version of Emryce.
         /// </summary>
-        public string Checksum { get; set; }
+        public string LinuxDownloadUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the checksum of the Windows download artifact file.
+        /// </summary>
+        public string WindowsChecksum { get; set; }
+
+        /// <summary>
+        /// Gets or sets the checksum of the Linux download artifact file.
+        /// </summary>
+        public string LinuxChecksum { get; set; }
 
         /// <summary>
         /// Gets or sets the list of changes in the change log.

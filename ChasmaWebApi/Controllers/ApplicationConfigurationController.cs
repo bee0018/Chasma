@@ -196,9 +196,9 @@ namespace ChasmaWebApi.Controllers
             SystemManifest manifest = new()
             {
                 ChangeLog = ["this is a change"],
-                Checksum = "123",
+                WindowsChecksum = "123",
                 CriticalUpdate = true,
-                DownloadUrl = "url.com",
+                WindowsDownloadUrl = "url.com",
                 ReleaseDate = "today",
                 Version = "1.0.0",
             };

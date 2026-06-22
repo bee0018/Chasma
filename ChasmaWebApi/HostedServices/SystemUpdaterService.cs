@@ -212,7 +212,25 @@ namespace ChasmaWebApi.HostedServices
             string appUpdatesDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Emryce", "Updates", manifest.Version);
             try
             {
-                HttpResponseMessage httpMessage = await WebClient.GetAsync(manifest.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                string url;
+                string checkSum;
+                if (OperatingSystem.IsWindows())
+                {
+                    url = manifest.WindowsDownloadUrl;
+                    checkSum = manifest.WindowsChecksum;
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    url = manifest.LinuxDownloadUrl;
+                    checkSum = manifest.LinuxChecksum;
+                }
+                else
+                {
+                    logger.LogError("Cannot download update because the OS is not supported.");
+                    return;
+                }
+
+                HttpResponseMessage httpMessage = await WebClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
                 httpMessage.EnsureSuccessStatusCode();
                 using Stream remoteFileStream = await httpMessage.Content.ReadAsStreamAsync(cancellationToken);
                 if (!Directory.Exists(appUpdatesDirectory))
@@ -220,12 +238,12 @@ namespace ChasmaWebApi.HostedServices
                     Directory.CreateDirectory(appUpdatesDirectory);
                 }
 
-                Uri uri = new(manifest.DownloadUrl);
+                Uri uri = new(url);
                 string filePath = Path.GetFileName(uri.AbsolutePath);
                 string downloadFilePath = Path.Combine(appUpdatesDirectory, filePath);
                 using FileStream localFileStream = File.Create(downloadFilePath);
                 await remoteFileStream.CopyToAsync(localFileStream, cancellationToken);
-                if (!IsDownloadedUpdateFileValid(filePath, manifest.Checksum))
+                if (!IsDownloadedUpdateFileValid(filePath, checkSum))
                 {
                     throw new Exception("Downloaded file has been tampered or corrupted.");
                 }
