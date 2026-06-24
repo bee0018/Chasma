@@ -68,7 +68,7 @@
 
 	<Target Name="BuildClientToDevWwwroot" AfterTargets="GenerateOpenApiClients" Condition="'$(Configuration)' == 'Debug'">
 		<Message Text="Building React frontend (dev wwwroot)..." Importance="high" />
-		<Exec WorkingDirectory="..\chasma-thin-client\" Command="npm run build" />
+		<Exec WorkingDirectory="..\chasma-thin-client\" Command="set CI=false&amp;npm run build" />
 		<RemoveDir Directories="wwwroot" />
 		<MakeDir Directories="wwwroot" />
 		<ItemGroup>
@@ -88,7 +88,7 @@
 
 	<Target Name="BuildClientApp" AfterTargets="GenerateOpenApiClients" Condition="'$(Configuration)' == 'Release'">
 		<Message Text="Building React frontend..." Importance="high" />
-		<Exec WorkingDirectory="..\chasma-thin-client\" Command="npm run build" />
+		<Exec WorkingDirectory="..\chasma-thin-client\" Command="set CI=false&amp;npm run build" />
 		<ItemGroup>
 			<SpaFiles Include="$(SpaSource)**\*" />
 		</ItemGroup>

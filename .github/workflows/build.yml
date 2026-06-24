@@ -1,0 +1,42 @@
+name: Build Emryce
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 1. Setup Node.js Environment
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-size: '20.x'
+        cache: 'npm'
+        cache-dependency-path: 'chasma-thin-client/package-lock.json'
+
+    # 2. Install Frontend Dependencies
+    - name: Install npm dependencies
+      working-directory: chasma-thin-client
+      run: npm install
+
+    # 3. Setup .NET SDK
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    # 4. Restore .NET NuGet Packages
+    - name: Restore NuGet packages
+      run: dotnet restore ChasmaWebApi/ChasmaWebApi.csproj
+
+    # 5. Build Project
+    - name: Build project (Release)
+      run: dotnet build ChasmaWebApi/ChasmaWebApi.csproj --configuration Release --no-restore
