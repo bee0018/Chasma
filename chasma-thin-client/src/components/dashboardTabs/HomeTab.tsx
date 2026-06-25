@@ -285,7 +285,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                         <h1 style={{ margin: 0 }}>Your Repositories, Monitored & Mastered 🕹️</h1>
                         <p style={{ margin: '8px 0 0 0' }}>{`${user?.userName}, manage any of the registered repositories found on your filesystem.`}</p>
                     </div>
-                    {newSystemUpdate !== null &&
+                    {newSystemUpdate !== undefined &&
                         <button
                             className="update-button"
                             style={{ whiteSpace: 'nowrap' }}

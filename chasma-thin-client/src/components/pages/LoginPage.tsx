@@ -27,7 +27,7 @@ const LoginPage: React.FC = () => {
     const newSystemUpdate = useCacheStore((state) => state.newSystemUpdate);
 
     /** Gets or sets a flag indicating whether the view should show the banner. */
-    const [showBanner, setShowBanner] = useState<boolean>(newSystemUpdate !== null);
+    const [showBanner, setShowBanner] = useState<boolean>(newSystemUpdate !== undefined);
 
     /** The navigation function. **/
     const navigate = useNavigate();
