@@ -122,7 +122,8 @@ export const useCacheStore = create<CacheState>()(
                 workspaceSnapshots: [],
                 token: undefined,
                 refreshToken: undefined,
-                notification: null
+                notification: null,
+                newSystemUpdate: undefined,
             }),
         }),
         {

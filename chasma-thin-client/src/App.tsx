@@ -30,6 +30,7 @@ import HomeTab from './components/dashboardTabs/HomeTab';
 import ForgotPasswordPage from './components/pages/ForgotPasswordPage';
 import * as signalR from "@microsoft/signalr";
 import { apiBaseUrl } from './environmentConstants';
+import ReportBugsPage from './components/pages/ReportBugsPage';
 
 function App() {
     /** The notification modal to display in the application. */
@@ -185,6 +186,7 @@ function App() {
                     <Route path="snapshots" element={<ApplySnapshotsTab />} />
                     <Route path="apiStatus" element={<ApiStatusTab />} />
                     <Route path="setup" element={<AppSetupPage />} />
+                    <Route path="report-bugs" element={<ReportBugsPage />} />
                 </Route>
                 <Route path="/help" element={<HelpPage />}>
                     <Route path="config" element={<HelpConfigXmlPage />} />
