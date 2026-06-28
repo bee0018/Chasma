@@ -11,6 +11,7 @@ using ChasmaWebApi.Data.Responses.Infrastructure;
 using ChasmaWebApi.Data.Responses.Status;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -26,6 +27,7 @@ namespace ChasmaWebApi.Controllers
     [ApiController]
     [Authorize]
     [Route("api/[controller]")]
+    [EnableRateLimiting(ChasmaWebApiConfigurations.RateLimiterPolicy)]
     public class UserController : ControllerBase
     {
         /// <summary>

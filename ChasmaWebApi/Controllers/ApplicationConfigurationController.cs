@@ -9,6 +9,7 @@ using ChasmaWebApi.Data.Responses.Infrastructure;
 using ChasmaWebApi.Util;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -20,6 +21,7 @@ namespace ChasmaWebApi.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    [EnableRateLimiting(ChasmaWebApiConfigurations.RateLimiterPolicy)]
     public class ApplicationConfigurationController : ControllerBase
     {
         /// <summary>
@@ -33,11 +35,6 @@ namespace ChasmaWebApi.Controllers
         private readonly IApplicationControlService applicationControlService;
 
         /// <summary>
-        /// The web host environment, which provides information about the hosting environment the application is running in.
-        /// </summary>
-        private readonly IWebHostEnvironment webHostEnvironment;
-
-        /// <summary>
         /// The internal cache manager.
         /// </summary>
         private readonly ICacheManager cacheManager;
@@ -49,13 +46,11 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         /// <param name="log">The logger instance.</param>
         /// <param name="controlSerivce">The application control service instance.</param>
-        /// <param name="env">The web host environment instance.</param>
         /// <param name="apiCacheManager">The API cache manager.</param>
-        public ApplicationConfigurationController(ILogger<ApplicationConfigurationController> log, IApplicationControlService controlSerivce, IWebHostEnvironment env, ICacheManager apiCacheManager)
+        public ApplicationConfigurationController(ILogger<ApplicationConfigurationController> log, IApplicationControlService controlSerivce, ICacheManager apiCacheManager)
         {
             logger = log;
             applicationControlService = controlSerivce;
-            webHostEnvironment = env;
             cacheManager = apiCacheManager;
         }
 
@@ -88,7 +83,7 @@ namespace ChasmaWebApi.Controllers
         [AllowAnonymous]
         public ActionResult<GetApiConfigMessage> GetConfig()
         {
-            bool isDevelopment = webHostEnvironment.IsDevelopment();
+            bool isDevelopment = ChasmaWebApiConfigurations.IsDevelopmentMode;
             string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
             string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Emryce");
             string configFilePath = isDevelopment
@@ -151,7 +146,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            bool isDevelopment = webHostEnvironment.IsDevelopment();
+            bool isDevelopment = ChasmaWebApiConfigurations.IsDevelopmentMode;
             string defaultConfigPath = Path.Combine(AppContext.BaseDirectory, "config.xml");
             string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Emryce");
             string configFilePath = isDevelopment
@@ -252,7 +247,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            bool isDevelopmentMode = webHostEnvironment.IsDevelopment();
+            bool isDevelopmentMode = ChasmaWebApiConfigurations.IsDevelopmentMode;
             if (!applicationControlService.TryApplyUpdateAndRestartApplication(manifest, isDevelopmentMode, out string errorMessage))
             {
                 logger.LogError("{error}. Sending error response.", errorMessage);

@@ -11,6 +11,7 @@ using ChasmaWebApi.Data.Responses.Status;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChasmaWebApi.Controllers
@@ -21,6 +22,7 @@ namespace ChasmaWebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [EnableRateLimiting(ChasmaWebApiConfigurations.RateLimiterPolicy)]
     public class RepositoryStatusController : ControllerBase
     {
         /// <summary>

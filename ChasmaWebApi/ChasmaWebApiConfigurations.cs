@@ -115,6 +115,11 @@ namespace ChasmaWebApi
         public const string DefaultJwtSecretKey = "TEMP_DEV_KEY_1234567890";
 
         /// <summary>
+        /// The rate limiter policy.
+        /// </summary>
+        public const string RateLimiterPolicy = "FrontendFixedPolicy";
+
+        /// <summary>
         /// Gets or sets a value indicating whether the application is running in development mode.
         /// </summary>
         public static bool IsDevelopmentMode { get; set; }

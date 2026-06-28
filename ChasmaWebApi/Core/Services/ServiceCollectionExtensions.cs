@@ -14,6 +14,7 @@ using ChasmaWebApi.Data;
 using ChasmaWebApi.HostedServices;
 using ChasmaWebApi.Hubs;
 using ChasmaWebApi.Util;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -69,6 +70,16 @@ namespace ChasmaWebApi.Core.Services
         /// <returns>The application service collection with the added resources.</returns>
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, ChasmaWebApiConfigurations webApiConfigurations)
         {
+            services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.AddFixedWindowLimiter(policyName: ChasmaWebApiConfigurations.RateLimiterPolicy, fixedOptions =>
+                {
+                    fixedOptions.PermitLimit = 200;
+                    fixedOptions.Window = TimeSpan.FromMinutes(1);
+                    fixedOptions.QueueLimit = 0;
+                });
+            });
             services.AddControllers();
             services.AddSignalR();
             services.AddCors(options =>
@@ -138,7 +149,8 @@ namespace ChasmaWebApi.Core.Services
                 await databaseContext.Database.MigrateAsync();
             }
 
-            app.UseDefaultFiles()
+            app.UseRateLimiter()
+                .UseDefaultFiles()
                 .UseStaticFiles()
                 .UseRouting();
             if (app.Environment.IsDevelopment())
