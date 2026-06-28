@@ -577,6 +577,18 @@ const RepositoryStatusPage: React.FC = () => {
                 >
                     <span className="profile-icon">📁</span>
                     <span>{repoName}</span>
+                    <svg data-component="Octicon"
+                        aria-hidden="true" focusable="false"
+                        className="octicon octicon-triangle-down"
+                        viewBox="0 0 16 16"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        display="inline-block"
+                        overflow="visible"
+                        style={{ verticalAlign: "text-bottom" }}>
+                        <path d="m4.427 7.427 3.396 3.396a.25.25 0 0 0 .354 0l3.396-3.396A.25.25 0 0 0 11.396 7H4.604a.25.25 0 0 0-.177.427Z" />
+                    </svg>
                 </div>
                 <div className="tab" style={{ marginTop: "20px" }} onClick={() => navigate("/home")}>Home 🏠</div>
                 <div
