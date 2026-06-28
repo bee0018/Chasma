@@ -7,6 +7,7 @@ using ChasmaWebApi.Data.Requests.Remote;
 using ChasmaWebApi.Data.Responses.Remote;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ChasmaWebApi.Controllers
 {
@@ -16,6 +17,7 @@ namespace ChasmaWebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [EnableRateLimiting(ChasmaWebApiConfigurations.RateLimiterPolicy)]
     public class RemoteController : ControllerBase
     {
         /// <summary>

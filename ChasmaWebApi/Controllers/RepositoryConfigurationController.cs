@@ -8,6 +8,7 @@ using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Responses.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChasmaWebApi.Controllers;
@@ -18,6 +19,7 @@ namespace ChasmaWebApi.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting(ChasmaWebApiConfigurations.RateLimiterPolicy)]
 public class RepositoryConfigurationController : ControllerBase
 {
     /// <summary>

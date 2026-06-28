@@ -1,10 +1,10 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
-using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Requests.DryRun;
 using ChasmaWebApi.Data.Responses.DryRun;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ChasmaWebApi.Controllers
 {
@@ -14,6 +14,7 @@ namespace ChasmaWebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [EnableRateLimiting(ChasmaWebApiConfigurations.RateLimiterPolicy)]
     public class DryRunController : ControllerBase
     {
         /// <summary>
