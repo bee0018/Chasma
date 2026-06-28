@@ -135,38 +135,6 @@
         }
       }
     },
-    "/api/ApplicationConfiguration/reportBugs": {
-      "post": {
-        "tags": [
-          "ApplicationConfiguration"
-        ],
-        "operationId": "ApplicationConfiguration_ReportBugToCloudflareWorker",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReportBugsRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportBugsResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/Branch/addBranch": {
       "post": {
         "tags": [
@@ -476,6 +444,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HeartbeatMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Proxy/reportBugs": {
+      "post": {
+        "tags": [
+          "Proxy"
+        ],
+        "operationId": "Proxy_ReportBugToCloudflareWorker",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportBugsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportBugsResponse"
                 }
               }
             }
@@ -2269,33 +2269,6 @@
           }
         }
       },
-      "ReportBugsResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "ReportBugsRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "userId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "issueTitle": {
-            "type": "string"
-          },
-          "bugDescription": {
-            "type": "string"
-          }
-        }
-      },
       "AddNewBranchResponse": {
         "allOf": [
           {
@@ -2776,6 +2749,33 @@
           0,
           1
         ]
+      },
+      "ReportBugsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ReportBugsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "issueTitle": {
+            "type": "string"
+          },
+          "bugDescription": {
+            "type": "string"
+          }
+        }
       },
       "GetPullRequestStatusMessage": {
         "allOf": [

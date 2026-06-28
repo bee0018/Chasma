@@ -3,7 +3,7 @@ import { ReportBugsRequest } from "../../API/ChasmaWebApiClient";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useNavigate } from "react-router-dom";
-import { appConfigClient } from "../../managers/ApiClientManager";
+import { proxyClient } from "../../managers/ApiClientManager";
 
 /**
  * Initializes a new instance of the ReportBugsPage class.
@@ -51,7 +51,7 @@ export const ReportBugsPage: React.FC = () => {
         request.issueTitle = bugTitle;
         request.bugDescription = bugDescription;
         try {
-            const response = await appConfigClient.reportBugToCloudflareWorker(request);
+            const response = await proxyClient.reportBugToCloudflareWorker(request);
             if (response.isErrorResponse) {
                 setNotification({
                     title: "Failed to submit bug report",
@@ -71,6 +71,15 @@ export const ReportBugsPage: React.FC = () => {
             const errorNotification = await handleApiError(error, navigate, "Error reporting bug!", "An error occurred when attempting to submit bug report. Review console and internal server logs.");
             setNotification(errorNotification);
         }
+    };
+
+    /**
+     * Resets the form details.
+     */
+    const resetForm = () => {
+        setBugTitle("");
+        setBugDescription("");
+        setSuccessfullyCreated(false);
     };
 
     return (
@@ -98,13 +107,13 @@ export const ReportBugsPage: React.FC = () => {
                     disabled={disabledSendButton}
                     onClick={handleReportBugRequest}
                 >
-                    Report
+                    Send Report
                 </button>
                 <button className="modal-button secondary"
-                    onClick={() => setBugDescription("")}
+                    onClick={resetForm}
                     style={{ marginLeft: "8px" }}
                 >
-                    Clear
+                    {successfullyCreated ? "Reset" : "Clear"}
                 </button>
             </div>
         </>

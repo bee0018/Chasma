@@ -3,6 +3,7 @@
     BranchClient,
     DryRunClient,
     HealthClient,
+    ProxyClient,
     RemoteClient,
     RepositoryConfigurationClient,
     RepositoryStatusClient,
@@ -53,3 +54,6 @@ export const branchClient = new BranchClient(apiBaseUrl, { fetch: fetchWithAuth 
 
 /** The application configuration client for the web API. */
 export const appConfigClient = new ApplicationConfigurationClient(apiBaseUrl, { fetch: fetchWithAuth });
+
+/** The Proxy worker client for the web API. */
+export const proxyClient = new ProxyClient(apiBaseUrl, { fetch: fetchWithAuth });
