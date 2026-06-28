@@ -210,6 +210,12 @@ const Dashboard: React.FC = () => {
                             User Settings 🔧
                         </div>
                         <div
+                            className={`tab ${isActive("report-bugs")}`}
+                            onClick={() => navigate("report-bugs")}
+                        >
+                            Report Bugs 🐛
+                        </div>
+                        <div
                             className="tab"
                             onClick={() => window.open("/help", "_blank")}>
                             <span className="username">Help</span>

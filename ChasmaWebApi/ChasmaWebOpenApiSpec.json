@@ -135,6 +135,38 @@
         }
       }
     },
+    "/api/ApplicationConfiguration/reportBugs": {
+      "post": {
+        "tags": [
+          "ApplicationConfiguration"
+        ],
+        "operationId": "ApplicationConfiguration_ReportBugToCloudflareWorker",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportBugsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportBugsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Branch/addBranch": {
       "post": {
         "tags": [
@@ -2197,10 +2229,16 @@
           "criticalUpdate": {
             "type": "boolean"
           },
-          "downloadUrl": {
+          "windowsDownloadUrl": {
             "type": "string"
           },
-          "checksum": {
+          "linuxDownloadUrl": {
+            "type": "string"
+          },
+          "windowsChecksum": {
+            "type": "string"
+          },
+          "linuxChecksum": {
             "type": "string"
           },
           "changeLog": {
@@ -2228,6 +2266,33 @@
         "properties": {
           "systemManifest": {
             "$ref": "#/components/schemas/SystemManifest"
+          }
+        }
+      },
+      "ReportBugsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ReportBugsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "issueTitle": {
+            "type": "string"
+          },
+          "bugDescription": {
+            "type": "string"
           }
         }
       },
