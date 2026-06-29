@@ -339,11 +339,10 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// Gets the branch synchronization statuses based off the specified branch name.
         /// </summary>
         /// <param name="branchName">The branch to get status for.</param>
-        /// <param name="username">The user's username.</param>
         /// <param name="repositories">The list of repositories to get branch sync statuses for.</param>
         /// <param name="workingDirectories">The mapping of repository identifiers to its matching working directory.</param>
         /// <returns>The list of branch sync statuses.</returns>
-        List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, string username, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories);
+        List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories);
 
         /// <summary>
         /// Tries to restore the specified file in the repository, discarding any unstaged changes to the file.

@@ -12,6 +12,8 @@ string appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.Spe
 string logPath = Path.Combine(appDataDirectory, "logs", "emryce-.log");
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console()
     .WriteTo.Async(a => a.File(
     logPath,

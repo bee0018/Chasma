@@ -324,7 +324,7 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, string username, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories)
+        public List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories)
         {
             List<BranchSyncStatus> statuses = new();
             foreach (LocalGitRepository repository in repositories)
@@ -351,6 +351,7 @@ namespace ChasmaWebApi.Core.Services.Control
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
                     ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
                     string token = RemoteHelper.GetApiToken(remoteHostPlatform, apiConfigurations);
+                    string username = RemoteHelper.GetRemoteHostUsername(repository);
                     (string branchName, int aheadCount, int behindCount, string lastUpdated) divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
                     string repoName = repository.Name;
                     string repoOwner = repository.Owner;
