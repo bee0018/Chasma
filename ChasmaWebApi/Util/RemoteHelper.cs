@@ -1,4 +1,5 @@
 ﻿using ChasmaWebApi.Data.Objects.Application;
+using ChasmaWebApi.Data.Objects.Git;
 using NGitLab;
 using Octokit;
 
@@ -79,6 +80,23 @@ namespace ChasmaWebApi.Util
             {
                 RemoteHostPlatform.GitHub => apiConfigurations.GitHubApiToken,
                 RemoteHostPlatform.GitLab => apiConfigurations.GitLabApiToken,
+                _ => string.Empty,
+            };
+        }
+
+        /// <summary>
+        /// Gets the username of the remote host of where the repository is hosted.
+        /// </summary>
+        /// <param name="repository">The local git repository.</param>
+        /// <returns>The remote host username.</returns>
+        public static string GetRemoteHostUsername(LocalGitRepository repository)
+        {
+            RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
+            ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();
+            return remoteHostPlatform switch
+            {
+                RemoteHostPlatform.GitHub => apiConfig.GitHubUsername,
+                RemoteHostPlatform.GitLab => apiConfig.GitLabUsername,
                 _ => string.Empty,
             };
         }

@@ -8,6 +8,7 @@ using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
 using ChasmaWebApi.Data.Responses.Status;
+using ChasmaWebApi.Util;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -82,7 +83,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.RepositoryId))
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
             {
                 logger.LogError("Cannot process git status request because the repository identifier is null or empty.");
                 response.IsErrorResponse = true;
@@ -93,17 +95,25 @@ namespace ChasmaWebApi.Controllers
             int userId = request.UserId;
             if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
-                logger.LogError("No user found in cache for user ID: {userId}. Cannot get repository status. Sending error response.", request.UserId);
+                logger.LogError("No user found in cache for user ID: {userId}. Cannot get repository status. Sending error response.", userId);
                 response.IsErrorResponse = true;
-                response.ErrorMessage = $"No user found in cache for user ID: {request.UserId}. Cannot get repository status.";
+                response.ErrorMessage = $"No user found in cache for user ID: {userId}. Cannot get repository status.";
                 return Ok(response);
             }
 
-            string repoId = request.RepositoryId;
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Repository not found in cache when getting status for repo with identifier {id}. Sending error response.", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot get status because the repository cannot be found in system cache.";
+                return Ok(response);
+            }
+
             ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            string token = webApiConfigurations.GitHubApiToken;
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform, webApiConfigurations);
+            string username = RemoteHelper.GetRemoteHostUsername(repository);
             logger.LogDebug("Received request to run git status for repository ID: {repoId}", repoId);
-            RepositorySummary summary = applicationControlService.GetRepositoryStatus(repoId, user.UserName, token);
+            RepositorySummary summary = applicationControlService.GetRepositoryStatus(repoId, username, token);
             if (summary == null)
             {
                 logger.LogError("Failed to get repository status for repo ID: {repoId}", repoId);
@@ -142,11 +152,20 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(applyStagingActionRequest.RepoKey))
+            string repoId = applyStagingActionRequest.RepoKey;
+            if (string.IsNullOrEmpty(repoId))
             {
                 logger.LogError("Repository key must be populated.");
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Cannot process request because the repository key is not populated.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Repository not found in cache when applying staging action for repo with identifier {id}. Sending error response.", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot process request because the repository cannot be found in cache.";
                 return Ok(response);
             }
 
@@ -168,16 +187,16 @@ namespace ChasmaWebApi.Controllers
             }
 
             ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            string token = webApiConfigurations.GitHubApiToken;
-            string repoKey = applyStagingActionRequest.RepoKey;
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform, webApiConfigurations);
+            string username = RemoteHelper.GetRemoteHostUsername(repository);
             string fileName = applyStagingActionRequest.FileName;
             bool isStaging = applyStagingActionRequest.IsStaging;
-            List<RepositoryStatusElement>? statusElements = applicationControlService.ApplyStagingAction(repoKey, fileName, isStaging, user.UserName, token);
+            List<RepositoryStatusElement>? statusElements = applicationControlService.ApplyStagingAction(repoId, fileName, isStaging, username, token);
             if (statusElements == null)
             {
-                logger.LogError("Failed to apply staging action for repo ID: {repoId}", repoKey);
+                logger.LogError("Failed to apply staging action for repo ID: {repoId}", repoId);
                 response.IsErrorResponse = true;
-                response.ErrorMessage = $"Failed to apply staging action for repo ID: {repoKey}. Check server logs for more information.";
+                response.ErrorMessage = $"Failed to apply staging action for repo ID: {repoId}. Check server logs for more information.";
                 return Ok(response);
             }
 
@@ -297,8 +316,17 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Repository not found in cache when pushing changes for repo with identifier {id}. Sending error response.", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot get push changes because the repository cannot be found in system cache.";
+                return Ok(response);
+            }
+
             ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            if (!applicationControlService.TryPushChanges(workingDirectory, webApiConfigurations.GitHubApiToken, out string errorMessage))
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform, webApiConfigurations);
+            if (!applicationControlService.TryPushChanges(workingDirectory, token, out string errorMessage))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"Failed to push changes to repo: {repoId}. {errorMessage}";
@@ -364,9 +392,17 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            string fullName = user.Name;
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Repository not found in cache when pulling changes for repo with identifier {id}. Sending error response.", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot get pull changes because the repository cannot be found in system cache.";
+                return Ok(response);
+            }
+
             ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            string token = webApiConfigurations.GitHubApiToken;
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform, webApiConfigurations);
+            string fullName = user.Name;
             if (!applicationControlService.TryPullChanges(workingDirectory, fullName, email, token, out string errorMessage))
             {
                 response.IsErrorResponse = true;
@@ -577,7 +613,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            List<BranchSyncStatus> branchSyncStatuses = applicationControlService.GetBranchSyncStatuses(branchName, user.UserName, cacheManager.Repositories.Values, cacheManager.WorkingDirectories);
+            List<BranchSyncStatus> branchSyncStatuses = applicationControlService.GetBranchSyncStatuses(branchName, cacheManager.Repositories.Values, cacheManager.WorkingDirectories);
             logger.LogInformation("Successfully retrieved branch sync status for branch: {branch}", branchName);
             response.BranchSyncStatuses = branchSyncStatuses;
             return Ok(response);

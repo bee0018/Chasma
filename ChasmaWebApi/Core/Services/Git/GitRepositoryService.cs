@@ -154,6 +154,13 @@ namespace ChasmaWebApi.Core.Services.Git
                 return statusElements;
             }
 
+            if (!CacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository localGitRepository))
+            {
+                string paths = string.Join(", ", fileNames);
+                Logger.LogError("Repository not found with key {repoKey} when attemtping to stage/unstage the files {paths}.", repoId, paths);
+                return statusElements;
+            }
+
             using Repository repo = new(workingDirectory);
             foreach (string fileName in fileNames)
             {
@@ -173,7 +180,10 @@ namespace ChasmaWebApi.Core.Services.Git
             }
 
             repo.Index.Write();
-            RepositorySummary summary = GetRepositoryStatus(repoId, string.Empty, string.Empty, repo);
+            string username = RemoteHelper.GetRemoteHostUsername(localGitRepository);
+            ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();
+            string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform, apiConfig);
+            RepositorySummary summary = GetRepositoryStatus(repoId, username, token, repo);
             return summary?.StatusElements;
         }
 
@@ -187,7 +197,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 return statusElements;
             }
 
-            using Repository repo = new Repository(workingDirectory);
+            using Repository repo = new(workingDirectory);
             string stagingAction;
             if (stagingFile)
             {
@@ -674,25 +684,36 @@ namespace ChasmaWebApi.Core.Services.Git
                 return (string.Empty, 0, 0, string.Empty);
             }
 
-            try
+            string errorMessage = string.Empty;
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(token))
             {
-                FetchOptions fetchOptions = new()
+                if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out errorMessage))
                 {
-                    CredentialsProvider = (url, user, credentials) =>
-                    new UsernamePasswordCredentials
-                    {
-                        Username = username,
-                        Password = token
-                    }
-                };
-                Commands.Fetch(repo, branch.RemoteName, [], fetchOptions, null);
+                    logger.LogError("Could not execute fetch command because: {error}", errorMessage);
+                }
             }
-            catch (Exception e)
+            else
             {
-                logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}. Attempting manual fetch.", branch.RemoteName, repo.Info.WorkingDirectory);
-                if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out string errorMessage))
+                try
                 {
-                    logger.LogError(errorMessage);
+                    FetchOptions fetchOptions = new()
+                    {
+                        CredentialsProvider = (url, user, credentials) =>
+                        new UsernamePasswordCredentials
+                        {
+                            Username = username,
+                            Password = token
+                        }
+                    };
+                    Commands.Fetch(repo, branch.RemoteName, [], fetchOptions, null);
+                }
+                catch (Exception e)
+                {
+                    logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}. Attempting manual fetch.", branch.RemoteName, repo.Info.WorkingDirectory);
+                    if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out errorMessage))
+                    {
+                        logger.LogError(errorMessage);
+                    }
                 }
             }
 
@@ -703,10 +724,15 @@ namespace ChasmaWebApi.Core.Services.Git
                 return (string.Empty, 0, 0, string.Empty);
             }
 
+            string lastHeadUpdateTimestamp = repo.Head.Commits
+                .Max(i => i.Author.When)
+                .ToLocalTime()
+                .ToString("g");
+            string repoHeadLastUpdated = $"From HEAD: {lastHeadUpdateTimestamp}";
             if (branch.TrackedBranch == null)
             {
                 logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
-                return (string.Empty, 0, 0, string.Empty);
+                return (localBranchName, 0, 0, repoHeadLastUpdated);
             }
 
             string upstreamBranchName = branch.TrackedBranch.FriendlyName;
@@ -715,13 +741,13 @@ namespace ChasmaWebApi.Core.Services.Git
             if (localBranch == null)
             {
                 logger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
-                return (string.Empty, 0, 0, string.Empty);
+                return (localBranchName, 0, 0, repoHeadLastUpdated);
             }
 
             if (upstreamBranch == null)
             {
                 logger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
-                return (localBranchName, 0, 0, localBranchName);
+                return (localBranchName, 0, 0, repoHeadLastUpdated);
             }
             
             string lastUpdated = upstreamBranch.Tip.Committer.When.ToLocalTime().ToString("g");
