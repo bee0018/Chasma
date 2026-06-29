@@ -1,6 +1,0 @@
-@ChasmaWebApi_HostAddress = http://localhost:5230
-
-GET {{ChasmaWebApi_HostAddress}}/
-Accept: application/json
-
-###
