@@ -449,9 +449,9 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public bool TryCreatePullRequest(string workingDirectory, string owner, string repoName, string title, string headBranch, string baseBranch, string body, string token, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage)
+        public bool TryCreatePullRequest(PreparedGitHubPullRequest pullRequest, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage)
         {
-            return gitHubService.TryCreatePullRequest(workingDirectory, owner, repoName, title, headBranch, baseBranch, body, token, out pullRequestId, out prUrl, out timestamp, out errorMessage);
+            return gitHubService.TryCreatePullRequest(pullRequest, out pullRequestId, out prUrl, out timestamp, out errorMessage);
         }
 
         // <inheritdoc />

@@ -176,6 +176,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 };
                 RemotePullRequest mr = new()
                 {
+                    RepositoryId = preparedMergeRequest.RepositoryId,
                     Number = gitLabMergeRequest.Iid,
                     RepositoryName = preparedMergeRequest.RepoName,
                     RepositoryOwner = preparedMergeRequest.RepoOwner,
