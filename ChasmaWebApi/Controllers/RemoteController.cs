@@ -5,6 +5,7 @@ using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Data.Requests.Remote;
 using ChasmaWebApi.Data.Responses.Remote;
+using ChasmaWebApi.Util;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -202,7 +203,15 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            string owner = cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repo) ? repo.Owner : string.Empty;
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repo))
+            {
+                logger.LogError("Invalid {request}. Repository not found in cache with identifier {id} when trying to create pull request. Sending error response.", nameof(CreatePRRequest), repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Could not create pull request. Repository could not be found.";
+                return Ok(response);
+            }
+
+            string owner = repo.Owner;
             if (string.IsNullOrEmpty(owner))
             {
                 response.IsErrorResponse = true;
@@ -221,8 +230,7 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
-                ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-                string token = webApiConfigurations.GitHubApiToken;
+                string token = RemoteHelper.GetApiToken(repo.HostPlatform);
                 string title = request.PullRequestTitle;
                 string headBranch = request.WorkingBranchName;
                 string baseBranch = request.DestinationBranchName;
@@ -309,7 +317,7 @@ namespace ChasmaWebApi.Controllers
                 string title = request.Title;
                 string body = request.Body;
                 ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-                string token = webApiConfigurations.GitHubApiToken;
+                string token = webApiConfigurations.GitHubApiToken ?? string.Empty;
                 bool issueIsCreated = applicationControlService.TryCreateIssue(repoName, repoOwner, title, body, token, out int issueId, out string issueUrl, out string errorMessage);
                 if (!issueIsCreated)
                 {

@@ -181,8 +181,7 @@ namespace ChasmaWebApi.Core.Services.Git
 
             repo.Index.Write();
             string username = RemoteHelper.GetRemoteHostUsername(localGitRepository);
-            ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();
-            string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform, apiConfig);
+            string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform);
             RepositorySummary summary = GetRepositoryStatus(repoId, username, token, repo);
             return summary?.StatusElements;
         }

@@ -6,6 +6,7 @@ using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
 using ChasmaWebApi.Data.Responses.Status;
+using ChasmaWebApi.Util;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -85,6 +86,14 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Invalid {request}. Repository not found in cache with identifier {id} when trying to add new branch. Sending error response.", requestName, repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Invalid request. Repository could not be found.";
+                return Ok(response);
+            }
+
             int userId = request.UserId;
             if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
@@ -103,9 +112,9 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            string token = webApiConfigurations.GitHubApiToken;
-            if (!applicationControlService.TryAddNewBranch(workingDirectory, branchName, user.UserName, token, out string errorMessage))
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+            string username = RemoteHelper.GetRemoteHostUsername(repository);
+            if (!applicationControlService.TryAddNewBranch(workingDirectory, branchName, username, token, out string errorMessage))
             {
                 logger.LogError("Failed to create new branch {branchName} for repository {repoId}. Reason: {reason}", branchName, repoId, errorMessage);
                 response.IsErrorResponse = true;
@@ -338,6 +347,14 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Invalid {request}. Repository not found in cache with identifier {id} when trying to merge branches. Sending error response.", requestName, repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Could not merge branches. Repository could not be found.";
+                return Ok(response);
+            }
+
             int userId = request.UserId;
             if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
             {
@@ -351,9 +368,9 @@ namespace ChasmaWebApi.Controllers
             {
                 string sourceBranchName = request.SourceBranch;
                 string destinationBranchName = request.DestinationBranch;
-                ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-                string token = webApiConfigurations.GitHubApiToken;
-                if (!applicationControlService.TryMergeChanges(workingDirectory, sourceBranchName, destinationBranchName, user.Name, user.Email, token, out string errorMessage))
+                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                string username = RemoteHelper.GetRemoteHostUsername(repository);
+                if (!applicationControlService.TryMergeChanges(workingDirectory, sourceBranchName, destinationBranchName, username, user.Email, token, out string errorMessage))
                 {
                     response.IsErrorResponse = true;
                     response.ErrorMessage = errorMessage;

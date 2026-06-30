@@ -349,8 +349,7 @@ namespace ChasmaWebApi.Core.Services.Control
                 else
                 {
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
-                    ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-                    string token = RemoteHelper.GetApiToken(remoteHostPlatform, apiConfigurations);
+                    string token = RemoteHelper.GetApiToken(remoteHostPlatform);
                     string username = RemoteHelper.GetRemoteHostUsername(repository);
                     (string branchName, int aheadCount, int behindCount, string lastUpdated) divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
                     string repoName = repository.Name;

@@ -633,7 +633,7 @@ namespace ChasmaWebApi.Core.Services.Index
 
             return new UsernamePasswordCredentials
             {
-                // Fall back to standard "git" if username isn't saved. 
+                // Fall back to standard "git" if username isn't saved.
                 // Most platforms accept any non-empty string when using access tokens.
                 Username = !string.IsNullOrEmpty(remotePlatformUsername) ? remotePlatformUsername : "git",
                 Password = apiAccessToken,

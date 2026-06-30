@@ -109,8 +109,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform, webApiConfigurations);
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
             string username = RemoteHelper.GetRemoteHostUsername(repository);
             logger.LogDebug("Received request to run git status for repository ID: {repoId}", repoId);
             RepositorySummary summary = applicationControlService.GetRepositoryStatus(repoId, username, token);
@@ -186,8 +185,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform, webApiConfigurations);
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
             string username = RemoteHelper.GetRemoteHostUsername(repository);
             string fileName = applyStagingActionRequest.FileName;
             bool isStaging = applyStagingActionRequest.IsStaging;
@@ -324,8 +322,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform, webApiConfigurations);
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
             if (!applicationControlService.TryPushChanges(workingDirectory, token, out string errorMessage))
             {
                 response.IsErrorResponse = true;
@@ -400,8 +397,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform, webApiConfigurations);
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
             string fullName = user.Name;
             if (!applicationControlService.TryPullChanges(workingDirectory, fullName, email, token, out string errorMessage))
             {
