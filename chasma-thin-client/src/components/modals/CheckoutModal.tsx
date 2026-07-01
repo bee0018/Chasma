@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import Checkbox from "../Checkbox";
+import { createPortal } from "react-dom";
 
 /**
  * The members of the checkout modal.
@@ -17,7 +18,10 @@ interface ICheckoutModalProps {
     onClose: () => void;
 
     /** Function to call when the response is successful. **/
-    onSuccess: () => void,
+    onSuccess?: () => void,
+
+    /** The targeted branch to checkout. */
+    targetedBranch?: string | undefined;
 }
 
 /**
@@ -33,7 +37,11 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
     const [successfullyCheckedOut, setSuccessfullyCheckedOut] = React.useState<boolean | undefined>(undefined);
 
     /** Gets or sets the modal title. **/
-    const [title, setTitle] = React.useState<string>("Select branch to checkout: ");
+    const [title, setTitle] = React.useState<string>(
+        props.targetedBranch === undefined
+        ? "Select branch to checkout: "
+        : `Checkout branch ${props.targetedBranch}?`
+    );
 
     /** Gets or sets the remote branches to checkout. **/
     const [branchesList, setBranchesList] = React.useState<string[] | undefined>([]);
@@ -69,7 +77,7 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
 
         const request = new GitCheckoutRequest();
         request.repositoryId = props.repositoryId;
-        request.branchName = branchName;
+        request.branchName = props.targetedBranch !== undefined ? props.targetedBranch : branchName;
         request.userId = user?.userId;
         request.checkoutMode = branchCheckoutMode;
         request.stashMessage = stashMessage;
@@ -84,7 +92,9 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
             setTitle("Check out successful!");
             setErrorMessage(undefined);
             setSuccessfullyCheckedOut(true);
-            props.onSuccess();
+            if (props.onSuccess) {
+                props.onSuccess();
+            }
         }
         catch (e) {
             setTitle("Could not check out branch!")
@@ -132,9 +142,11 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
     }
 
     useEffect(() => {
-        fetchAssociatedBranches().catch(e => console.error(e));
-    }, []);
-    return (
+        if (!props.targetedBranch) {
+            fetchAssociatedBranches().catch(e => console.error(e));
+        }
+    }, [props.targetedBranch]);
+    return createPortal (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
                 <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -214,7 +226,7 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
                         />
                     </div>
                     <br />
-                    {branchesList && branchesList.length > 0 && (
+                    {branchesList && branchesList.length > 0 && props.targetedBranch === undefined && (
                         <select value={branchName}
                             onChange={(e) => setBranchName(e.target.value)}
                             className="modal-input-field"
@@ -250,7 +262,8 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
                     </div>
                 </div>
             </div>
-        </>
+        </>,
+        document.body
     )
 }
 

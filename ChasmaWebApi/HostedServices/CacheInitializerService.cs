@@ -231,11 +231,12 @@ namespace ChasmaWebApi.HostedServices
         /// <summary>
         /// Gets all the open pull requests via the GitHub API.
         /// </summary>
-        /// <param name="owner">The repository owner.</param>
-        /// <param name="repoName">The repository owner.</param>
+        /// <param name="repository">The repository.</param>
         /// <returns>Task containing the result of the API operation.</returns>
-        private async Task<List<RemotePullRequest>?> GetGitHubPullRequestAsync(string owner, string repoName)
+        private async Task<List<RemotePullRequest>?> GetGitHubPullRequestAsync(LocalGitRepository repository)
         {
+            string repoName = repository.Name;
+            string owner = repository.Owner;
             if (string.IsNullOrEmpty(InitialApiConfiguration.GitHubApiToken))
             {
                 logger.LogWarning("GitHub API token is not provided. Cannot fetch pull requests for {repoName}.", repoName);
@@ -251,6 +252,7 @@ namespace ChasmaWebApi.HostedServices
                 {
                     RemotePullRequest pr = new()
                     {
+                        RepositoryId = repository.Id,
                         Number = pullRequest.Number,
                         RepositoryName = pullRequest.Head.Repository.Name,
                         RepositoryOwner = pullRequest.Head.Repository.Owner.Login,
@@ -278,12 +280,13 @@ namespace ChasmaWebApi.HostedServices
         /// <summary>
         /// Gets the pull request by its number via the GitHub API.
         /// </summary>
-        /// <param name="owner">The repository owner.</param>
-        /// <param name="name">The repoository name.</param>
-        /// <param name="prNumber">The GitHub pull request number.</param>
+        /// <param name="remotePullRequest">The remote pull request.</param>
         /// <returns>The internal GitHub pull request.</returns>
-        private async Task<RemotePullRequest?> GetPullRequestByPrNumberAsync(string owner, string name, long prNumber)
+        private async Task<RemotePullRequest?> GetPullRequestByPrNumberAsync(RemotePullRequest remotePullRequest)
         {
+            string owner = remotePullRequest.RepositoryOwner;
+            string name = remotePullRequest.RepositoryName;
+            long prNumber = remotePullRequest.Number;
             ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
             if (string.IsNullOrEmpty(configurations.GitHubApiToken))
             {
@@ -308,6 +311,7 @@ namespace ChasmaWebApi.HostedServices
 
                 RemotePullRequest pr = new()
                 {
+                    RepositoryId = remotePullRequest.RepositoryId,
                     Number = pullRequest.Number,
                     BranchName = pullRequest.Head.Ref,
                     RepositoryName = pullRequest.Head.Repository.Name,
@@ -364,7 +368,7 @@ namespace ChasmaWebApi.HostedServices
         {
             foreach (RemotePullRequest existingPullRequest in cacheManager.GitHubPullRequests.Values)
             {
-                RemotePullRequest? pr = await GetPullRequestByPrNumberAsync(existingPullRequest.RepositoryOwner, existingPullRequest.RepositoryName, existingPullRequest.Number);
+                RemotePullRequest? pr = await GetPullRequestByPrNumberAsync(existingPullRequest);
                 if (pr == null)
                 {
                     continue;
@@ -385,7 +389,7 @@ namespace ChasmaWebApi.HostedServices
                     .ToList();
             foreach (LocalGitRepository repository in gitHubRepositories)
             {
-                List<RemotePullRequest>? pullRequests = await GetGitHubPullRequestAsync(repository.Owner, repository.Name);
+                List<RemotePullRequest>? pullRequests = await GetGitHubPullRequestAsync(repository);
                 if (pullRequests == null)
                 {
                     logger.LogWarning("No pull requests could be found for {name}.", repository.GetDisplayName());
@@ -460,6 +464,7 @@ namespace ChasmaWebApi.HostedServices
                 {
                     RemotePullRequest mr = new()
                     {
+                        RepositoryId = repository.Id,
                         Number = mergeRequest.Iid,
                         RepositoryName = repoName,
                         RepositoryOwner = owner,
@@ -520,10 +525,7 @@ namespace ChasmaWebApi.HostedServices
         {
             foreach (RemotePullRequest existingPullRequest in cacheManager.GitLabMergeRequests.Values)
             {
-                string owner = existingPullRequest.RepositoryOwner;
-                string repoName = existingPullRequest.RepositoryName;
-                long iid = existingPullRequest.Number;
-                RemotePullRequest? mr = await GetMergeRequestByIidNumberAsync(owner, repoName, iid, cancellationToken);
+                RemotePullRequest? mr = await GetMergeRequestByIidNumberAsync(existingPullRequest, cancellationToken);
                 if (mr == null)
                 {
                     continue;
@@ -536,13 +538,14 @@ namespace ChasmaWebApi.HostedServices
         /// <summary>
         /// Gets the merge request by its internal identification via the GitLab API.
         /// </summary>
-        /// <param name="owner">The repository owner.</param>
-        /// <param name="repoName">The repoository name.</param>
-        /// <param name="mergeRequestId">The GitLab merge request number.</param>
+        /// <param name="existingPullRequest">The GitLab merge request.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The internal remote pull request.</returns>
-        private async Task<RemotePullRequest?> GetMergeRequestByIidNumberAsync(string owner, string repoName, long mergeRequestId, CancellationToken cancellationToken)
+        private async Task<RemotePullRequest?> GetMergeRequestByIidNumberAsync(RemotePullRequest existingPullRequest, CancellationToken cancellationToken)
         {
+            string owner = existingPullRequest.RepositoryOwner;
+            string repoName = existingPullRequest.RepositoryName;
+            long mergeRequestId = existingPullRequest.Number;
             ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
             if (string.IsNullOrEmpty(configurations.GitLabApiToken))
             {
@@ -577,6 +580,7 @@ namespace ChasmaWebApi.HostedServices
 
                 RemotePullRequest mr = new()
                 {
+                    RepositoryId = existingPullRequest.RepositoryId,
                     Number = mergeRequest.Iid,
                     RepositoryName = repoName,
                     RepositoryOwner = owner,

@@ -9,6 +9,11 @@
         #region Required Fields
 
         /// <summary>
+        /// Gets or sets the repository identifier.
+        /// </summary>
+        public string RepositoryId { get; set; }
+
+        /// <summary>
         /// Gets or sets the repository owner.
         /// </summary>
         public string RepoOwner { get; set; }

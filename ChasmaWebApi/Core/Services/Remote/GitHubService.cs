@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
+using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
 using LibGit2Sharp;
@@ -45,17 +46,31 @@ namespace ChasmaWebApi.Core.Services.Remote
         #endregion
 
         // <inheritdoc />
-        public bool TryCreatePullRequest(string workingDirectory, string owner, string repoName, string title, string headBranch, string baseBranch, string body, string token, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage)
+        public bool TryCreatePullRequest(PreparedGitHubPullRequest pullRequest, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage)
         {
             errorMessage = string.Empty;
             prUrl = string.Empty;
             timestamp = string.Empty;
             pullRequestId = -1;
-
+            string workingDirectory = pullRequest.WorkingDirectory;
+            string headBranch = pullRequest.HeadBranch;
+            string baseBranch = pullRequest.BaseBranch;
+            string repoName = pullRequest.RepositoryName;
+            string token = pullRequest.Token;
+            string title = pullRequest.PullRequestTitle;
+            string body = pullRequest.Description;
+            string owner = pullRequest.RepositoryOwner;
             if (!PullRequestCanBeCreated(workingDirectory, headBranch, baseBranch, out string reason))
             {
                 errorMessage = reason;
                 Logger.LogError("Cannot create pull request in {repoName}: {reason}", repoName, reason);
+                return false;
+            }
+
+            if (!CacheManager.Repositories.TryGetValue(pullRequest.RepositoryId, out LocalGitRepository repository))
+            {
+                errorMessage = "Could not find repository in system cache.";
+                Logger.LogError("Could not create pull request because the repository could not be found. Sending error response.");
                 return false;
             }
 
@@ -78,6 +93,7 @@ namespace ChasmaWebApi.Core.Services.Remote
             timestamp = createdPullRequest.CreatedAt.ToLocalTime().ToString("g");
             RemotePullRequest pr = new()
             {
+                RepositoryId = repository.Id,
                 Number = createdPullRequest.Number,
                 RepositoryName = repoName,
                 RepositoryOwner = owner,

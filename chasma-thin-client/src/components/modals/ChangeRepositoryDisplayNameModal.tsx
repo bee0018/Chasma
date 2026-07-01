@@ -134,7 +134,7 @@ const ChangeRepositoryDisplayNameModal: React.FC<IChangeRepositoryDisplayNameMod
                 </div>
             </div>
         </div>,
-        document.body // 3. Renders the modal directly on the body node root element
+        document.body
     );
 }
 

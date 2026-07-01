@@ -15,7 +15,7 @@ import { useCacheStore } from './managers/CacheManager';
 import NotificationModal from './components/modals/NotificationModal';
 import { userClient } from './managers/ApiClientManager';
 import { RefreshRequest, SystemManifest } from './API/ChasmaWebApiClient';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import AppSetupPage from './components/pages/AppSetupPage';
 import StartupGate from './components/pages/gates/StartupGate';
 import UserConfigTab from './components/dashboardTabs/UserConfigTab';

@@ -2805,6 +2805,9 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
+              "repositoryId": {
+                "type": "string"
+              },
               "number": {
                 "type": "integer",
                 "format": "int64"

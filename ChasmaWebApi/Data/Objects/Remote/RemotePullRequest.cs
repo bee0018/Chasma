@@ -8,6 +8,11 @@ namespace ChasmaWebApi.Data.Objects.Remote
     public class RemotePullRequest : ChasmaXmlBase
     {
         /// <summary>
+        /// Gets or sets the repository identifier.
+        /// </summary>
+        public string RepositoryId { get; set; }
+
+        /// <summary>
         /// Gets or sets the pull request number.
         /// Note: This is not the database ID, but the PR number in remote Git client.
         /// </summary>

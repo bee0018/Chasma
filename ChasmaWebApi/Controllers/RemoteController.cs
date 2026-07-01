@@ -236,7 +236,19 @@ namespace ChasmaWebApi.Controllers
                 string baseBranch = request.DestinationBranchName;
                 string body = request.PullRequestBody;
                 string repoName = request.RepositoryName;
-                if (!applicationControlService.TryCreatePullRequest(workingDirectory, owner, repoName, title, headBranch, baseBranch, body, token, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage))
+                PreparedGitHubPullRequest pullRequest = new()
+                {
+                    RepositoryId = repoId,
+                    WorkingDirectory = workingDirectory,
+                    RepositoryOwner = owner,
+                    RepositoryName = repoName,
+                    PullRequestTitle = title,
+                    HeadBranch = headBranch,
+                    BaseBranch = baseBranch,
+                    Description = body,
+                    Token = token,
+                };
+                if (!applicationControlService.TryCreatePullRequest(pullRequest, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage))
                 {
                     response.IsErrorResponse = true;
                     response.ErrorMessage = $"Failed to create pull request for repo: {request.RepositoryName}. {errorMessage}";
@@ -604,6 +616,7 @@ namespace ChasmaWebApi.Controllers
             {
                 PreparedGitLabMergeRequest preparedRequest = new()
                 {
+                    RepositoryId = repoId,
                     RepoOwner = repository.Owner,
                     RepoName = repository.Name,
                     SourceBranch = sourceBranch,

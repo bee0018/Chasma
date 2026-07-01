@@ -7,6 +7,7 @@ import { useCacheStore } from "../../managers/CacheManager";
 import { useNavigate } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
+import CheckoutModal from "../modals/CheckoutModal";
 
 /**
  * Initializes a new instance of the GlobalPullRequestTab component
@@ -33,14 +34,20 @@ const GlobalRepositoryTab: React.FC = () => {
     /** Gets or sets a value indicating whether the request is ready to be sent. */
     const [disableSendButton, setDisableSendButton] = useState(false);
 
+    /** Gets or sets the selected repository identifier. */
+    const [selectedRepositoryId, setSelectedRepositoryId] = useState<string | undefined>(undefined);
+
+    /** Gets or sets the targeted branch to checkout. */
+    const [targetedBranch, setTargetedBranch] = useState<string | undefined>(undefined);
+
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
 
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** The filtered branches by search query. **/
     const filteredBranches = pullRequests.filter(pr =>
@@ -89,19 +96,35 @@ const GlobalRepositoryTab: React.FC = () => {
                 return;
             }
 
-           if (response.branchSyncStatuses) {
-            setBranchStatuses(response.branchSyncStatuses);
-           }
+            if (response.branchSyncStatuses) {
+                setBranchStatuses(response.branchSyncStatuses);
+            }
 
-           setNotification(null);
-           setDisableSendButton(false);
+            setNotification(null);
+            setDisableSendButton(false);
         }
-        catch (e)
-        {
+        catch (e) {
             const errorNotification = await handleApiError(e, navigate, "Error getting branch sync status!", "Review console logs for more information.");
             setNotification(errorNotification);
             setDisableSendButton(false);
         }
+    };
+
+    /**
+     * Handles the event when the user wants to checkout a branch from a pull request.
+     * @param pr The remote pull request.
+     */
+    const handleCheckoutBranch = (pr: RemotePullRequest) => {
+        setSelectedRepositoryId(pr.repositoryId);
+        setTargetedBranch(pr.branchName);
+    };
+
+    /**
+     * Clears the checkout details.
+     */
+    const clearCheckoutDetails = () => {
+        setSelectedRepositoryId(undefined);
+        setTargetedBranch(undefined);
     };
 
     /** Load git status every 2.5s **/
@@ -115,181 +138,200 @@ const GlobalRepositoryTab: React.FC = () => {
 
     return (
         <>
-        <div className="workflow-page-container">
-            <section className="command-mode-section">
-                <div className="command-mode-toggle">
-                    <button
-                        className={`command-mode-button ${viewMode === "prs" ? "active" : ""}`}
-                        onClick={() => setViewMode("prs")}
-                    >
-                        PRs
-                    </button>
-                    <button
-                        className={`command-mode-button ${viewMode === "branchSync" ? "active" : ""}`}
-                        onClick={() => setViewMode("branchSync")}
-                    >
-                        Branch Sync
-                    </button>
-                </div>
-            </section>
-            {viewMode === "prs" &&
-                <>
-                    <div className="workflow-page-header">
-                        <h1>System-Wide Open Pull Requests</h1>
-                        <p>Your centralized hub for tracking, reviewing, and merging open pull requests with precision and control🧠</p>
-                        <input
-                            type="text"
-                            placeholder="Search branches..."
-                            value={prSearchQuery}
-                            onChange={e => setPrSearchQuery(e.target.value)}
-                            className="input-field" />
-                    </div>
-                    <br/>
-                    {pullRequests.length === 0 && prSearchQuery === "" && <p className="no-workflows">No pull requests retrieved yet.</p>}
-                    {pullRequests.length > 0 && prSearchQuery === "" &&
-                        <div className="workflow-table-container">
-                            <table className="workflow-table">
-                                <thead>
-                                <tr>
-                                    <th>Number</th>
-                                    <th>Repo Name</th>
-                                    <th>Repo Owner</th>
-                                    <th>Branch</th>
-                                    <th>Active State</th>
-                                    <th>Merge State</th>
-                                    <th>Created At</th>
-                                    <th>Merged At</th>
-                                    <th>Merged</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {pullRequests.map((pr, index) => (
-                                    <tr
-                                        key={index}
-                                        className="success"
-                                        onClick={() => window.open(pr.htmlUrl, "_blank")}
-                                    >
-                                        <td>{pr.number}</td>
-                                        <td>{pr.repositoryName}</td>
-                                        <td>{pr.repositoryOwner}</td>
-                                        <td>{pr.branchName}</td>
-                                        <td>{capitalizeFirst(pr.activeState)}</td>
-                                        <td>{capitalizeFirst(pr.mergeableState)}</td>
-                                        <td>{pr.createdAt}</td>
-                                        <td>{pr.mergedAt}</td>
-                                        <td>{pr.mergedAt ? "Yes" : ""}</td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    {filteredBranches.length > 0 && prSearchQuery !== "" &&
-                        <div className="workflow-table-container">
-                            <table className="workflow-table">
-                                <thead>
-                                <tr>
-                                    <th>Number</th>
-                                    <th>Repo Name</th>
-                                    <th>Repo Owner</th>
-                                    <th>Branch</th>
-                                    <th>Active State</th>
-                                    <th>Merge State</th>
-                                    <th>Created At</th>
-                                    <th>Merged At</th>
-                                    <th>Merged</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {filteredBranches.map((pr, index) => (
-                                    <tr
-                                        key={index}
-                                        className="success"
-                                        onClick={() => window.open(pr.htmlUrl, "_blank")}
-                                    >
-                                        <td>{pr.number}</td>
-                                        <td>{pr.repositoryName}</td>
-                                        <td>{pr.repositoryOwner}</td>
-                                        <td>{pr.branchName}</td>
-                                        <td>{capitalizeFirst(pr.activeState)}</td>
-                                        <td>{capitalizeFirst(pr.mergeableState)}</td>
-                                        <td>{pr.createdAt}</td>
-                                        <td>{pr.mergedAt}</td>
-                                        <td>{pr.merged}</td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </>
-            }
-            {viewMode === "branchSync" &&
-                <>
-                    <div className="workflow-page-header">
-                        <h1>Cross-Repo Branches</h1>
-                        <p>Keep every branch in lockstep—system-wide sync without the chaos🔀</p>
-                        <input
-                            type="text"
-                            placeholder="Search branch to sync..."
-                            value={branchSyncSearchQuery}
-                            onChange={e => setBranchSyncSearchQuery(e.target.value)}
-                            className="input-field" />
+            <div className="workflow-page-container">
+                <section className="command-mode-section">
+                    <div className="command-mode-toggle">
                         <button
-                            className="submit-button"
-                            disabled={disableSendButton}
-                            onClick={handleBranchSyncRequest}
-                            type="submit">
-                                Search
+                            className={`command-mode-button ${viewMode === "prs" ? "active" : ""}`}
+                            onClick={() => setViewMode("prs")}
+                        >
+                            PRs
+                        </button>
+                        <button
+                            className={`command-mode-button ${viewMode === "branchSync" ? "active" : ""}`}
+                            onClick={() => setViewMode("branchSync")}
+                        >
+                            Branch Sync
                         </button>
                     </div>
-                    <br/>
-                    {branchStatuses.length === 0 && <p className="no-workflows">No branch statuses have been retrieved yet.</p>}
-                    {branchStatuses.length > 0 &&
-                        <div className="workflow-table-container">
-                            <table className="workflow-table">
-                                <thead>
-                                <tr>
-                                    <th>Repository Name</th>
-                                    <th>Branch Existence</th>
-                                    <th>Commits Behind Base</th>
-                                    <th>Commits Ahead Of Base</th>
-                                    <th>Pull Request Open</th>
-                                    <th>Build Status</th>
-                                    <th>Last Updated</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {branchStatuses.map((status, index) => (
-                                    <tr
-                                        key={index}
-                                        className="success"
-                                    >
-                                        <td>{status.repositoryName}</td>
-                                        <td
-                                            style={{color: status.branchExists ? "white" : "orange"}}>
-                                                {status.branchExists ? "Exists" : "Does not exist"}
-                                        </td>
-                                        <td
-                                            style={{color: Number(status.behind) > 0 ? "yellow" : "white"}}>
-                                                {status.behind}
-                                        </td>
-                                        <td
-                                            style={{color: Number(status.ahead) > 0 ? "lightgreen" : "white"}}>
-                                                {status.ahead}
-                                        </td>
-                                        <td>{status.pullRequestOpen ? "Open" : "-"}</td>
-                                        <td>{status.buildStatus}</td>
-                                        <td>{status.lastUpdated}</td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                </section>
+                {viewMode === "prs" &&
+                    <>
+                        <div className="workflow-page-header">
+                            <h1>System-Wide Open Pull Requests</h1>
+                            <p>Your centralized hub for tracking, reviewing, and merging open pull requests with precision and control🧠</p>
+                            <input
+                                type="text"
+                                placeholder="Search branches..."
+                                value={prSearchQuery}
+                                onChange={e => setPrSearchQuery(e.target.value)}
+                                className="input-field" />
                         </div>
-                    }
-                </>
-            }
-        </div>
+                        <br />
+                        {pullRequests.length === 0 && prSearchQuery === "" && <p className="no-workflows">No pull requests retrieved yet.</p>}
+                        {pullRequests.length > 0 && prSearchQuery === "" &&
+                            <div className="workflow-table-container">
+                                <table className="workflow-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Number</th>
+                                            <th>Repo Name</th>
+                                            <th>Repo Owner</th>
+                                            <th>Branch</th>
+                                            <th>Active State</th>
+                                            <th>Merge State</th>
+                                            <th>Created At</th>
+                                            <th>Merged At</th>
+                                            <th>Merged</th>
+                                            <th>Checkout</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pullRequests.map((pr, index) => (
+                                            <tr
+                                                key={index}
+                                                className="success"
+                                                onClick={() => window.open(pr.htmlUrl, "_blank")}
+                                            >
+                                                <td>{pr.number}</td>
+                                                <td>{pr.repositoryName}</td>
+                                                <td>{pr.repositoryOwner}</td>
+                                                <td>{pr.branchName}</td>
+                                                <td>{capitalizeFirst(pr.activeState)}</td>
+                                                <td>{capitalizeFirst(pr.mergeableState)}</td>
+                                                <td>{pr.createdAt}</td>
+                                                <td>{pr.mergedAt}</td>
+                                                <td>{pr.mergedAt ? "Yes" : ""}</td>
+                                                <td>
+                                                    <button
+                                                        className="repo-action"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCheckoutBranch(pr);
+                                                        }}
+                                                    >
+                                                        Checkout
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        {filteredBranches.length > 0 && prSearchQuery !== "" &&
+                            <div className="workflow-table-container">
+                                <table className="workflow-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Number</th>
+                                            <th>Repo Name</th>
+                                            <th>Repo Owner</th>
+                                            <th>Branch</th>
+                                            <th>Active State</th>
+                                            <th>Merge State</th>
+                                            <th>Created At</th>
+                                            <th>Merged At</th>
+                                            <th>Merged</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredBranches.map((pr, index) => (
+                                            <tr
+                                                key={index}
+                                                className="success"
+                                                onClick={() => window.open(pr.htmlUrl, "_blank")}
+                                            >
+                                                <td>{pr.number}</td>
+                                                <td>{pr.repositoryName}</td>
+                                                <td>{pr.repositoryOwner}</td>
+                                                <td>{pr.branchName}</td>
+                                                <td>{capitalizeFirst(pr.activeState)}</td>
+                                                <td>{capitalizeFirst(pr.mergeableState)}</td>
+                                                <td>{pr.createdAt}</td>
+                                                <td>{pr.mergedAt}</td>
+                                                <td>{pr.merged}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        {selectedRepositoryId &&
+                            <CheckoutModal
+                                repositoryId={selectedRepositoryId}
+                                onClose={clearCheckoutDetails}
+                                targetedBranch={targetedBranch}
+                            />
+                        }
+                    </>
+                }
+                {viewMode === "branchSync" &&
+                    <>
+                        <div className="workflow-page-header">
+                            <h1>Cross-Repo Branches</h1>
+                            <p>Keep every branch in lockstep—system-wide sync without the chaos🔀</p>
+                            <input
+                                type="text"
+                                placeholder="Search branch to sync..."
+                                value={branchSyncSearchQuery}
+                                onChange={e => setBranchSyncSearchQuery(e.target.value)}
+                                className="input-field" />
+                            <button
+                                className="submit-button"
+                                disabled={disableSendButton}
+                                onClick={handleBranchSyncRequest}
+                                type="submit">
+                                Search
+                            </button>
+                        </div>
+                        <br />
+                        {branchStatuses.length === 0 && <p className="no-workflows">No branch statuses have been retrieved yet.</p>}
+                        {branchStatuses.length > 0 &&
+                            <div className="workflow-table-container">
+                                <table className="workflow-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Repository Name</th>
+                                            <th>Branch Existence</th>
+                                            <th>Commits Behind Base</th>
+                                            <th>Commits Ahead Of Base</th>
+                                            <th>Pull Request Open</th>
+                                            <th>Build Status</th>
+                                            <th>Last Updated</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {branchStatuses.map((status, index) => (
+                                            <tr
+                                                key={index}
+                                                className="success"
+                                            >
+                                                <td>{status.repositoryName}</td>
+                                                <td
+                                                    style={{ color: status.branchExists ? "white" : "orange" }}>
+                                                    {status.branchExists ? "Exists" : "Does not exist"}
+                                                </td>
+                                                <td
+                                                    style={{ color: Number(status.behind) > 0 ? "yellow" : "white" }}>
+                                                    {status.behind}
+                                                </td>
+                                                <td
+                                                    style={{ color: Number(status.ahead) > 0 ? "lightgreen" : "white" }}>
+                                                    {status.ahead}
+                                                </td>
+                                                <td>{status.pullRequestOpen ? "Open" : "-"}</td>
+                                                <td>{status.buildStatus}</td>
+                                                <td>{status.lastUpdated}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </>
+                }
+            </div>
         </>
     );
 };
