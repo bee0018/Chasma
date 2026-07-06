@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
 import CheckoutModal from "../modals/CheckoutModal";
+import BranchSyncModalConfirmationModal from "../modals/BranchSyncModalConfirmation";
 
 /**
  * Initializes a new instance of the GlobalPullRequestTab component
@@ -39,6 +40,9 @@ const GlobalRepositoryTab: React.FC = () => {
 
     /** Gets or sets the targeted branch to checkout. */
     const [targetedBranch, setTargetedBranch] = useState<string | undefined>(undefined);
+
+    /** Gets or sets a value indicating whether the user is confirming branch synchronization. */
+    const [isConfirmingBranchSync, setIsConfirmingBranchSync] = useState<boolean>(false);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
@@ -72,8 +76,9 @@ const GlobalRepositoryTab: React.FC = () => {
 
     /**
      * Handles the event when the user wants to get the branch sync status.
+     * @param isSkipping Flag indicating whether the user wants to skip getting builds.
      */
-    const handleBranchSyncRequest = async () => {
+    const handleBranchSyncRequest = async (isSkipping : boolean) => {
         setDisableSendButton(true);
         setNotification({
             title: `Getting branch sync status for ${branchSyncSearchQuery}`,
@@ -84,6 +89,7 @@ const GlobalRepositoryTab: React.FC = () => {
         const request = new GetBranchSyncStatusRequest();
         request.branchName = branchSyncSearchQuery;
         request.userId = user?.userId;
+        request.skipBuildRetrieval = isSkipping;
         try {
             const response = await statusClient.getBranchSyncStatus(request);
             if (response.isErrorResponse) {
@@ -280,7 +286,7 @@ const GlobalRepositoryTab: React.FC = () => {
                             <button
                                 className="submit-button"
                                 disabled={disableSendButton}
-                                onClick={handleBranchSyncRequest}
+                                onClick={() => setIsConfirmingBranchSync(true)}
                                 type="submit">
                                 Search
                             </button>
@@ -328,6 +334,12 @@ const GlobalRepositoryTab: React.FC = () => {
                                     </tbody>
                                 </table>
                             </div>
+                        }
+                        {isConfirmingBranchSync &&
+                            <BranchSyncModalConfirmationModal
+                                onClose={() => setIsConfirmingBranchSync(false)}
+                                onSelected={handleBranchSyncRequest}
+                            />
                         }
                     </>
                 }

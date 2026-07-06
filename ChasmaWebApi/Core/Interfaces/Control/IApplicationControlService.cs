@@ -334,8 +334,9 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="branchName">The branch to get status for.</param>
         /// <param name="repositories">The list of repositories to get branch sync statuses for.</param>
         /// <param name="workingDirectories">The mapping of repository identifiers to its matching working directory.</param>
+        /// <param name="skipBuildRetrievals">Flag indicating whether to skip branch build retrieval for the repositories.</param>
         /// <returns>The list of branch sync statuses.</returns>
-        List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories);
+        List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories, bool skipBuildRetrievals);
 
         /// <summary>
         /// Tries to restore the specified file in the repository, discarding any unstaged changes to the file.
