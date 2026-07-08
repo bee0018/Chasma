@@ -215,7 +215,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
                 if (string.IsNullOrEmpty(configurations.GitLabApiToken))
                 {
-                    logger.LogError("GitLab API token is not configured. Please set the GitLabApiToken in the configuration.");
+                    logger.LogError("Could not get pipeline jobs. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.");
                     return null;
                 }
 
@@ -266,6 +266,12 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                {
+                    logger.LogError("Could not get users that are in the {repo} project. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.", repoName);
+                    return null;
+                }
+
                 Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
@@ -295,6 +301,12 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                {
+                    logger.LogError("Could not create GitLab Issue for the {repo} project. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.", issue.RepoName);
+                    return null;
+                }
+
                 Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{issue.RepoOwner}/{issue.RepoName}");
                 IssueCreate issueRequest = new()
@@ -327,6 +339,12 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                {
+                    logger.LogError("Could create merge request in {repo} project. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.", preparedMergeRequest.RepoName);
+                    return null;
+                }
+
                 Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{preparedMergeRequest.RepoOwner}/{preparedMergeRequest.RepoName}");
                 IMergeRequestClient mergeRequestClient = Client.GetMergeRequest(project.Id);
