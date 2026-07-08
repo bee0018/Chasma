@@ -173,7 +173,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 workflowRunResults.Add(buildResult);
             }
 
-            Logger.LogInformation("Retrieved {count} build runs from {repo}.", runs.Count, repoName);
+            Logger.LogInformation("Retrieved {count} build runs from {repo} via GitHub API.", runs.Count, repoName);
             return true;
         }
 
@@ -190,7 +190,14 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             try
             {
-                return await client.Actions.Workflows.Runs.List(repoOwner, repoName);
+                ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();
+                ApiOptions options = new()
+                {
+                    PageCount = 1,
+                    PageSize = apiConfig.WorkflowRunReportThreshold ?? 30,
+                };
+                WorkflowRunsRequest workflowRunsRequest = new();
+                return await client.Actions.Workflows.Runs.List(repoOwner, repoName, workflowRunsRequest, options);
             }
             catch (Exception e)
             {

@@ -1,5 +1,4 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
-using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Messages.Application;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Requests.Configuration;

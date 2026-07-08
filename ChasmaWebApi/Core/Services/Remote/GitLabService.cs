@@ -213,6 +213,12 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                {
+                    logger.LogError("GitLab API token is not configured. Please set the GitLabApiToken in the configuration.");
+                    return null;
+                }
+
                 Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
