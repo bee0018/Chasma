@@ -194,14 +194,6 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            if (string.IsNullOrEmpty(request.PullRequestBody))
-            {
-                response.IsErrorResponse = true;
-                response.ErrorMessage = "Pull request body message must be populated. Cannot create pull request.";
-                logger.LogError("Null or empty pull request body message received. Sending error response");
-                return Ok(response);
-            }
-
             if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repo))
             {
                 logger.LogError("Invalid {request}. Repository not found in cache with identifier {id} when trying to create pull request. Sending error response.", nameof(CreatePRRequest), repoId);
