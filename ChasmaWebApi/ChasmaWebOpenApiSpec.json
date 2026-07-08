@@ -695,12 +695,12 @@
         }
       }
     },
-    "/api/Remote": {
+    "/api/Remote/createGitLabMergeRequest": {
       "post": {
         "tags": [
           "Remote"
         ],
-        "operationId": "Remote_CreateMergeRequest",
+        "operationId": "Remote_CreateGitLabMergeRequest",
         "requestBody": {
           "x-name": "request",
           "content": {

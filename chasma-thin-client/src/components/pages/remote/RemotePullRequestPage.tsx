@@ -171,7 +171,7 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
             request.squash = isSquashing;
             request.allowCollaboration = isAllowingCollaboration;
             try {
-                const response = await remoteClient.createMergeRequest(request);
+                const response = await remoteClient.createGitLabMergeRequest(request);
                 if (response.isErrorResponse) {
                     setTitle("Error creating Merge Request");
                     setErrorMessage(response.errorMessage);

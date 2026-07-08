@@ -538,7 +538,9 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         /// <param name="request">Request to create a merge request.</param>
         /// <returns>Response to creating a merge request from GitLab API.</returns>
-        public ActionResult<CreateMergeRequestResponse> CreateMergeRequest([FromBody] CreateMergeRequest request)
+        [HttpPost]
+        [Route("createGitLabMergeRequest")]
+        public ActionResult<CreateMergeRequestResponse> CreateGitLabMergeRequest([FromBody] CreateMergeRequest request)
         {
             string requestName = nameof(CreateMergeRequest);
             CreateMergeRequestResponse response = new();
