@@ -623,7 +623,7 @@ namespace ChasmaWebApi.Core.Services.Index
         /// <param name="apiAccessToken">The remote host platform API personal access token.</param>
         /// <param name="remotePlatformUsername">The remote host platform username (e.g., GitHub login username).</param>
         /// <returns>The user-password credentials.</returns>
-        private static UsernamePasswordCredentials GetUserPasswordCredentials(string apiAccessToken, string remotePlatformUsername)
+        private static UsernamePasswordCredentials GetUserPasswordCredentials(string? apiAccessToken, string? remotePlatformUsername)
         {
             // If we don't have an global API token, pass null to try an anonymous public clone.
             if (string.IsNullOrEmpty(apiAccessToken))
