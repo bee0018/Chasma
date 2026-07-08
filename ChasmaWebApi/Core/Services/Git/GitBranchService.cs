@@ -88,7 +88,7 @@ namespace ChasmaWebApi.Core.Services.Git
             }
 
             repository.Branches.Remove(branchToDelete);
-            Logger.LogInformation("Successfully deleted branch {branchName} from repository with id: {id}", branchName, repository);
+            Logger.LogInformation("Successfully deleted branch {branchName} from repository with id: {id}", branchName, repositoryId);
 
             // Delete tracking of pull requests associated with this branch.
             StopTrackingRemotePullRequests(workingDirectory, branchName);
