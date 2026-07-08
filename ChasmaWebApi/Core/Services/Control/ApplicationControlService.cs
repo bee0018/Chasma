@@ -533,7 +533,7 @@ namespace ChasmaWebApi.Core.Services.Control
             }
 
             ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            WorkflowRunResult mostRecentBuild = orderedBuilds.Take(apiConfigurations.WorkflowRunReportThreshold ?? 30).FirstOrDefault(i => i.BranchName == branchName);
+            WorkflowRunResult mostRecentBuild = orderedBuilds.FirstOrDefault(i => i.BranchName == branchName);
             if (buildsExistForBranch && mostRecentBuild == null)
             {
                 // A build exists for this branch in the lifetime of this repository, however, it is not recent in the reported number of builds that is being sent out.

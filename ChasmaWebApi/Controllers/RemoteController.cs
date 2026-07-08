@@ -83,7 +83,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.RepositoryName))
+            string repoName = request.RepositoryName;
+            if (string.IsNullOrEmpty(repoName))
             {
                 logger.LogError("Empty repository name received when attempting to get workflow run results. Sending error response.");
                 response.IsErrorResponse = true;
@@ -91,7 +92,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.RepositoryOwner))
+            string repoOwner = request.RepositoryOwner;
+            if (string.IsNullOrEmpty(repoOwner))
             {
                 logger.LogError("Empty repository owner received when attempting to get workflow run results. Sending error response.");
                 response.IsErrorResponse = true;
@@ -100,7 +102,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            logger.LogInformation("Attempting to get workflow data for the last {threshold} builds for {repoName}.", webApiConfigurations.WorkflowRunReportThreshold, request.RepositoryName);
+            logger.LogInformation("Attempting to get workflow data for the last {threshold} builds for {repoName}.", webApiConfigurations.WorkflowRunReportThreshold ?? 30, repoName);
             string token = webApiConfigurations.GitHubApiToken;
             if (string.IsNullOrEmpty(token))
             {
@@ -110,8 +112,6 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            string repoOwner = request.RepositoryOwner;
-            string repoName = request.RepositoryName;
             try
             {
                 bool runsRetrieved = applicationControlService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> runResults, out string errorMessage);
@@ -123,8 +123,7 @@ namespace ChasmaWebApi.Controllers
                 }
 
                 response.RepositoryName = repoName;
-                List<WorkflowRunResult> runs = runResults.Take(webApiConfigurations.WorkflowRunReportThreshold ?? 30).ToList();
-                response.WorkflowRunResults.AddRange(runs);
+                response.WorkflowRunResults.AddRange(runResults);
                 logger.LogInformation("Retrieved latest {count} build runs from {repo}.", runResults.Count, repoName);
                 return Ok(response);
             }
