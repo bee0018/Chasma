@@ -4077,6 +4077,9 @@
               "userId": {
                 "type": "integer",
                 "format": "int32"
+              },
+              "skipBuildRetrieval": {
+                "type": "boolean"
               }
             }
           }

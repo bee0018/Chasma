@@ -324,12 +324,12 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories)
+        public List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories, bool skipBuildRetrieval)
         {
             List<BranchSyncStatus> statuses = new();
             foreach (LocalGitRepository repository in repositories)
             {
-               // We know the key to exist so this is a safe operation.
+                // We know the key to exist so this is a safe operation.
                 string workingDirectory = workingDirectories[repository.Id];
                 string buildStatus = "N/A";
                 BranchSyncStatus branchSyncStatus = new();
@@ -352,19 +352,22 @@ namespace ChasmaWebApi.Core.Services.Control
                     string token = RemoteHelper.GetApiToken(remoteHostPlatform);
                     string username = RemoteHelper.GetRemoteHostUsername(repository);
                     (string branchName, int aheadCount, int behindCount, string lastUpdated) divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
-                    string repoName = repository.Name;
-                    string repoOwner = repository.Owner;
-                    if (string.IsNullOrEmpty(token))
+                    if (!skipBuildRetrieval)
                     {
-                        logger.LogWarning("No API token found for repository {RepoName} with remote host platform {RemoteHostPlatform}. Unable to fetch build status from remote host platform.", repository.GetDisplayName(), remoteHostPlatform);
-                    }
-                    else if (remoteHostPlatform == RemoteHostPlatform.GitHub && gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> gitHubResults, out _))
-                    {
-                        buildStatus = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchName);
-                    }
-                    else if (remoteHostPlatform == RemoteHostPlatform.GitLab && gitLabService.TryGetPipelineJobResults(repository, out List<WorkflowRunResult> gitLabResults, out _))
-                    {
-                        buildStatus = GetBuildStatusFromRemoteBuildResults(gitLabResults, branchName);
+                        string repoName = repository.Name;
+                        string repoOwner = repository.Owner;
+                        if (string.IsNullOrEmpty(token))
+                        {
+                            logger.LogWarning("No API token found for repository {repoName} with remote host platform {remoteHostPlatform}. Unable to fetch build status from remote host platform.", repository.GetDisplayName(), remoteHostPlatform);
+                        }
+                        else if (remoteHostPlatform == RemoteHostPlatform.GitHub && gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> gitHubResults, out _))
+                        {
+                            buildStatus = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchName);
+                        }
+                        else if (remoteHostPlatform == RemoteHostPlatform.GitLab && gitLabService.TryGetPipelineJobResults(repository, out List<WorkflowRunResult> gitLabResults, out _))
+                        {
+                            buildStatus = GetBuildStatusFromRemoteBuildResults(gitLabResults, branchName);
+                        }
                     }
 
                     RepositorySummary? summary = gitRepositoryService.GetRepositoryStatus(repository.Id, username, token);
@@ -520,7 +523,7 @@ namespace ChasmaWebApi.Core.Services.Control
         /// <param name="builds">The list of build results.</param>
         /// <param name="branchName">The branch name to search builds for.</param>
         /// <returns>The build status for the most recent specified branch name.</returns>
-        private string GetBuildStatusFromRemoteBuildResults(IEnumerable<WorkflowRunResult> builds, string branchName)
+        private static string GetBuildStatusFromRemoteBuildResults(IEnumerable<WorkflowRunResult> builds, string branchName)
         {
             bool buildsExistForBranch = false;
             IOrderedEnumerable<WorkflowRunResult> orderedBuilds = builds.OrderByDescending(i => DateTimeOffset.Parse(i.UpdatedDate));

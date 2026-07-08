@@ -16,5 +16,10 @@ namespace ChasmaWebApi.Data.Requests.Status
         /// Gets or sets the user identifier.
         /// </summary>
         public int UserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to skip branch build retrieval.
+        /// </summary>
+        public bool SkipBuildRetrieval { get; set; }
     }
 }

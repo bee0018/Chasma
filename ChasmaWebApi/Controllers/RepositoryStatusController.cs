@@ -609,7 +609,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            List<BranchSyncStatus> branchSyncStatuses = applicationControlService.GetBranchSyncStatuses(branchName, cacheManager.Repositories.Values, cacheManager.WorkingDirectories);
+            List<BranchSyncStatus> branchSyncStatuses = applicationControlService.GetBranchSyncStatuses(branchName, cacheManager.Repositories.Values, cacheManager.WorkingDirectories, request.SkipBuildRetrieval);
             logger.LogInformation("Successfully retrieved branch sync status for branch: {branch}", branchName);
             response.BranchSyncStatuses = branchSyncStatuses;
             return Ok(response);
