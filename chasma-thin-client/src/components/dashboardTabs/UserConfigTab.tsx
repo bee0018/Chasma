@@ -6,6 +6,7 @@ import { userClient } from "../../managers/ApiClientManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useNavigate } from "react-router-dom";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
+import ProgressBar from "../application/ProgressBar";
 
 /**
  * Initializes a new UserConfigTab class.
@@ -13,7 +14,7 @@ import { useDocumentTitle } from "../../util/useDocumentTitle";
  */
 const UserConfigTab: React.FC = () => {
     useDocumentTitle("User Configuration");
-    
+
     /** Gets the logged-in user. */
     const user = useCacheStore(state => state.user);
 
@@ -58,7 +59,7 @@ const UserConfigTab: React.FC = () => {
 
     /** Flag indicating whether the user's full name is valid. */
     const isFullNameValid = !!fullName && fullName.trim().length > 0;
-    
+
     /** The whitespace-trimmed user's email. */
     const normalizedEmail = email?.trim();
 
@@ -67,7 +68,7 @@ const UserConfigTab: React.FC = () => {
 
     /** Flag indicating whether the password section is valid. */
     const isPasswordSectionValid = password.length === 0 || (passwordIsValid && passwordsMatch && currentUserPassword.length > 0);
-    
+
     /** The total number of validated fields. */
     const totalFields = 4;
 
@@ -95,7 +96,7 @@ const UserConfigTab: React.FC = () => {
         else {
             isValid = true;
         }
-        
+
         setPasswordIsValid(isValid);
     };
 
@@ -109,7 +110,7 @@ const UserConfigTab: React.FC = () => {
             isError: false,
             loading: true
         });
-        
+
         try {
             const request = new ModifyUserRequest();
             request.userId = user?.userId;
@@ -163,7 +164,7 @@ const UserConfigTab: React.FC = () => {
             setNotification(errorNotification);
         }
     };
- 
+
     return (
         <>
             <div className="workflow-page-header">
@@ -188,32 +189,32 @@ const UserConfigTab: React.FC = () => {
                     <div className="password-error">
                         <p>{usernameValidationError}</p>
                     </div>
-                    <br/>
+                    <br />
                 </>
             )}
             {!usernameValidationError
                 && lastSavedUsername
                 && username
                 && lastSavedUsername === username && (
-                <>
-                    <div className="password-success">
-                        Your current username {username} is available!
-                    </div>
-                    <br/>
-                </>
-            )}
+                    <>
+                        <div className="password-success">
+                            Your current username {username} is available!
+                        </div>
+                        <br />
+                    </>
+                )}
             {!usernameValidationError
                 && lastSavedUsername
                 && username
                 && lastSavedUsername !== username
                 && (
-                <>
-                    <div className="password-success">
-                        {username} is available!
-                    </div>
-                    <br/>
-                </>
-            )}
+                    <>
+                        <div className="password-success">
+                            {username} is available!
+                        </div>
+                        <br />
+                    </>
+                )}
             <div className="form-row">
                 <label>Edit Full Name:</label>
                 <input
@@ -226,7 +227,7 @@ const UserConfigTab: React.FC = () => {
             {!isFullNameValid && (
                 <>
                     <div className="password-error">Full name is not valid!</div>
-                    <br/>
+                    <br />
                 </>
             )}
             {isFullNameValid && (
@@ -234,7 +235,7 @@ const UserConfigTab: React.FC = () => {
                     <div className="password-success">
                         Full name is valid!
                     </div>
-                    <br/>
+                    <br />
                 </>
             )}
             <div className="form-row">
@@ -249,7 +250,7 @@ const UserConfigTab: React.FC = () => {
             {!isEmailValid && (
                 <>
                     <div className="password-error">Enter a valid email!</div>
-                    <br/>
+                    <br />
                 </>
             )}
             {isEmailValid && (
@@ -257,7 +258,7 @@ const UserConfigTab: React.FC = () => {
                     <div className="password-success">
                         Email is valid!
                     </div>
-                    <br/>
+                    <br />
                 </>
             )}
             <div className="form-row">
@@ -281,7 +282,7 @@ const UserConfigTab: React.FC = () => {
                             <li>At least 10 or more characters</li>
                         </ul>
                     </div>
-                    <br/>
+                    <br />
                 </>
             )}
             {passwordIsValid && password && (
@@ -289,7 +290,7 @@ const UserConfigTab: React.FC = () => {
                     <div className="password-success">
                         Password meets complexity requirements!
                     </div>
-                    <br/>
+                    <br />
                 </>
             )}
             {password.length > 0 && (
@@ -304,54 +305,44 @@ const UserConfigTab: React.FC = () => {
                             onChange={(e) => setConfirmedPassword(e.target.value)} />
                     </div>
                     {password !== confirmPassword && (
-                    <>
-                        <div className="password-error">Passwords do not match!</div>
-                        <br/>
-                    </>
+                        <>
+                            <div className="password-error">Passwords do not match!</div>
+                            <br />
+                        </>
                     )}
                     {password === confirmPassword && (
                         <>
                             <div className="password-success">Passwords match!</div>
-                            <br/>
+                            <br />
                         </>
                     )}
                     <div className="form-row">
-                    <label>Current Password:</label>
-                    <input
-                        type="password"
-                        className="input-field"
-                        placeholder="*************"
-                        value={currentUserPassword}
-                        onChange={(e) => setCurrentUserPassword(e.target.value)} />
+                        <label>Current Password:</label>
+                        <input
+                            type="password"
+                            className="input-field"
+                            placeholder="*************"
+                            value={currentUserPassword}
+                            onChange={(e) => setCurrentUserPassword(e.target.value)} />
                     </div>
                     {currentUserPassword.length <= 0 && (
                         <>
                             <div className="password-error">Password must be entered!</div>
-                            <br/>
+                            <br />
                         </>
                     )}
                     {currentUserPassword.length > 0 && (
                         <>
                             <div className="password-success">Password ready!</div>
-                            <br/>
+                            <br />
                         </>
                     )}
-            </>
+                </>
             )}
-            <h2>
-                {progressPercent === 100
-                    ? "All Set — Save When Ready!"
-                    : "A Few Things Left to Finish"}
-            </h2>
-            <div className="progress-container">
-                <div className="progress-bar" style={{
-                    width: `${progressPercent}%`,
-                    background: progressPercent === 100
-                        ? "linear-gradient(90deg, #22c55e, #4ade80)"
-                        : "linear-gradient(90deg, #973737, #de4a4a)"}}
-                />
-            </div>
-            <br/>
+            <ProgressBar
+                progressPercent={progressPercent}
+                unfinishedMessage="A Few Things Left to Finish"
+                finishedMessage="All Set — Save When Ready!" />
             <button
                 type="submit"
                 className="submit-button"

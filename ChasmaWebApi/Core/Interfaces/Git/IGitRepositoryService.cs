@@ -114,5 +114,15 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="snapshot">The workspace context snapshot.</param>
         /// <returns>Returns a list of results for each repository snapshot application, indicating whether each application was successful or not.</returns>
         List<RepositorySnapshotAdditionResult> LoadWorkspaceContextSnapshot(WorkContextSnapshot snapshot);
+
+        /// <summary>
+        /// Gets the health score for the specified branch metrics, build conclusion, and repository metrics.
+        /// </summary>
+        /// <param name="branchMetrics">The branch divergence details.</param>
+        /// <param name="buildConclusion">The conclusion of the workflow run.</param>
+        /// <param name="repositoryMetrics">The repository status metrics.</param>
+        /// <param name="repository">The local git repository.</param>
+        /// <returns>The overall health score of the repository.</returns>
+        RepositoryHealthScore GetHealthScore(BranchMetrics branchMetrics, string buildConclusion, RepositorySummary? repositoryMetrics, LocalGitRepository repository);
     }
 }

@@ -141,6 +141,12 @@ const Dashboard: React.FC = () => {
                         >
                             Global 🌍
                         </div>
+                        <div
+                            className={`tab ${isActive("repoSync")}`}
+                            onClick={() => navigate("repoSync")}
+                        >
+                            Alignment ⚖️
+                        </div>
                     </div>
                 )}
                 <div

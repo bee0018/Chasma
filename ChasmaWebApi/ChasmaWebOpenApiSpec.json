@@ -4059,6 +4059,28 @@
           },
           "lastUpdated": {
             "type": "string"
+          },
+          "healthScore": {
+            "$ref": "#/components/schemas/RepositoryHealthScore"
+          }
+        }
+      },
+      "RepositoryHealthScore": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scoreCategory": {
+            "type": "string"
+          },
+          "description": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

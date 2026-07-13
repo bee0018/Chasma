@@ -68,6 +68,11 @@ namespace ChasmaWebApi.Core.Services.Control
         private readonly ILogger<ApplicationControlService> logger;
 
         /// <summary>
+        /// The internal cache manager.
+        /// </summary>
+        private readonly ICacheManager cacheManager;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationControlService"/> class with the specified dependencies.
         /// </summary>
         /// <param name="repoIndexService">The repository index service.</param>
@@ -79,6 +84,7 @@ namespace ChasmaWebApi.Core.Services.Control
         /// <param name="simService">The git operation simulation service.</param>
         /// <param name="gitlabService">The GitLab remote repository management service.</param>
         /// <param name="log">The internal logging instance.</param>
+        /// <param name="apiCacheManager">The internal API cache manager.</param>
         public ApplicationControlService(
             IRepositoryIndexService repoIndexService,
             IGitRepositoryService gitRepoService,
@@ -88,7 +94,8 @@ namespace ChasmaWebApi.Core.Services.Control
             IGitHubService gitHubRemoteService,
             ISimulationService simService,
             IGitLabService gitlabService,
-            ILogger<ApplicationControlService> log)
+            ILogger<ApplicationControlService> log,
+            ICacheManager apiCacheManager)
         {
             repositoryIndexService = repoIndexService;
             gitRepositoryService = gitRepoService;
@@ -99,6 +106,7 @@ namespace ChasmaWebApi.Core.Services.Control
             simulationService = simService;
             gitLabService = gitlabService;
             logger = log;
+            cacheManager = apiCacheManager;
         }
 
         #region Infrastructure
@@ -326,12 +334,14 @@ namespace ChasmaWebApi.Core.Services.Control
         // <inheritdoc />
         public List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories, bool skipBuildRetrieval)
         {
+            // TODO: FIX THE CASE FOR WHEN REPOS DON'T HAVE BUILDS CONFIGURED BUT STILL RETURNS NOTHING
             List<BranchSyncStatus> statuses = new();
             foreach (LocalGitRepository repository in repositories)
             {
                 // We know the key to exist so this is a safe operation.
                 string workingDirectory = workingDirectories[repository.Id];
-                string buildStatus = "N/A";
+                (string BuildStatus, string BuildConclusion) buildMetrics = ("N/A", "N/A");
+                RepositoryHealthScore healthScore = new();
                 BranchSyncStatus branchSyncStatus = new();
                 if (!GitBranchService.DoesBranchExist(workingDirectory, branchName, logger))
                 {
@@ -342,8 +352,9 @@ namespace ChasmaWebApi.Core.Services.Control
                         Ahead = "-",
                         Behind = "-",
                         PullRequestOpen = false,
-                        BuildStatus = buildStatus,
+                        BuildStatus = buildMetrics.BuildStatus,
                         LastUpdated = "-",
+                        HealthScore = healthScore,
                     };
                 }
                 else
@@ -351,7 +362,8 @@ namespace ChasmaWebApi.Core.Services.Control
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
                     string token = RemoteHelper.GetApiToken(remoteHostPlatform);
                     string username = RemoteHelper.GetRemoteHostUsername(repository);
-                    (string branchName, int aheadCount, int behindCount, string lastUpdated) divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
+                    BranchMetrics divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
+                    bool isPullRequestOpen = false;
                     if (!skipBuildRetrieval)
                     {
                         string repoName = repository.Name;
@@ -360,26 +372,36 @@ namespace ChasmaWebApi.Core.Services.Control
                         {
                             logger.LogWarning("No API token found for repository {repoName} with remote host platform {remoteHostPlatform}. Unable to fetch build status from remote host platform.", repository.GetDisplayName(), remoteHostPlatform);
                         }
-                        else if (remoteHostPlatform == RemoteHostPlatform.GitHub && gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> gitHubResults, out _))
+                        else if (remoteHostPlatform == RemoteHostPlatform.GitHub)
                         {
-                            buildStatus = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchName);
+                            isPullRequestOpen = cacheManager.GitHubPullRequests.Values.Any(i => i.RepositoryId == repository.Id && i.BranchName == branchName && !i.Merged);
+                            if (gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> gitHubResults, out _))
+                            {
+                                buildMetrics = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchName);
+                            }
                         }
-                        else if (remoteHostPlatform == RemoteHostPlatform.GitLab && gitLabService.TryGetPipelineJobResults(repository, out List<WorkflowRunResult> gitLabResults, out _))
+                        else if (remoteHostPlatform == RemoteHostPlatform.GitLab)
                         {
-                            buildStatus = GetBuildStatusFromRemoteBuildResults(gitLabResults, branchName);
+                            isPullRequestOpen = cacheManager.GitLabMergeRequests.Values.Any(i => i.RepositoryId == repository.Id && i.BranchName == branchName && !i.Merged);
+                            if (gitLabService.TryGetPipelineJobResults(repository, out List<WorkflowRunResult> gitLabResults, out _))
+                            {
+                                buildMetrics = GetBuildStatusFromRemoteBuildResults(gitLabResults, branchName);
+                            }
                         }
                     }
 
-                    RepositorySummary? summary = gitRepositoryService.GetRepositoryStatus(repository.Id, username, token);
+                    RepositorySummary? repositorySummary = gitRepositoryService.GetRepositoryStatus(repository.Id, username, token);
+                    healthScore = gitRepositoryService.GetHealthScore(divergenceDetails, buildMetrics.BuildConclusion, repositorySummary, repository);
                     branchSyncStatus = new()
                     {
                         RepositoryName = repository.GetDisplayName(),
                         BranchExists = true,
-                        Ahead = divergenceDetails.aheadCount.ToString(),
-                        Behind = divergenceDetails.behindCount.ToString(),
-                        PullRequestOpen = summary != null && summary.PullRequests.Any(i => i.BranchName == branchName && !i.Merged),
-                        BuildStatus = buildStatus,
-                        LastUpdated = divergenceDetails.lastUpdated,
+                        Ahead = divergenceDetails.AheadCount.ToString(),
+                        Behind = divergenceDetails.BehindCount.ToString(),
+                        PullRequestOpen = isPullRequestOpen,
+                        BuildStatus = buildMetrics.BuildStatus,
+                        LastUpdated = divergenceDetails.LastUpdated,
+                        HealthScore = healthScore,
                     };
                 }
                 
@@ -523,7 +545,7 @@ namespace ChasmaWebApi.Core.Services.Control
         /// <param name="builds">The list of build results.</param>
         /// <param name="branchName">The branch name to search builds for.</param>
         /// <returns>The build status for the most recent specified branch name.</returns>
-        private static string GetBuildStatusFromRemoteBuildResults(IEnumerable<WorkflowRunResult> builds, string branchName)
+        private static (string BuildStatus, string BuildConclusion) GetBuildStatusFromRemoteBuildResults(IEnumerable<WorkflowRunResult> builds, string branchName)
         {
             bool buildsExistForBranch = false;
             IOrderedEnumerable<WorkflowRunResult> orderedBuilds = builds.OrderByDescending(i => DateTimeOffset.Parse(i.UpdatedDate));
@@ -537,17 +559,17 @@ namespace ChasmaWebApi.Core.Services.Control
             if (buildsExistForBranch && mostRecentBuild == null)
             {
                 // A build exists for this branch in the lifetime of this repository, however, it is not recent in the reported number of builds that is being sent out.
-                return "Stale";
+                return ("Stale", "-");
             }
 
             if (buildsExistForBranch && mostRecentBuild != null)
             {
                 // This build is recent and up to date.
-                return mostRecentBuild.BuildStatus;
+                return (mostRecentBuild.BuildStatus, mostRecentBuild.BuildConclusion);
             }
 
             // Builds have not been configured for this branch.
-            return "-";
+            return ("-", "-");
         }
 
         #endregion

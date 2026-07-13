@@ -1,12 +1,18 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Git;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Data.Objects.Application;
+using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
 using ChasmaWebApi.Util.Extensions;
 using LibGit2Sharp;
+using Octokit;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
+using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using Branch = LibGit2Sharp.Branch;
 using Commit = LibGit2Sharp.Commit;
 using Repository = LibGit2Sharp.Repository;
@@ -39,6 +45,11 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         private readonly IGitBranchService GitBranchService;
 
+        /// <summary>
+        /// The simulation service, which is responsible for simulating Git operations.
+        /// </summary>
+        private readonly ISimulationService SimulationService;
+
         #region Constructor
 
         /// <summary>
@@ -48,12 +59,14 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <param name="cacheManager">The cache manager used to store and retrieve cached data for repository operations.</param>
         /// <param name="stashService">The Git stash service used to perform stash-related operations.</param>
         /// <param name="branchService">The Git branch service used to perform branch related operations.</param>
-        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager, IGitStashService stashService, IGitBranchService branchService)
+        /// <param name="simulationService">The Git simulation operations service.</param>
+        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager, IGitStashService stashService, IGitBranchService branchService, ISimulationService simulationService)
         {
             Logger = logger;
             CacheManager = cacheManager;
             GitStashService = stashService;
             GitBranchService = branchService;
+            SimulationService = simulationService;
         }
 
         #endregion
@@ -105,7 +118,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 }
 
                 Logger.LogDebug("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
-                (string branchName, int aheadCount, int behindCount, string lastUpdated) = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, username, token, Logger);
+                BranchMetrics branchMetrics = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, username, token, Logger);
                 string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
                 string commitHash = GetCommitHash(repo.Head, Logger);
                 List<RemotePullRequest> remotePullRequests;
@@ -117,20 +130,20 @@ namespace ChasmaWebApi.Core.Services.Git
                 }
                 else
                 {
-                    remotePullRequests = GetRemotePullRequests(remoteOriginBranch.PushUrl, branchName);
+                    remotePullRequests = GetRemotePullRequests(remoteOriginBranch.PushUrl, branchMetrics.BranchName);
                 }
 
                 RepositorySummary repositorySummary = new()
                 {
                     RepositoryId = repoKey,
                     StatusElements = statusElements,
-                    CommitsAhead = aheadCount,
-                    CommitsBehind = behindCount,
-                    BranchName = branchName,
+                    CommitsAhead = branchMetrics.AheadCount,
+                    CommitsBehind = branchMetrics.BehindCount,
+                    BranchName = branchMetrics.BranchName,
                     RemoteUrl = remoteUrl,
                     CommitHash = commitHash,
                     PullRequests = remotePullRequests,
-                    LastUpdated = lastUpdated,
+                    LastUpdated = branchMetrics.LastUpdated,
                 };
                 return repositorySummary;
             }
@@ -658,6 +671,64 @@ namespace ChasmaWebApi.Core.Services.Git
             return additionResults;
         }
 
+        // <inheritdoc />
+        public RepositoryHealthScore GetHealthScore(BranchMetrics branchMetrics, string buildConclusion, RepositorySummary? repositoryMetrics, LocalGitRepository repository)
+        {
+            RepositoryHealthScore healthScore = new();
+            if (repositoryMetrics  == null)
+            {
+                // If there are no repository metrics, we cannot calculate a health score, so we return 0.
+                return healthScore;
+            }
+
+            SimulatedGitPullResult? pullSimulationResult = null;
+            bool buildHasFailed = false;
+            healthScore.Score = 100;
+            if (IsFailedBuild(buildConclusion))
+            {
+                buildHasFailed = true;
+                healthScore.Score -= 35;
+            }
+
+            int behindPenaltyWeight = 12;
+            int aheadPenaltyWeight = 13;
+            int dirtyFilesPenaltyWeight = 40;
+            if (branchMetrics.BehindCount > 0)
+            {
+                PullSimulationEntry pullSimulationEntry = new()
+                {
+                    RepositoryId = repository.Id,
+                    BranchToPull = branchMetrics.BranchName,
+                };
+                List<PullSimulationEntry> simulationEntries = [pullSimulationEntry];
+                List<SimulatedGitPullResult> simulationResults = SimulationService.SimulateGitPull(simulationEntries);
+                pullSimulationResult = simulationResults[0];
+                if (!pullSimulationResult.IsSuccessful)
+                {
+                    behindPenaltyWeight = 40;
+                    dirtyFilesPenaltyWeight = 12;
+                    healthScore.Score -= behindPenaltyWeight;
+                }
+                else
+                {
+                    behindPenaltyWeight = 12;
+                    dirtyFilesPenaltyWeight = 40;
+                    int behindPenalty = branchMetrics.BehindCount * 2;
+                    healthScore.Score -= Math.Min(behindPenalty, behindPenaltyWeight);
+                }
+            }
+
+            int aheadPenalty = branchMetrics.AheadCount * 2;
+            healthScore.Score -= Math.Min(aheadPenalty, aheadPenaltyWeight);
+
+            int dirtyFilesPenalty = repositoryMetrics.StatusElements.Count * 2;
+            healthScore.Score -= Math.Min(dirtyFilesPenalty, dirtyFilesPenaltyWeight);
+            healthScore.Score = Math.Clamp(healthScore.Score, 0, 100);
+            healthScore.ScoreCategory = GetHealthScoreTierName(healthScore.Score);
+            healthScore.Description = GetHealthScoreDescription(healthScore.Score, branchMetrics, buildHasFailed, repositoryMetrics, pullSimulationResult);
+            return healthScore;
+        }
+
         /// <summary>
         /// Gets the branch diversion calculation for the specified repository.
         /// </summary>
@@ -667,20 +738,25 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <param name="token">The token for authentication when fetching updates from remote.</param>
         /// <param name="logger">The logging instance.</param>
         /// <returns>The number of local branch name, commits ahead, behind, and last updated..</returns>
-        public static (string branchName, int aheadCount, int behindCount, string lastUpdated) GetBranchDiversionCalculation(string workingDirectory, string branchName, string username, string token, ILogger logger)
+        public static BranchMetrics GetBranchDiversionCalculation(string workingDirectory, string branchName, string username, string token, ILogger logger)
         {
+            BranchMetrics branchMetrics = new()
+            {
+                BranchName = string.Empty,
+                LastUpdated = string.Empty,
+            };
             using Repository repo = new(workingDirectory);
             Branch branch = repo.Branches.FirstOrDefault(i => i.FriendlyName == branchName);
             if (branch == null)
             {
                 logger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", repo.Info.WorkingDirectory);
-                return (string.Empty, 0, 0, string.Empty);
+                return branchMetrics;
             }
 
             if (repo.Info.IsHeadDetached)
             {
                 logger.LogWarning("Cannot get branch diversion calculation. The HEAD is in a detached state for repository at {path}.", repo.Info.WorkingDirectory);
-                return (string.Empty, 0, 0, string.Empty);
+                return branchMetrics;
             }
 
             string errorMessage = string.Empty;
@@ -720,7 +796,7 @@ namespace ChasmaWebApi.Core.Services.Git
             if (string.IsNullOrEmpty(localBranchName))
             {
                 logger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", repo.Info.WorkingDirectory, localBranchName);
-                return (string.Empty, 0, 0, string.Empty);
+                return branchMetrics;
             }
 
             string lastHeadUpdateTimestamp = repo.Head.Commits
@@ -728,10 +804,12 @@ namespace ChasmaWebApi.Core.Services.Git
                 .ToLocalTime()
                 .ToString("g");
             string repoHeadLastUpdated = $"From HEAD: {lastHeadUpdateTimestamp}";
+            branchMetrics.BranchName = localBranchName;
+            branchMetrics.LastUpdated = repoHeadLastUpdated;
             if (branch.TrackedBranch == null)
             {
                 logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
-                return (localBranchName, 0, 0, repoHeadLastUpdated);
+                return branchMetrics;
             }
 
             string upstreamBranchName = branch.TrackedBranch.FriendlyName;
@@ -740,18 +818,25 @@ namespace ChasmaWebApi.Core.Services.Git
             if (localBranch == null)
             {
                 logger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
-                return (localBranchName, 0, 0, repoHeadLastUpdated);
+                return branchMetrics;
             }
 
             if (upstreamBranch == null)
             {
                 logger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
-                return (localBranchName, 0, 0, repoHeadLastUpdated);
+                return branchMetrics;
             }
             
             string lastUpdated = upstreamBranch.Tip.Committer.When.ToLocalTime().ToString("g");
             HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
-            return (localBranchName, divergence.AheadBy ?? 0, divergence.BehindBy ?? 0, lastUpdated);
+            branchMetrics = new()
+            {
+                BranchName = localBranchName,
+                AheadCount = divergence.AheadBy ?? 0,
+                BehindCount = divergence.BehindBy ?? 0,
+                LastUpdated = lastUpdated,
+            };
+            return branchMetrics;
         }
 
         #region Private Methods
@@ -896,6 +981,114 @@ namespace ChasmaWebApi.Core.Services.Git
 
             Logger.LogWarning("Could not get remote pull requests because the remote host platform {platform} is not supported.", hostPlatform);
             return new();
+        }
+
+        /// <summary>
+        /// Determines if the build result is failed.
+        /// </summary>
+        /// <param name="buildConclusion">The workflow run build result.</param>
+        /// <returns>True if the build has failed; false otherwise.</returns>
+        private static bool IsFailedBuild(string buildConclusion)
+        {
+            if (string.IsNullOrEmpty(buildConclusion) || buildConclusion.Equals("N/A", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return buildConclusion.Equals("failure", StringComparison.OrdinalIgnoreCase) || buildConclusion.Equals("failed", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Gets the health score tier name based on the score.
+        /// </summary>
+        /// <param name="score">The overall health score.</param>
+        /// <returns>The health score tier name.</returns>
+        private static string GetHealthScoreTierName(int score)
+        {
+            if (score >= 0 && score <= 59)
+            {
+                return "Severe";
+            }
+
+            if (score >= 60 && score <= 69)
+            {
+                return "Stalled";
+            }
+
+            if (score >= 70 && score <= 79)
+            {
+                return "Attention Needed";
+            }
+
+            if (score >= 80 && score <= 89)
+            {
+                return "Stable";
+            }
+
+            if (score >= 90 && score <= 99)
+            {
+                return "Great";
+            }
+
+            if (score == 100)
+            {
+                return "Excellent";
+            }
+
+            return "Unknown";
+        }
+
+        /// <summary>
+        /// Generates the health score description based on the score, branch metrics, build result, and repository metrics.
+        /// </summary>
+        /// <param name="score">The overall repository score.</param>
+        /// <param name="branchMetrics">The branch divergence metrics.</param>
+        /// <param name="buildFailed">A value indicating whether the most recent build has failed.</param>
+        /// <param name="repositoryMetrics">The repository metrics.</param>
+        /// <param name="simulatedPullResult">The simulated git pull results.</param>
+        /// <returns>The generated health score description.</returns>
+        private static List<string> GetHealthScoreDescription(int score, BranchMetrics branchMetrics, bool buildFailed, RepositorySummary? repositoryMetrics, SimulatedGitPullResult simulatedPullResult = null)
+        {
+            List<string> healthScoreDescription = [];
+            if (score == 100)
+            {
+                healthScoreDescription.Add("Nothing to do");
+                return healthScoreDescription;
+            }
+
+            if (buildFailed)
+            {
+                healthScoreDescription.Add("Most recent build failed. Manual review is needed.");
+            }
+
+            if (branchMetrics.BehindCount > 0 && branchMetrics.AheadCount > 0)
+            {
+                healthScoreDescription.Add("Diverged by being both ahead and behind.");
+            }
+
+            if (branchMetrics.BehindCount > 0)
+            {
+                if (simulatedPullResult != null && !simulatedPullResult.IsSuccessful)
+                {
+                    healthScoreDescription.Add("Need to pull in latest changes, but doing so would cause conflicts.");
+                }
+                else
+                {
+                    healthScoreDescription.Add("Need to pull in latest changes.");
+                }
+            }
+
+            if (branchMetrics.AheadCount > 0)
+            {
+                healthScoreDescription.Add("Ahead of the base and push changes to be fully up to date.");
+            }
+
+            if (repositoryMetrics?.StatusElements.Count > 0)
+            {
+                healthScoreDescription.Add("There are uncommitted files in the working directory/index.");
+            }
+
+            return healthScoreDescription;
         }
 
         #endregion

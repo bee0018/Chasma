@@ -50,3 +50,6 @@ export type SnapshotMode = "add" | "apply";
 
 /** The banner type options. */
 export type BannerType = 'info' | 'success' | 'warning' | 'error';
+
+/** The synchronization step status options. */
+export type SyncStepStatus = 'idle' | 'running' | 'success' | 'failed';
