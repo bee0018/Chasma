@@ -535,6 +535,12 @@ const RepositoryStatusPage: React.FC = () => {
             newSelection.clear();
             newSelection.add(file.filePath!);
             setLastSelectedIndex(index);
+            if (file?.filePath === selectedFile?.filePath) {
+                // Only want to get the diff of newly selected file.
+                // This also prevents the user from spamming the server with requests by repeatedly click the same file.
+                return;
+            }
+
             setSelectedFile(file);
             handleGetGitDiffRequest(file, isStaged);
         }
