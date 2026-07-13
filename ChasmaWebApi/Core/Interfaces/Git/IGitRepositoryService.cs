@@ -118,11 +118,10 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <summary>
         /// Gets the health score for the specified branch metrics, build conclusion, and repository metrics.
         /// </summary>
-        /// <param name="branchMetrics">The branch divergence details.</param>
         /// <param name="buildConclusion">The conclusion of the workflow run.</param>
         /// <param name="repositoryMetrics">The repository status metrics.</param>
         /// <param name="repository">The local git repository.</param>
         /// <returns>The overall health score of the repository.</returns>
-        RepositoryHealthScore GetHealthScore(BranchMetrics branchMetrics, string buildConclusion, RepositorySummary? repositoryMetrics, LocalGitRepository repository);
+        RepositoryHealthScore GetHealthScore(string buildConclusion, RepositorySummary? repositoryMetrics, LocalGitRepository repository);
     }
 }

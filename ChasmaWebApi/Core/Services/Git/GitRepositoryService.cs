@@ -672,7 +672,7 @@ namespace ChasmaWebApi.Core.Services.Git
         }
 
         // <inheritdoc />
-        public RepositoryHealthScore GetHealthScore(BranchMetrics branchMetrics, string buildConclusion, RepositorySummary? repositoryMetrics, LocalGitRepository repository)
+        public RepositoryHealthScore GetHealthScore(string buildConclusion, RepositorySummary? repositoryMetrics, LocalGitRepository repository)
         {
             RepositoryHealthScore healthScore = new();
             if (repositoryMetrics  == null)
@@ -693,12 +693,12 @@ namespace ChasmaWebApi.Core.Services.Git
             int behindPenaltyWeight = 12;
             int aheadPenaltyWeight = 13;
             int dirtyFilesPenaltyWeight = 40;
-            if (branchMetrics.BehindCount > 0)
+            if (repositoryMetrics.CommitsBehind > 0)
             {
                 PullSimulationEntry pullSimulationEntry = new()
                 {
                     RepositoryId = repository.Id,
-                    BranchToPull = branchMetrics.BranchName,
+                    BranchToPull = repositoryMetrics.BranchName,
                 };
                 List<PullSimulationEntry> simulationEntries = [pullSimulationEntry];
                 List<SimulatedGitPullResult> simulationResults = SimulationService.SimulateGitPull(simulationEntries);
@@ -713,19 +713,19 @@ namespace ChasmaWebApi.Core.Services.Git
                 {
                     behindPenaltyWeight = 12;
                     dirtyFilesPenaltyWeight = 40;
-                    int behindPenalty = branchMetrics.BehindCount * 2;
+                    int behindPenalty = repositoryMetrics.CommitsBehind * 2;
                     healthScore.Score -= Math.Min(behindPenalty, behindPenaltyWeight);
                 }
             }
 
-            int aheadPenalty = branchMetrics.AheadCount * 2;
+            int aheadPenalty = repositoryMetrics.CommitsAhead * 2;
             healthScore.Score -= Math.Min(aheadPenalty, aheadPenaltyWeight);
 
             int dirtyFilesPenalty = repositoryMetrics.StatusElements.Count * 2;
             healthScore.Score -= Math.Min(dirtyFilesPenalty, dirtyFilesPenaltyWeight);
             healthScore.Score = Math.Clamp(healthScore.Score, 0, 100);
             healthScore.ScoreCategory = GetHealthScoreTierName(healthScore.Score);
-            healthScore.Description = GetHealthScoreDescription(healthScore.Score, branchMetrics, buildHasFailed, repositoryMetrics, pullSimulationResult);
+            healthScore.Description = GetHealthScoreDescription(healthScore.Score, buildHasFailed, repositoryMetrics, pullSimulationResult);
             return healthScore;
         }
 
@@ -1042,12 +1042,11 @@ namespace ChasmaWebApi.Core.Services.Git
         /// Generates the health score description based on the score, branch metrics, build result, and repository metrics.
         /// </summary>
         /// <param name="score">The overall repository score.</param>
-        /// <param name="branchMetrics">The branch divergence metrics.</param>
         /// <param name="buildFailed">A value indicating whether the most recent build has failed.</param>
         /// <param name="repositoryMetrics">The repository metrics.</param>
         /// <param name="simulatedPullResult">The simulated git pull results.</param>
         /// <returns>The generated health score description.</returns>
-        private static List<string> GetHealthScoreDescription(int score, BranchMetrics branchMetrics, bool buildFailed, RepositorySummary? repositoryMetrics, SimulatedGitPullResult simulatedPullResult = null)
+        private static List<string> GetHealthScoreDescription(int score, bool buildFailed, RepositorySummary repositoryMetrics, SimulatedGitPullResult simulatedPullResult = null)
         {
             List<string> healthScoreDescription = [];
             if (score == 100)
@@ -1061,12 +1060,12 @@ namespace ChasmaWebApi.Core.Services.Git
                 healthScoreDescription.Add("Most recent build failed. Manual review is needed.");
             }
 
-            if (branchMetrics.BehindCount > 0 && branchMetrics.AheadCount > 0)
+            if (repositoryMetrics.CommitsBehind > 0 && repositoryMetrics.CommitsAhead > 0)
             {
                 healthScoreDescription.Add("Diverged by being both ahead and behind.");
             }
 
-            if (branchMetrics.BehindCount > 0)
+            if (repositoryMetrics.CommitsBehind > 0)
             {
                 if (simulatedPullResult != null && !simulatedPullResult.IsSuccessful)
                 {
@@ -1078,9 +1077,9 @@ namespace ChasmaWebApi.Core.Services.Git
                 }
             }
 
-            if (branchMetrics.AheadCount > 0)
+            if (repositoryMetrics.CommitsAhead > 0)
             {
-                healthScoreDescription.Add("Ahead of the base and push changes to be fully up to date.");
+                healthScoreDescription.Add("There are commits ahead of the base and you need to your push changes to be fully up to date.");
             }
 
             if (repositoryMetrics?.StatusElements.Count > 0)

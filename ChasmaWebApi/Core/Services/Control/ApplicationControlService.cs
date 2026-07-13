@@ -362,7 +362,6 @@ namespace ChasmaWebApi.Core.Services.Control
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
                     string token = RemoteHelper.GetApiToken(remoteHostPlatform);
                     string username = RemoteHelper.GetRemoteHostUsername(repository);
-                    BranchMetrics divergenceDetails = GitRepositoryService.GetBranchDiversionCalculation(workingDirectory, branchName, username, token, logger);
                     bool isPullRequestOpen = false;
                     if (!skipBuildRetrieval)
                     {
@@ -391,16 +390,16 @@ namespace ChasmaWebApi.Core.Services.Control
                     }
 
                     RepositorySummary? repositorySummary = gitRepositoryService.GetRepositoryStatus(repository.Id, username, token);
-                    healthScore = gitRepositoryService.GetHealthScore(divergenceDetails, buildMetrics.BuildConclusion, repositorySummary, repository);
+                    healthScore = gitRepositoryService.GetHealthScore(buildMetrics.BuildConclusion, repositorySummary, repository);
                     branchSyncStatus = new()
                     {
                         RepositoryName = repository.GetDisplayName(),
                         BranchExists = true,
-                        Ahead = divergenceDetails.AheadCount.ToString(),
-                        Behind = divergenceDetails.BehindCount.ToString(),
+                        Ahead = repositorySummary?.CommitsAhead.ToString() ?? "",
+                        Behind = repositorySummary?.CommitsBehind.ToString() ?? "",
                         PullRequestOpen = isPullRequestOpen,
                         BuildStatus = buildMetrics.BuildStatus,
-                        LastUpdated = divergenceDetails.LastUpdated,
+                        LastUpdated = repositorySummary?.LastUpdated ?? "",
                         HealthScore = healthScore,
                     };
                 }
