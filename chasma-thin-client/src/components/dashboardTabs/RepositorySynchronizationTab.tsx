@@ -200,17 +200,17 @@ const RepositorySynchronizationTab: React.FC = () => {
                         </thead>
                         <tbody>
                             <tr>
-                                <td className='sync-state-table-operation-step-title'>Preflight Check</td>
+                                <td className='sync-state-table-operation-step-title'>Preflight Checks</td>
                                 <td className='sync-state-table-operation-step-status'>{getStatusBadge(syncState.preflightStatus)}</td>
                                 <td className='sync-state-table-operation-step-details'>{syncState.preflightDetails}</td>
                             </tr>
                             <tr>
-                                <td className='sync-state-table-operation-step-title'>Pull Results</td>
+                                <td className='sync-state-table-operation-step-title'>Pull Changes</td>
                                 <td className='sync-state-table-operation-step-status'>{getStatusBadge(syncState.pullStatus)}</td>
                                 <td className='sync-state-table-operation-step-details'>{syncState.pullDetails}</td>
                             </tr>
                             <tr>
-                                <td className='sync-state-table-operation-step-title'>Push Results</td>
+                                <td className='sync-state-table-operation-step-title'>Push Changes</td>
                                 <td className='sync-state-table-operation-step-status'>{getStatusBadge(syncState.pushStatus)}</td>
                                 <td className='sync-state-table-operation-step-details'>{syncState.pushDetails}</td>
                             </tr>

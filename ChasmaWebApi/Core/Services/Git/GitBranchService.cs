@@ -6,6 +6,11 @@ using ChasmaWebApi.Util;
 using ChasmaWebApi.Util.Extensions;
 using LibGit2Sharp;
 using System.Diagnostics;
+using Branch = LibGit2Sharp.Branch;
+using Commit = LibGit2Sharp.Commit;
+using Reference = LibGit2Sharp.Reference;
+using Repository = LibGit2Sharp.Repository;
+using Signature = LibGit2Sharp.Signature;
 
 namespace ChasmaWebApi.Core.Services.Git
 {
@@ -87,12 +92,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 return false;
             }
 
-            repository.Branches.Remove(branchToDelete);
-            Logger.LogInformation("Successfully deleted branch {branchName} from repository with id: {id}", branchName, repositoryId);
-
-            // Delete tracking of pull requests associated with this branch.
-            StopTrackingRemotePullRequests(workingDirectory, branchName);
-            return true;
+            return TryDeleteSpecifiedBranch(workingDirectory, branchToDelete, repositoryId, out errorMessage);
         }
 
         // <inheritdoc />
@@ -182,6 +182,40 @@ namespace ChasmaWebApi.Core.Services.Git
 
             Logger.LogWarning("Automatic merge failed for branch {sourceBranchName} into {destinationBranchName}. Reason: {errorMessage}", sourceBranchName, destinationBranchName, errorMessage);
             return TryMergeBranchManually(workingDirectory, destinationBranchName, sourceBranchName, out errorMessage);
+        }
+
+        // <inheritdoc />
+        public int PruneBranches(string workingDirectory, LocalGitRepository repository)
+        {
+            int numberOfPrunedBranches = 0;
+            try
+            {
+                using Repository repo = new(workingDirectory);
+                RemoteHelper.FetchLatestChanges(workingDirectory, repo.Head, repository, Logger);
+                ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();
+                int branchPruningThreshold = apiConfig.BranchPruningDayThreshold ?? 45;
+                List<string> branchesToPrune = repo.Branches.Where(i => CanBranchBePruned(workingDirectory, i.CanonicalName, branchPruningThreshold)).Select(i => i.CanonicalName).ToList();
+                foreach (string canonicalBranchName in branchesToPrune)
+                {
+                    Logger.LogInformation("Attempting to prune branch {branch} in repository at {workingDirectory} because it is either merged or has not been updated in {threshold} days.", canonicalBranchName, workingDirectory, branchPruningThreshold);
+                    Branch branchToDelete = repo.Branches.First(i => i.CanonicalName == canonicalBranchName);
+                    if (!TryDeleteSpecifiedBranch(workingDirectory, branchToDelete, repository.Id, out string errorMessage))
+                    {
+                        Logger.LogError("Failed to prune branch {branch} in repository {repoName} at {workingDirectory} with error: {errorMessage}.", repository.GetDisplayName(), canonicalBranchName, workingDirectory, errorMessage);
+                        continue;
+                    }
+
+                    Logger.LogInformation("Successfully pruned branch {branch} in repository {repoName} at {workingDirectory}.", repository.GetDisplayName(), canonicalBranchName, workingDirectory);
+                    numberOfPrunedBranches++;
+                }
+
+                return numberOfPrunedBranches;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error when trying to prune branches in directory {dir}: {error}", workingDirectory, ex);
+                return numberOfPrunedBranches;
+            }
         }
 
         /// <summary>
@@ -474,6 +508,115 @@ namespace ChasmaWebApi.Core.Services.Git
             else
             {
                 Logger.LogWarning("Could not stop tracking pull requests for {branch} because the remote host platform {platform} is not supported.", branchName, repository.HostPlatform);
+            }
+        }
+
+        /// <summary>
+        /// Determines if the specified branch can be pruned based on its age and merge status with the remote branch.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the branch to evaluate.</param>
+        /// <param name="branchName">The canonical name of the branch that can possibly be pruned.</param>
+        /// <remarks>
+        ///  By anchoring the merge verification to strictly the target branch, we ensure that the branch is only pruned if it has been fully merged into the mainline of development.
+        ///  This prevents accidental pruning of branches that may have been merged into other feature branches or non-mainline branches.
+        /// </remarks>
+        /// <param name="branchPruningThreshold">The maximum number of days a branch can go without updates before it is flagged for pruning.</param>
+        /// <returns>True if the branch can be pruned; false otherwise.</returns>
+        private bool CanBranchBePruned(string workingDirectory, string branchName, int branchPruningThreshold)
+        {
+            try
+            {
+                using Repository repo = new(workingDirectory);
+                Branch localBranch = repo.Branches.FirstOrDefault(i => i.CanonicalName == branchName);
+                if (localBranch == null)
+                {
+                    return false;
+                }
+
+                // Never prune remote tracking branches (i.e, refs/remotes/*) or symbolic refs like HEAD
+                if (localBranch.IsRemote || localBranch.CanonicalName.Contains("/remotes/") || localBranch.CanonicalName.EndsWith("/HEAD"))
+                {
+                    return false;
+                }
+
+                // Do not prune the repository that the repository currently has checked out.
+                if (localBranch.IsCurrentRepositoryHead)
+                {
+                    return false;
+                }
+
+                HashSet<string> defaultProtectedBranches = new(StringComparer.OrdinalIgnoreCase) { "main", "master", "dev", "develop" };
+                string targetDefaultBranchName = "main";
+                SymbolicReference remoteHeadReference = repo.Refs["refs/remotes/origin/HEAD"] as SymbolicReference;
+                if (remoteHeadReference?.Target is Reference resolvedRemoteTarget)
+                {
+                    // This will get the symbolic reference to the head branch. This covers the case when the HEAD points at a custom branch such as "home-branch".
+                    // In this case, "home-branch" will be added to the defaultProtectedBranches hash set.
+                    string remoteDefaultName = resolvedRemoteTarget.CanonicalName.Replace("refs/remotes/origin/", "");
+                    defaultProtectedBranches.Add(remoteDefaultName);
+                    targetDefaultBranchName = remoteDefaultName;
+                }
+                else if (repo.Head != null)
+                {
+                    targetDefaultBranchName = repo.Head.FriendlyName;
+                }
+
+                if (defaultProtectedBranches.Contains(localBranch.FriendlyName))
+                {
+                    return false;
+                }
+
+                DateTimeOffset lastCommitDate = localBranch.Tip.Author.When;
+                TimeSpan branchAge = DateTimeOffset.Now - lastCommitDate;
+                if (branchAge.TotalDays >= branchPruningThreshold)
+                {
+                    // This branch is now considered stale, so we can prune it.
+                    return true;
+                }
+
+                Branch integrationBranch = repo.Branches[$"origin/{targetDefaultBranchName}"];
+                if (integrationBranch == null)
+                {
+                    return false;
+                }
+
+                Commit mergeCommit = repo.ObjectDatabase.FindMergeBase(localBranch.Tip, integrationBranch.Tip);
+                return mergeCommit != null && mergeCommit.Id == localBranch.Tip.Id;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error when trying to determine if branch {branch} can be pruned in directory {dir}: {error}", branchName, workingDirectory, ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Tries to delete the specified branch from the repository.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <param name="branchToDelete">The branch object to delete.</param>
+        /// <param name="repositoryId">The repository identifier.</param>
+        /// <param name="errorMessage">The error message when deleting the object.</param>
+        /// <returns>True if the branch is deleted; false otherwise.</returns>
+        private bool TryDeleteSpecifiedBranch(string workingDirectory, Branch branchToDelete, string repositoryId, out string errorMessage)
+        {
+            string branchName = branchToDelete.FriendlyName;
+            errorMessage = string.Empty;
+            try
+            {
+                using Repository repository = new(workingDirectory);
+                repository.Branches.Remove(branchToDelete);
+                Logger.LogInformation("Successfully deleted branch {branchName} from repository with id: {id}", branchName, repositoryId);
+
+                // Delete tracking of pull requests associated with this branch.
+                StopTrackingRemotePullRequests(workingDirectory, branchName);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"Failed to delete branch {branchName} for repository at {workingDirectory}. Check server logs for more information.";
+                Logger.LogError(e, errorMessage);
+                return false;
             }
         }
 

@@ -86,5 +86,10 @@ namespace ChasmaWebApi.Data.Messages.Application
         /// Gets or sets the secure binding port for HTTPS connections.
         /// </summary>
         public int SecureBindingPort { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of days after which branches should be pruned if they have not been updated.
+        /// </summary>
+        public int? BranchPruningDayThreshold { get; set; }
     }
 }

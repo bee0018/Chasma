@@ -2077,6 +2077,11 @@
               "secureBindingPort": {
                 "type": "integer",
                 "format": "int32"
+              },
+              "branchPruningDayThreshold": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
               }
             }
           }
@@ -2208,6 +2213,11 @@
                 "nullable": true
               },
               "gitLabMergeRequestScanIntervalSeconds": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "branchPruningDayThreshold": {
                 "type": "integer",
                 "format": "int32",
                 "nullable": true

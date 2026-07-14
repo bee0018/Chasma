@@ -8,11 +8,7 @@ using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
 using ChasmaWebApi.Util.Extensions;
 using LibGit2Sharp;
-using Octokit;
 using System.Diagnostics;
-using System.Net.NetworkInformation;
-using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Branch = LibGit2Sharp.Branch;
 using Commit = LibGit2Sharp.Commit;
 using Repository = LibGit2Sharp.Repository;
@@ -80,6 +76,12 @@ namespace ChasmaWebApi.Core.Services.Git
                 return null;
             }
 
+            if (!CacheManager.Repositories.TryGetValue(repoKey, out LocalGitRepository localGitRepository))
+            {
+                Logger.LogError("Could not find local git repository with {repoKey} provided to get repository status.", repoKey);
+                return null;
+            }
+
             Repository repo = existingRepo ?? new(workingDirectory);
             try
             {
@@ -118,7 +120,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 }
 
                 Logger.LogDebug("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
-                BranchMetrics branchMetrics = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, username, token, Logger);
+                BranchMetrics branchMetrics = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, localGitRepository);
                 string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
                 string commitHash = GetCommitHash(repo.Head, Logger);
                 List<RemotePullRequest> remotePullRequests;
@@ -734,11 +736,9 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         /// <param name="workingDirectory">The specified repository working directory.</param>
         /// <param name="branchName">The branch name.</param>
-        /// <param name="username">The username for authentication when fetching updates from remote.</param>
-        /// <param name="token">The token for authentication when fetching updates from remote.</param>
-        /// <param name="logger">The logging instance.</param>
-        /// <returns>The number of local branch name, commits ahead, behind, and last updated..</returns>
-        public static BranchMetrics GetBranchDiversionCalculation(string workingDirectory, string branchName, string username, string token, ILogger logger)
+        /// <param name="repository">The local git repository.</param>
+        /// <returns>The number of local branch name, commits ahead, behind, and last updated.</returns>
+        private BranchMetrics GetBranchDiversionCalculation(string workingDirectory, string branchName, LocalGitRepository repository)
         {
             BranchMetrics branchMetrics = new()
             {
@@ -749,53 +749,21 @@ namespace ChasmaWebApi.Core.Services.Git
             Branch branch = repo.Branches.FirstOrDefault(i => i.FriendlyName == branchName);
             if (branch == null)
             {
-                logger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", repo.Info.WorkingDirectory);
+                Logger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", repo.Info.WorkingDirectory);
                 return branchMetrics;
             }
 
             if (repo.Info.IsHeadDetached)
             {
-                logger.LogWarning("Cannot get branch diversion calculation. The HEAD is in a detached state for repository at {path}.", repo.Info.WorkingDirectory);
+                Logger.LogWarning("Cannot get branch diversion calculation. The HEAD is in a detached state for repository at {path}.", repo.Info.WorkingDirectory);
                 return branchMetrics;
             }
 
-            string errorMessage = string.Empty;
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(token))
-            {
-                if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out errorMessage))
-                {
-                    logger.LogError("Could not execute fetch command because: {error}", errorMessage);
-                }
-            }
-            else
-            {
-                try
-                {
-                    FetchOptions fetchOptions = new()
-                    {
-                        CredentialsProvider = (url, user, credentials) =>
-                        new UsernamePasswordCredentials
-                        {
-                            Username = username,
-                            Password = token
-                        }
-                    };
-                    Commands.Fetch(repo, branch.RemoteName, [], fetchOptions, null);
-                }
-                catch (Exception e)
-                {
-                    logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}. Attempting manual fetch.", branch.RemoteName, repo.Info.WorkingDirectory);
-                    if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out errorMessage))
-                    {
-                        logger.LogError(errorMessage);
-                    }
-                }
-            }
-
+            RemoteHelper.FetchLatestChanges(workingDirectory, branch, repository, Logger);
             string localBranchName = branch.FriendlyName;
             if (string.IsNullOrEmpty(localBranchName))
             {
-                logger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", repo.Info.WorkingDirectory, localBranchName);
+                Logger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", repo.Info.WorkingDirectory, localBranchName);
                 return branchMetrics;
             }
 
@@ -808,7 +776,7 @@ namespace ChasmaWebApi.Core.Services.Git
             branchMetrics.LastUpdated = repoHeadLastUpdated;
             if (branch.TrackedBranch == null)
             {
-                logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
+                Logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
                 return branchMetrics;
             }
 
@@ -817,13 +785,13 @@ namespace ChasmaWebApi.Core.Services.Git
             Branch upstreamBranch = repo.Branches[upstreamBranchName];
             if (localBranch == null)
             {
-                logger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
+                Logger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
                 return branchMetrics;
             }
 
             if (upstreamBranch == null)
             {
-                logger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
+                Logger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
                 return branchMetrics;
             }
             
