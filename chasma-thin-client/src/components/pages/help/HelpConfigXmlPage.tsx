@@ -35,6 +35,7 @@ const HelpConfigXmlPage: React.FC = () => {
 \t<gitLabSshPassphrase>phrase</gitLabSshPassphrase>
 \t<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
 \t<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
+\t<branchPruningDayThreshold>45</branchPruningDayThreshold>
 </configurations>`}
             </pre>
             <h3 className="help-subtitle">Attributes</h3>
@@ -195,6 +196,16 @@ const HelpConfigXmlPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>Defines the interval in seconds at which GitLab merge requests are scanned for updates.</p>
+                <p className="xml-meta">Default: <code>45</code></p>
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">branchPruningDayThreshold</span>
+                    <span className="xml-type">integer</span>
+                    <span className="xml-optional">optional</span>
+                </div>
+                <p>Defines the number of days after which branches should be pruned if they have not been updated.</p>
                 <p className="xml-meta">Default: <code>45</code></p>
             </div>
         </section>

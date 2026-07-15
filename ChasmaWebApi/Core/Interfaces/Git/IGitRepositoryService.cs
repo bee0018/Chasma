@@ -1,4 +1,5 @@
-﻿using ChasmaWebApi.Data.Objects.Git;
+﻿using ChasmaWebApi.Data.Objects.Application;
+using ChasmaWebApi.Data.Objects.Git;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Interfaces.Git
@@ -12,11 +13,9 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// Gets the status of the specified repository.
         /// </summary>
         /// <param name="repoKey">The repository identifier.</param>
-        /// <param name="username">The git username.</param>
-        /// <param name="token">The git API token.</param>
         /// <param name="existingRepo">The repository.</param>
         /// <returns>A repository summary of running the command 'git status'.</returns>
-        RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token, Repository? existingRepo = null);
+        RepositorySummary? GetRepositoryStatus(string repoKey, Repository? existingRepo = null);
 
         /// <summary>
         /// Applies the staging action to the specified files.
@@ -50,22 +49,21 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <summary>
         /// Tries to push the committed changes to the remote repository.
         /// </summary>
-        /// <param name="filePath">The filepath to the specified repository.</param>
-        /// <param name="token">The git API token.</param>
+        /// <param name="workingDirectory">The filepath to the specified repository.</param>
+        /// <param name="localGitRepository">The local git repository.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the user was able to push changes; false otherwise.</returns>
-        bool TryPushChanges(string filePath, string token, out string errorMessage);
+        bool TryPushChanges(string workingDirectory, LocalGitRepository localGitRepository, out string errorMessage);
 
         /// <summary>
         /// Tries to pull changes from the remote repository.
         /// </summary>
         /// <param name="workingDirectory">The working directory of the repository.</param>
-        /// <param name="fullName">The user's full name.</param>
-        /// <param name="email">The user's email.</param>
-        /// <param name="token">The git API token.</param>
+        /// <param name="user">The logged in user.</param>
+        /// <param name="localGitRepository">The local git repository.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the user was able to pull changes, false otherwise.</returns>
-        bool TryPullChanges(string workingDirectory, string fullName, string email, string token, out string errorMessage);
+        bool TryPullChanges(string workingDirectory, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage);
 
         /// <summary>
         /// Tries to reset the repository to the specified revision with the given reset mode.
@@ -123,5 +121,12 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="repository">The local git repository.</param>
         /// <returns>The overall health score of the repository.</returns>
         RepositoryHealthScore GetHealthScore(string buildConclusion, RepositorySummary? repositoryMetrics, LocalGitRepository repository);
+
+        /// <summary>
+        /// Determines whether the manifest files are present in the changeset of the specified working directory.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <returns>True if manifest files are going to pulled in; false otherwise.</returns>
+        bool AreManifestFilesInChangeset(string workingDirectory);
     }
 }

@@ -145,7 +145,7 @@ const Dashboard: React.FC = () => {
                             className={`tab ${isActive("repoSync")}`}
                             onClick={() => navigate("repoSync")}
                         >
-                            Alignment ⚖️
+                            Synchronize 🔁
                         </div>
                     </div>
                 )}

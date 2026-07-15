@@ -10,6 +10,7 @@ using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Data.Objects.Shell;
+using ChasmaWebApi.Data.Objects.Status;
 using ChasmaWebApi.Util;
 using LibGit2Sharp;
 using System.Diagnostics;
@@ -274,9 +275,9 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public bool TryMergeChanges(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage)
+        public bool TryMergeChanges(string workingDirectory, string sourceBranchName, string destinationBranchName, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage)
         {
-            return gitBranchService.TryMergeBranch(workingDirectory, sourceBranchName, destinationBranchName, fullName, email, token, out errorMessage);
+            return gitBranchService.TryMergeBranch(workingDirectory, sourceBranchName, destinationBranchName, user, localGitRepository, out errorMessage);
         }
 
         #endregion
@@ -284,9 +285,9 @@ namespace ChasmaWebApi.Core.Services.Control
         #region Repository Status Interactions 
 
         // <inheritdoc />
-        public RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token)
+        public RepositorySummary? GetRepositoryStatus(string repoKey)
         {
-            return gitRepositoryService.GetRepositoryStatus(repoKey, username, token);
+            return gitRepositoryService.GetRepositoryStatus(repoKey);
         }
 
         // <inheritdoc />
@@ -308,15 +309,15 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public bool TryPushChanges(string filePath, string token, out string errorMessage)
+        public bool TryPushChanges(string filePath, LocalGitRepository localGitRepository, out string errorMessage)
         {
-            return gitRepositoryService.TryPushChanges(filePath, token, out errorMessage);
+            return gitRepositoryService.TryPushChanges(filePath, localGitRepository, out errorMessage);
         }
 
         // <inheritdoc />
-        public bool TryPullChanges(string workingDirectory, string fullName, string email, string token, out string errorMessage)
+        public bool TryPullChanges(string workingDirectory, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage)
         {
-            return gitRepositoryService.TryPullChanges(workingDirectory, fullName, email, token, out errorMessage);
+            return gitRepositoryService.TryPullChanges(workingDirectory, user, localGitRepository, out errorMessage);
         }
 
         // <inheritdoc />
@@ -334,7 +335,6 @@ namespace ChasmaWebApi.Core.Services.Control
         // <inheritdoc />
         public List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories, bool skipBuildRetrieval)
         {
-            // TODO: FIX THE CASE FOR WHEN REPOS DON'T HAVE BUILDS CONFIGURED BUT STILL RETURNS NOTHING
             List<BranchSyncStatus> statuses = new();
             foreach (LocalGitRepository repository in repositories)
             {
@@ -389,7 +389,7 @@ namespace ChasmaWebApi.Core.Services.Control
                         }
                     }
 
-                    RepositorySummary? repositorySummary = gitRepositoryService.GetRepositoryStatus(repository.Id, username, token);
+                    RepositorySummary? repositorySummary = gitRepositoryService.GetRepositoryStatus(repository.Id);
                     healthScore = gitRepositoryService.GetHealthScore(buildMetrics.BuildConclusion, repositorySummary, repository);
                     branchSyncStatus = new()
                     {
@@ -426,6 +426,96 @@ namespace ChasmaWebApi.Core.Services.Control
         public List<RepositorySnapshotAdditionResult> ApplyWorkspaceContextSnapshot(WorkContextSnapshot snapshot)
         {
             return gitRepositoryService.LoadWorkspaceContextSnapshot(snapshot);
+        }
+
+        // <inheritdoc />
+        public bool TryPerformSynchronizationStep(string workingDirectory, LocalGitRepository repository, SynchronizationStep syncStep, BranchCheckoutMode branchCheckoutMode, ApplicationUser user, out string executionOutput)
+        {
+            if (syncStep == SynchronizationStep.PreFlightChecks)
+            {
+                int numberOfPrunedBranches = gitBranchService.TryPruneBranches(workingDirectory, repository, out string errorMessage);
+                if (numberOfPrunedBranches == -1)
+                {
+                    executionOutput = $"Ran into errors when attempting to prune branches in {repository.GetDisplayName()}: {errorMessage}";
+                    return false;
+                }
+
+                executionOutput = $"Pre-flight checks completed. {numberOfPrunedBranches} branches were pruned.";
+                return true;
+            }
+
+            if (syncStep == SynchronizationStep.PullChanges)
+            {
+                RepositorySummary? repositoryMetrics = gitRepositoryService.GetRepositoryStatus(repository.Id);
+                if (repositoryMetrics == null)
+                {
+                    executionOutput = $"Unable to retrieve repository metrics in {repository.GetDisplayName()}. Cannot perform pull changes.";
+                    return false;
+                }
+
+                int commitsBehind = repositoryMetrics.CommitsBehind;
+                if (commitsBehind == 0)
+                {
+                    executionOutput = "No changes to pull.";
+                    return true;
+                }
+
+                string stashMessage = $"Auto-stash before pulling changes in {repository.GetDisplayName()} on branch {repositoryMetrics.BranchName} at {DateTimeOffset.Now.ToLocalTime():g}";
+                if (!gitBranchService.TryHandleWorkingDirectoryChanges(workingDirectory, repositoryMetrics.BranchName, branchCheckoutMode, stashMessage, out string fileHandlingError, user))
+                {
+                    logger.LogError("Error occurred while handling working directory changes in {repositoryName}: {errorMessage}", repository.GetDisplayName(), fileHandlingError);
+                    executionOutput = $"{fileHandlingError}";
+                    return false;
+                }
+
+                bool manifestFileExists = gitRepositoryService.AreManifestFilesInChangeset(workingDirectory);
+                if (!gitRepositoryService.TryPullChanges(workingDirectory, user, repository, out string errorMessage))
+                {
+                    executionOutput = $"Error occurred while pulling changes in {repository.GetDisplayName()}: {errorMessage}";
+                    return false;
+                }
+
+                if (branchCheckoutMode == BranchCheckoutMode.KeepChanges && !gitStashService.TryPopStash(workingDirectory, out string stashApplyError))
+                {
+                    executionOutput = $"Error occurred while applying stashed changes in {repository.GetDisplayName()}: {stashApplyError}";
+                    return false;
+                }
+
+                string commitPhrase = commitsBehind == 1 ? "commit" : "commits";
+                executionOutput = manifestFileExists
+                    ? $"Successfully pulled in {commitsBehind} {commitPhrase}. Manifest files were detected, therefore a build or restore is recommended."
+                    : $"Successfully pulled {commitsBehind} {commitPhrase}.";
+                return true;
+            }
+
+            if (syncStep == SynchronizationStep.PushChanges)
+            {
+                RepositorySummary? repositoryMetrics = gitRepositoryService.GetRepositoryStatus(repository.Id);
+                if (repositoryMetrics == null)
+                {
+                    executionOutput = $"Unable to retrieve repository metrics in {repository.GetDisplayName()}. Cannot perform push changes.";
+                    return false;
+                }
+
+                if (repositoryMetrics.CommitsAhead == 0)
+                {
+                    executionOutput = "No changes to push.";
+                    return true;
+                }
+
+                if (!gitRepositoryService.TryPushChanges(workingDirectory, repository, out string pushError))
+                {
+                    logger.LogError("Error occurred while pushing changes in {repositoryName}: {errorMessage}", repository.GetDisplayName(), pushError);
+                    executionOutput = $"{pushError}";
+                    return false;
+                }
+
+                executionOutput = "Pushed changes completed successfully.";
+                return true;
+            }
+
+            executionOutput = "Invalid synchronization step specified.";
+            return false;
         }
 
         #endregion

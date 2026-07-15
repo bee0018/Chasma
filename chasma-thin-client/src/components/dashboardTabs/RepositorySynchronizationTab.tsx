@@ -2,24 +2,12 @@ import React, { useState } from 'react';
 import { SyncStepStatus } from '../types/CustomTypes';
 import { useCacheStore } from '../../managers/CacheManager';
 import { useDocumentTitle } from '../../util/useDocumentTitle';
-import { LocalGitRepository } from '../../API/ChasmaWebApiClient';
+import { BranchCheckoutMode, LocalGitRepository, SynchronizationStep, SynchronizeRepositoryRequest, SynchronizeRepositoryResponse } from '../../API/ChasmaWebApiClient';
 import ProgressBar from '../application/ProgressBar';
-
-// Simulated API Calls to your C# Backend
-const api = {
-    runPreflight: async (path: string) => {
-        await new Promise(r => setTimeout(r, 1200)); // Simulate network lag
-        return { success: true, message: "Safe to sync. No merge conflicts." };
-    },
-    runPull: async (path: string) => {
-        await new Promise(r => setTimeout(r, 1800));
-        return { success: true, message: "Pulled 3 commits. NuGet packages restored." };
-    },
-    runPush: async (path: string) => {
-        await new Promise(r => setTimeout(r, 1000));
-        return { success: true, message: "Pushed 1 ahead commit to origin." };
-    }
-};
+import { statusClient } from '../../managers/ApiClientManager';
+import { handleApiError } from '../../managers/TransactionHandlerManager';
+import { useNavigate } from 'react-router-dom';
+import SmartSyncConfirmationModal from '../modals/SmartSyncConfirmationModal';
 
 /** The repository synchronization state. */
 interface RepoSyncState {
@@ -30,13 +18,6 @@ interface RepoSyncState {
     pullDetails: string;
     pushStatus: SyncStepStatus;
     pushDetails: string;
-}
-
-
-export interface SyncTarget {
-    id: string;
-    name: string;
-    path: string;
 }
 
 /**
@@ -52,8 +33,11 @@ const RepositorySynchronizationTab: React.FC = () => {
     /** Gets the repositories that are cached in the system. */
     const repositories = useCacheStore(state => state.repositories);
 
-    /** Gets or sets a value indicating whether the repository divergence has been sent. */
-    const [divergenceRequestHasBeenSent, setDivergenceRequestHasBeenSent] = useState<boolean>(false);
+    /** Gets the logged-in user. */
+    const user = useCacheStore(state => state.user);
+
+    /** The navigation function. **/
+    const navigate = useNavigate();
 
     /** Gets or sets the repository synchronization steps. */
     const [syncStates, setSyncStates] = useState<RepoSyncState[]>(() => {
@@ -74,60 +58,140 @@ const RepositorySynchronizationTab: React.FC = () => {
     /** Gets or sets a value indicating whether the user is syncing repositories. */
     const [isSyncing, setIsSyncing] = useState(false);
 
+    /** Gets or sets a value indicating whether the user is configuring the checkout mode. */
+    const [isConfiguringCheckoutMode, setIsConfiguringCheckoutMode] = useState<boolean>(false);
+
     /** The number signifying the percentage of completeness of synchronization. */
     const progressPercent = Math.round((repoSyncCounter / repositories.length) * 100);
 
+    /** Reverts all sync states back to its initial state. */
+    const resetSyncSteps = () => {
+        setSyncStates(() => {
+            return repositories.map(i => {
+                const repoSyncState: RepoSyncState = {
+                    repository: i,
+                    preflightStatus: 'idle',
+                    preflightDetails: '-',
+                    pullStatus: 'idle',
+                    pullDetails: '-',
+                    pushStatus: 'idle',
+                    pushDetails: '-'
+                };
+                return repoSyncState;
+            });
+        })
+    }
+
     /**
      * Executes the smart synchronization pipeline.
+     * @param checkoutMode The branch checkout mode.
      */
-    const executeSmartSync = async () => {
+    const executeSmartSync = async (checkoutMode: BranchCheckoutMode) => {
         setIsSyncing(true);
-
-        // Mock targets containing paths required by the backend
-        const targets: SyncTarget[] = [
-            { id: repositories[0].id!, name: 'chasma-web-api', path: 'C:/repos/chasma-web-api' },
-            { id: repositories[1].id!, name: 'chasma-frontend', path: 'C:/repos/chasma-frontend' }
-        ];
-
-        // Map each target to its own isolated, running execution promise
-        const syncPromises = targets.map(async (target) => {
+        setRepoSyncCounter(0);
+        resetSyncSteps();
+        let completedCount = 0;
+        for (const repo of repositories) {
             // --- PHASE 1: PREFLIGHT ---
-            updateRepoStep(target.id, 'preflightStatus', 'running', 'Evaluating tracking branches...');
-            try {
-                const preflight = await api.runPreflight(target.path);
-                updateRepoStep(target.id, 'preflightStatus', 'success', preflight.message);
-            } catch (err) {
-                updateRepoStep(target.id, 'preflightStatus', 'failed', 'Preflight check failed.');
-                return; // Abort remaining steps for this specific repo
+            updateRepoStep(repo.id, 'preflightStatus', 'running', 'Running pre-flight checks...');
+            const preflightResponse = await performPreFlightChecks(repo);
+            if (preflightResponse.isErrorResponse) {
+                updateRepoStep(repo.id, 'preflightStatus', 'failed', preflightResponse.errorMessage);
+                continue;
             }
+
+            updateRepoStep(repo.id, 'preflightStatus', 'success', preflightResponse.syncStepDescription);
 
             // --- PHASE 2: PULL RESULTS ---
-            updateRepoStep(target.id, 'pullStatus', 'running', 'Executing pull and manifest verification...');
-            try {
-                const pull = await api.runPull(target.path);
-                updateRepoStep(target.id, 'pullStatus', 'success', pull.message);
-            } catch (err) {
-                updateRepoStep(target.id, 'pullStatus', 'failed', 'Pull execution aborted.');
-                return;
+            updateRepoStep(repo.id, 'pullStatus', 'running', 'Executing pull and manifest verification...');
+            const pullResponse = await performPullSyncStep(repo, checkoutMode);
+            if (pullResponse.isErrorResponse) {
+                updateRepoStep(repo.id, 'pullStatus', 'failed', pullResponse.errorMessage);
+                continue;
             }
+
+            updateRepoStep(repo.id, 'pullStatus', 'success', pullResponse.syncStepDescription);
 
             // --- PHASE 3: PUSH RESULTS ---
-            updateRepoStep(target.id, 'pushStatus', 'running', 'Pushing staging commits upstream...');
-            try {
-                const push = await api.runPush(target.path);
-                updateRepoStep(target.id, 'pushStatus', 'success', push.message);
-            } catch (err) {
-                updateRepoStep(target.id, 'pushStatus', 'failed', 'Push execution failed.');
+            updateRepoStep(repo.id, 'pushStatus', 'running', 'Pushing staging commits upstream...');
+            const pushResponse = await performPushSyncStep(repo);
+            if (pushResponse.isErrorResponse) {
+                updateRepoStep(repo.id, 'pushStatus', 'failed', pushResponse.errorMessage);
+                continue;
             }
-        });
+            
+            updateRepoStep(repo.id, 'pushStatus', 'success', pushResponse.syncStepDescription);
+            completedCount++;
+            setRepoSyncCounter(completedCount);
+        };
 
-        // Run all repository operational sequences in parallel
-        const count = repoSyncCounter + 1;
-        setRepoSyncCounter(count);
-
-        await Promise.all(syncPromises);
         setIsSyncing(false);
     };
+
+    /**
+     * Performs the pre-flight checks in the server API.
+     * @param repo The local git repository to run pre-flight checks on.
+     * @returns The synchronization response to running pre-flight checks.
+     */
+    async function performPreFlightChecks(repo: LocalGitRepository, ): Promise<SynchronizeRepositoryResponse> {
+        const request = new SynchronizeRepositoryRequest();
+        request.userId = user?.userId;
+        request.repositoryId = repo.id;
+        request.syncStep = SynchronizationStep.PreFlightChecks;
+        try {
+            return await statusClient.performSynchronizationStep(request);
+        } catch (error) {
+            await handleApiError(error, navigate, "Error peforming pre-flight checks!", "Check server logs for more information.");
+            let response = new SynchronizeRepositoryResponse();
+            response.isErrorResponse = true;
+            response.errorMessage = "Preflight check failed. Manually review server logs for more information.";
+            return response;
+        }
+    }
+
+    /**
+     * Performs the pull and manifest verification changes in the server API.
+     * @param repo The local git repository to pull changes in.
+     * @param branchCheckoutMode The branch checkout mode.
+     * @returns The synchronization response to running pull/manifest verification.
+     */
+    async function performPullSyncStep(repo: LocalGitRepository, branchCheckoutMode: BranchCheckoutMode): Promise<SynchronizeRepositoryResponse> {
+        const request = new SynchronizeRepositoryRequest();
+        request.userId = user?.userId;
+        request.repositoryId = repo.id;
+        request.syncStep = SynchronizationStep.PullChanges;
+        request.checkoutMode = branchCheckoutMode;
+        try {
+            return await statusClient.performSynchronizationStep(request);
+        } catch (error) {
+            await handleApiError(error, navigate, "Error peforming pull sync step!", "Check server logs for more information.");
+            let response = new SynchronizeRepositoryResponse();
+            response.isErrorResponse = true;
+            response.errorMessage = "Pulling changes failed. Manually review server logs for more information.";
+            return response;
+        }
+    }
+
+    /**
+     * Performs the push changes sync step in the server API.
+     * @param repo The local git repository to push changes in.
+     * @returns The synchronization response to running push verification.
+     */
+    async function performPushSyncStep(repo: LocalGitRepository): Promise<SynchronizeRepositoryResponse> {
+        const request = new SynchronizeRepositoryRequest();
+        request.userId = user?.userId;
+        request.repositoryId = repo.id;
+        request.syncStep = SynchronizationStep.PushChanges;
+        try {
+            return await statusClient.performSynchronizationStep(request);
+        } catch (error) {
+            await handleApiError(error, navigate, "Error peforming push sync step!", "Check server logs for more information.");
+            let response = new SynchronizeRepositoryResponse();
+            response.isErrorResponse = true;
+            response.errorMessage = "Pushing changes failed. Manually review server logs for more information.";
+            return response;
+        }
+    }
 
     /**
      * Updates the repository synchonization step with the run details.
@@ -137,10 +201,10 @@ const RepositorySynchronizationTab: React.FC = () => {
      * @param details The details of synchronization step.
      */
     const updateRepoStep = (
-        repoId: string,
+        repoId: string | undefined,
         stepKey: 'preflightStatus' | 'pullStatus' | 'pushStatus',
         status: SyncStepStatus,
-        details: string
+        details: string | undefined
     ) => {
         setSyncStates(prev => prev.map(entry => {
             if (entry.repository.id !== repoId) {
@@ -171,10 +235,23 @@ const RepositorySynchronizationTab: React.FC = () => {
         }
     };
 
+    /**
+     * Handles the event when the user selects a checkout mode.
+     * @param checkoutMode The branch checkout mode.
+     */
+    const handleCheckoutModeSelected = async (checkoutMode: BranchCheckoutMode) => {
+        setIsConfiguringCheckoutMode(false);
+        if (isSyncing) {
+            return;
+        }
+
+        await executeSmartSync(checkoutMode);
+    };
+
     return (
         <div className='sync-workspace-background'>
             <button
-                onClick={executeSmartSync}
+                onClick={() => setIsConfiguringCheckoutMode(true)}
                 disabled={isSyncing}
                 className={isSyncing ? 'pipeline-trigger-button-is-syncing' : 'pipeline-trigger-button-not-syncing'}
             >
@@ -222,6 +299,12 @@ const RepositorySynchronizationTab: React.FC = () => {
                     )}
                 </div>
             ))}
+            {isConfiguringCheckoutMode &&
+                <SmartSyncConfirmationModal
+                    onClose={() => setIsConfiguringCheckoutMode(false)}
+                    onSelected={(checkoutMode) => handleCheckoutModeSelected(checkoutMode)}
+                />
+            }
         </div>
     );
 };

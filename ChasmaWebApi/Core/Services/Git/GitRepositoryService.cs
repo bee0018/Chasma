@@ -68,7 +68,7 @@ namespace ChasmaWebApi.Core.Services.Git
         #endregion
 
         // <inheritdoc/>
-        public RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token, Repository? existingRepo = null)
+        public RepositorySummary? GetRepositoryStatus(string repoKey, Repository? existingRepo = null)
         {
             if (!CacheManager.WorkingDirectories.TryGetValue(repoKey, out string workingDirectory))
             {
@@ -195,9 +195,7 @@ namespace ChasmaWebApi.Core.Services.Git
             }
 
             repo.Index.Write();
-            string username = RemoteHelper.GetRemoteHostUsername(localGitRepository);
-            string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform);
-            RepositorySummary summary = GetRepositoryStatus(repoId, username, token, repo);
+            RepositorySummary summary = GetRepositoryStatus(repoId, repo);
             return summary?.StatusElements;
         }
 
@@ -226,7 +224,7 @@ namespace ChasmaWebApi.Core.Services.Git
 
             Logger.LogInformation("{action} file {file}", stagingAction, fileName);
             repo.Index.Write();
-            RepositorySummary summary = GetRepositoryStatus(repoKey, username, token, repo);
+            RepositorySummary summary = GetRepositoryStatus(repoKey, repo);
             return summary?.StatusElements;
         }
 
@@ -239,10 +237,10 @@ namespace ChasmaWebApi.Core.Services.Git
         }
 
         // <inheritdoc />
-        public bool TryPushChanges(string filePath, string token, out string errorMessage)
+        public bool TryPushChanges(string filePath, LocalGitRepository repository, out string errorMessage)
         {
             errorMessage = string.Empty;
-            using Repository repo = new Repository(filePath);
+            using Repository repo = new(filePath);
             Branch branch = repo.Head;
             if (branch == null)
             {
@@ -267,7 +265,8 @@ namespace ChasmaWebApi.Core.Services.Git
 
             try
             {
-                string username = repo.Config.Get<string>("user.name")?.Value ?? "chasma-bot";
+                string username = RemoteHelper.GetRemoteHostUsername(repository);
+                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
                 PushOptions options = new()
                 {
                     CredentialsProvider = (url, usernameFromUrl, types) =>
@@ -297,12 +296,13 @@ namespace ChasmaWebApi.Core.Services.Git
         }
 
         // <inheritdoc />
-        public bool TryPullChanges(string workingDirectory, string fullName, string email, string token, out string errorMessage)
+        public bool TryPullChanges(string workingDirectory, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage)
         {
             errorMessage = string.Empty;
-            using Repository repo = new Repository(workingDirectory);
-            string username = repo.Config.Get<string>("user.name")?.Value ?? "chasma-bot";
-            Signature author = new(fullName, email, DateTimeOffset.Now);
+            using Repository repo = new(workingDirectory);
+            string username = RemoteHelper.GetRemoteHostUsername(localGitRepository);
+            Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
+            string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform);
             PullOptions options = new()
             {
                 FetchOptions = new FetchOptions
@@ -731,80 +731,52 @@ namespace ChasmaWebApi.Core.Services.Git
             return healthScore;
         }
 
-        /// <summary>
-        /// Gets the branch diversion calculation for the specified repository.
-        /// </summary>
-        /// <param name="workingDirectory">The specified repository working directory.</param>
-        /// <param name="branchName">The branch name.</param>
-        /// <param name="repository">The local git repository.</param>
-        /// <returns>The number of local branch name, commits ahead, behind, and last updated.</returns>
-        private BranchMetrics GetBranchDiversionCalculation(string workingDirectory, string branchName, LocalGitRepository repository)
+        // <inheritdoc />
+        public bool AreManifestFilesInChangeset(string workingDirectory)
         {
-            BranchMetrics branchMetrics = new()
+            try
             {
-                BranchName = string.Empty,
-                LastUpdated = string.Empty,
-            };
-            using Repository repo = new(workingDirectory);
-            Branch branch = repo.Branches.FirstOrDefault(i => i.FriendlyName == branchName);
-            if (branch == null)
-            {
-                Logger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", repo.Info.WorkingDirectory);
-                return branchMetrics;
-            }
+                using Repository repo = new(workingDirectory);
+                Branch localBranch = repo.Head;
+                if (localBranch?.Tip?.Tree == null)
+                {
+                    Logger.LogWarning("Cannot check for manifest files in changeset. Failed to get local branch tree information for repository at {workingDirectory}.", workingDirectory);
+                    return false;
+                }
 
-            if (repo.Info.IsHeadDetached)
-            {
-                Logger.LogWarning("Cannot get branch diversion calculation. The HEAD is in a detached state for repository at {path}.", repo.Info.WorkingDirectory);
-                return branchMetrics;
-            }
+                Branch remoteBranch = localBranch.TrackedBranch;
+                if (remoteBranch?.Tip?.Tree == null)
+                {
+                    Logger.LogWarning("Cannot check for manifest files in changeset. Failed to get remote branch tree information for repository at {workingDirectory}.", workingDirectory);
+                    return false;
+                }
 
-            RemoteHelper.FetchLatestChanges(workingDirectory, branch, repository, Logger);
-            string localBranchName = branch.FriendlyName;
-            if (string.IsNullOrEmpty(localBranchName))
-            {
-                Logger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", repo.Info.WorkingDirectory, localBranchName);
-                return branchMetrics;
-            }
+                Tree localTree = localBranch.Tip.Tree;
+                Tree remoteTree = remoteBranch.Tip.Tree;
+                TreeChanges changes = repo.Diff.Compare<TreeChanges>(remoteTree, localTree);
+                HashSet<string> manifestFileExtensions = GetManifestFileExtensions();
+                foreach (TreeEntryChanges? entry in changes)
+                {
+                    if (entry == null)
+                    {
+                        continue;
+                    }
 
-            string lastHeadUpdateTimestamp = repo.Head.Commits
-                .Max(i => i.Author.When)
-                .ToLocalTime()
-                .ToString("g");
-            string repoHeadLastUpdated = $"From HEAD: {lastHeadUpdateTimestamp}";
-            branchMetrics.BranchName = localBranchName;
-            branchMetrics.LastUpdated = repoHeadLastUpdated;
-            if (branch.TrackedBranch == null)
-            {
-                Logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
-                return branchMetrics;
-            }
+                    string fileExtension = Path.GetExtension(entry.Path);
+                    if (manifestFileExtensions.Contains(fileExtension))
+                    {
+                        Logger.LogInformation("Found manifest file {file} in changeset for repository at {workingDirectory}.", entry.Path, workingDirectory);
+                        return true;
+                    }
+                }
 
-            string upstreamBranchName = branch.TrackedBranch.FriendlyName;
-            Branch localBranch = repo.Branches[localBranchName];
-            Branch upstreamBranch = repo.Branches[upstreamBranchName];
-            if (localBranch == null)
-            {
-                Logger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
-                return branchMetrics;
+                return false;
             }
-
-            if (upstreamBranch == null)
+            catch (Exception e)
             {
-                Logger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
-                return branchMetrics;
+                Logger.LogError(e, "Failed to check for manifest files in changeset for repository at {workingDirectory}.", workingDirectory);
+                return false;
             }
-            
-            string lastUpdated = upstreamBranch.Tip.Committer.When.ToLocalTime().ToString("g");
-            HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
-            branchMetrics = new()
-            {
-                BranchName = localBranchName,
-                AheadCount = divergence.AheadBy ?? 0,
-                BehindCount = divergence.BehindBy ?? 0,
-                LastUpdated = lastUpdated,
-            };
-            return branchMetrics;
         }
 
         #region Private Methods
@@ -1056,6 +1028,133 @@ namespace ChasmaWebApi.Core.Services.Git
             }
 
             return healthScoreDescription;
+        }
+
+        /// <summary>
+        /// Gets the branch diversion calculation for the specified repository.
+        /// </summary>
+        /// <param name="workingDirectory">The specified repository working directory.</param>
+        /// <param name="branchName">The branch name.</param>
+        /// <param name="repository">The local git repository.</param>
+        /// <returns>The number of local branch name, commits ahead, behind, and last updated.</returns>
+        private BranchMetrics GetBranchDiversionCalculation(string workingDirectory, string branchName, LocalGitRepository repository)
+        {
+            BranchMetrics branchMetrics = new()
+            {
+                BranchName = string.Empty,
+                LastUpdated = string.Empty,
+            };
+            using Repository repo = new(workingDirectory);
+            Branch branch = repo.Branches.FirstOrDefault(i => i.FriendlyName == branchName);
+            if (branch == null)
+            {
+                Logger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", repo.Info.WorkingDirectory);
+                return branchMetrics;
+            }
+
+            if (repo.Info.IsHeadDetached)
+            {
+                Logger.LogWarning("Cannot get branch diversion calculation. The HEAD is in a detached state for repository at {path}.", repo.Info.WorkingDirectory);
+                return branchMetrics;
+            }
+
+            RemoteHelper.FetchLatestChanges(workingDirectory, branch, repository, Logger);
+            string localBranchName = branch.FriendlyName;
+            if (string.IsNullOrEmpty(localBranchName))
+            {
+                Logger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", repo.Info.WorkingDirectory, localBranchName);
+                return branchMetrics;
+            }
+
+            string lastHeadUpdateTimestamp = repo.Head.Commits
+                .Max(i => i.Author.When)
+                .ToLocalTime()
+                .ToString("g");
+            string repoHeadLastUpdated = $"From HEAD: {lastHeadUpdateTimestamp}";
+            branchMetrics.BranchName = localBranchName;
+            branchMetrics.LastUpdated = repoHeadLastUpdated;
+            if (branch.TrackedBranch == null)
+            {
+                Logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
+                return branchMetrics;
+            }
+
+            string upstreamBranchName = branch.TrackedBranch.FriendlyName;
+            Branch localBranch = repo.Branches[localBranchName];
+            Branch upstreamBranch = repo.Branches[upstreamBranchName];
+            if (localBranch == null)
+            {
+                Logger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
+                return branchMetrics;
+            }
+
+            if (upstreamBranch == null)
+            {
+                Logger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
+                return branchMetrics;
+            }
+
+            string lastUpdated = upstreamBranch.Tip.Committer.When.ToLocalTime().ToString("g");
+            HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
+            branchMetrics = new()
+            {
+                BranchName = localBranchName,
+                AheadCount = divergence.AheadBy ?? 0,
+                BehindCount = divergence.BehindBy ?? 0,
+                LastUpdated = lastUpdated,
+            };
+            return branchMetrics;
+        }
+
+        /// <summary>
+        /// Gets the set of file extensions that are commonly used for manifest files.
+        /// </summary>
+        /// <returns>The set of manifest file extensions.</returns>
+        private static HashSet<string> GetManifestFileExtensions()
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".json",
+                ".xml",
+                ".yaml",
+                ".yml",
+                ".toml",
+                ".ini",
+                ".cfg",
+                ".conf",
+                ".properties",
+                ".plist",
+                ".manifest",
+                ".appmanifest",
+                ".webmanifest",
+                ".mf",
+                ".godot",
+                ".uproject",
+                ".unityproj",
+                ".asmdef",
+                ".csproj",
+                ".vbproj",
+                ".fsproj",
+                ".sln",
+                ".pubxml",
+                ".nuspec",
+                ".appxmanifest",
+                ".podspec",
+                ".pubspec",
+                ".lock",
+                ".gemspec",
+                ".gemfile",
+                ".gradle",
+                ".pom",
+                ".exs",
+                ".nimble",
+                ".opam",
+                ".cabal",
+                ".tf",
+                ".tfvars",
+                ".spec",
+                ".ebextensions",
+            };
         }
 
         #endregion

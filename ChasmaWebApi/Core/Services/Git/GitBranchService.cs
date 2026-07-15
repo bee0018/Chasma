@@ -99,32 +99,8 @@ namespace ChasmaWebApi.Core.Services.Git
         public bool TryCheckoutBranch(string workingDirectory, string branchName, BranchCheckoutMode checkoutMode, string? stashMessage, out string errorMessage, ApplicationUser user = null)
         {
             errorMessage = string.Empty;
-            StashModifiers stashMode = StashModifiers.Default | StashModifiers.IncludeUntracked;
-            if (user == null)
+            if (!TryHandleWorkingDirectoryChanges(workingDirectory, branchName, checkoutMode, stashMessage, out errorMessage, user))
             {
-                user = new ApplicationUser()
-                {
-                    Email = "Emryce.bot@emryce.com",
-                    Name = "Emryce-Bot",
-                };
-            }
-
-            if (checkoutMode == BranchCheckoutMode.StashOnly && !GitStashService.TryAddStash(workingDirectory, user, stashMessage, stashMode, out errorMessage))
-            {
-                Logger.LogError("Failed to stash changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
-                return false;
-            }
-
-            string stashMessageToBePopped = $"Stash for branch checkout of {branchName} at {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss}";
-            if (checkoutMode == BranchCheckoutMode.KeepChanges && !GitStashService.TryAddStash(workingDirectory, user, stashMessageToBePopped, stashMode, out errorMessage))
-            {
-                Logger.LogError("Failed to stash changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
-                return false;
-            }
-
-            if (checkoutMode == BranchCheckoutMode.DiscardAll && (!ShellUtility.TryExecuteShellCommand("git restore --staged .", workingDirectory, out errorMessage) || !ShellUtility.TryExecuteShellCommand("git restore .", workingDirectory, out errorMessage)))
-            {
-                Logger.LogError("Failed to discard changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
                 return false;
             }
 
@@ -173,9 +149,9 @@ namespace ChasmaWebApi.Core.Services.Git
         }
 
         // <inheritdoc />
-        public bool TryMergeBranch(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage)
+        public bool TryMergeBranch(string workingDirectory, string sourceBranchName, string destinationBranchName, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage)
         {
-            if (TryMergeBranchAutomatically(workingDirectory, sourceBranchName, destinationBranchName, fullName, email, token, out errorMessage))
+            if (TryMergeBranchAutomatically(workingDirectory, sourceBranchName, destinationBranchName, user, localGitRepository, out errorMessage))
             {
                 return true;
             }
@@ -185,11 +161,11 @@ namespace ChasmaWebApi.Core.Services.Git
         }
 
         // <inheritdoc />
-        public int PruneBranches(string workingDirectory, LocalGitRepository repository)
+        public int TryPruneBranches(string workingDirectory, LocalGitRepository repository, out string errorMessage)
         {
-            int numberOfPrunedBranches = 0;
             try
             {
+                int numberOfPrunedBranches = 0;
                 using Repository repo = new(workingDirectory);
                 RemoteHelper.FetchLatestChanges(workingDirectory, repo.Head, repository, Logger);
                 ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();
@@ -199,9 +175,9 @@ namespace ChasmaWebApi.Core.Services.Git
                 {
                     Logger.LogInformation("Attempting to prune branch {branch} in repository at {workingDirectory} because it is either merged or has not been updated in {threshold} days.", canonicalBranchName, workingDirectory, branchPruningThreshold);
                     Branch branchToDelete = repo.Branches.First(i => i.CanonicalName == canonicalBranchName);
-                    if (!TryDeleteSpecifiedBranch(workingDirectory, branchToDelete, repository.Id, out string errorMessage))
+                    if (!TryDeleteSpecifiedBranch(workingDirectory, branchToDelete, repository.Id, out string deleteError))
                     {
-                        Logger.LogError("Failed to prune branch {branch} in repository {repoName} at {workingDirectory} with error: {errorMessage}.", repository.GetDisplayName(), canonicalBranchName, workingDirectory, errorMessage);
+                        Logger.LogError("Failed to prune branch {branch} in repository {repoName} at {workingDirectory} with error: {errorMessage}.", repository.GetDisplayName(), canonicalBranchName, workingDirectory, deleteError);
                         continue;
                     }
 
@@ -209,13 +185,48 @@ namespace ChasmaWebApi.Core.Services.Git
                     numberOfPrunedBranches++;
                 }
 
+                errorMessage = string.Empty;
                 return numberOfPrunedBranches;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error when trying to prune branches in directory {dir}: {error}", workingDirectory, ex);
-                return numberOfPrunedBranches;
+                errorMessage = $"Error when trying to prune branches in directory {workingDirectory}: {ex}";
+                Logger.LogError(errorMessage);
+                return -1;
             }
+        }
+
+        // <inheritdoc />
+        public bool TryHandleWorkingDirectoryChanges(string workingDirectory, string branchName, BranchCheckoutMode checkoutMode, string? stashMessage, out string errorMessage, ApplicationUser user = null)
+        {
+            errorMessage = string.Empty;
+            user ??= new ApplicationUser()
+            {
+                Email = "Emryce.bot@emryce.com",
+                Name = "Emryce-Bot",
+            };
+
+            StashModifiers stashMode = StashModifiers.Default | StashModifiers.IncludeUntracked;
+            if (checkoutMode == BranchCheckoutMode.StashOnly && !GitStashService.TryAddStash(workingDirectory, user, stashMessage, stashMode, out errorMessage))
+            {
+                Logger.LogError("Failed to stash changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
+                return false;
+            }
+
+            string stashMessageToBePopped = $"Stash for branch checkout of {branchName} at {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss}";
+            if (checkoutMode == BranchCheckoutMode.KeepChanges && !GitStashService.TryAddStash(workingDirectory, user, stashMessageToBePopped, stashMode, out errorMessage))
+            {
+                Logger.LogError("Failed to stash changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
+                return false;
+            }
+
+            if (checkoutMode == BranchCheckoutMode.DiscardAll && (!ShellUtility.TryExecuteShellCommand("git restore --staged .", workingDirectory, out errorMessage) || !ShellUtility.TryExecuteShellCommand("git restore .", workingDirectory, out errorMessage)))
+            {
+                Logger.LogError("Failed to discard changes for branch checkout for repository at {workingDirectory} with error: {errorMessage}. Sending error response.", workingDirectory, errorMessage);
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -247,12 +258,11 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <param name="workingDirectory">The working directory of the repository.</param>
         /// <param name="sourceBranchName">The source branch.</param>
         /// <param name="destinationBranchName">The destination branch to be merged in to.</param>
-        /// <param name="fullName">The name of the user.</param>
-        /// <param name="email">The email of the user.</param>
-        /// <param name="token">The Git client API token.</param>
+        /// <param name="user">The user performing the merge operation.</param>
+        /// <param name="localGitRepository">The local Git repository object.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the branch was merged; false otherwise.</returns>
-        private bool TryMergeBranchAutomatically(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage)
+        private bool TryMergeBranchAutomatically(string workingDirectory, string sourceBranchName, string destinationBranchName, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage)
         {
             errorMessage = string.Empty;
             try
@@ -278,7 +288,7 @@ namespace ChasmaWebApi.Core.Services.Git
 
                 Commands.Fetch(repo, sourceBranch.RemoteName, [], new FetchOptions(), null);
                 Commands.Checkout(repo, destinationBranch);
-                Signature author = new(fullName, email, DateTimeOffset.Now);
+                Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
                 MergeOptions options = new()
                 {
                     CommitOnSuccess = true,
@@ -296,7 +306,8 @@ namespace ChasmaWebApi.Core.Services.Git
                     return false;
                 }
 
-                string username = repo.Config.Get<string>("user.name")?.Value ?? "chasma-bot";
+                string username = RemoteHelper.GetRemoteHostUsername(localGitRepository);
+                string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform);
                 PushOptions pushOptions = new()
                 {
                     CredentialsProvider = (url, usernameFromUrl, types) =>
@@ -487,13 +498,13 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <summary>
         /// Stops remote tracking pull requests for the specified branch.
         /// </summary>
-        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="repositoryId">The identifier of the repository.</param>
         /// <param name="branchName">The name of the branch to stop tracking pull requests for.</param>
-        private void StopTrackingRemotePullRequests(string workingDirectory, string branchName)
+        private void StopTrackingRemotePullRequests(string repositoryId, string branchName)
         {
-            if (!CacheManager.Repositories.TryGetValue(workingDirectory, out LocalGitRepository repository))
+            if (!CacheManager.Repositories.TryGetValue(repositoryId, out LocalGitRepository repository))
             {
-                Logger.LogWarning("Could not find a repository with the identifier {directory} so {branch} pull request tracking could not be processed.", workingDirectory, branchName);
+                Logger.LogWarning("Could not find a repository with the identifier {directory} so {branch} pull request tracking could not be processed.", repositoryId, branchName);
                 return;
             }
 
@@ -516,11 +527,11 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         /// <param name="workingDirectory">The working directory of the branch to evaluate.</param>
         /// <param name="branchName">The canonical name of the branch that can possibly be pruned.</param>
+        /// <param name="branchPruningThreshold">The maximum number of days a branch can go without updates before it is flagged for pruning.</param>
         /// <remarks>
         ///  By anchoring the merge verification to strictly the target branch, we ensure that the branch is only pruned if it has been fully merged into the mainline of development.
         ///  This prevents accidental pruning of branches that may have been merged into other feature branches or non-mainline branches.
         /// </remarks>
-        /// <param name="branchPruningThreshold">The maximum number of days a branch can go without updates before it is flagged for pruning.</param>
         /// <returns>True if the branch can be pruned; false otherwise.</returns>
         private bool CanBranchBePruned(string workingDirectory, string branchName, int branchPruningThreshold)
         {
@@ -609,7 +620,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 Logger.LogInformation("Successfully deleted branch {branchName} from repository with id: {id}", branchName, repositoryId);
 
                 // Delete tracking of pull requests associated with this branch.
-                StopTrackingRemotePullRequests(workingDirectory, branchName);
+                StopTrackingRemotePullRequests(repositoryId, branchName);
                 return true;
             }
             catch (Exception e)

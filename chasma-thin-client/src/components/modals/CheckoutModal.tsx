@@ -31,23 +31,23 @@ interface ICheckoutModalProps {
  */
 const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps) => {
     /** Gets or sets the error message. **/
-    const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     /** Gets or sets a value indicating whether the branch was successfully checked out. **/
-    const [successfullyCheckedOut, setSuccessfullyCheckedOut] = React.useState<boolean | undefined>(undefined);
+    const [successfullyCheckedOut, setSuccessfullyCheckedOut] = useState<boolean | undefined>(undefined);
 
     /** Gets or sets the modal title. **/
-    const [title, setTitle] = React.useState<string>(
+    const [title, setTitle] = useState<string>(
         props.targetedBranch === undefined
         ? "Select branch to checkout: "
         : `Checkout branch ${props.targetedBranch}?`
     );
 
     /** Gets or sets the remote branches to checkout. **/
-    const [branchesList, setBranchesList] = React.useState<string[] | undefined>([]);
+    const [branchesList, setBranchesList] = useState<string[] | undefined>([]);
 
     /** Gets or sets the branch name. **/
-    const [branchName, setBranchName] = React.useState<string>("");
+    const [branchName, setBranchName] = useState<string>("");
 
     /** Gets or sets a value indicating whether the checkout request was sent. **/
     const [checkoutRequestSent, setCheckoutRequestSent] = useState<boolean>(false);
