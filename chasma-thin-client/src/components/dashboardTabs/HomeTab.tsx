@@ -60,24 +60,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
     const [isStopping, setIsStopping] = useState<boolean>(false);
 
     useEffect(() => {
-        updateUserRepositoryConfiguration().catch(console.error);
-    }, [currentReposVersion]);
-
-    /**
-     * Updates the repository configuration when the repositories are updated in the background.
-     */
-    const updateUserRepositoryConfiguration = async () => {
-        try {
-            const userId = user?.userId;
-            const message = await configClient.getLocalGitRepositories(userId);
-            useCacheStore.getState().setRepositories(message.repositories);
-        } catch (e) {
-            const errorNotification = await handleApiError(e, navigate);
-            setNotification(errorNotification);
-        }
-    };
-
-    useEffect(() => {
         /** Retrieves the repository data from the web API. **/
         const retrieveUserRepositoryConfiguration = async () => {
             try {
@@ -95,7 +77,7 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
             .catch(e => {
                 console.error(e.message);
             });
-    }, []);
+    }, [currentReposVersion, user?.userId]);
 
     useEffect(() => {
         const closeMenu = () => setContextMenu(null);
@@ -318,17 +300,11 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                             onClick={() => setContextMenu(null)}
                         >
                             <ul>
-                                <li onClick={() => navigate(`/status/${contextMenu.repo.name}/${contextMenu.repo.id}`)}>
+                                <li onClick={() => navigate(`/status/${contextMenu.repo.displayName ? contextMenu.repo.displayName : contextMenu.repo.name}/${contextMenu.repo.id}`)}>
                                     Open Status Page
                                 </li>
-                                <li>
-                                    <a
-                                        href={`/status/${contextMenu.repo.name}/${contextMenu.repo.id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                                        Open Status in New Tab
-                                    </a>
+                                <li onClick={() => window.open(`/status/${contextMenu.repo.displayName ? contextMenu.repo.displayName : contextMenu.repo.name}/${contextMenu.repo.id}`, "_blank", "noopener,noreferrer")}>
+                                    Open Status in New Tab
                                 </li>
                                 <li onClick={() => handleRepoDelete(contextMenu.repo.id)}>
                                     Delete
