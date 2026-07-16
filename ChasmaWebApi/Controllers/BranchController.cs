@@ -368,9 +368,7 @@ namespace ChasmaWebApi.Controllers
             {
                 string sourceBranchName = request.SourceBranch;
                 string destinationBranchName = request.DestinationBranch;
-                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
-                string username = RemoteHelper.GetRemoteHostUsername(repository);
-                if (!applicationControlService.TryMergeChanges(workingDirectory, sourceBranchName, destinationBranchName, username, user.Email, token, out string errorMessage))
+                if (!applicationControlService.TryMergeChanges(workingDirectory, sourceBranchName, destinationBranchName, user, repository, out string errorMessage))
                 {
                     response.IsErrorResponse = true;
                     response.ErrorMessage = errorMessage;

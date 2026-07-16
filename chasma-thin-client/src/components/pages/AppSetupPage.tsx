@@ -82,6 +82,12 @@ export const AppSetupPage: React.FC = () => {
     /** Gets or sets the GitLab SSH private key passphrase. */
     const [gitLabSshPassphrase, setGitLabSshPassphrase] = useState<string | undefined>(undefined);
 
+    /** Gets or sets the branch threshold pruning in days. */
+    const [branchPruningThreshold, setBranchPruningThreshold] = useState<string | undefined>(undefined);
+
+    /** Gets or sets a value indicating whether the branch pruning threshold is valid. */
+    const [branchPruningThresholdIsValid, setBranchPruningThresholdIsValid] = useState<boolean | undefined>(undefined);
+
     /** Gets or sets a value indicating whether the request is ready to be sent. */
     const [disableSendButton, setDisableSendButton] = useState(false);
 
@@ -136,7 +142,7 @@ export const AppSetupPage: React.FC = () => {
         if (!jwtIsConfigured && isBlankOrUndefined(jwtSecretKey)) {
             setNotification({
                 title: "Could not apply configurations!",
-                message: "'jwtSecretKey' must be populated!",
+                message: "The secret JWT key must be populated!",
                 isError: true,
             });
             return;
@@ -145,7 +151,7 @@ export const AppSetupPage: React.FC = () => {
         if (!jwtIsConfigured && jwtSecretKey && jwtSecretKey.length < 16) {
             setNotification({
                 title: "Could not apply configurations!",
-                message: "'jwtSecretKey' must be greater than or equal to 16 characters!",
+                message: "The secret JWT key must be greater than or equal to 16 characters!",
                 isError: true,
             });
             return;
@@ -154,7 +160,7 @@ export const AppSetupPage: React.FC = () => {
         if (isBlankOrUndefined(bindingPort)) {
             setNotification({
                 title: "Could not apply configurations!",
-                message: "'bindingPort' must be populated!",
+                message: "The fallback HTTP port must be populated!",
                 isError: true,
             });
             return;
@@ -163,7 +169,7 @@ export const AppSetupPage: React.FC = () => {
         if (!isValidInteger(bindingPort)) {
             setNotification({
                 title: "Could not apply configurations!",
-                message: "'bindingPort' must be a valid integer!",
+                message: "The fallback HTTP port must be a valid integer!",
                 isError: true,
             });
             return;
@@ -172,7 +178,7 @@ export const AppSetupPage: React.FC = () => {
         if (isBlankOrUndefined(secureBindingPort)) {
             setNotification({
                 title: "Could not apply configurations!",
-                message: "'secureBindingPort' must be populated!",
+                message: "The secure binding port must be populated!",
                 isError: true,
             });
             return;
@@ -181,7 +187,16 @@ export const AppSetupPage: React.FC = () => {
         if (!isValidInteger(secureBindingPort)) {
             setNotification({
                 title: "Could not apply configurations!",
-                message: "'secureBindingPort' must be a valid integer!",
+                message: "The secure binding port must be a valid integer!",
+                isError: true,
+            });
+            return;
+        }
+
+        if (!isValidInteger(branchPruningThreshold)) {
+            setNotification({
+                title: "Could not apply configurations!",
+                message: "The branch pruning threshold must be a valid integer!",
                 isError: true,
             });
             return;
@@ -190,7 +205,7 @@ export const AppSetupPage: React.FC = () => {
         if (isBlankOrUndefined(globalWorkspacePath)) {
             setNotification({
                 title: "Could not apply configurations!",
-                message: "'globalWorkspacePath' must be populated!",
+                message: "The global workspace path that it must be populated!",
                 isError: true,
             });
             return;
@@ -217,6 +232,7 @@ export const AppSetupPage: React.FC = () => {
         config.gitHubUsername = gitHubUsername;
         config.gitLabUsername = gitLabUsername;
         config.globalWorkspacePath = globalWorkspacePath;
+        config.branchPruningDayThreshold = safeNumber(branchPruningThreshold);
         const request = new ModifyApiConfigRequest();
         request.apiConfiguration = config;
         try {
@@ -234,7 +250,7 @@ export const AppSetupPage: React.FC = () => {
             if (response.staticConfigurationsChanged) {
                 setNotification({
                     title: "Successfully applied configurations!",
-                    message: "Binding Port, JWT Secret Key, and/or Global Workspace Path key has been updated. Restart the app to apply changes.",
+                    message: "Binding Ports, JWT Secret Key, and/or Global Workspace Path key has been updated. Restart the app to apply changes.",
                     isError: false,
                 });
             }
@@ -333,6 +349,12 @@ export const AppSetupPage: React.FC = () => {
                     setSecureBindingPortIsValid(true);
                 }
 
+                setBranchPruningThreshold(String(response.branchPruningDayThreshold));
+                const branchPruningThreshold = response.branchPruningDayThreshold;
+                if (branchPruningThreshold && branchPruningThreshold > 0) {
+                    setBranchPruningThresholdIsValid(true);
+                }
+                
                 setGitHubApiTokenIsConfigured(response.gitHubApiTokenConfigured);
                 setGitLabApiTokenIsConfigured(response.gitLabApiTokenConfigured);
                 setWorkflowRunReportThreshold(String(response.workflowRunReportThreshold));
@@ -740,6 +762,31 @@ export const AppSetupPage: React.FC = () => {
                 {!isValidInteger(gitLabMergeRequestScanIntervalSeconds) && (
                     <div className="password-error">
                         Please enter a valid number of seconds greater than 0, or leave it blank to skip.
+                    </div>
+                )}
+            </div>
+
+            {/* Branch Pruning Threshold */}
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">Branch Pruning Threshold (Days)</span>
+                    <span className="xml-type">Days</span>
+                    <span className="xml-optional">Optional</span>
+                </div>
+                <p>The maximum number of days a branch can go without updates before it is flagged for pruning. If you aren't sure, 45 is reccommended.</p>
+                <input
+                    type="text"
+                    className="input-field"
+                    placeholder="e.g., 45"
+                    value={branchPruningThreshold}
+                    onChange={(e) => {
+                        setBranchPruningThreshold(e.target.value);
+                        const thresholdIsValid = isValidInteger(e.target.value);
+                        setBranchPruningThresholdIsValid(thresholdIsValid);
+                    }} />
+                {!branchPruningThresholdIsValid && (
+                    <div className="password-error">
+                        Please enter a whole number greater than 0.
                     </div>
                 )}
             </div>

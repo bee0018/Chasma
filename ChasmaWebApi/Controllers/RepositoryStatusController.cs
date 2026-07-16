@@ -4,6 +4,7 @@ using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Models;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Data.Objects.Status;
 using ChasmaWebApi.Data.Requests.Configuration;
 using ChasmaWebApi.Data.Requests.Status;
 using ChasmaWebApi.Data.Responses.Configuration;
@@ -109,10 +110,8 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
-            string username = RemoteHelper.GetRemoteHostUsername(repository);
             logger.LogDebug("Received request to run git status for repository ID: {repoId}", repoId);
-            RepositorySummary summary = applicationControlService.GetRepositoryStatus(repoId, username, token);
+            RepositorySummary summary = applicationControlService.GetRepositoryStatus(repoId);
             if (summary == null)
             {
                 logger.LogError("Failed to get repository status for repo ID: {repoId}", repoId);
@@ -322,8 +321,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
-            if (!applicationControlService.TryPushChanges(workingDirectory, token, out string errorMessage))
+            if (!applicationControlService.TryPushChanges(workingDirectory, repository, out string errorMessage))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"Failed to push changes to repo: {repoId}. {errorMessage}";
@@ -397,9 +395,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
-            string fullName = user.Name;
-            if (!applicationControlService.TryPullChanges(workingDirectory, fullName, email, token, out string errorMessage))
+            if (!applicationControlService.TryPullChanges(workingDirectory, user, repository, out string errorMessage))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = $"Failed to pull changes to repo: {repoId}. {errorMessage}";
@@ -838,6 +834,73 @@ namespace ChasmaWebApi.Controllers
 
             logger.LogInformation("Successfully deleted workspace context snapshot(s): {snapshotId}.", string.Join(", ", deletedSnapshotIds));
             response.SnapshotIds = deletedSnapshotIds;
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Performs the synchronization step for the specified repository, which can include pulling changes, pushing changes, or performing pre-flight checks.
+        /// </summary>
+        /// <param name="request">The perform sync step request.</param>
+        /// <returns>The response to performing the sync step.</returns>
+        [HttpPost]
+        [Route("performSyncStep")]
+        public ActionResult<SynchronizeRepositoryResponse> PerformSynchronizationStep([FromBody] SynchronizeRepositoryRequest request)
+        {
+            SynchronizeRepositoryResponse response = new();
+            if (request == null)
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Null request received. Cannot perform synchronization step.";
+                logger.LogError("SynchronizeRepositoryRequest received is null. Sending error response");
+                return BadRequest(response);
+            }
+
+            int userId = request.UserId;
+            if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No user found in cache for user ID: {userId}. Cannot perform synchronization step.";
+                logger.LogError("No user was found for user ID: {userId} when trying to perform sync step. Sending error response", userId);
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Cannot perform synchronization step because the repository identifier is null or empty.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "The repository identifier is null or empty.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Repository not found in cache when performing sync step for repo with identifier {id}. Sending error response.", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot perform repo sync step because the repository cannot be found in system cache.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+            {
+                logger.LogError("Repository working directory not found in cache when performing sync step for repo with identifier {id}. Sending error response.", repoId);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Cannot perform repo sync step because the repository working directory cannot be found in system cache.";
+                return Ok(response);
+            }
+
+            SynchronizationStep syncStep = request.SyncStep;
+            BranchCheckoutMode checkoutMode = request.CheckoutMode;
+            if (!applicationControlService.TryPerformSynchronizationStep(workingDirectory, repository, syncStep, checkoutMode, user, out string executionOutput))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = executionOutput;
+                logger.LogError("Failed to perform synchronization step for repo: {repoId}. {errorMessage}", repoId, executionOutput);
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully performed synchronization step {step} for repo: {repoId}", syncStep, repoId);
+            response.SyncStepDescription = executionOutput;
             return Ok(response);
         }
     }

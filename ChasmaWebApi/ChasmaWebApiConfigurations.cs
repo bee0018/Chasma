@@ -107,6 +107,12 @@ namespace ChasmaWebApi
         [XmlElement("gitLabMergeRequestScanIntervalSeconds")]
         public int? GitLabMergeRequestScanIntervalSeconds { get; set; }
 
+        /// <summary>
+        /// Gets or sets the number of days after which branches will be pruned if they have not been updated.
+        /// </summary>
+        [XmlElement("branchPruningDayThreshold")]
+        public int? BranchPruningDayThreshold { get; set; }
+
         #endregion
 
         /// <summary>
@@ -223,6 +229,11 @@ namespace ChasmaWebApi
             if (SecureBindingPort != newConfig.SecureBindingPort)
             {
                 SecureBindingPort = newConfig.SecureBindingPort;
+            }
+
+            if (BranchPruningDayThreshold != newConfig.BranchPruningDayThreshold)
+            {
+                BranchPruningDayThreshold = newConfig.BranchPruningDayThreshold;
             }
         }
         

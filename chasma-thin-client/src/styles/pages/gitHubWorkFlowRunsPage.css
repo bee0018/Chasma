@@ -1,12 +1,13 @@
 ﻿:root {
     --color-bg: #121212;
 }
+
 .workflow-page-container {
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
     padding: 24px;
     color: #e0e0e0;
     font-family: "Inter", sans-serif;
+    box-sizing: border-box;
 }
 
 .workflow-page-header {
@@ -171,6 +172,26 @@
 
 .workflow-table tr.failure {
     border-left: 4px solid #ef4444;
+}
+
+.workflow-table tr.unknown {
+    border-left: 4px solid #3f4243;
+}
+
+.workflow-table tr.poor {
+    border-left: 4px solid #e09f11;
+}
+
+.workflow-table tr.average {
+    border-left: 4px solid #f1f600;
+}
+
+.workflow-table tr.good {
+    border-left: 4px solid #99ea8b;
+}
+
+.workflow-table tr.excellent {
+    border-left: 4px solid #009e12;
 }
 
 .workflow-table tr:hover {

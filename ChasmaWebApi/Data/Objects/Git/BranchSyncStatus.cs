@@ -39,5 +39,10 @@
         /// Gets or sets when the branch was last updated.
         /// </summary>
         public string LastUpdated { get; set; }
+
+        /// <summary>
+        /// Gets or sets the health score of the branch, which is a measure of its overall quality and stability.
+        /// </summary>
+        public RepositoryHealthScore HealthScore { get; set; }
     }
 }

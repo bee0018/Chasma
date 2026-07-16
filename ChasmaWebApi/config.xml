@@ -16,4 +16,5 @@
 	<gitLabSshPassphrase/>
 	<selfHostedGitLabUrl/>
 	<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
+	<branchPruningDayThreshold>45</branchPruningDayThreshold>
 </configurations>

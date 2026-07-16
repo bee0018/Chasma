@@ -3,6 +3,7 @@ using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Data.Objects.Shell;
+using ChasmaWebApi.Data.Objects.Status;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Interfaces.Control
@@ -99,21 +100,18 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="workingDirectory">The working directory of the repository.</param>
         /// <param name="sourceBranchName">The name of the branch to merge from.</param>
         /// <param name="destinationBranchName">The name of the branch to merge into.</param>
-        /// <param name="fullName">The user's full name.</param>
-        /// <param name="email">The user's email.</param>
-        /// <param name="token">The GitHub API token.</param>
+        /// <param name="user">The user performing the merge operation.</param>
+        /// <param name="localGitRepository">The local git repository.</param>
         /// <param name="errorMessage">The error message if an error occurs.</param>
         /// <returns>True if the merge was successful; false otherwise.</returns>
-        bool TryMergeChanges(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage);
+        bool TryMergeChanges(string workingDirectory, string sourceBranchName, string destinationBranchName, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage);
 
         /// <summary>
         /// Gets the status of the specified repository.
         /// </summary>
         /// <param name="repoKey">The repository identifier.</param>
-        /// <param name="username">The git username.</param>
-        /// <param name="token">The git API token.</param>
         /// <returns>A repository summary of running the command 'git status'.</returns>
-        RepositorySummary? GetRepositoryStatus(string repoKey, string username, string token);
+        RepositorySummary? GetRepositoryStatus(string repoKey);
 
         /// <summary>
         /// Applies the staging action to the specified files.
@@ -148,21 +146,20 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// Tries to push the committed changes to the remote repository.
         /// </summary>
         /// <param name="filePath">The filepath to the specified repository.</param>
-        /// <param name="token">The git API token.</param>
+        /// <param name="localGitRepository">The local git repository.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the user was able to push changes; false otherwise.</returns>
-        bool TryPushChanges(string filePath, string token, out string errorMessage);
+        bool TryPushChanges(string filePath, LocalGitRepository localGitRepository, out string errorMessage);
 
         /// <summary>
         /// Tries to pull changes from the remote repository.
         /// </summary>
         /// <param name="workingDirectory">The working directory of the repository.</param>
-        /// <param name="fullName">The user's full name.</param>
-        /// <param name="email">The user's email.</param>
-        /// <param name="token">The git API token.</param>
+        /// <param name="user">The logged in user.</param>
+        /// <param name="localGitRepository">The local git repository.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the user was able to pull changes, false otherwise.</returns>
-        bool TryPullChanges(string workingDirectory, string fullName, string email, string token, out string errorMessage);
+        bool TryPullChanges(string workingDirectory, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage);
 
         /// <summary>
         /// Tries to reset the repository to the specified revision with the given reset mode.
@@ -404,5 +401,17 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the application is being updated and restarted; false otherwise.</returns>
         bool TryApplyUpdateAndRestartApplication(SystemManifest systemManifest, bool isDevelopmentMode, out string errorMessage);
+
+        /// <summary>
+        /// Tries to perform the specified synchronization step for the given repository with the provided branch checkout mode.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <param name="repository">The local git repository.</param>
+        /// <param name="syncStep">The synchronization step.</param>
+        /// <param name="branchCheckoutMode">The branch checkout mode.</param>
+        /// <param name="user">The user performing the synchronization step.</param>
+        /// <param name="executionOutput">The execution output.</param>
+        /// <returns>True if the synchronization step passes; false otherwise.</returns>
+        bool TryPerformSynchronizationStep(string workingDirectory, LocalGitRepository repository, SynchronizationStep syncStep, BranchCheckoutMode branchCheckoutMode, ApplicationUser user, out string executionOutput);
     }
 }

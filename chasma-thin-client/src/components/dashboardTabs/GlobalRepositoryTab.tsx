@@ -133,6 +133,44 @@ const GlobalRepositoryTab: React.FC = () => {
         setTargetedBranch(undefined);
     };
 
+    /**
+     * Gets the branch sync row theme based on the health score.
+     * @param status The branch synchronization status.
+     */
+    const getBranchSyncRowTheme = (status: BranchSyncStatus | undefined) => {
+        if (!status) {
+            return "unknown";
+        }
+
+        if (!status.healthScore?.score) {
+            return "unknown";
+        }
+
+        if (status.healthScore.score >= 0 && status.healthScore.score <= 59) {
+            return "failure";
+        }
+
+        if (status.healthScore.score >= 60 && status.healthScore.score <= 69) {
+            return "poor"
+        }
+
+        if (status.healthScore.score >= 70 && status.healthScore.score <= 79) {
+            return "average"
+        }
+
+        if (status.healthScore.score >= 80 && status.healthScore.score <= 89) {
+            return "good"
+        }
+
+        if (status.healthScore.score >= 90 && status.healthScore.score <= 99) {
+            return "success"
+        }
+
+        if (status.healthScore.score === 100) {
+            return "excellent"
+        }
+    };
+
     /** Load git status every 2.5s **/
     useEffect(() => {
         retrievePullRequestsRequest();
@@ -276,7 +314,7 @@ const GlobalRepositoryTab: React.FC = () => {
                     <>
                         <div className="workflow-page-header">
                             <h1>Cross-Repo Branches</h1>
-                            <p>Keep every branch in lockstep—system-wide sync without the chaos🔀</p>
+                            <p>Keep every branch in lockstep—system-wide insights without the chaos🔀</p>
                             <input
                                 type="text"
                                 placeholder="Search branch to sync..."
@@ -305,15 +343,17 @@ const GlobalRepositoryTab: React.FC = () => {
                                             <th>Pull Request Open</th>
                                             <th>Build Status</th>
                                             <th>Last Updated</th>
+                                            <th>Health Score</th>
+                                            <th>Health Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {branchStatuses.map((status, index) => (
                                             <tr
                                                 key={index}
-                                                className="success"
+                                                className={getBranchSyncRowTheme(status)}
                                             >
-                                                <td>{status.repositoryName}</td>
+                                                <td><b>{status.repositoryName}</b></td>
                                                 <td
                                                     style={{ color: status.branchExists ? "white" : "orange" }}>
                                                     {status.branchExists ? "Exists" : "Does not exist"}
@@ -329,6 +369,15 @@ const GlobalRepositoryTab: React.FC = () => {
                                                 <td>{status.pullRequestOpen ? "Open" : "-"}</td>
                                                 <td>{status.buildStatus}</td>
                                                 <td>{status.lastUpdated}</td>
+                                                <td>{status.healthScore?.score}%</td>
+                                                <td>
+                                                    <b>{status.healthScore?.scoreCategory}:</b>
+                                                    <ul>
+                                                        {status.healthScore?.description?.map(reason => {
+                                                            return <li>{reason}</li>
+                                                        })}
+                                                    </ul>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>

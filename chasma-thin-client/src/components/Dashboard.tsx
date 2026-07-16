@@ -115,13 +115,13 @@ const Dashboard: React.FC = () => {
                             className={`tab ${isActive("cloneRepos")}`}
                             onClick={() => navigate("cloneRepos")}
                         >
-                            Clone Repositories 🚚
+                            Clone 🚚
                         </div>
                         <div
                             className={`tab ${isActive("addRepos")}`}
                             onClick={() => navigate("addRepos")}
                         >
-                            Add Repositories ➕
+                            Register ➕
                         </div>
                         <div
                             className="tab"
@@ -140,6 +140,12 @@ const Dashboard: React.FC = () => {
                             onClick={() => navigate("global")}
                         >
                             Global 🌍
+                        </div>
+                        <div
+                            className={`tab ${isActive("repoSync")}`}
+                            onClick={() => navigate("repoSync")}
+                        >
+                            Synchronize 🔁
                         </div>
                     </div>
                 )}

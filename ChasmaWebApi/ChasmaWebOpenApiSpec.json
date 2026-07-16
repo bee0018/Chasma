@@ -1428,6 +1428,38 @@
         }
       }
     },
+    "/api/RepositoryStatus/performSyncStep": {
+      "post": {
+        "tags": [
+          "RepositoryStatus"
+        ],
+        "operationId": "RepositoryStatus_PerformSynchronizationStep",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SynchronizeRepositoryRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SynchronizeRepositoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Shell/executeShellCommands": {
       "post": {
         "tags": [
@@ -2077,6 +2109,11 @@
               "secureBindingPort": {
                 "type": "integer",
                 "format": "int32"
+              },
+              "branchPruningDayThreshold": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
               }
             }
           }
@@ -2208,6 +2245,11 @@
                 "nullable": true
               },
               "gitLabMergeRequestScanIntervalSeconds": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "branchPruningDayThreshold": {
                 "type": "integer",
                 "format": "int32",
                 "nullable": true
@@ -4059,6 +4101,28 @@
           },
           "lastUpdated": {
             "type": "string"
+          },
+          "healthScore": {
+            "$ref": "#/components/schemas/RepositoryHealthScore"
+          }
+        }
+      },
+      "RepositoryHealthScore": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scoreCategory": {
+            "type": "string"
+          },
+          "description": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -4307,6 +4371,55 @@
             }
           }
         }
+      },
+      "SynchronizeRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "syncStepDescription": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "SynchronizeRepositoryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "repositoryId": {
+            "type": "string"
+          },
+          "syncStep": {
+            "$ref": "#/components/schemas/SynchronizationStep"
+          },
+          "checkoutMode": {
+            "$ref": "#/components/schemas/BranchCheckoutMode"
+          }
+        }
+      },
+      "SynchronizationStep": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "PreFlightChecks",
+          "PullChanges",
+          "PushChanges"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
       },
       "ExecuteShellCommandResponse": {
         "allOf": [

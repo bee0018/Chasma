@@ -209,16 +209,8 @@ namespace ChasmaWebApi.Core.Services.Git
                 using Repository repository = new(workingDirectory);
                 if (!repository.Stashes.Any())
                 {
-                    errorMessage = $"No stashes found in repository at {workingDirectory}.";
-                    Logger.LogError(errorMessage);
-                    return false;
-                }
-
-                if (repository.Stashes.Count() == 0)
-                {
-                    errorMessage = $"No stashes found in repository at {workingDirectory}.";
-                    Logger.LogError(errorMessage);
-                    return false;
+                    Logger.LogInformation("There are no stashes to pop for repo located at {dir}, so there is nothing to do.", repository.Info.WorkingDirectory);
+                    return true;
                 }
 
                 StashApplyStatus status = repository.Stashes.Pop(0);

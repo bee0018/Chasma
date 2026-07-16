@@ -103,6 +103,7 @@ namespace ChasmaWebApi.Controllers
                 GitLabSshKeyPrivateKeyPath = currentConfig.GitLabSshKeyPrivateKeyPath,
                 GitHubSshPassphrase = currentConfig.GitHubSshPassphrase,
                 GitLabSshPassphrase = currentConfig.GitLabSshPassphrase,
+                BranchPruningDayThreshold = currentConfig.BranchPruningDayThreshold,
             };
             return Ok(response);
         }

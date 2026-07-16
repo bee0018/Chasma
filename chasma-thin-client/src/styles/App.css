@@ -18,5 +18,6 @@
 @import "pages/helpPage.css";
 @import "pages/registerPage.css";
 @import "pages/repositoryStatusPage.css";
+@import "pages/repositorySyncPage.css";
 
 @import "modals/modal.css";

@@ -1,7 +1,9 @@
 ﻿using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
+using LibGit2Sharp;
 using NGitLab;
 using Octokit;
+using Repository = LibGit2Sharp.Repository;
 
 namespace ChasmaWebApi.Util
 {
@@ -19,7 +21,7 @@ namespace ChasmaWebApi.Util
         public static GitHubClient GetGitHubClient(string repoName, string token)
         {
             ProductHeaderValue header = new(repoName);
-            Credentials credentials = new(token);
+            Octokit.Credentials credentials = new(token);
             return new GitHubClient(header)
             {
                 Credentials = credentials,
@@ -99,6 +101,51 @@ namespace ChasmaWebApi.Util
                 RemoteHostPlatform.GitLab => apiConfig.GitLabUsername,
                 _ => string.Empty,
             };
+        }
+
+        /// <summary>
+        /// Fetches the latest changes from the remote repository for the specified branch, using the provided API token and username for authentication if available.
+        /// </summary>
+        /// <param name="workingDirectory">The working repository.</param>
+        /// <param name="branch">The branch to fetch changes for.</param>
+        /// <param name="localRepository">The cached local git repository.</param>
+        /// <param name="logger">The logging instance.</param>
+        public static void FetchLatestChanges(string workingDirectory, LibGit2Sharp.Branch branch, LocalGitRepository localRepository, ILogger logger)
+        {
+            string token = GetApiToken(localRepository.HostPlatform);
+            string username = GetRemoteHostUsername(localRepository);
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(token))
+            {
+                if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out string errorMessage))
+                {
+                    logger.LogError("Could not execute fetch command because: {error}", errorMessage);
+                }
+            }
+            else
+            {
+                try
+                {
+                    using Repository repo = new(workingDirectory);
+                    FetchOptions fetchOptions = new()
+                    {
+                        CredentialsProvider = (url, user, credentials) =>
+                        new UsernamePasswordCredentials
+                        {
+                            Username = username,
+                            Password = token
+                        }
+                    };
+                    Commands.Fetch(repo, branch?.RemoteName, [], fetchOptions, null);
+                }
+                catch (Exception e)
+                {
+                    logger.LogWarning(e, "Failed to fetch updates from remote {remote} for repository at {path}. Attempting manual fetch.", branch.RemoteName, workingDirectory);
+                    if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out string errorMessage))
+                    {
+                        logger.LogError(errorMessage);
+                    }
+                }
+            }
         }
     }
 }

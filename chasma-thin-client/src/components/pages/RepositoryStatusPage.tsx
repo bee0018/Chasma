@@ -535,6 +535,12 @@ const RepositoryStatusPage: React.FC = () => {
             newSelection.clear();
             newSelection.add(file.filePath!);
             setLastSelectedIndex(index);
+            if (file?.filePath === selectedFile?.filePath) {
+                // Only want to get the diff of newly selected file.
+                // This also prevents the user from spamming the server with requests by repeatedly click the same file.
+                return;
+            }
+
             setSelectedFile(file);
             handleGetGitDiffRequest(file, isStaged);
         }
@@ -600,32 +606,6 @@ const RepositoryStatusPage: React.FC = () => {
 
                 <div
                     className="sidebar-section-header"
-                    onClick={() => setIsStashesAndAutomationOptionsOpen(!isStashesAndAutomationOptionsOpen)}
-                >
-                    <span>Stashes & Automation</span>
-                    <span className={`arrow ${isStashesAndAutomationOptionsOpen ? "open" : ""}`}>▶</span>
-                </div>
-                {isStashesAndAutomationOptionsOpen && (
-                    <div className="sidebar-section-content">
-                        {!isSafeMode &&
-                            <>
-                                <div
-                                    className={`tab ${activeTab === "stashes" ? "active" : ""}`}
-                                    onClick={() => handleTabClick("stashes")}
-                                >
-                                    Stashes🗄️
-                                </div>
-                                <div
-                                    className={`tab ${activeTab === "shell" ? "active" : ""}`}
-                                    onClick={() => handleTabClick("shell")}>
-                                    Custom Shell Commands🖥️
-                                </div>
-                            </>
-                        }
-                    </div>
-                )}
-                <div
-                    className="sidebar-section-header"
                     onClick={() => setIsRepoActionsOpen(!isRepoActionsOpen)}
                 >
                     <span>Repo Actions</span>
@@ -668,6 +648,34 @@ const RepositoryStatusPage: React.FC = () => {
                         }
                     </div>
                 )}
+
+                <div
+                    className="sidebar-section-header"
+                    onClick={() => setIsStashesAndAutomationOptionsOpen(!isStashesAndAutomationOptionsOpen)}
+                >
+                    <span>Stashes & Automation</span>
+                    <span className={`arrow ${isStashesAndAutomationOptionsOpen ? "open" : ""}`}>▶</span>
+                </div>
+                {isStashesAndAutomationOptionsOpen && (
+                    <div className="sidebar-section-content">
+                        {!isSafeMode &&
+                            <>
+                                <div
+                                    className={`tab ${activeTab === "stashes" ? "active" : ""}`}
+                                    onClick={() => handleTabClick("stashes")}
+                                >
+                                    Stashes🗄️
+                                </div>
+                                <div
+                                    className={`tab ${activeTab === "shell" ? "active" : ""}`}
+                                    onClick={() => handleTabClick("shell")}>
+                                    Custom Shell Commands🖥️
+                                </div>
+                            </>
+                        }
+                    </div>
+                )}
+                
                 <div
                     className="sidebar-section-header"
                     onClick={() => setIsRemoteOptionsOpen(!isRemoteOptionsOpen)}

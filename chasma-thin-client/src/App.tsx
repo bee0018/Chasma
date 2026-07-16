@@ -31,6 +31,7 @@ import ForgotPasswordPage from './components/pages/ForgotPasswordPage';
 import * as signalR from "@microsoft/signalr";
 import { apiBaseUrl } from './environmentConstants';
 import ReportBugsPage from './components/pages/ReportBugsPage';
+import RepositorySynchronizationTab from './components/dashboardTabs/RepositorySynchronizationTab';
 
 function App() {
     /** The notification modal to display in the application. */
@@ -187,6 +188,7 @@ function App() {
                     <Route path="apiStatus" element={<ApiStatusTab />} />
                     <Route path="setup" element={<AppSetupPage />} />
                     <Route path="report-bugs" element={<ReportBugsPage />} />
+                    <Route path="repoSync" element={<RepositorySynchronizationTab />} />
                 </Route>
                 <Route path="/help" element={<HelpPage />}>
                     <Route path="config" element={<HelpConfigXmlPage />} />

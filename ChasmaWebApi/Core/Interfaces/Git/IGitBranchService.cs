@@ -53,11 +53,30 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="workingDirectory">The working directory of the repository.</param>
         /// <param name="sourceBranchName">The name of the branch to merge from.</param>
         /// <param name="destinationBranchName">The name of the branch to merge into.</param>
-        /// <param name="fullName">The user's full name.</param>
-        /// <param name="email">The user's email.</param>
-        /// <param name="token">The GitHub API token.</param>
+        /// <param name="user">The user performing the merge operation.</param>
+        /// <param name="localGitRepository">The local git repository.</param>
         /// <param name="errorMessage">The error message if an error occurs.</param>
         /// <returns>True if the merge was successful; false otherwise.</returns>
-        bool TryMergeBranch(string workingDirectory, string sourceBranchName, string destinationBranchName, string fullName, string email, string token, out string errorMessage);
+        bool TryMergeBranch(string workingDirectory, string sourceBranchName, string destinationBranchName, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage);
+
+        /// <summary>
+        /// Prunes the branches in the specified repository, removing any branches that are no longer needed or have been merged.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <param name="repository">The local git repository.</param>
+        /// <returns>The number of branches that were pruned.</returns>
+        int TryPruneBranches(string workingDirectory, LocalGitRepository repository, out string errorMessage);
+
+        /// <summary>
+        /// Tries to handle any uncommitted changes in the working directory before checking out a new branch, based on the specified checkout mode.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="branchName">The branch to checkout.</param>
+        /// <param name="checkoutMode">The branch checkout mode to determine how to handle uncommitted changes when checking out a branch.</param>
+        /// <param name="stashMessage">The stash message to use if stashing is needed when checking out the branch.</param>
+        /// <param name="errorMessage">The error message if there an issue checking out the branch.</param>
+        /// <param name="user">The user performing the branch checkout.</param>
+        /// <returns>True if the changes were handled successfully; false otherwise.</returns>
+        bool TryHandleWorkingDirectoryChanges(string workingDirectory, string branchName, BranchCheckoutMode checkoutMode, string? stashMessage, out string errorMessage, ApplicationUser user = null);
     }
 }

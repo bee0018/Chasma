@@ -108,6 +108,13 @@ static bool IsPortInUse(int port)
 /// <param name="port">The port to launch application from.</param>
 static void LaunchStartupGate(int port)
 {
+    string executablePath = Process.GetCurrentProcess().ProcessName;
+    if (ChasmaWebApiConfigurations.IsDevelopmentMode && executablePath.Equals("iisexpress", StringComparison.OrdinalIgnoreCase))
+    {
+        // In development mode, if running under IIS Express, we don't want to launch the browser automatically.
+        return;
+    }
+
     try
     {
         Thread.Sleep(1000);

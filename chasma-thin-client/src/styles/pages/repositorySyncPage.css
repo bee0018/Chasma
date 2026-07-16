@@ -1,0 +1,81 @@
+.sync-workspace-background {
+    padding: 24px;
+    background: #181818;
+    color: #eee;
+    min-height: 10vh;
+}
+
+.sync-workspace-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.repo-sync-state-header {
+    color: #22d3ee;
+    margin-bottom: 12px;
+}
+
+.sync-state-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1e1e1e;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.sync-state-table thead tr {
+    background: #111;
+    text-align: left;
+}
+
+.sync-state-table thead th {
+    padding: 12px;
+}
+
+.sync-state-table tbody tr {
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.sync-state-table-operation-step-title {
+    padding: 12px;
+    font-weight: 500;
+}
+
+.sync-state-table-operation-step-status {
+    padding: 12px;
+}
+
+.sync-state-table-operation-step-details {
+    padding: 12px;
+    color: #ccc;
+}
+
+.status-separator {
+    border: none;
+    height: 1px;
+    background: #333;
+    margin: 40px 0;
+}
+
+.pipeline-trigger-button-not-syncing {
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: #22d3ee;
+    color: #111;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.pipeline-trigger-button-is-syncing {
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: #333;
+    color: #6b7280;
+    border: none;
+    font-weight: bold;
+    cursor: not-allowed;
+}

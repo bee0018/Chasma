@@ -45,7 +45,7 @@ const BranchSyncModalConfirmationModal: React.FC<IBranchSyncModalConfirmationPro
 
                     </div>
                     <h2 className="modal-title">Do you want to skip retrieving build data?</h2>
-                    <h3 className="modal-message">May take longer to query data.</h3>
+                    <h3 className="modal-message">May take longer to query data if getting workflow run data.</h3>
                     <br />
                     <div className="modal-actions">
                         <button
