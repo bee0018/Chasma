@@ -4,6 +4,7 @@ import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useNavigate } from "react-router-dom";
 import { proxyClient } from "../../managers/ApiClientManager";
+import { isBlankOrUndefined } from "../../stringHelperUtil";
 
 /**
  * Initializes a new instance of the ReportBugsPage class.
@@ -21,6 +22,9 @@ export const ReportBugsPage: React.FC = () => {
 
     /** Gets or sets the bug description of the issue. */
     const [bugDescription, setBugDescription] = useState<string | undefined>(undefined);
+
+    /** Gets or sets the system logs that the user will paste. */
+    const [systemLogs, setSystemLogs] = useState<string | undefined>(undefined);
 
     /** Gets the logged-in user. */
     const user = useCacheStore(state => state.user);
@@ -49,7 +53,9 @@ export const ReportBugsPage: React.FC = () => {
         const request = new ReportBugsRequest();
         request.userId = user?.userId;
         request.issueTitle = bugTitle;
-        request.bugDescription = bugDescription;
+        request.bugDescription = !isBlankOrUndefined(systemLogs)
+            ? bugDescription + "\n```\n" + systemLogs + "\n```\n"
+            : bugDescription;
         try {
             const response = await proxyClient.reportBugToCloudflareWorker(request);
             if (response.isErrorResponse) {
@@ -79,7 +85,9 @@ export const ReportBugsPage: React.FC = () => {
     const resetForm = () => {
         setBugTitle("");
         setBugDescription("");
+        setSystemLogs("");
         setSuccessfullyCreated(false);
+        setDisableSendButton(false);
     };
 
     return (
@@ -97,9 +105,16 @@ export const ReportBugsPage: React.FC = () => {
             <textarea
                 className="textarea-field"
                 placeholder="Tell us what happened..."
-                style={{ height: "600px", width: "100%", padding: "16px", boxSizing: "border-box" }}
+                style={{ height: "400px", width: "100%", padding: "16px", boxSizing: "border-box" }}
                 value={bugDescription}
                 onChange={(e) => setBugDescription(e.target.value)}
+            />
+            <textarea
+                className="textarea-field"
+                placeholder="Paste logs here. Can be found under the System & Diagnostics tab and click Open Server Logs (optional)"
+                style={{ height: "300px", width: "100%", padding: "16px", boxSizing: "border-box" }}
+                value={systemLogs}
+                onChange={(e) => setSystemLogs(e.target.value)}
             />
             <div className="modal-actions" style={{ marginTop: "16px" }}>
                 <button className="modal-button primary"
