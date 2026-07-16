@@ -188,6 +188,19 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets a value indicating whether the stashes and automation actions tab is open. */
     const [isStashesAndAutomationOptionsOpen, setIsStashesAndAutomationOptionsOpen] = useState<boolean>(false);
 
+    useEffect(() => {
+        setSelectedFile(null);
+        setSelectedFiles(new Set());
+        setStatusElements(undefined);
+        setRawDiff("");
+        setBranchName("");
+        setCommitHash("");
+        setCommitsAhead(0);
+        setCommitsBehind(0);
+        setOpenPullRequests(undefined);
+        cleanUpSimulationResults();
+    }, [repoId]);
+
     /** Load git status every 2.5s **/
     useEffect(() => {
         if (!repoId) return;
@@ -553,7 +566,7 @@ const RepositoryStatusPage: React.FC = () => {
      * @param url The url to switch to.
      */
     const handleRepositoryStatusSwitch = (url: string) => {
-        window.location.href = url;
+        navigate(url);
         setIsSwitchingStatusPages(false);
     };
 
@@ -675,7 +688,7 @@ const RepositoryStatusPage: React.FC = () => {
                         }
                     </div>
                 )}
-                
+
                 <div
                     className="sidebar-section-header"
                     onClick={() => setIsRemoteOptionsOpen(!isRemoteOptionsOpen)}

@@ -1,7 +1,6 @@
 import './styles/App.css';
 import Dashboard from "./components/Dashboard";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import RepositoryStatusPage from "./components/pages/RepositoryStatusPage";
 import WorkflowRunsPage from "./components/pages/WorkflowRunsPage";
 import LoginPage from "./components/pages/LoginPage";
 import RegisterPage from "./components/pages/RegisterPage";
@@ -32,6 +31,7 @@ import * as signalR from "@microsoft/signalr";
 import { apiBaseUrl } from './environmentConstants';
 import ReportBugsPage from './components/pages/ReportBugsPage';
 import RepositorySynchronizationTab from './components/dashboardTabs/RepositorySynchronizationTab';
+import KeyedRepositoryStatusPage from './components/pages/KeyedRepositoryStatusPage';
 
 function App() {
     /** The notification modal to display in the application. */
@@ -197,7 +197,7 @@ function App() {
                     <Route path="gitlab-api" element={<HelpGitLabApiIntegrationPage />} />
                     <Route path="git-commands" element={<HelpCommonGitCommandsPage />} />
                 </Route>
-                <Route path="/status/:repoName/:repoId" element={<RepositoryStatusPage />} />
+                <Route path="/status/:repoName/:repoId" element={<KeyedRepositoryStatusPage />} />
                 <Route path="/builds/:repoId" element={<WorkflowRunsPage />} />
             </Routes>
         </BrowserRouter>
