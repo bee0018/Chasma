@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useCacheStore } from "../managers/CacheManager";
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import IncludeRepositoryModal from "./modals/IncludeRepositoryModal";
 import LogoutModal from './modals/LogoutModal';
 import { shellClient } from '../managers/ApiClientManager';
 
@@ -10,11 +9,8 @@ import { shellClient } from '../managers/ApiClientManager';
  * @constructor
  */
 const Dashboard: React.FC = () => {
-    /** Gets or sets a value indicating whether the user is including repositories. **/
-    const [isIncludingRepos, setIsIncludingRepos] = useState(false);
-
     /** Gets or sets the repository version. Serves as a trigger to update child components. **/
-    const [reposVersion, setReposVersion] = useState(0);
+    const [reposVersion] = useState(0);
 
     /** Gets or sets a value indicating whether the user is logging out. **/
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -42,11 +38,6 @@ const Dashboard: React.FC = () => {
 
     /** Gets or sets a value indicating whether the user and help actions tab is open. */
     const [isUserAndHelpOptionsOpen, setIsUserAndHelpOptionsOpen] = useState<boolean>(false);
-
-    /** Handles the trigger when the repositories are updated. **/
-    const handleReposUpdated = () => {
-        setReposVersion(v => v + 1);
-    };
 
     /** Helper function to see which tab path matches our path sub-route context */
     const isActive = (path: string) => {
@@ -122,12 +113,6 @@ const Dashboard: React.FC = () => {
                             onClick={() => navigate("addRepos")}
                         >
                             Register ➕
-                        </div>
-                        <div
-                            className="tab"
-                            onClick={() => setIsIncludingRepos(true)}
-                        >
-                            Ignored Repos 🚫
                         </div>
                         <div
                             className={`tab ${isActive("snapshots")}`}
@@ -241,12 +226,6 @@ const Dashboard: React.FC = () => {
                     <Outlet context={{ reposVersion }} />
                 </div>
             </main>
-
-            {isIncludingRepos && (
-                <IncludeRepositoryModal
-                    onClose={() => setIsIncludingRepos(false)}
-                    onRepositoriesUpdated={handleReposUpdated} />
-            )}
             {isLoggingOut && (
                 <LogoutModal
                     onClose={() => setIsLoggingOut(false)}
