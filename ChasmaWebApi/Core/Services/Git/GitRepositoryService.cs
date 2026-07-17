@@ -1154,6 +1154,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 ".tfvars",
                 ".spec",
                 ".ebextensions",
+                ".project",
             };
         }
 
