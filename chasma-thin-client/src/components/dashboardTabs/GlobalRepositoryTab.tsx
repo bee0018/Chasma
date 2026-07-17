@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BranchSyncStatus, GetBranchSyncStatusRequest, RemotePullRequest } from "../../API/ChasmaWebApiClient";
 import { remoteClient, statusClient } from "../../managers/ApiClientManager";
 import { capitalizeFirst } from "../../stringHelperUtil";
@@ -61,7 +61,11 @@ const GlobalRepositoryTab: React.FC = () => {
     /**
      * Retrieves the tracked pull requests from the backend API.
      */
-    const retrievePullRequestsRequest = async () => {
+    const retrievePullRequestsRequest = useCallback(async () => {
+        if (viewMode === "branchSync") {
+            return;
+        }
+
         try {
             const message = await remoteClient.getGlobalPullRequests();
             if (message.pullRequests) {
@@ -72,13 +76,13 @@ const GlobalRepositoryTab: React.FC = () => {
             const errorNotification = await handleApiError(e, navigate, "Could not retrieve pull requests!", "Check internal server logs for more information.");
             setNotification(errorNotification);
         }
-    };
+    }, [viewMode, navigate, setNotification]);
 
     /**
      * Handles the event when the user wants to get the branch sync status.
      * @param isSkipping Flag indicating whether the user wants to skip getting builds.
      */
-    const handleBranchSyncRequest = async (isSkipping : boolean) => {
+    const handleBranchSyncRequest = async (isSkipping: boolean) => {
         setDisableSendButton(true);
         setNotification({
             title: `Getting branch sync status for ${branchSyncSearchQuery}`,
@@ -171,14 +175,14 @@ const GlobalRepositoryTab: React.FC = () => {
         }
     };
 
-    /** Load git status every 2.5s **/
+    /** Gets pull request update every 2.5s **/
     useEffect(() => {
         retrievePullRequestsRequest();
         const interval = setInterval(() => {
             retrievePullRequestsRequest();
         }, 2500);
         return () => clearInterval(interval);
-    }, []);
+    }, [retrievePullRequestsRequest]);
 
     return (
         <>
