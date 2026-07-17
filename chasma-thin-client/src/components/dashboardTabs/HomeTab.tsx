@@ -3,7 +3,6 @@ import GitRepoOverviewCard from "../GitRepoOverviewCard";
 import {
     ApplyUpdateRequest,
     DeleteRepositoryRequest,
-    IgnoreRepositoryRequest,
     LocalGitRepository,
     SystemManifest,
 } from "../../API/ChasmaWebApiClient";
@@ -169,33 +168,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         setNotification(errorNotification);
     }
 
-    /**
-     * Handles the action when the user wants to include/ignore the repository.
-     * @param repoId The repository identifier.
-     */
-    const handleIgnoreAction = async (repoId: string | undefined) => {
-        try {
-            const request = new IgnoreRepositoryRequest();
-            request.userId = user?.userId;
-            request.repositoryId = repoId;
-            request.isIgnored = true;
-            const response = await configClient.ignoreRepository(request);
-            if (response.isErrorResponse) {
-                setNotification({
-                    title: `Repository ignore action failed!`,
-                    message: response.errorMessage,
-                    isError: true,
-                });
-                return;
-            }
-
-            useCacheStore.getState().setRepositories(response.includedRepositories);
-        }
-        catch (e) {
-            const errorNotification = await handleApiError(e, navigate, "Repository ignore action failed!", "Review server logs for more information.");
-            setNotification(errorNotification);
-        }
-    };
 
     /** Handles the event when the user right-clicks a card to open the context menu. **/
     const handleContextMenu = (event: React.MouseEvent, repo: LocalGitRepository) => {
@@ -308,9 +280,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                                 </li>
                                 <li onClick={() => handleRepoDelete(contextMenu.repo.id)}>
                                     Delete
-                                </li>
-                                <li onClick={() => handleIgnoreAction(contextMenu.repo.id)}>
-                                    Ignore
                                 </li>
                                 <li onClick={() => setActiveRenameRepo(contextMenu.repo)}>
                                     Change Display Name
