@@ -250,7 +250,7 @@ namespace ChasmaWebApi.Core.Services.Simulation
                 simulatedMergeResult.RepositoryName = repository.GetDisplayName();
                 using Repository repo = new(workingDirectory);
                 string mergeSimulationPath = Path.Combine(workingDirectory, "merge-sim");
-                string worktreePath = Path.Combine(mergeSimulationPath, Guid.NewGuid().ToString("N"));
+                string clonedBranchPath = Path.Combine(mergeSimulationPath, Guid.NewGuid().ToString("N"));
                 try
                 {
                     if (!ShellUtility.TryExecuteShellCommand($"git fetch --prune origin", workingDirectory, out string errorMessage))
@@ -279,10 +279,11 @@ namespace ChasmaWebApi.Core.Services.Simulation
                         continue;
                     }
 
-                    if (!ShellUtility.TryExecuteShellCommand($"git worktree add --detach \"{worktreePath}\" {destinationBranch.Tip.Sha}", workingDirectory, out errorMessage))
+                    string cloneCommand = $"git clone --shared --branch {destinationBranchName} \"{workingDirectory}\" \"{clonedBranchPath}\"";
+                    if (!ShellUtility.TryExecuteShellCommand(cloneCommand, workingDirectory, out errorMessage))
                     {
-                        Logger.LogError("Could not create worktree for temporary branch {branch} in repository {id}.", destinationBranchName, repoId);
-                        DryRunHelper.FailSimulationResult(simulatedMergeResult, "Failed to create worktree.");
+                        Logger.LogError("Could not create temporary clone for branch {branch} in repository {id} because {error}.", destinationBranchName, repoId, errorMessage);
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, "Failed to create merge directory.");
                         dryRunResults.Add(simulatedMergeResult);
                         continue;
                     }
@@ -306,19 +307,19 @@ namespace ChasmaWebApi.Core.Services.Simulation
                         CommitOnSuccess = false,
 
                     };
-                    using Repository workTreeRepo = new(worktreePath);
-                    MergeResult mergeResult = workTreeRepo.Merge(sourceBranch.Tip, author, mergeOptions);
+                    using Repository clonedRepository = new(clonedBranchPath);
+                    MergeResult mergeResult = clonedRepository.Merge(sourceBranch.Tip, author, mergeOptions);
                     string repoName = repository.Name;
                     simulatedMergeResult.MergeStatus = GetMergeStatusMessage(mergeResult.Status, sourceBranchName, destinationBranchName, repoName);
                     if (mergeResult.Status == MergeStatus.Conflicts)
                     {
                         #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type. This will not apply here because we know the files won't be null.
-                        List<string> conflictFiles = workTreeRepo.Index.Conflicts
+                        List<string> conflictFiles = clonedRepository.Index.Conflicts
                             .Select(i => i.Ours?.Path ?? i.Theirs?.Path)
                             .Where(i => !string.IsNullOrEmpty(i))
                             .ToList();
                         string conflictFilesString = string.Join("\n- ", conflictFiles);
-                        string conflictPhrase = workTreeRepo.Index.Conflicts.Any()
+                        string conflictPhrase = clonedRepository.Index.Conflicts.Any()
                             ? $" due to conflicts in the following files: \n- {conflictFilesString}\n"
                             : string.Empty;
                         string outputFilePath = entry.OutputFilePath;
@@ -331,7 +332,7 @@ namespace ChasmaWebApi.Core.Services.Simulation
                             {
                                 OutputPath = outputFilePath,
                                 TimeStamp = DateTimeOffset.Now.ToString("yyyyMMdd_HHmmss"),
-                                WorktreePath = worktreePath,
+                                ClonedBranchPath = clonedBranchPath,
                                 ConflictingFiles = conflictFiles,
                                 Repository = repository,
                                 SourceBranch = sourceBranch,
@@ -361,16 +362,6 @@ namespace ChasmaWebApi.Core.Services.Simulation
                 }
                 finally
                 {
-                    if (!ShellUtility.TryExecuteShellCommand($"git worktree remove --force {worktreePath}", workingDirectory, out string errorMessage))
-                    {
-                        Logger.LogError("Failed to remove worktrees in repo {id} because {error}.", repoId, errorMessage);
-                    }
-
-                    if (!ShellUtility.TryExecuteShellCommand($"git worktree prune", workingDirectory, out errorMessage))
-                    {
-                        Logger.LogError("Failed to prune worktrees in repo {id} because {error}.", repoId, errorMessage);
-                    }
-
                     if (Directory.Exists(mergeSimulationPath))
                     {
                         Directory.Delete(mergeSimulationPath, true);
@@ -427,7 +418,7 @@ namespace ChasmaWebApi.Core.Services.Simulation
             foreach (string conflictFile in package.ConflictingFiles)
             {
                 string relativeFilePath = conflictFile.Replace('/', Path.DirectorySeparatorChar);
-                string sourceFilePath = Path.Combine(package.WorktreePath, relativeFilePath);
+                string sourceFilePath = Path.Combine(package.ClonedBranchPath, relativeFilePath);
                 string extractedFileName = Path.GetFileName(sourceFilePath);
                 string destinationFilePath = Path.Combine(conflictOutputDirectory, extractedFileName);
                 File.Copy(sourceFilePath, destinationFilePath, overwrite: true);
