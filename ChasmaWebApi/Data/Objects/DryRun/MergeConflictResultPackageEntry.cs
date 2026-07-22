@@ -19,9 +19,9 @@ namespace ChasmaWebApi.Data.Objects.DryRun
         public string TimeStamp { get; set; }
 
         /// <summary>
-        /// Gets or sets the path to the working tree containing the conflicted files.
+        /// Gets or sets the path to the cloned branch containing the conflicted files.
         /// </summary>
-        public string WorktreePath { get; set; }
+        public string ClonedBranchPath { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of file paths representing files in conflict.
