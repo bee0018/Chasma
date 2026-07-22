@@ -73,14 +73,8 @@ export const AppSetupPage: React.FC = () => {
     /** Gets or sets the GitHub SSH private key path. */
     const [gitHubSshPrivateKeyPath, setGitHubSshPrivateKeyPath] = useState<string | undefined>(undefined);
 
-    /** Gets or sets the GitHub SSH private key passphrase. */
-    const [gitHubSshPassphrase, setGitHubSshPassphrase] = useState<string | undefined>(undefined);
-
     /** Gets or sets the GitLab SSH private key path. */
     const [gitLabSshPrivateKeyPath, setGitLabSshPrivateKeyPath] = useState<string | undefined>(undefined);
-
-    /** Gets or sets the GitLab SSH private key passphrase. */
-    const [gitLabSshPassphrase, setGitLabSshPassphrase] = useState<string | undefined>(undefined);
 
     /** Gets or sets the branch threshold pruning in days. */
     const [branchPruningThreshold, setBranchPruningThreshold] = useState<string | undefined>(undefined);
@@ -365,9 +359,7 @@ export const AppSetupPage: React.FC = () => {
                 setGitLabUsername(response.gitLabUsername);
                 setGlobalWorkspacePath(response.globalWorkspacePath);
                 setGitHubSshPrivateKeyPath(response.gitHubSshKeyPrivateKeyPath);
-                setGitHubSshPassphrase(response.gitHubSshPassphrase);
                 setGitLabSshPrivateKeyPath(response.gitLabSshKeyPrivateKeyPath);
-                setGitLabSshPassphrase(response.gitLabSshPassphrase);
             } catch (error) {
                 console.log(error);
                 setNotification({
@@ -591,22 +583,6 @@ export const AppSetupPage: React.FC = () => {
                     onChange={(e) => setGitHubSshPrivateKeyPath(e.target.value)} />
             </div>
 
-            {/* GitHub SSH Passphrase */}
-            <div className="xml-attr">
-                <div className="xml-attr-header">
-                    <span className="xml-name">GitHub SSH Key Password</span>
-                    <span className="xml-type">Text</span>
-                    <span className="xml-optional">Optional</span>
-                </div>
-                <p>The password (passphrase) that unlocks your GitHub SSH key, if you set one up.</p>
-                <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Leave blank if your key doesn't have a password"
-                    value={gitHubSshPassphrase}
-                    onChange={(e) => setGitHubSshPassphrase(e.target.value)} />
-            </div>
-
             {/* GitHub API Token */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
@@ -695,22 +671,6 @@ export const AppSetupPage: React.FC = () => {
                     placeholder="e.g., /home/user/.ssh/id_rsa"
                     value={gitLabSshPrivateKeyPath}
                     onChange={(e) => setGitLabSshPrivateKeyPath(e.target.value)} />
-            </div>
-
-            {/* GitLab SSH Passphrase */}
-            <div className="xml-attr">
-                <div className="xml-attr-header">
-                    <span className="xml-name">GitLab SSH Key Password</span>
-                    <span className="xml-type">Text</span>
-                    <span className="xml-optional">Optional</span>
-                </div>
-                <p>The password (passphrase) that unlocks your GitLab SSH key, if you set one up.</p>
-                <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Leave blank if your key doesn't have a password"
-                    value={gitLabSshPassphrase}
-                    onChange={(e) => setGitLabSshPassphrase(e.target.value)} />
             </div>
 
             {/* GitLab API Token */}

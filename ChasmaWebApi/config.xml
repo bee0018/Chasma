@@ -5,7 +5,6 @@
 	<globalWorkspacePath/>
 	<gitHubUsername/>
 	<gitHubSshPrivateKeyPath/>
-	<gitHubSshPassphrase/>
 	<githubApiToken/>
 	<secureBindingPort>7200</secureBindingPort>
 	<workflowRunReportThreshold>30</workflowRunReportThreshold>
@@ -13,7 +12,6 @@
 	<gitLabUsername/>
 	<gitlabApiToken/>
 	<gitLabSshPrivateKeyPath/>
-	<gitLabSshPassphrase/>
 	<selfHostedGitLabUrl/>
 	<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 	<branchPruningDayThreshold>45</branchPruningDayThreshold>

@@ -2066,14 +2066,6 @@
                 "type": "string",
                 "nullable": true
               },
-              "gitHubSshPassphrase": {
-                "type": "string",
-                "nullable": true
-              },
-              "gitLabSshPassphrase": {
-                "type": "string",
-                "nullable": true
-              },
               "secureBindingPort": {
                 "type": "integer",
                 "format": "int32"
@@ -2192,19 +2184,11 @@
                 "type": "string",
                 "nullable": true
               },
-              "gitHubSshPassphrase": {
-                "type": "string",
-                "nullable": true
-              },
               "gitLabApiToken": {
                 "type": "string",
                 "nullable": true
               },
               "gitLabSshKeyPrivateKeyPath": {
-                "type": "string",
-                "nullable": true
-              },
-              "gitLabSshPassphrase": {
                 "type": "string",
                 "nullable": true
               },

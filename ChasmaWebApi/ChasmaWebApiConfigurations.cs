@@ -72,12 +72,6 @@ namespace ChasmaWebApi
         public string? GitHubSshKeyPrivateKeyPath { get; set; }
 
         /// <summary>
-        /// Gets or sets the user-defineed password used to encrypt an SSH private key file when it is generated for a GitHub account.
-        /// </summary>
-        [XmlElement("gitHubSshPassphrase")]
-        public string? GitHubSshPassphrase { get; set; }
-
-        /// <summary>
         /// Gets or sets the GitLab API token.
         /// </summary>
         [XmlElement("gitlabApiToken")]
@@ -88,12 +82,6 @@ namespace ChasmaWebApi
         /// </summary>
         [XmlElement("gitLabSshPrivateKeyPath")]
         public string? GitLabSshKeyPrivateKeyPath { get; set; }
-
-        /// <summary>
-        /// Gets or sets the user-defineed password used to encrypt an SSH private key file when it is generated for a GitLab account.
-        /// </summary>
-        [XmlElement("gitLabSshPassphrase")]
-        public string? GitLabSshPassphrase { get; set; }
 
         /// <summary>
         /// Gets or sets the self hosted GitLab url.
@@ -211,19 +199,9 @@ namespace ChasmaWebApi
                 GitHubSshKeyPrivateKeyPath = newConfig.GitHubSshKeyPrivateKeyPath;
             }
 
-            if (GitHubSshPassphrase != newConfig.GitHubSshPassphrase)
-            {
-                GitHubSshPassphrase = newConfig.GitHubSshPassphrase;
-            }
-
             if (GitLabSshKeyPrivateKeyPath != newConfig.GitLabSshKeyPrivateKeyPath)
             {
                 GitLabSshKeyPrivateKeyPath = newConfig.GitLabSshKeyPrivateKeyPath;
-            }
-
-            if (GitLabSshPassphrase != newConfig.GitLabSshPassphrase)
-            {
-                GitLabSshPassphrase = newConfig.GitLabSshPassphrase;
             }
 
             if (SecureBindingPort != newConfig.SecureBindingPort)

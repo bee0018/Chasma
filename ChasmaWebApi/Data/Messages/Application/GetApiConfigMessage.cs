@@ -73,16 +73,6 @@ namespace ChasmaWebApi.Data.Messages.Application
         public string? GitLabSshKeyPrivateKeyPath { get; set; }
 
         /// <summary>
-        /// Gets or sets the GitHub account SSH key pass phrase.
-        /// </summary>
-        public string? GitHubSshPassphrase { get; set; }
-
-        /// <summary>
-        /// Gets or sets the GitLab account SSH key pass phrase.
-        /// </summary>
-        public string? GitLabSshPassphrase { get; set; }
-
-        /// <summary>
         /// Gets or sets the secure binding port for HTTPS connections.
         /// </summary>
         public int SecureBindingPort { get; set; }
