@@ -25,14 +25,12 @@ const HelpConfigXmlPage: React.FC = () => {
 \t<globalWorkspacePath>path/to/workspace</globalWorkspacePath>
 \t<gitHubUsername>gitHubUser</gitHubUsername>
 \t<gitHubSshPrivateKeyPath>path/to/private/key</gitHubSshPrivateKeyPath>
-\t<gitHubSshPassphrase>phrase</gitHubSshPassphrase>
 \t<githubApiToken>token</githubApiToken>
 \t<workflowRunReportThreshold>30</workflowRunReportThreshold>
 \t<gitHubPullRequestScanIntervalSeconds>20</gitHubPullRequestScanIntervalSeconds>
 \t<gitLabUsername>gitLabUsername</gitLabUsername>
 \t<gitlabApiToken>token</gitlabApiToken>
 \t<gitLabSshPrivateKeyPath>path/to/private/key</gitLabSshPrivateKeyPath>
-\t<gitLabSshPassphrase>phrase</gitLabSshPassphrase>
 \t<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
 \t<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 \t<branchPruningDayThreshold>45</branchPruningDayThreshold>
@@ -101,16 +99,6 @@ const HelpConfigXmlPage: React.FC = () => {
 
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">gitHubSshPassphrase</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
-                </div>
-                <p>The passphrase to the SSH private key for your GitHub account.</p>
-                <p className="xml-meta">Default: none</p>
-            </div>
-
-            <div className="xml-attr">
-                <div className="xml-attr-header">
                     <span className="xml-name">gitHubApiToken</span>
                     <span className="xml-type">string</span>
                     <span className="xml-optional">optional</span>
@@ -166,16 +154,6 @@ const HelpConfigXmlPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>The path to the SSH private key for your GitLab account.</p>
-                <p className="xml-meta">Default: none</p>
-            </div>
-
-            <div className="xml-attr">
-                <div className="xml-attr-header">
-                    <span className="xml-name">gitLabSshPassphrase</span>
-                    <span className="xml-type">string</span>
-                    <span className="xml-optional">optional</span>
-                </div>
-                <p>The passphrase to the SSH private key for your GitLab account.</p>
                 <p className="xml-meta">Default: none</p>
             </div>
 
