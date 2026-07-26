@@ -38,16 +38,23 @@ namespace ChasmaWebApi.Controllers
         private readonly IApplicationControlService applicationControlService;
 
         /// <summary>
+        /// The internal API encryption service.
+        /// </summary>
+        private readonly IEncryptionService encryptionService;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="BranchController"/> class.
         /// </summary>
         /// <param name="log">The internal API logger.</param>
         /// <param name="controlService">The application control orchestrator.</param>
         /// <param name="apiCacheManager">The API cache manager.</param>
-        public BranchController(ILogger<BranchController> log, IApplicationControlService controlService, ICacheManager apiCacheManager)
+        /// <param name="apiEncryptionService">The internal encryption service.</param>
+        public BranchController(ILogger<BranchController> log, IApplicationControlService controlService, ICacheManager apiCacheManager, IEncryptionService apiEncryptionService)
         {
             logger = log;
             applicationControlService = controlService;
             cacheManager = apiCacheManager;
+            encryptionService = apiEncryptionService;
         }
 
         /// <summary>
@@ -113,8 +120,9 @@ namespace ChasmaWebApi.Controllers
             }
 
             string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+            string decryptedToken = encryptionService.DecryptString(token);
             string username = RemoteHelper.GetRemoteHostUsername(repository);
-            if (!applicationControlService.TryAddNewBranch(workingDirectory, branchName, username, token, out string errorMessage))
+            if (!applicationControlService.TryAddNewBranch(workingDirectory, branchName, username, decryptedToken, out string errorMessage))
             {
                 logger.LogError("Failed to create new branch {branchName} for repository {repoId}. Reason: {reason}", branchName, repoId, errorMessage);
                 response.IsErrorResponse = true;

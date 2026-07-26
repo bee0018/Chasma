@@ -110,9 +110,9 @@ namespace ChasmaWebApi.Util
         /// <param name="branch">The branch to fetch changes for.</param>
         /// <param name="localRepository">The cached local git repository.</param>
         /// <param name="logger">The logging instance.</param>
-        public static void FetchLatestChanges(string workingDirectory, LibGit2Sharp.Branch branch, LocalGitRepository localRepository, ILogger logger)
+        /// <param name="token">The remote host API token.</param>
+        public static void FetchLatestChanges(string workingDirectory, LibGit2Sharp.Branch branch, LocalGitRepository localRepository, ILogger logger, string token)
         {
-            string token = GetApiToken(localRepository.HostPlatform);
             string username = GetRemoteHostUsername(localRepository);
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(token))
             {

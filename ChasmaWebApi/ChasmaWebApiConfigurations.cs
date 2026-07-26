@@ -1,4 +1,5 @@
-﻿using ChasmaWebApi.Util;
+﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Util;
 using System.Xml.Serialization;
 
 namespace ChasmaWebApi
@@ -136,14 +137,12 @@ namespace ChasmaWebApi
         /// <summary>
         /// Updates the current configuration with values from a new configuration object. Only properties that have different values will be updated.
         /// </summary>
+        /// <remarks>The API tokens are not encrypted on the passed in configuration object.</remarks>
         /// <param name="newConfig">The incoming configuration.</param>
-        public void Update(ChasmaWebApiConfigurations newConfig)
+        /// <param name="encryptionService">The encryption utility.</param>
+        public void Update(ChasmaWebApiConfigurations newConfig, IEncryptionService encryptionService)
         {
-            if (GitHubApiToken != newConfig.GitHubApiToken)
-            {
-                GitHubApiToken = newConfig.GitHubApiToken;
-            }
-
+            HandlePersistedConfigurations(newConfig, encryptionService);
             if (WorkflowRunReportThreshold != newConfig.WorkflowRunReportThreshold)
             {
                 WorkflowRunReportThreshold = newConfig.WorkflowRunReportThreshold;
@@ -154,11 +153,6 @@ namespace ChasmaWebApi
                 GitHubPullRequestScanIntervalSeconds = newConfig.GitHubPullRequestScanIntervalSeconds;
             }
 
-            if (GitLabApiToken != newConfig.GitLabApiToken)
-            {
-                GitLabApiToken = newConfig.GitLabApiToken;
-            }
-
             if (SelfHostedGitLabUrl != newConfig.SelfHostedGitLabUrl)
             {
                 SelfHostedGitLabUrl = newConfig.SelfHostedGitLabUrl;
@@ -167,11 +161,6 @@ namespace ChasmaWebApi
             if (GitLabMergeRequestScanIntervalSeconds != newConfig.GitLabMergeRequestScanIntervalSeconds)
             {
                 GitLabMergeRequestScanIntervalSeconds = newConfig.GitLabMergeRequestScanIntervalSeconds;
-            }
-
-            if (JwtSecretKey != newConfig.JwtSecretKey)
-            {
-                JwtSecretKey = newConfig.JwtSecretKey;
             }
 
             if (BindingPort != newConfig.BindingPort)
@@ -194,15 +183,7 @@ namespace ChasmaWebApi
                 GlobalWorkspacePath = newConfig.GlobalWorkspacePath;
             }
 
-            if (GitHubSshKeyPrivateKeyPath != newConfig.GitHubSshKeyPrivateKeyPath)
-            {
-                GitHubSshKeyPrivateKeyPath = newConfig.GitHubSshKeyPrivateKeyPath;
-            }
-
-            if (GitLabSshKeyPrivateKeyPath != newConfig.GitLabSshKeyPrivateKeyPath)
-            {
-                GitLabSshKeyPrivateKeyPath = newConfig.GitLabSshKeyPrivateKeyPath;
-            }
+            
 
             if (SecureBindingPort != newConfig.SecureBindingPort)
             {
@@ -237,6 +218,56 @@ namespace ChasmaWebApi
             string configFilePath = GetConfigXmlFilePath();
             ChasmaWebApiConfigurations apiConfig = DeserializeFromFile<ChasmaWebApiConfigurations>(configFilePath);
             return apiConfig;
+        }
+
+        /// <summary>
+        /// Handles any persisted data. These values will only change if the user has intentionally set fields in the Emryce frontend.
+        /// </summary>
+        /// <param name="newConfig">The incoming configuration.</param>
+        /// <param name="encryptionService">The encryption service.</param>
+        private void HandlePersistedConfigurations(ChasmaWebApiConfigurations newConfig, IEncryptionService encryptionService)
+        {
+            if (!string.IsNullOrEmpty(newConfig.GitHubApiToken))
+            {
+                string decryptedGitHubApiToken = encryptionService.DecryptString(GitHubApiToken);
+                if (decryptedGitHubApiToken != newConfig.GitHubApiToken)
+                {
+                    GitHubApiToken = encryptionService.EncryptString(newConfig.GitHubApiToken);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(newConfig.GitLabApiToken))
+            {
+                string decryptedGitLabApiToken = encryptionService.DecryptString(GitLabApiToken);
+                if (decryptedGitLabApiToken != newConfig.GitLabApiToken)
+                {
+                    GitLabApiToken = encryptionService.EncryptString(newConfig.GitLabApiToken);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(newConfig.JwtSecretKey))
+            {
+                if (JwtSecretKey != newConfig.JwtSecretKey)
+                {
+                    JwtSecretKey = newConfig.JwtSecretKey;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(newConfig.GitHubSshKeyPrivateKeyPath))
+            {
+                if (GitHubSshKeyPrivateKeyPath != newConfig.GitHubSshKeyPrivateKeyPath)
+                {
+                    GitHubSshKeyPrivateKeyPath = newConfig.GitHubSshKeyPrivateKeyPath;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(newConfig.GitLabSshKeyPrivateKeyPath))
+            {
+                if (GitLabSshKeyPrivateKeyPath != newConfig.GitLabSshKeyPrivateKeyPath)
+                {
+                    GitLabSshKeyPrivateKeyPath = newConfig.GitLabSshKeyPrivateKeyPath;
+                }
+            }
         }
     }
 }

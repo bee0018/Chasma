@@ -46,6 +46,11 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         private readonly ISimulationService SimulationService;
 
+        /// <summary>
+        /// The internal API encryption service.
+        /// </summary>
+        private readonly IEncryptionService EncryptionService;
+
         #region Constructor
 
         /// <summary>
@@ -56,13 +61,15 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <param name="stashService">The Git stash service used to perform stash-related operations.</param>
         /// <param name="branchService">The Git branch service used to perform branch related operations.</param>
         /// <param name="simulationService">The Git simulation operations service.</param>
-        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager, IGitStashService stashService, IGitBranchService branchService, ISimulationService simulationService)
+        /// <param name="encryptionService">The internal API encryption service for managing credential data.</param>
+        public GitRepositoryService(ILogger<GitRepositoryService> logger, ICacheManager cacheManager, IGitStashService stashService, IGitBranchService branchService, ISimulationService simulationService, IEncryptionService encryptionService)
         {
             Logger = logger;
             CacheManager = cacheManager;
             GitStashService = stashService;
             GitBranchService = branchService;
             SimulationService = simulationService;
+            EncryptionService = encryptionService;
         }
 
         #endregion
@@ -267,13 +274,14 @@ namespace ChasmaWebApi.Core.Services.Git
             {
                 string username = RemoteHelper.GetRemoteHostUsername(repository);
                 string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                string decryptedToken = EncryptionService.DecryptString(token);
                 PushOptions options = new()
                 {
                     CredentialsProvider = (url, usernameFromUrl, types) =>
                         new UsernamePasswordCredentials
                         {
                             Username = username,
-                            Password = token,
+                            Password = decryptedToken,
                         }
                 };
 
@@ -303,6 +311,7 @@ namespace ChasmaWebApi.Core.Services.Git
             string username = RemoteHelper.GetRemoteHostUsername(localGitRepository);
             Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
             string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform);
+            string decryptedToken = EncryptionService.DecryptString(token);
             PullOptions options = new()
             {
                 FetchOptions = new FetchOptions
@@ -311,7 +320,7 @@ namespace ChasmaWebApi.Core.Services.Git
                         new UsernamePasswordCredentials
                         {
                             Username = username,
-                            Password = token,
+                            Password = decryptedToken,
                         }
                 }
             };
@@ -1058,7 +1067,9 @@ namespace ChasmaWebApi.Core.Services.Git
                 return branchMetrics;
             }
 
-            RemoteHelper.FetchLatestChanges(workingDirectory, branch, repository, Logger);
+            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+            string decryptedToken = EncryptionService.DecryptString(token);
+            RemoteHelper.FetchLatestChanges(workingDirectory, branch, repository, Logger, decryptedToken);
             string localBranchName = branch.FriendlyName;
             if (string.IsNullOrEmpty(localBranchName))
             {

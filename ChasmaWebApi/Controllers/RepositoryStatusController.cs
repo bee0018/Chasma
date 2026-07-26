@@ -47,6 +47,11 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         private readonly ApplicationDbContext applicationDbContext;
 
+        /// <summary>
+        /// The internal API encryption service.
+        /// </summary>
+        private readonly IEncryptionService encryptionService;
+
         #region Constructor
 
         /// <summary>
@@ -56,12 +61,14 @@ namespace ChasmaWebApi.Controllers
         /// <param name="controlService">The application control service.</param>
         /// <param name="apiCacheManager">The internal API cache manager.</param>
         /// <param name="dbContext">The application database context.</param>
-        public RepositoryStatusController(ILogger<RepositoryStatusController> log, IApplicationControlService controlService, ICacheManager apiCacheManager, ApplicationDbContext dbContext)
+        /// <param name="apiEncryptionService">The internal encryption service.</param>
+        public RepositoryStatusController(ILogger<RepositoryStatusController> log, IApplicationControlService controlService, ICacheManager apiCacheManager, ApplicationDbContext dbContext, IEncryptionService apiEncryptionService)
         {
             logger = log;
             applicationControlService = controlService;
             cacheManager = apiCacheManager;
             applicationDbContext = dbContext;
+            encryptionService = apiEncryptionService;
         }
 
         #endregion
@@ -185,10 +192,11 @@ namespace ChasmaWebApi.Controllers
             }
 
             string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+            string decryptedToken = encryptionService.DecryptString(token);
             string username = RemoteHelper.GetRemoteHostUsername(repository);
             string fileName = applyStagingActionRequest.FileName;
             bool isStaging = applyStagingActionRequest.IsStaging;
-            List<RepositoryStatusElement>? statusElements = applicationControlService.ApplyStagingAction(repoId, fileName, isStaging, username, token);
+            List<RepositoryStatusElement>? statusElements = applicationControlService.ApplyStagingAction(repoId, fileName, isStaging, username, decryptedToken);
             if (statusElements == null)
             {
                 logger.LogError("Failed to apply staging action for repo ID: {repoId}", repoId);

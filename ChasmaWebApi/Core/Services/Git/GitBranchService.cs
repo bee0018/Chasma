@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Git;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Core.Services.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Util;
@@ -35,6 +36,11 @@ namespace ChasmaWebApi.Core.Services.Git
         private readonly IGitStashService GitStashService;
 
         /// <summary>
+        /// The internal API encryption service.
+        /// </summary>
+        private readonly IEncryptionService EncryptionService;
+
+        /// <summary>
         /// The lock object used for concurrency.
         /// </summary>
         private readonly Lock lockObject = new();
@@ -47,11 +53,13 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <param name="logger">The logger to use for logging diagnostic and operational information within the service.</param>
         /// <param name="cacheManager">The cache manager to use for managing cached data to optimize performance of Git operations.</param>
         /// <param name="stashService">The Git stash service to use for stashing changes when necessary during Git operations.</param>
-        public GitBranchService(ILogger<GitBranchService> logger, ICacheManager cacheManager, IGitStashService stashService)
+        /// <param name="encryptionService">The internal API encryption service for managing credential data.</param>
+        public GitBranchService(ILogger<GitBranchService> logger, ICacheManager cacheManager, IGitStashService stashService, IEncryptionService encryptionService)
         {
             Logger = logger;
             CacheManager = cacheManager;
             GitStashService = stashService;
+            EncryptionService = encryptionService;
         }
 
         #endregion
@@ -167,7 +175,9 @@ namespace ChasmaWebApi.Core.Services.Git
             {
                 int numberOfPrunedBranches = 0;
                 using Repository repo = new(workingDirectory);
-                RemoteHelper.FetchLatestChanges(workingDirectory, repo.Head, repository, Logger);
+                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                string decryptedToken = EncryptionService.DecryptString(token);
+                RemoteHelper.FetchLatestChanges(workingDirectory, repo.Head, repository, Logger, decryptedToken);
                 ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();
                 int branchPruningThreshold = apiConfig.BranchPruningDayThreshold ?? 45;
                 List<string> branchesToPrune = repo.Branches.Where(i => CanBranchBePruned(workingDirectory, i.CanonicalName, branchPruningThreshold)).Select(i => i.CanonicalName).ToList();
@@ -308,13 +318,14 @@ namespace ChasmaWebApi.Core.Services.Git
 
                 string username = RemoteHelper.GetRemoteHostUsername(localGitRepository);
                 string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform);
+                string decryptedToken = EncryptionService.DecryptString(token);
                 PushOptions pushOptions = new()
                 {
                     CredentialsProvider = (url, usernameFromUrl, types) =>
                         new UsernamePasswordCredentials
                         {
                             Username = username,
-                            Password = token,
+                            Password = decryptedToken,
                         }
                 };
 
