@@ -14,6 +14,7 @@ using ChasmaWebApi.Data;
 using ChasmaWebApi.HostedServices;
 using ChasmaWebApi.Hubs;
 using ChasmaWebApi.Util;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -113,6 +114,18 @@ namespace ChasmaWebApi.Core.Services
                     };
                 });
 
+            if (OperatingSystem.IsLinux())
+            {
+                string keyStoragePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Emryce", "keys");
+                services.AddDataProtection()
+                    .PersistKeysToFileSystem(new DirectoryInfo(keyStoragePath))
+                    .SetApplicationName("Emryce");
+            }
+            else
+            {
+                services.AddDataProtection();
+            }
+
             return services
                 .AddSingleton<IPasswordUtility, PasswordUtility>()
                 .AddSingleton<ICacheManager, CacheManager>()
@@ -125,6 +138,7 @@ namespace ChasmaWebApi.Core.Services
                 .AddSingleton<IGitHubService, GitHubService>()
                 .AddSingleton<IGitLabService, GitLabService>()
                 .AddSingleton<ISimulationService, SimulationService>()
+                .AddSingleton<IEncryptionService, EncryptionService>()
                 .AddEndpointsApiExplorer()
                 .AddOpenApiDocument(config =>
                 {

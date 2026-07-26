@@ -37,16 +37,22 @@ namespace ChasmaWebApi.Controllers
         private readonly ICacheManager cacheManager;
 
         /// <summary>
+        /// The internal API encryption service.
+        /// </summary>
+        private readonly IEncryptionService encryptionService;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="RemoteController"/> class.
         /// </summary>
         /// <param name="log">The internal logger.</param>
         /// <param name="controlService">The application orchestrator.</param>
         /// <param name="apiCacheManager">The internal API cache manager.</param>
-        public RemoteController(ILogger<RemoteController> log, IApplicationControlService controlService, ICacheManager apiCacheManager)
+        public RemoteController(ILogger<RemoteController> log, IApplicationControlService controlService, ICacheManager apiCacheManager, IEncryptionService apiEncryptionService)
         {
             logger = log;
             applicationControlService = controlService;
             cacheManager = apiCacheManager;
+            encryptionService = apiEncryptionService;
         }
 
         /// <summary>
@@ -104,7 +110,8 @@ namespace ChasmaWebApi.Controllers
             ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             logger.LogInformation("Attempting to get workflow data for the last {threshold} builds for {repoName}.", webApiConfigurations.WorkflowRunReportThreshold ?? 30, repoName);
             string token = webApiConfigurations.GitHubApiToken;
-            if (string.IsNullOrEmpty(token))
+            string decryptedToken = encryptionService.DecryptString(token);
+            if (string.IsNullOrEmpty(decryptedToken))
             {
                 logger.LogError("GitHub API token is not configured. Cannot retrieve workflow run results. Sending error response.");
                 response.IsErrorResponse = true;
@@ -114,7 +121,7 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
-                bool runsRetrieved = applicationControlService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> runResults, out string errorMessage);
+                bool runsRetrieved = applicationControlService.TryGetWorkflowRunResults(repoName, repoOwner, decryptedToken, out List<WorkflowRunResult> runResults, out string errorMessage);
                 if (!runsRetrieved && !string.IsNullOrEmpty(errorMessage))
                 {
                     response.IsErrorResponse = true;
@@ -222,6 +229,7 @@ namespace ChasmaWebApi.Controllers
             try
             {
                 string token = RemoteHelper.GetApiToken(repo.HostPlatform);
+                string decryptedToken = encryptionService.DecryptString(token);
                 string title = request.PullRequestTitle;
                 string headBranch = request.WorkingBranchName;
                 string baseBranch = request.DestinationBranchName;
@@ -237,7 +245,7 @@ namespace ChasmaWebApi.Controllers
                     HeadBranch = headBranch,
                     BaseBranch = baseBranch,
                     Description = body,
-                    Token = token,
+                    Token = decryptedToken,
                 };
                 if (!applicationControlService.TryCreatePullRequest(pullRequest, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage))
                 {
@@ -321,7 +329,8 @@ namespace ChasmaWebApi.Controllers
                 string body = request.Body;
                 ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
                 string token = webApiConfigurations.GitHubApiToken ?? string.Empty;
-                bool issueIsCreated = applicationControlService.TryCreateIssue(repoName, repoOwner, title, body, token, out int issueId, out string issueUrl, out string errorMessage);
+                string decryptedToken = encryptionService.DecryptString(token);
+                bool issueIsCreated = applicationControlService.TryCreateIssue(repoName, repoOwner, title, body, decryptedToken, out int issueId, out string issueUrl, out string errorMessage);
                 if (!issueIsCreated)
                 {
                     logger.LogError("Failed to create issue for {repoName}. Sending error response.", repoName);

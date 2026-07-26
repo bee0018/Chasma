@@ -5,6 +5,7 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
 using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Core.Services.Git;
+using ChasmaWebApi.Core.Services.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
@@ -74,6 +75,13 @@ namespace ChasmaWebApi.Core.Services.Control
         private readonly ICacheManager cacheManager;
 
         /// <summary>
+        /// The encryption service for managing credentials data.
+        /// </summary>
+        private readonly IEncryptionService encryptionService;
+
+        #region Constructor
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationControlService"/> class with the specified dependencies.
         /// </summary>
         /// <param name="repoIndexService">The repository index service.</param>
@@ -86,6 +94,7 @@ namespace ChasmaWebApi.Core.Services.Control
         /// <param name="gitlabService">The GitLab remote repository management service.</param>
         /// <param name="log">The internal logging instance.</param>
         /// <param name="apiCacheManager">The internal API cache manager.</param>
+        /// <param name="apiEncryptionService">The internal encryption service.</param>
         public ApplicationControlService(
             IRepositoryIndexService repoIndexService,
             IGitRepositoryService gitRepoService,
@@ -96,7 +105,8 @@ namespace ChasmaWebApi.Core.Services.Control
             ISimulationService simService,
             IGitLabService gitlabService,
             ILogger<ApplicationControlService> log,
-            ICacheManager apiCacheManager)
+            ICacheManager apiCacheManager,
+            IEncryptionService apiEncryptionService)
         {
             repositoryIndexService = repoIndexService;
             gitRepositoryService = gitRepoService;
@@ -108,14 +118,17 @@ namespace ChasmaWebApi.Core.Services.Control
             gitLabService = gitlabService;
             logger = log;
             cacheManager = apiCacheManager;
+            encryptionService = apiEncryptionService;
         }
+
+        #endregion
 
         #region Infrastructure
 
         // <inheritdoc />
         public void UpdateApiConfiguration(string configFilePath, ChasmaWebApiConfigurations newConfig, ChasmaWebApiConfigurations currentConfig)
         {
-            currentConfig.Update(newConfig);
+            currentConfig.Update(newConfig, encryptionService);
             string xmlText = ChasmaXmlBase.GenerateXml(currentConfig);
             File.WriteAllText(configFilePath, xmlText, Encoding.UTF8);
         }
@@ -361,20 +374,21 @@ namespace ChasmaWebApi.Core.Services.Control
                 {
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
                     string token = RemoteHelper.GetApiToken(remoteHostPlatform);
+                    string decryptedToken = encryptionService.DecryptString(token);
                     string username = RemoteHelper.GetRemoteHostUsername(repository);
                     bool isPullRequestOpen = false;
                     if (!skipBuildRetrieval)
                     {
                         string repoName = repository.Name;
                         string repoOwner = repository.Owner;
-                        if (string.IsNullOrEmpty(token))
+                        if (string.IsNullOrEmpty(decryptedToken))
                         {
                             logger.LogWarning("No API token found for repository {repoName} with remote host platform {remoteHostPlatform}. Unable to fetch build status from remote host platform.", repository.GetDisplayName(), remoteHostPlatform);
                         }
                         else if (remoteHostPlatform == RemoteHostPlatform.GitHub)
                         {
                             isPullRequestOpen = cacheManager.GitHubPullRequests.Values.Any(i => i.RepositoryId == repository.Id && i.BranchName == branchName && !i.Merged);
-                            if (gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out List<WorkflowRunResult> gitHubResults, out _))
+                            if (gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, decryptedToken, out List<WorkflowRunResult> gitHubResults, out _))
                             {
                                 buildMetrics = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchName);
                             }

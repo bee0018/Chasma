@@ -24,6 +24,11 @@ namespace ChasmaWebApi.Core.Services.Remote
         private readonly ICacheManager cacheManager;
 
         /// <summary>
+        /// The internal API encryption service.
+        /// </summary>
+        private readonly IEncryptionService encryptionService;
+
+        /// <summary>
         /// Gets or sets the GitLab API client.
         /// </summary>
         private static GitLabClient Client { get; set; }
@@ -33,10 +38,12 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// </summary>
         /// <param name="log">The internal API logger.</param>
         /// <param name="apiCacheManager">The API cache manager.</param>
-        public GitLabService(ILogger<GitLabService> log, ICacheManager apiCacheManager)
+        /// <param name="apiEncryptionService">The API encryption service.</param>
+        public GitLabService(ILogger<GitLabService> log, ICacheManager apiCacheManager, IEncryptionService apiEncryptionService)
         {
             logger = log;
             cacheManager = apiCacheManager;
+            encryptionService = apiEncryptionService;
         }
 
         // <inheritdoc />
@@ -219,7 +226,8 @@ namespace ChasmaWebApi.Core.Services.Remote
                     return null;
                 }
 
-                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
                 {
@@ -272,7 +280,8 @@ namespace ChasmaWebApi.Core.Services.Remote
                     return null;
                 }
 
-                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
                 {
@@ -307,7 +316,8 @@ namespace ChasmaWebApi.Core.Services.Remote
                     return null;
                 }
 
-                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{issue.RepoOwner}/{issue.RepoName}");
                 IssueCreate issueRequest = new()
                 {
@@ -345,7 +355,8 @@ namespace ChasmaWebApi.Core.Services.Remote
                     return null;
                 }
 
-                Client = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{preparedMergeRequest.RepoOwner}/{preparedMergeRequest.RepoName}");
                 IMergeRequestClient mergeRequestClient = Client.GetMergeRequest(project.Id);
                 MergeRequestCreate mergeRequestToCreate = new()

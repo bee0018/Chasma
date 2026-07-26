@@ -23,6 +23,11 @@ namespace ChasmaWebApi.Core.Services.Index
         private readonly ICacheManager CacheManager;
 
         /// <summary>
+        /// The internal API encryption service.
+        /// </summary>
+        private readonly IEncryptionService encryptionService;
+
+        /// <summary>
         /// The lock object used for concurrency.
         /// </summary>
         private readonly Lock lockObject = new();
@@ -34,10 +39,12 @@ namespace ChasmaWebApi.Core.Services.Index
         /// </summary>
         /// <param name="logger">The logger for this service.</param>
         /// <param name="cacheManager">The internal API cache manager.</param>
-        public RepositoryIndexService(ILogger<RepositoryIndexService> logger, ICacheManager cacheManager)
+        /// <param name="apiEncryptionService">The internal API encryption service.</param>
+        public RepositoryIndexService(ILogger<RepositoryIndexService> logger, ICacheManager cacheManager, IEncryptionService apiEncryptionService)
         {
             Logger = logger;
             CacheManager = cacheManager;
+            encryptionService = apiEncryptionService;
         }
 
         #endregion
@@ -582,12 +589,12 @@ namespace ChasmaWebApi.Core.Services.Index
             if (remoteHostPlatform == RemoteHostPlatform.GitHub)
             {
                 remotePlatformUsername = apiConfiguration.GitHubUsername;
-                apiAccessToken = apiConfiguration.GitHubApiToken;
+                apiAccessToken = encryptionService.DecryptString(apiConfiguration.GitHubApiToken);
             }
             else if (remoteHostPlatform == RemoteHostPlatform.GitLab)
             {
                 remotePlatformUsername = apiConfiguration.GitLabUsername;
-                apiAccessToken = apiConfiguration.GitLabApiToken;
+                apiAccessToken = encryptionService.DecryptString(apiConfiguration.GitLabApiToken);
             }
             
             try

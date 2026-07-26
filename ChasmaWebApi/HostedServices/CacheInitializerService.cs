@@ -5,6 +5,7 @@ using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
+using LibGit2Sharp;
 using Microsoft.EntityFrameworkCore;
 using NGitLab;
 using NGitLab.Models;
@@ -19,7 +20,8 @@ namespace ChasmaWebApi.HostedServices
     /// <param name="logger">The internal logging interface.</param>
     /// <param name="cacheManager">The application's cache manager.</param>
     /// <param name="serviceScopeFactory">The service scope factory used for getting required services.</param>
-    public class CacheInitializerService(ILogger<CacheInitializerService> logger, ICacheManager cacheManager, IServiceScopeFactory serviceScopeFactory) : IHostedService
+    /// <param name="apiEncryptionService">The API encryption service.</param>
+    public class CacheInitializerService(ILogger<CacheInitializerService> logger, ICacheManager cacheManager, IServiceScopeFactory serviceScopeFactory, IEncryptionService apiEncryptionService) : IHostedService
     {
         /// <summary>
         /// The internal logging interface.
@@ -35,6 +37,11 @@ namespace ChasmaWebApi.HostedServices
         /// The service scope factory used for getting required services.
         /// </summary>
         private readonly IServiceScopeFactory serviceScopeFactory = serviceScopeFactory;
+
+        /// <summary>
+        /// The internal API encryption service.
+        /// </summary>
+        private readonly IEncryptionService encryptionService = apiEncryptionService;
 
         /// <summary>
         /// The initial web API application configurations.
@@ -245,7 +252,8 @@ namespace ChasmaWebApi.HostedServices
 
             try
             {
-                GitHubClient = RemoteHelper.GetGitHubClient(repoName, InitialApiConfiguration.GitHubApiToken);
+                string decryptedToken = encryptionService.DecryptString(InitialApiConfiguration.GitHubApiToken);
+                GitHubClient = RemoteHelper.GetGitHubClient(repoName, decryptedToken);
                 IReadOnlyList<PullRequest> pullRequests = await GitHubClient.PullRequest.GetAllForRepository(owner, repoName);
                 List<RemotePullRequest> gitHubPullRequests = [];
                 foreach (PullRequest pullRequest in pullRequests)
@@ -296,7 +304,8 @@ namespace ChasmaWebApi.HostedServices
 
             try
             {
-                GitHubClient = RemoteHelper.GetGitHubClient(name, configurations.GitHubApiToken);
+                string decryptedToken = encryptionService.DecryptString(configurations.GitHubApiToken);
+                GitHubClient = RemoteHelper.GetGitHubClient(name, decryptedToken);
                 if (!int.TryParse(prNumber.ToString(), out int pullRequestNumber))
                 {
                     logger.LogWarning("Cannot parse pull request number for {name}. Skipping.", name);
@@ -441,7 +450,8 @@ namespace ChasmaWebApi.HostedServices
 
             try
             {
-                GitLabClient = RemoteHelper.GetGitLabClient(InitialApiConfiguration.GitLabApiToken, InitialApiConfiguration.SelfHostedGitLabUrl);
+                string decryptedToken = encryptionService.DecryptString(InitialApiConfiguration.GitLabApiToken);
+                GitLabClient = RemoteHelper.GetGitLabClient(decryptedToken, InitialApiConfiguration.SelfHostedGitLabUrl);
                 string owner = repository.Owner;
                 string repoName = repository.Name;
                 Project project = await GitLabClient.Projects.GetAsync($"{owner}/{repoName}");
@@ -555,7 +565,8 @@ namespace ChasmaWebApi.HostedServices
             
             try
             {
-                GitLabClient = RemoteHelper.GetGitLabClient(configurations.GitLabApiToken, configurations.SelfHostedGitLabUrl);
+                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
+                GitLabClient = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
                 Project project = await GitLabClient.Projects.GetAsync($"{owner}/{repoName}", cancellationToken: cancellationToken);
                 if (project == null)
                 {
