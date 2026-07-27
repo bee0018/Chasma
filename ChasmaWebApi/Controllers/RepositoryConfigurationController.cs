@@ -105,57 +105,6 @@ public class RepositoryConfigurationController : ControllerBase
     }
 
     /// <summary>
-    /// Gets the valid git repositories found on this system.
-    /// </summary>
-    /// <param name="userId">The user identifier.</param>
-    /// <returns>Message containing the git repositories found on the logical drives.</returns>
-    [HttpPost]
-    [Route("addLocalGitRepositories")]
-    public async Task<ActionResult<AddLocalRepositoriesResponse>> AddLocalGitRepositories(int userId)
-    {
-        logger.LogInformation("Attempting to add local git repositories on the machine's logical drives.");
-        AddLocalRepositoriesResponse response = new();
-        if (!applicationControlService.TryAddLocalGitRepositoriesFromFileSystem(userId, out List<LocalGitRepository> newRepositories))
-        {
-            logger.LogError("No new local git repositories added.");
-            response.IsErrorResponse = true;
-            response.ErrorMessage = "No new local git repositories found on this machine.";
-            return Ok(response);
-        }
-
-        logger.LogInformation("Found {count} new repo(s) on this machine.", newRepositories.Count);
-        foreach (LocalGitRepository repo in newRepositories)
-        {
-            RepositoryModel repositoryModel = new()
-            {
-                Id = repo.Id,
-                UserId = repo.UserId,
-                Name = repo.Name,
-                Owner = repo.Owner,
-                Url = repo.Url,
-                HostPlatform = repo.HostPlatform,
-                IsIgnored = false,
-                DisplayName = repo.DisplayName,
-            };
-            await applicationDbContext.Repositories.AddAsync(repositoryModel);
-
-            WorkingDirectoryModel workingDirectoryModel = new()
-            {
-
-                RepositoryId = repo.Id,
-                WorkingDirectory = cacheManager.WorkingDirectories[repo.Id],
-            };
-            await applicationDbContext.WorkingDirectories.AddAsync(workingDirectoryModel);
-        }
-
-        await applicationDbContext.SaveChangesAsync();
-        response.CurrentRepositories = cacheManager.Repositories.Values
-            .Where(i => i.UserId == userId)
-            .ToList();
-        return Ok(response);
-    }
-
-    /// <summary>
     /// Adds a git repository from the specified path to cache.
     /// </summary>
     /// <param name="request">The request to add a local git repository.</param>

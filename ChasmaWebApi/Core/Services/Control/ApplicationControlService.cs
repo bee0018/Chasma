@@ -230,12 +230,6 @@ namespace ChasmaWebApi.Core.Services.Control
         #region Repository Configuration
 
         // <inheritdoc />
-        public bool TryAddLocalGitRepositoriesFromFileSystem(int userId, out List<LocalGitRepository> newRepositories)
-        {
-            return repositoryIndexService.TryAddLocalGitRepositories(userId, out newRepositories);
-        }
-
-        // <inheritdoc />
         public List<RepositoryAdditionResult> AddGitRepositories(IEnumerable<string> repoPaths, int userId, out List<NewRepository> newRepositories)
         {
             return repositoryIndexService.AddGitRepositories(repoPaths, userId, out newRepositories);

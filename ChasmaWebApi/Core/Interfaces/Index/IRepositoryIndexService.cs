@@ -8,14 +8,6 @@ namespace ChasmaWebApi.Core.Interfaces.Index
     public interface IRepositoryIndexService
     {
         /// <summary>
-        /// Adds the local git repositories on the local machine and adds them to the database.
-        /// </summary>
-        /// <param name="userId">The user identifier.</param>
-        /// <param name="newRepositories">The local validated local git repositories found on the system.</param>
-        /// <returns>True if the repositories are found and added without error; false otherwise.</returns>
-        bool TryAddLocalGitRepositories(int userId, out List<LocalGitRepository> newRepositories);
-
-        /// <summary>
         /// Tries to delete the repository from cache and database.
         /// </summary>
         /// <param name="repositoryId">The repository identifier.</param>

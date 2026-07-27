@@ -40,9 +40,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
     /** Sets the notification modal. */
     const setNotification = useCacheStore(state => state.setNotification);
 
-    /** Gets or sets a value indicating whether the request is ready to be sent. */
-    const [disableSendButton, setDisableSendButton] = useState(false);
-
     /** Gets or sets the repository being edited. */
     const [activeRenameRepo, setActiveRenameRepo] = useState<LocalGitRepository | null>(null);
 
@@ -90,54 +87,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
         mouseY: number;
         repo: LocalGitRepository;
     } | null>(null);
-
-    /** Sends a request to the add the local git repositories on the filesystem. **/
-    async function handleAddLocalGitRepositories() {
-        if (disableSendButton) {
-            setNotification({
-                title: "Currently adding local git repositories to the system.",
-                message: "Please await repository additions while your request is being processed. May take a while depending on how large your filesystem is.",
-                isError: false,
-                loading: true
-            });
-            return;
-        }
-
-        setDisableSendButton(true);
-        setNotification({
-            title: "Adding local git repositories from logical drives...",
-            message: "Please wait while your request is being processed. May take a while depending on how large your filesystem is.",
-            isError: false,
-            loading: true
-        });
-
-        try {
-            const userId = user?.userId;
-            const response = await configClient.addLocalGitRepositories(userId);
-            if (response.isErrorResponse) {
-                setNotification({
-                    title: "Git repository retrieval failed!",
-                    message: response.errorMessage,
-                    isError: true,
-                });
-                setDisableSendButton(false);
-                return;
-            }
-
-            setNotification({
-                title: "Git repository retrieval finished!",
-                message: "Close the modal to find the repositories found on your system.",
-                isError: false,
-            });
-            useCacheStore.getState().setRepositories(response.currentRepositories);
-            setDisableSendButton(false);
-        }
-        catch (e) {
-            const errorNotification = await handleApiError(e, navigate);
-            setNotification(errorNotification);
-            setDisableSendButton(false);
-        }
-    }
 
     /**
      * Handles the event when the user wants to delete a repository.
@@ -238,6 +187,40 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                     <div>
                         <h1 style={{ margin: 0 }}>Your Repositories, Monitored & Mastered 🕹️</h1>
                         <p style={{ margin: '8px 0 0 0' }}>{`${user?.userName}, manage any of the registered repositories found on your filesystem.`}</p>
+                        {localGitRepositories && localGitRepositories.length === 0 &&
+                            <>
+                                <h2>Get Started With Adding Local Git Repositories</h2>
+                                <div className="help-subsection">
+                                    <ul className="help-steps">
+                                        <li>
+                                            <div>
+                                                <strong>Adding Local Git Repositories</strong>
+                                                <p>- On the left sidebar, open the <strong>REPOSITORY MANAGEMENT</strong> tab.</p>
+                                                <p>- Select the <strong>Register ➕</strong> button.</p>
+                                                <p>- Select <strong>Add Path +</strong> and in each of the input fields paste the absolute path to the repository root.</p>
+                                                <p>- Select <strong>Add Repositories</strong> to add the repositories to the system.</p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <br />
+                                <h2>Get Started With Cloning Git Repositories</h2>
+                                <div className="help-subsection">
+                                    <ul className="help-steps">
+                                        <li>
+                                            <div>
+                                                <strong>Cloning Git Repositories</strong>
+                                                <p><i>Note: Preconfigure either your remote host credentials in the </i> <strong>SYSTEM & DIAGNOSTICS</strong>&gt; <strong>System Settings ⚙️</strong> page.</p>
+                                                <p>- On the left sidebar, open the <strong>REPOSITORY MANAGEMENT</strong> tab.</p>
+                                                <p>- Select the <strong>Clone 🚚</strong> button.</p>
+                                                <p>- Select <strong>Add Entry</strong> and configure each entry for new repositories you want to clone to your system and manage within the system.</p>
+                                                <p>- When finished configuring, select <strong>Clone Repos</strong>.</p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </>
+                        }
                     </div>
                     {newSystemUpdate !== undefined &&
                         <button
@@ -288,13 +271,6 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                         </div>
                     )}
                 </div>
-                <button
-                    className="submit-button"
-                    type="submit"
-                    onClick={handleAddLocalGitRepositories}
-                >
-                    Add Git Repos from Local Machine
-                </button>
                 {activeRenameRepo &&
                     <ChangeRepositoryDisplayNameModal
                         onClose={() => setActiveRenameRepo(null)}
