@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Status
+﻿namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class representing the git function to 'git commit'.
     /// </summary>
-    public class GitCommitRequest : ChasmaXmlBase
+    public class GitCommitRequest
     {
         /// <summary>
         /// Gets or sets the user identifier.

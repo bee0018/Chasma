@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Status
+﻿namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class representing the git function to pull latest changes.
     /// </summary>
-    public class GitPullRequest : ChasmaXmlBase
+    public class GitPullRequest
     {
         /// <summary>
         /// Gets or sets the repository identifier.

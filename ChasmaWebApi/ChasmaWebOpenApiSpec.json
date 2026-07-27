@@ -1953,100 +1953,82 @@
   "components": {
     "schemas": {
       "GetSystemReadyMessage": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "isReady": {
-                "type": "boolean"
-              },
-              "invalidElements": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "ChasmaXmlBase": {
         "type": "object",
-        "additionalProperties": false
+        "additionalProperties": false,
+        "properties": {
+          "isReady": {
+            "type": "boolean"
+          },
+          "invalidElements": {
+            "type": "string"
+          }
+        }
       },
       "GetApiConfigMessage": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "bindingPort": {
+            "type": "integer",
+            "format": "int32"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "bindingPort": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "jwtSecretKeyConfigured": {
-                "type": "boolean"
-              },
-              "gitHubApiTokenConfigured": {
-                "type": "boolean"
-              },
-              "gitLabApiTokenConfigured": {
-                "type": "boolean"
-              },
-              "workflowRunReportThreshold": {
-                "type": "integer",
-                "format": "int32",
-                "nullable": true
-              },
-              "gitHubPullRequestScanIntervalSeconds": {
-                "type": "integer",
-                "format": "int32",
-                "nullable": true
-              },
-              "selfHostedGitLabUrl": {
-                "type": "string",
-                "nullable": true
-              },
-              "gitLabMergeRequestScanIntervalSeconds": {
-                "type": "integer",
-                "format": "int32",
-                "nullable": true
-              },
-              "gitHubUsername": {
-                "type": "string",
-                "nullable": true
-              },
-              "gitLabUsername": {
-                "type": "string",
-                "nullable": true
-              },
-              "globalWorkspacePath": {
-                "type": "string"
-              },
-              "gitHubSshKeyPrivateKeyPath": {
-                "type": "string",
-                "nullable": true
-              },
-              "gitLabSshKeyPrivateKeyPath": {
-                "type": "string",
-                "nullable": true
-              },
-              "secureBindingPort": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "branchPruningDayThreshold": {
-                "type": "integer",
-                "format": "int32",
-                "nullable": true
-              }
-            }
+          "jwtSecretKeyConfigured": {
+            "type": "boolean"
+          },
+          "gitHubApiTokenConfigured": {
+            "type": "boolean"
+          },
+          "gitLabApiTokenConfigured": {
+            "type": "boolean"
+          },
+          "workflowRunReportThreshold": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "gitHubPullRequestScanIntervalSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "selfHostedGitLabUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "gitLabMergeRequestScanIntervalSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "gitHubUsername": {
+            "type": "string",
+            "nullable": true
+          },
+          "gitLabUsername": {
+            "type": "string",
+            "nullable": true
+          },
+          "globalWorkspacePath": {
+            "type": "string"
+          },
+          "gitHubSshKeyPrivateKeyPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "gitLabSshKeyPrivateKeyPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "secureBindingPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "branchPruningDayThreshold": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
-        ]
+        }
       },
       "ModifyApiConfigResponse": {
         "allOf": [
@@ -2065,44 +2047,30 @@
         ]
       },
       "ResponseBase": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isErrorResponse": {
+            "type": "boolean"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "isErrorResponse": {
-                "type": "boolean"
-              },
-              "errorMessage": {
-                "type": "string",
-                "nullable": true
-              },
-              "statusCode": {
-                "type": "integer",
-                "format": "int32"
-              }
-            }
+          "errorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "statusCode": {
+            "type": "integer",
+            "format": "int32"
           }
-        ]
+        }
       },
       "ModifyApiConfigRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "apiConfiguration": {
-                "$ref": "#/components/schemas/ChasmaWebApiConfigurations"
-              }
-            }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "apiConfiguration": {
+            "$ref": "#/components/schemas/ChasmaWebApiConfigurations"
           }
-        ]
+        }
       },
       "ChasmaWebApiConfigurations": {
         "allOf": [
@@ -2179,6 +2147,10 @@
           }
         ]
       },
+      "ChasmaXmlBase": {
+        "type": "object",
+        "additionalProperties": false
+      },
       "SystemManifest": {
         "type": "object",
         "additionalProperties": false,
@@ -2244,30 +2216,23 @@
         ]
       },
       "AddNewBranchRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "branchName": {
-                "type": "string"
-              },
-              "isCheckingOutNewBranch": {
-                "type": "boolean"
-              }
-            }
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "isCheckingOutNewBranch": {
+            "type": "boolean"
           }
-        ]
+        }
       },
       "DeleteBranchResponse": {
         "allOf": [
@@ -2281,23 +2246,16 @@
         ]
       },
       "DeleteBranchRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "branchName": {
-                "type": "string"
-              }
-            }
+          "branchName": {
+            "type": "string"
           }
-        ]
+        }
       },
       "GitCheckoutResponse": {
         "allOf": [
@@ -2311,34 +2269,27 @@
         ]
       },
       "GitCheckoutRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "branchName": {
-                "type": "string"
-              },
-              "checkoutMode": {
-                "$ref": "#/components/schemas/BranchCheckoutMode"
-              },
-              "stashMessage": {
-                "type": "string",
-                "nullable": true
-              }
-            }
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "checkoutMode": {
+            "$ref": "#/components/schemas/BranchCheckoutMode"
+          },
+          "stashMessage": {
+            "type": "string",
+            "nullable": true
           }
-        ]
+        }
       },
       "BranchCheckoutMode": {
         "type": "integer",
@@ -2376,20 +2327,13 @@
         ]
       },
       "GitBranchRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              }
-            }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           }
-        ]
+        }
       },
       "GitMergeResponse": {
         "allOf": [
@@ -2403,30 +2347,23 @@
         ]
       },
       "GitMergeRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "sourceBranch": {
-                "type": "string"
-              },
-              "destinationBranch": {
-                "type": "string"
-              }
-            }
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sourceBranch": {
+            "type": "string"
+          },
+          "destinationBranch": {
+            "type": "string"
           }
-        ]
+        }
       },
       "SimulateGitPullResponse": {
         "allOf": [
@@ -2500,23 +2437,16 @@
         }
       },
       "SimulateGitPullRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "entries": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/PullSimulationEntry"
-                }
-              }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PullSimulationEntry"
             }
           }
-        ]
+        }
       },
       "PullSimulationEntry": {
         "type": "object",
@@ -2569,23 +2499,16 @@
         ]
       },
       "SimulateAddBranchRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "entries": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/AddBranchSimulationEntry"
-                }
-              }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddBranchSimulationEntry"
             }
           }
-        ]
+        }
       },
       "AddBranchSimulationEntry": {
         "type": "object",
@@ -2641,23 +2564,16 @@
         ]
       },
       "SimulateBranchMergeRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "mergeEntries": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/MergeSimulationEntry"
-                }
-              }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mergeEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MergeSimulationEntry"
             }
           }
-        ]
+        }
       },
       "MergeSimulationEntry": {
         "type": "object",
@@ -2683,23 +2599,16 @@
         }
       },
       "HeartbeatMessage": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "message": {
-                "type": "string"
-              },
-              "status": {
-                "$ref": "#/components/schemas/HeartbeatStatus"
-              }
-            }
+          "status": {
+            "$ref": "#/components/schemas/HeartbeatStatus"
           }
-        ]
+        }
       },
       "HeartbeatStatus": {
         "type": "integer",
@@ -2741,71 +2650,57 @@
         }
       },
       "GetPullRequestStatusMessage": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "pullRequests": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/RemotePullRequest"
-                }
-              }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "pullRequests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RemotePullRequest"
             }
           }
-        ]
+        }
       },
       "RemotePullRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "number": {
-                "type": "integer",
-                "format": "int64"
-              },
-              "repositoryName": {
-                "type": "string"
-              },
-              "repositoryOwner": {
-                "type": "string"
-              },
-              "branchName": {
-                "type": "string"
-              },
-              "activeState": {
-                "type": "string"
-              },
-              "mergeableState": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": "string"
-              },
-              "mergedAt": {
-                "type": "string",
-                "nullable": true
-              },
-              "merged": {
-                "type": "boolean"
-              },
-              "htmlUrl": {
-                "type": "string"
-              }
-            }
+          "number": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "repositoryName": {
+            "type": "string"
+          },
+          "repositoryOwner": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "activeState": {
+            "type": "string"
+          },
+          "mergeableState": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "mergedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "merged": {
+            "type": "boolean"
+          },
+          "htmlUrl": {
+            "type": "string"
           }
-        ]
+        }
       },
       "GitHubWorkflowRunResponse": {
         "allOf": [
@@ -2906,35 +2801,28 @@
         ]
       },
       "CreatePRRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "pullRequestTitle": {
-                "type": "string"
-              },
-              "workingBranchName": {
-                "type": "string"
-              },
-              "destinationBranchName": {
-                "type": "string"
-              },
-              "pullRequestBody": {
-                "type": "string"
-              },
-              "repositoryName": {
-                "type": "string"
-              }
-            }
+          "pullRequestTitle": {
+            "type": "string"
+          },
+          "workingBranchName": {
+            "type": "string"
+          },
+          "destinationBranchName": {
+            "type": "string"
+          },
+          "pullRequestBody": {
+            "type": "string"
+          },
+          "repositoryName": {
+            "type": "string"
           }
-        ]
+        }
       },
       "CreateGitHubIssueResponse": {
         "allOf": [
@@ -2957,29 +2845,22 @@
         ]
       },
       "CreateGitHubIssueRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryName": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryName": {
-                "type": "string"
-              },
-              "repositoryOwner": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              },
-              "body": {
-                "type": "string"
-              }
-            }
+          "repositoryOwner": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
           }
-        ]
+        }
       },
       "GetPipelineJobsResponse": {
         "allOf": [
@@ -3197,26 +3078,19 @@
         }
       },
       "LocalRepositoriesInfoMessage": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "timestamp": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "timestamp": {
-                "type": "string"
-              },
-              "repositories": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/LocalGitRepository"
-                }
-              }
+          "repositories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocalGitRepository"
             }
           }
-        ]
+        }
       },
       "LocalGitRepository": {
         "type": "object",
@@ -3267,23 +3141,16 @@
         ]
       },
       "GetIgnoredRepositoriesMessage": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "ignoredRepositories": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ignoredRepositories": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
-        ]
+        }
       },
       "AddGitRepositoriesResponse": {
         "allOf": [
@@ -3326,27 +3193,20 @@
         }
       },
       "AddGitRepositoriesRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "repositoryPaths": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
+          "repositoryPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
-        ]
+        }
       },
       "DeleteRepositoryResponse": {
         "allOf": [
@@ -3368,24 +3228,17 @@
         ]
       },
       "DeleteRepositoryRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              }
-            }
+          "userId": {
+            "type": "integer",
+            "format": "int32"
           }
-        ]
+        }
       },
       "GitRmResponse": {
         "allOf": [
@@ -3399,45 +3252,31 @@
         ]
       },
       "GitRmRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "selectedFile": {
-                "$ref": "#/components/schemas/RepositoryStatusElement"
-              }
-            }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "selectedFile": {
+            "$ref": "#/components/schemas/RepositoryStatusElement"
           }
-        ]
+        }
       },
       "RepositoryStatusElement": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "filePath": {
-                "type": "string"
-              },
-              "state": {
-                "$ref": "#/components/schemas/FileStatus"
-              },
-              "isStaged": {
-                "type": "boolean"
-              }
-            }
+          "filePath": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/FileStatus"
+          },
+          "isStaged": {
+            "type": "boolean"
           }
-        ]
+        }
       },
       "FileStatus": {
         "type": "integer",
@@ -3504,27 +3343,20 @@
         ]
       },
       "GitCloneRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "blueprints": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/GitCloneBlueprint"
-                }
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "blueprints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitCloneBlueprint"
             }
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
           }
-        ]
+        }
       },
       "GitCloneBlueprint": {
         "type": "object",
@@ -3622,24 +3454,17 @@
         ]
       },
       "GitStatusRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              }
-            }
+          "userId": {
+            "type": "integer",
+            "format": "int32"
           }
-        ]
+        }
       },
       "ApplyStagingActionResponse": {
         "allOf": [
@@ -3661,30 +3486,23 @@
         ]
       },
       "ApplyStagingActionRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repoKey": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repoKey": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "fileName": {
-                "type": "string"
-              },
-              "isStaging": {
-                "type": "boolean"
-              }
-            }
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "isStaging": {
+            "type": "boolean"
           }
-        ]
+        }
       },
       "GitCommitResponse": {
         "allOf": [
@@ -3698,30 +3516,23 @@
         ]
       },
       "GitCommitRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "repositoryId": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string"
-              },
-              "commitMessage": {
-                "type": "string"
-              }
-            }
+          "repositoryId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "commitMessage": {
+            "type": "string"
           }
-        ]
+        }
       },
       "GitPushResponse": {
         "allOf": [
@@ -3735,20 +3546,13 @@
         ]
       },
       "GitPushRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              }
-            }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           }
-        ]
+        }
       },
       "GitPullResponse": {
         "allOf": [
@@ -3762,27 +3566,20 @@
         ]
       },
       "GitPullRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "email": {
-                "type": "string"
-              }
-            }
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "email": {
+            "type": "string"
           }
-        ]
+        }
       },
       "GitDiffResponse": {
         "allOf": [
@@ -3801,26 +3598,19 @@
         ]
       },
       "GitDiffRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "filePath": {
-                "type": "string"
-              },
-              "isStaged": {
-                "type": "boolean"
-              }
-            }
+          "filePath": {
+            "type": "string"
+          },
+          "isStaged": {
+            "type": "boolean"
           }
-        ]
+        }
       },
       "GitResetResponse": {
         "allOf": [
@@ -3839,26 +3629,19 @@
         ]
       },
       "GitResetRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "resetMode": {
-                "$ref": "#/components/schemas/ResetMode"
-              },
-              "revParseSpec": {
-                "type": "string"
-              }
-            }
+          "resetMode": {
+            "$ref": "#/components/schemas/ResetMode"
+          },
+          "revParseSpec": {
+            "type": "string"
           }
-        ]
+        }
       },
       "ResetMode": {
         "type": "integer",
@@ -3894,29 +3677,22 @@
         ]
       },
       "ApplyBulkStagingActionRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "fileNames": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "isStaging": {
-                "type": "boolean"
-              }
+          "fileNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
+          },
+          "isStaging": {
+            "type": "boolean"
           }
-        ]
+        }
       },
       "GetBranchSyncStatusResponse": {
         "allOf": [
@@ -3987,27 +3763,20 @@
         }
       },
       "GetBranchSyncStatusRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "branchName": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "branchName": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "skipBuildRetrieval": {
-                "type": "boolean"
-              }
-            }
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipBuildRetrieval": {
+            "type": "boolean"
           }
-        ]
+        }
       },
       "GitRestoreResponse": {
         "allOf": [
@@ -4021,20 +3790,13 @@
         ]
       },
       "GitRestoreRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "selectedFile": {
-                "$ref": "#/components/schemas/RepositoryStatusElement"
-              }
-            }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "selectedFile": {
+            "$ref": "#/components/schemas/RepositoryStatusElement"
           }
-        ]
+        }
       },
       "AddWorkContextSnapshotResponse": {
         "allOf": [
@@ -4316,26 +4078,19 @@
         }
       },
       "ExecuteShellCommandRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "commands": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
-        ]
+        }
       },
       "ExecuteBatchShellCommandsResponse": {
         "allOf": [
@@ -4357,48 +4112,34 @@
         ]
       },
       "BatchCommandEntryResult": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryName": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryName": {
-                "type": "string"
-              },
-              "executedCommand": {
-                "type": "string"
-              },
-              "isSuccess": {
-                "type": "boolean"
-              },
-              "message": {
-                "type": "string"
-              }
-            }
+          "executedCommand": {
+            "type": "string"
+          },
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
           }
-        ]
+        }
       },
       "ExecuteBatchShellCommandsRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "batchCommands": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/BatchCommandEntry"
-                }
-              }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "batchCommands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchCommandEntry"
             }
           }
-        ]
+        }
       },
       "BatchCommandEntry": {
         "type": "object",
@@ -4438,30 +4179,23 @@
         ]
       },
       "AddStashRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "stashModifier": {
-                "$ref": "#/components/schemas/StashModifiers"
-              },
-              "message": {
-                "type": "string"
-              }
-            }
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stashModifier": {
+            "$ref": "#/components/schemas/StashModifiers"
+          },
+          "message": {
+            "type": "string"
           }
-        ]
+        }
       },
       "StashModifiers": {
         "type": "integer",
@@ -4513,20 +4247,13 @@
         }
       },
       "GetStashListRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              }
-            }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           }
-        ]
+        }
       },
       "GetStashDetailsResponse": {
         "allOf": [
@@ -4560,23 +4287,16 @@
         }
       },
       "GetStashDetailsRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "stashEntry": {
-                "$ref": "#/components/schemas/StashEntry"
-              }
-            }
+          "stashEntry": {
+            "$ref": "#/components/schemas/StashEntry"
           }
-        ]
+        }
       },
       "ApplyStashResponse": {
         "allOf": [
@@ -4590,27 +4310,20 @@
         ]
       },
       "ApplyStashRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "stashIndex": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "applyStashModifier": {
-                "$ref": "#/components/schemas/StashApplyModifiers"
-              }
-            }
+          "stashIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "applyStashModifier": {
+            "$ref": "#/components/schemas/StashApplyModifiers"
           }
-        ]
+        }
       },
       "StashApplyModifiers": {
         "type": "integer",
@@ -4637,24 +4350,17 @@
         ]
       },
       "DeleteStashRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "repositoryId": {
-                "type": "string"
-              },
-              "stashIndex": {
-                "type": "integer",
-                "format": "int32"
-              }
-            }
+          "stashIndex": {
+            "type": "integer",
+            "format": "int32"
           }
-        ]
+        }
       },
       "LoginResponse": {
         "allOf": [
@@ -4719,23 +4425,16 @@
         }
       },
       "LoginRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userName": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "userName": {
-                "type": "string"
-              },
-              "password": {
-                "type": "string"
-              }
-            }
+          "password": {
+            "type": "string"
           }
-        ]
+        }
       },
       "AddUserResponse": {
         "allOf": [
@@ -4815,20 +4514,13 @@
         ]
       },
       "RefreshRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "refreshToken": {
-                "type": "string"
-              }
-            }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "refreshToken": {
+            "type": "string"
           }
-        ]
+        }
       },
       "LogoutResponse": {
         "allOf": [
@@ -4842,21 +4534,14 @@
         ]
       },
       "LogoutRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              }
-            }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
           }
-        ]
+        }
       },
       "ModifyUserResponse": {
         "allOf": [
@@ -4881,36 +4566,29 @@
         ]
       },
       "ModifyUserRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "userId": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "username": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "password": {
-                "type": "string"
-              },
-              "currentPassword": {
-                "type": "string"
-              }
-            }
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "currentPassword": {
+            "type": "string"
           }
-        ]
+        }
       },
       "CheckUsernameAvailabilityResponse": {
         "allOf": [
@@ -4929,20 +4607,13 @@
         ]
       },
       "CheckUsernameAvailabilityRequest": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ChasmaXmlBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "userName": {
-                "type": "string"
-              }
-            }
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userName": {
+            "type": "string"
           }
-        ]
+        }
       },
       "GetSecurityQuestionsMessage": {
         "type": "object",

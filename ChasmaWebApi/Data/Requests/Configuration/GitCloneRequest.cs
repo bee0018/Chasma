@@ -1,12 +1,11 @@
 ﻿using ChasmaWebApi.Data.Objects.Git;
-using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing a request to clone a git repository.
     /// </summary>
-    public class GitCloneRequest : ChasmaXmlBase
+    public class GitCloneRequest
     {
         /// <summary>
         /// Gets or sets the list of blueprints for cloning git repositories.

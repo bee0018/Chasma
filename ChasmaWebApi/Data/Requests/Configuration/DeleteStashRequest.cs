@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Configuration
+﻿namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing a request to delete a stash configuration.
     /// </summary>
-    public class DeleteStashRequest : ChasmaXmlBase
+    public class DeleteStashRequest
     {
         /// <summary>
         /// Gets or sets the identifier of the repository where the stash is located.

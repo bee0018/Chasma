@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Messages
+﻿namespace ChasmaWebApi.Data.Messages
 {
     /// <summary>
     /// Class containing the information local git repositories a user has chosen to ignore.
     /// </summary>
-    public class GetIgnoredRepositoriesMessage : ChasmaXmlBase
+    public class GetIgnoredRepositoriesMessage
     {
         /// <summary>
         /// Gets or sets the list of ignored repositories.

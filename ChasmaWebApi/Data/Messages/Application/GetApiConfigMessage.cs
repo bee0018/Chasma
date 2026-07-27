@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Messages.Application
+﻿namespace ChasmaWebApi.Data.Messages.Application
 {
     /// <summary>
     /// Class representing the message to get the API configuration.
     /// </summary>
-    public class GetApiConfigMessage : ChasmaXmlBase
+    public class GetApiConfigMessage
     {
         /// <summary>
         /// Gets or sets where the port to listens on all IPs using IPv6 [::], or IPv4 0.0.0.0 if IPv6 is not supported.

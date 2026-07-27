@@ -1,12 +1,11 @@
 ﻿using ChasmaWebApi.Data.Objects.Status;
-using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Messages;
 
 /// <summary>
 /// Class representing the components of a Heartbeat Message
 /// </summary>
-public class HeartbeatMessage : ChasmaXmlBase
+public class HeartbeatMessage
 {
     /// <summary>
     /// Gets or sets the message of the heartbeat.

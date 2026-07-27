@@ -1,12 +1,11 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
-using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Responses;
 
 /// <summary>
 /// Class representing the base behavior and components of a response that is sent to a client.
 /// </summary>
-public class ResponseBase : ChasmaXmlBase, IResponse
+public class ResponseBase : IResponse
 {
     // <inheritdoc/>
     public bool IsErrorResponse { get; set; }

@@ -1,12 +1,11 @@
 ﻿using ChasmaWebApi.Data.Objects.Git;
-using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing a request to retrieve the details of a specific stash entry from the specified repository.
     /// </summary>
-    public class GetStashDetailsRequest : ChasmaXmlBase
+    public class GetStashDetailsRequest
     {
         /// <summary>
         /// Gets or sets the identifier of the repository for which to retrieve the stash details.

@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Configuration
+﻿namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing the request to delete a repository.
     /// </summary>
-    public class DeleteRepositoryRequest : ChasmaXmlBase
+    public class DeleteRepositoryRequest
     {
         /// <summary>
         /// Gets or sets the repository identifier.

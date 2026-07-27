@@ -1,12 +1,11 @@
 ﻿using ChasmaWebApi.Data.Objects.Git;
-using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class representing the request body for restoring a file.
     /// </summary>
-    public class GitRestoreRequest : ChasmaXmlBase
+    public class GitRestoreRequest
     {
         /// <summary>
         /// Gets or sets the selected file to be restored.

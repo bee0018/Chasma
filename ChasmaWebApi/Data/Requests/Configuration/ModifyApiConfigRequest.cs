@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Configuration
+﻿namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing a request to modify the API configuration.
     /// </summary>
-    public class ModifyApiConfigRequest : ChasmaXmlBase
+    public class ModifyApiConfigRequest
     {
         /// <summary>
         /// Gets or sets the newly modified API configurations to be applied.

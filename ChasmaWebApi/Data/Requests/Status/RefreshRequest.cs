@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Status
+﻿namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class representing the request body to refresh user tokens.
     /// </summary>
-    public class RefreshRequest : ChasmaXmlBase
+    public class RefreshRequest
     {
         /// <summary>
         /// Gets or sets the refresh token to evaluate.

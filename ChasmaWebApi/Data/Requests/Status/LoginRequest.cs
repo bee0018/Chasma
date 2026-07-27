@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Status
+﻿namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class representing a login request from the client.
     /// </summary>
-    public class LoginRequest : ChasmaXmlBase
+    public class LoginRequest
     {
         /// <summary>
         /// Gets or sets the user name.

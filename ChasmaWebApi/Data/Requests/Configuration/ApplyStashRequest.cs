@@ -1,12 +1,11 @@
-﻿using ChasmaWebApi.Util;
-using LibGit2Sharp;
+﻿using LibGit2Sharp;
 
 namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing a request to apply a stash configuration.
     /// </summary>
-    public class ApplyStashRequest : ChasmaXmlBase
+    public class ApplyStashRequest
     {
         /// <summary>
         /// Gets or sets the identifier of the repository where the stash is located.

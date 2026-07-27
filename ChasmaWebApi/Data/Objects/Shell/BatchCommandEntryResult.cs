@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Objects.Shell
+﻿namespace ChasmaWebApi.Data.Objects.Shell
 {
     /// <summary>
     /// Class representing the result of a batch command entry.
     /// </summary>
-    public class BatchCommandEntryResult : ChasmaXmlBase
+    public class BatchCommandEntryResult
     {
         /// <summary>
         /// Gets or sets the name of the repository.

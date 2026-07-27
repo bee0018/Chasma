@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Configuration
+﻿namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing a request to add multiple Git repositories from the local filesystem.
     /// </summary>
-    public class AddGitRepositoriesRequest : ChasmaXmlBase
+    public class AddGitRepositoriesRequest 
     {
         /// <summary>
         /// Gets or sets the unique identifier for the user.
