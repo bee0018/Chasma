@@ -789,37 +789,6 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/addLocalGitRepositories": {
-      "post": {
-        "tags": [
-          "RepositoryConfiguration"
-        ],
-        "operationId": "RepositoryConfiguration_AddLocalGitRepositories",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddLocalRepositoriesResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/RepositoryConfiguration/addGitRepository": {
       "post": {
         "tags": [
@@ -3310,25 +3279,6 @@
                 "type": "array",
                 "items": {
                   "type": "string"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "AddLocalRepositoriesResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ResponseBase"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "currentRepositories": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/LocalGitRepository"
                 }
               }
             }
