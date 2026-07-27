@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Shell
+﻿namespace ChasmaWebApi.Data.Requests.Shell
 {
     /// <summary>
     /// Class representing a request to execute a shell command.
     /// </summary>
-    public class ExecuteShellCommandRequest : ChasmaXmlBase
+    public class ExecuteShellCommandRequest
     {
         /// <summary>
         /// Gets or sets the repository identifier.

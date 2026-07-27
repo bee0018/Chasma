@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Status;
+﻿namespace ChasmaWebApi.Data.Requests.Status;
 
 /// <summary>
 /// Class representing components for staging/unstaging a file.
 /// </summary>
-public class ApplyStagingActionRequest : ChasmaXmlBase
+public class ApplyStagingActionRequest
 {
     /// <summary>
     /// Gets or sets the repository key.

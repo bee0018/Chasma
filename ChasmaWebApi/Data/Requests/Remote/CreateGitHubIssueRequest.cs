@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Remote
+﻿namespace ChasmaWebApi.Data.Requests.Remote
 {
     /// <summary>
     /// Class representing the components needed to create a GitHub issue.
     /// </summary>
-    public class CreateGitHubIssueRequest : ChasmaXmlBase
+    public class CreateGitHubIssueRequest
     {
         /// <summary>
         /// Gets or sets the repository name.

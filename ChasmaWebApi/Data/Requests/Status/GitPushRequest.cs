@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Status
+﻿namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class representing the git function to 'git push'.
     /// </summary>
-    public class GitPushRequest : ChasmaXmlBase
+    public class GitPushRequest
     {
         /// <summary>
         /// Gets or sets the repository identifier.

@@ -1,12 +1,11 @@
-﻿using ChasmaWebApi.Util;
-using LibGit2Sharp;
+﻿using LibGit2Sharp;
 
 namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class describing the request body for a Git reset operation, which resets the current HEAD to a specified state.
     /// </summary>
-    public class GitResetRequest : ChasmaXmlBase
+    public class GitResetRequest
     {
         /// <summary>
         /// Gets or sets the unique identifier of the repository.

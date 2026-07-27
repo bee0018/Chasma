@@ -1,12 +1,11 @@
 ﻿using ChasmaWebApi.Data.Objects.Git;
-using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class representing a request to perform a Git checkout operation.
     /// </summary>
-    public class GitCheckoutRequest : ChasmaXmlBase
+    public class GitCheckoutRequest
     {
         /// <summary>
         /// Gets or sets the ID of the repository to perform the checkout on.

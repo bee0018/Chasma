@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Configuration
+﻿namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing the components needed to delete a branch.
     /// </summary>
-    public class DeleteBranchRequest : ChasmaXmlBase
+    public class DeleteBranchRequest
     {
         /// <summary>
         /// Gets or sets the repository identifier.

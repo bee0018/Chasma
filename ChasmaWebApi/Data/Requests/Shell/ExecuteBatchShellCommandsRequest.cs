@@ -1,9 +1,8 @@
 ﻿using ChasmaWebApi.Data.Objects.Shell;
-using ChasmaWebApi.Util;
 
 namespace ChasmaWebApi.Data.Requests.Shell
 {
-    public class ExecuteBatchShellCommandsRequest : ChasmaXmlBase
+    public class ExecuteBatchShellCommandsRequest
     {
         /// <summary>
         /// Gets or sets the list of batch command entries.

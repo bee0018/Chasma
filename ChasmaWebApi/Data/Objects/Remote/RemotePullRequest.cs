@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Objects.Remote
+﻿namespace ChasmaWebApi.Data.Objects.Remote
 {
     /// <summary>
     /// Class representing the details of a remote pull request.
     /// </summary>
-    public class RemotePullRequest : ChasmaXmlBase
+    public class RemotePullRequest
     {
         /// <summary>
         /// Gets or sets the repository identifier.

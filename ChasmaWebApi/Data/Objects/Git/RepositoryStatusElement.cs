@@ -1,12 +1,11 @@
-﻿using ChasmaWebApi.Util;
-using LibGit2Sharp;
+﻿using LibGit2Sharp;
 
 namespace ChasmaWebApi.Data.Objects.Git
 {
     /// <summary>
     /// Class representing a repository status element.
     /// </summary>
-    public class RepositoryStatusElement : ChasmaXmlBase
+    public class RepositoryStatusElement
     {
         /// <summary>
         /// Gets or sets the repository identifier this file is associated to.

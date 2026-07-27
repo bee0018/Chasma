@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Messages.Application
+﻿namespace ChasmaWebApi.Data.Messages.Application
 {
     /// <summary>
     /// Class representing the message to indicate that the system is ready.
     /// </summary>
-    public class GetSystemReadyMessage : ChasmaXmlBase
+    public class GetSystemReadyMessage
     {
         /// <summary>
         /// Gets or sets a value indicating whether the system is ready.

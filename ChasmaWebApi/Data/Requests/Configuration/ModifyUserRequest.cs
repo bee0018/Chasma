@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Configuration
+﻿namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing a request to modify an existing user in the application.
     /// </summary>
-    public class ModifyUserRequest : ChasmaXmlBase
+    public class ModifyUserRequest
     {
         /// <summary>
         /// Gets or sets the user identifier.

@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Status
+﻿namespace ChasmaWebApi.Data.Requests.Status
 {
     /// <summary>
     /// Class representing a request to get the Git diff for a specific file in a repository.
     /// </summary>
-    public class GitDiffRequest : ChasmaXmlBase
+    public class GitDiffRequest
     {
         /// <summary>
         /// Gets or sets the repository identifier.

@@ -1,11 +1,9 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Configuration
+﻿namespace ChasmaWebApi.Data.Requests.Configuration
 {
     /// <summary>
     /// Class representing the request to add a new branch to a repository.
     /// </summary>
-    public class AddNewBranchRequest : ChasmaXmlBase
+    public class AddNewBranchRequest
     {
         /// <summary>
         /// Gets or sets the repository identifier.

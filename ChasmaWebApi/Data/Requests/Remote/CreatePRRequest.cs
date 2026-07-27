@@ -1,12 +1,10 @@
-﻿using ChasmaWebApi.Util;
-
-namespace ChasmaWebApi.Data.Requests.Remote
+﻿namespace ChasmaWebApi.Data.Requests.Remote
 {
     /// <summary>
     /// Class representing a request to create a pull request.
     /// Note: This request will be used for GitHub pull requests since it will be used with the Ocktokit library.
     /// </summary>
-    public class CreatePRRequest : ChasmaXmlBase
+    public class CreatePRRequest
     {
         /// <summary>
         /// Gets or sets the repository identifier.
