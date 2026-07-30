@@ -11,6 +11,11 @@
         public string RepositoryName { get; set; }
 
         /// <summary>
+        /// Gets or sets the branch name to sync.
+        /// </summary>
+        public string BranchName { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the specified branch exists.
         /// </summary>
         public bool BranchExists { get; set; }

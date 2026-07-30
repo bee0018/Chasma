@@ -605,7 +605,8 @@ namespace ChasmaWebApi.Controllers
             }
 
             string branchName = request.BranchName;
-            if (string.IsNullOrEmpty(branchName))
+            bool syncSpecifiedBranch = request.SyncSpecifiedBranch;
+            if (syncSpecifiedBranch && string.IsNullOrEmpty(branchName))
             {
                 logger.LogError("Invalid {request} because the branch name was empty. Sending error response.", requestName);
                 response.IsErrorResponse = true;
@@ -614,7 +615,7 @@ namespace ChasmaWebApi.Controllers
             }
 
             bool isSkippingBuildRetrieval = request.SkipBuildRetrieval;
-            List<BranchSyncStatus> branchSyncStatuses = applicationControlService.GetBranchSyncStatuses(branchName, cacheManager.Repositories.Values, cacheManager.WorkingDirectories, isSkippingBuildRetrieval);
+            List<BranchSyncStatus> branchSyncStatuses = applicationControlService.GetBranchSyncStatuses(branchName, isSkippingBuildRetrieval, syncSpecifiedBranch, user);
             logger.LogInformation("Successfully retrieved branch sync status for branch: {branch}", branchName);
             response.BranchSyncStatuses = branchSyncStatuses;
             return Ok(response);

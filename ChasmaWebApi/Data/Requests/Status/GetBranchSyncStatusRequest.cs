@@ -19,5 +19,10 @@
         /// Gets or sets a value indicating whether to skip branch build retrieval.
         /// </summary>
         public bool SkipBuildRetrieval { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the user is synchronizing a specified branch.
+        /// </summary>
+        public bool SyncSpecifiedBranch { get; set; }
     }
 }

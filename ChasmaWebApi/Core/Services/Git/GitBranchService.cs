@@ -245,18 +245,44 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <param name="workingDirectory">The working directory.</param>
         /// <param name="branchName">The branch to check for.</param>
         /// <param name="logger">The logging instance.</param>
+        /// <param name="syncSpecifiedBranch">Flag indicating whether the user is synchronizing a specific branch.</param>
         /// <returns>True if the branch exists; false otherwise.</returns>
-        public static bool DoesBranchExist(string workingDirectory, string branchName, ILogger logger)
+        public static bool DoesBranchExist(string workingDirectory, string branchName, ILogger logger, bool syncSpecifiedBranch)
         {
             try
             {
                 using Repository repo = new(workingDirectory);
-                return repo.Branches.Select(i => i.FriendlyName).Contains(branchName);
+                if (syncSpecifiedBranch)
+                {
+                    return repo.Branches.Select(i => i.FriendlyName).Contains(branchName);
+                }
+
+                return repo.Head != null;
             }
             catch (Exception ex)
             {
                 logger.LogWarning("Error when trying to see if {branch} exists in directory {dir}: {error}", branchName, workingDirectory, ex);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets the head branch name for the specified repository.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory.</param>
+        /// <param name="logger">The internal API logger.</param>
+        /// <returns>The name of the branch HEAD.</returns>
+        public static string GetHeadBranchName(string workingDirectory, ILogger logger)
+        {
+            try
+            {
+                using Repository repo = new(workingDirectory);
+                return repo.Head.FriendlyName;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning("Error when trying to see if head branch exists in directory {dir}: {error}", workingDirectory, ex);
+                return string.Empty;
             }
         }
 
