@@ -9,6 +9,7 @@ import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
 import CheckoutModal from "../modals/CheckoutModal";
 import BranchSyncModalConfirmationModal from "../modals/BranchSyncModalConfirmation";
+import Checkbox from "../Checkbox";
 
 /**
  * Initializes a new instance of the GlobalPullRequestTab component
@@ -43,6 +44,9 @@ const GlobalRepositoryTab: React.FC = () => {
 
     /** Gets or sets a value indicating whether the user is confirming branch synchronization. */
     const [isConfirmingBranchSync, setIsConfirmingBranchSync] = useState<boolean>(false);
+
+    /** Gets or sets a value indicating whether the user is syncing the head branch on each of the repositories. */
+    const [syncSpecificBranch, setSyncSpecificBranch] = useState<boolean>(false);
 
     /** The logged-in user. **/
     const user = useCacheStore((state) => state.user);
@@ -94,6 +98,7 @@ const GlobalRepositoryTab: React.FC = () => {
         request.branchName = branchSyncSearchQuery;
         request.userId = user?.userId;
         request.skipBuildRetrieval = isSkipping;
+        request.syncSpecifiedBranch = syncSpecificBranch;
         try {
             const response = await statusClient.getBranchSyncStatus(request);
             if (response.isErrorResponse) {
@@ -173,6 +178,18 @@ const GlobalRepositoryTab: React.FC = () => {
         if (status.healthScore.score === 100) {
             return "excellent"
         }
+    };
+
+    /**
+     * Handles the event when the user wants to select a specific branch to sync across the repositories.
+     * @param isSyncingSpecificBranch Flag indicating whether the user is syncing a specific branch.
+     */
+    const handleSyncBranchSelection = (isSyncingSpecificBranch: boolean) => {
+        if (!isSyncingSpecificBranch) {
+            setBranchSyncSearchQuery("");
+        }
+
+        setSyncSpecificBranch(isSyncingSpecificBranch);
     };
 
     /** Gets pull request update every 2.5s **/
@@ -319,12 +336,21 @@ const GlobalRepositoryTab: React.FC = () => {
                         <div className="workflow-page-header">
                             <h1>Cross-Repo Branches</h1>
                             <p>Keep every branch in lockstep—system-wide insights without the chaos🔀</p>
-                            <input
-                                type="text"
-                                placeholder="Search branch to sync..."
-                                value={branchSyncSearchQuery}
-                                onChange={e => setBranchSyncSearchQuery(e.target.value)}
-                                className="input-field" />
+                            <div style={{ textAlign: "left", marginBottom: "10px" }}>
+                                <Checkbox
+                                    label="Search status for specific branch across repositories"
+                                    onBoxChecked={handleSyncBranchSelection}
+                                    checked={syncSpecificBranch}
+                                />
+                            </div>
+                            {syncSpecificBranch &&
+                                <input
+                                    type="text"
+                                    placeholder="Search branch to sync..."
+                                    value={branchSyncSearchQuery}
+                                    onChange={e => setBranchSyncSearchQuery(e.target.value)}
+                                    className="input-field" />
+                            }
                             <button
                                 className="submit-button"
                                 disabled={disableSendButton}
@@ -341,6 +367,7 @@ const GlobalRepositoryTab: React.FC = () => {
                                     <thead>
                                         <tr>
                                             <th>Repository Name</th>
+                                            <th>Branch Name</th>
                                             <th>Branch Existence</th>
                                             <th>Commits Behind Base</th>
                                             <th>Commits Ahead Of Base</th>
@@ -358,10 +385,8 @@ const GlobalRepositoryTab: React.FC = () => {
                                                 className={getBranchSyncRowTheme(status)}
                                             >
                                                 <td><b>{status.repositoryName}</b></td>
-                                                <td
-                                                    style={{ color: status.branchExists ? "white" : "orange" }}>
-                                                    {status.branchExists ? "Exists" : "Does not exist"}
-                                                </td>
+                                                <td>{status.branchName}</td>
+                                                <td>{status.branchExists ? "Found ✅" : "Not Found ❌"}</td>
                                                 <td
                                                     style={{ color: Number(status.behind) > 0 ? "yellow" : "white" }}>
                                                     {status.behind}
@@ -374,8 +399,8 @@ const GlobalRepositoryTab: React.FC = () => {
                                                 <td>{status.buildStatus}</td>
                                                 <td>{status.lastUpdated}</td>
                                                 <td>{status.healthScore?.score}%</td>
-                                                <td>
-                                                    <b>{status.healthScore?.scoreCategory}:</b>
+                                                <td style={{color: status.healthScore?.scoreCategory === "Failed to get status" ? "red" : ""}}>
+                                                    <b>{status.healthScore?.scoreCategory}</b>
                                                     <ul>
                                                         {status.healthScore?.description?.map(reason => {
                                                             return <li>{reason}</li>

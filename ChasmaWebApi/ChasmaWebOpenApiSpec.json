@@ -3720,6 +3720,9 @@
           "repositoryName": {
             "type": "string"
           },
+          "branchName": {
+            "type": "string"
+          },
           "branchExists": {
             "type": "boolean"
           },
@@ -3774,6 +3777,9 @@
             "format": "int32"
           },
           "skipBuildRetrieval": {
+            "type": "boolean"
+          },
+          "syncSpecifiedBranch": {
             "type": "boolean"
           }
         }

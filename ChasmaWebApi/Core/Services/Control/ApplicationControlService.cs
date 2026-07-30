@@ -5,7 +5,6 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
 using ChasmaWebApi.Core.Interfaces.Simulation;
 using ChasmaWebApi.Core.Services.Git;
-using ChasmaWebApi.Core.Services.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.DryRun;
 using ChasmaWebApi.Data.Objects.Git;
@@ -340,21 +339,24 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, IEnumerable<LocalGitRepository> repositories, IDictionary<string, string> workingDirectories, bool skipBuildRetrieval)
+        public List<BranchSyncStatus> GetBranchSyncStatuses(string branchName, bool skipBuildRetrieval, bool syncSpecifiedBranch, ApplicationUser user)
         {
             List<BranchSyncStatus> statuses = new();
-            foreach (LocalGitRepository repository in repositories)
+            foreach (LocalGitRepository repository in cacheManager.Repositories.Values)
             {
                 // We know the key to exist so this is a safe operation.
-                string workingDirectory = workingDirectories[repository.Id];
+                string workingDirectory = cacheManager.WorkingDirectories[repository.Id];
                 (string BuildStatus, string BuildConclusion) buildMetrics = ("N/A", "N/A");
-                RepositoryHealthScore healthScore = new();
+                RepositoryHealthScore healthScore = new() { ScoreCategory = "Unknown" };
                 BranchSyncStatus branchSyncStatus = new();
-                if (!GitBranchService.DoesBranchExist(workingDirectory, branchName, logger))
+                string headBranchName = GitBranchService.GetHeadBranchName(workingDirectory, logger);
+                string branchToSync = syncSpecifiedBranch ? branchName : headBranchName;
+                if (!GitBranchService.DoesBranchExist(workingDirectory, branchToSync, logger, syncSpecifiedBranch))
                 {
                     branchSyncStatus = new()
                     {
                         RepositoryName = repository.GetDisplayName(),
+                        BranchName = branchToSync,
                         BranchExists = false,
                         Ahead = "-",
                         Behind = "-",
@@ -366,6 +368,30 @@ namespace ChasmaWebApi.Core.Services.Control
                 }
                 else
                 {
+                    bool checkoutNeeded = (headBranchName != branchName) && syncSpecifiedBranch;
+                    if (checkoutNeeded)
+                    {
+                        string stashMessage = $"Auto stash for branch sync status at ${DateTimeOffset.Now:g}";
+                        if (!gitBranchService.TryCheckoutBranch(workingDirectory, branchToSync, BranchCheckoutMode.StashOnly, stashMessage, out string errorMessage, user))
+                        {
+                            healthScore.ScoreCategory = "Failed to get status";
+                            branchSyncStatus = new()
+                            {
+                                RepositoryName = repository.GetDisplayName(),
+                                BranchName = branchToSync,
+                                BranchExists = false,
+                                Ahead = "-",
+                                Behind = "-",
+                                PullRequestOpen = false,
+                                BuildStatus = buildMetrics.BuildStatus,
+                                LastUpdated = "-",
+                                HealthScore = healthScore,
+                            };
+                            statuses.Add(branchSyncStatus);
+                            continue;
+                        }
+                    }
+
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
                     string token = RemoteHelper.GetApiToken(remoteHostPlatform);
                     string decryptedToken = encryptionService.DecryptString(token);
@@ -381,18 +407,18 @@ namespace ChasmaWebApi.Core.Services.Control
                         }
                         else if (remoteHostPlatform == RemoteHostPlatform.GitHub)
                         {
-                            isPullRequestOpen = cacheManager.GitHubPullRequests.Values.Any(i => i.RepositoryId == repository.Id && i.BranchName == branchName && !i.Merged);
+                            isPullRequestOpen = cacheManager.GitHubPullRequests.Values.Any(i => i.RepositoryId == repository.Id && i.BranchName == branchToSync && !i.Merged);
                             if (gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, decryptedToken, out List<WorkflowRunResult> gitHubResults, out _))
                             {
-                                buildMetrics = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchName);
+                                buildMetrics = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchToSync);
                             }
                         }
                         else if (remoteHostPlatform == RemoteHostPlatform.GitLab)
                         {
-                            isPullRequestOpen = cacheManager.GitLabMergeRequests.Values.Any(i => i.RepositoryId == repository.Id && i.BranchName == branchName && !i.Merged);
+                            isPullRequestOpen = cacheManager.GitLabMergeRequests.Values.Any(i => i.RepositoryId == repository.Id && i.BranchName == branchToSync && !i.Merged);
                             if (gitLabService.TryGetPipelineJobResults(repository, out List<WorkflowRunResult> gitLabResults, out _))
                             {
-                                buildMetrics = GetBuildStatusFromRemoteBuildResults(gitLabResults, branchName);
+                                buildMetrics = GetBuildStatusFromRemoteBuildResults(gitLabResults, branchToSync);
                             }
                         }
                     }
@@ -402,6 +428,7 @@ namespace ChasmaWebApi.Core.Services.Control
                     branchSyncStatus = new()
                     {
                         RepositoryName = repository.GetDisplayName(),
+                        BranchName = branchToSync,
                         BranchExists = true,
                         Ahead = repositorySummary?.CommitsAhead.ToString() ?? "",
                         Behind = repositorySummary?.CommitsBehind.ToString() ?? "",
@@ -410,8 +437,20 @@ namespace ChasmaWebApi.Core.Services.Control
                         LastUpdated = repositorySummary?.LastUpdated ?? "",
                         HealthScore = healthScore,
                     };
+                    if (checkoutNeeded)
+                    {
+                        if (!gitBranchService.TryCheckoutBranch(workingDirectory, headBranchName, BranchCheckoutMode.Default, null, out string errorMessage, user))
+                        {
+                            logger.LogError("Failed to checkout original branch {branch} for repository {repo}: {error}", headBranchName, repository.GetDisplayName(), errorMessage);
+                        }
+
+                        if (!gitStashService.TryPopStash(workingDirectory, out string stashApplyError))
+                        {
+                            logger.LogError("Failed to apply stash on original branch {branch} for repository {repo}: {error}", headBranchName, repository.GetDisplayName(), stashApplyError);
+                        }
+                    }
                 }
-                
+
                 statuses.Add(branchSyncStatus);
             }
 
