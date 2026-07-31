@@ -11,8 +11,11 @@
     StashClient,
     UserClient
 } from "../API/ChasmaWebApiClient";
-import {apiBaseUrl} from "../environmentConstants";
+import { apiBaseUrl } from "../environmentConstants";
 import { useCacheStore } from "./CacheManager";
+
+// High timeout for long-running operations (e.g., 5 minutes for heavy operations)
+const TIMEOUT_MS = 15 * 60 * 1000;
 
 /** Gets the fetch operation to get data with authorization headers. */
 const fetchWithAuth: typeof window.fetch = (input, init) => {
@@ -22,7 +25,30 @@ const fetchWithAuth: typeof window.fetch = (input, init) => {
         headers.set("Authorization", `Bearer ${token}`);
     }
 
-    return window.fetch(input, { ...init, headers });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+        controller.abort(new Error(`Request timed out after ${TIMEOUT_MS}ms`));
+        useCacheStore.getState().setNotification({
+            title: "Failed to complete request.",
+            message: "The request has timed out. Review server logs for more information.",
+            isError: true,
+        });
+    }, TIMEOUT_MS);
+
+    if (init?.signal) {
+        if (init.signal.aborted) {
+            controller.abort(init.signal.reason);
+        } else {
+            init.signal.addEventListener("abort", () => {
+                controller.abort(init.signal?.reason);
+            },{ once: true });
+        }
+    }
+
+    return window.fetch(input, { ...init, headers, signal: controller.signal })
+        .finally(() => {
+            clearTimeout(timeout);
+        });
 };
 
 /** Gets the user management client that interfaces with the web API. **/

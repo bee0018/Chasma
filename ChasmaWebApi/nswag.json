@@ -57,7 +57,7 @@
       "useGetBaseUrlMethod": false,
       "baseUrlTokenName": "https://localhost:5001",
       "queryNullValue": "",
-      "useAbortSignal": false,
+      "useAbortSignal": true,
       "inlineNamedDictionaries": false,
       "inlineNamedAny": false,
       "includeHttpContext": false,
