@@ -237,7 +237,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
                         )}
                     </div>
                     <h2 className="modal-title">{title}</h2>
-                    <span><code>{workingBranchName}</code> ➜ <code>{destinationBranch}</code></span>
+                    {!successfullyMerged && <span><code>{workingBranchName}</code> ➜ <code>{destinationBranch}</code></span>}
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {branchesList && branchesList.length > 0 && (
                         <div hidden={successfullyMerged}>

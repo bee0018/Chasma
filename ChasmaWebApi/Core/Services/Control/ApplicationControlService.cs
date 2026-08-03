@@ -257,9 +257,9 @@ namespace ChasmaWebApi.Core.Services.Control
         #region Branch Configuration
 
         // <inheritdoc />
-        public bool TryAddNewBranch(string workingDirectory, string branchName, string username, string token, out string errorMessage)
+        public bool TryAddNewBranch(string workingDirectory, string branchName, LocalGitRepository repository, out string errorMessage)
         {
-            return gitBranchService.TryAddBranch(workingDirectory, branchName, username, token, out errorMessage);
+            return gitBranchService.TryAddBranch(workingDirectory, branchName, repository, out errorMessage);
         }
 
         // <inheritdoc />
@@ -275,9 +275,9 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public List<string> GetAllBranchesForRepository(string workingDirectory)
+        public List<string> GetAllBranchesForRepository(string workingDirectory, LocalGitRepository repository)
         {
-            return gitBranchService.GetAllBranches(workingDirectory);
+            return gitBranchService.GetAllBranches(workingDirectory, repository);
         }
 
         // <inheritdoc />
@@ -563,6 +563,18 @@ namespace ChasmaWebApi.Core.Services.Control
 
             executionOutput = "Invalid synchronization step specified.";
             return false;
+        }
+
+        // <inheritdoc />
+        public bool TryInitializeRepository(InitializedRepositoryTemplate template, out string errorMessage)
+        {
+            return gitRepositoryService.TryInitializeRepository(template, out errorMessage);
+        }
+
+        // <inheritdoc />
+        public LocalGitRepository ConnectRemoteRepository(InitializedRepositoryTemplate template, string headBranchName, string remoteUrl, out string errorMessage)
+        {
+            return gitRepositoryService.ConnectRemoteRepository(template, headBranchName, remoteUrl, out errorMessage);
         }
 
         #endregion

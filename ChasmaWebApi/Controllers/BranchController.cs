@@ -119,10 +119,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
-            string decryptedToken = encryptionService.DecryptString(token);
-            string username = RemoteHelper.GetRemoteHostUsername(repository);
-            if (!applicationControlService.TryAddNewBranch(workingDirectory, branchName, username, decryptedToken, out string errorMessage))
+            if (!applicationControlService.TryAddNewBranch(workingDirectory, branchName, repository, out string errorMessage))
             {
                 logger.LogError("Failed to create new branch {branchName} for repository {repoId}. Reason: {reason}", branchName, repoId, errorMessage);
                 response.IsErrorResponse = true;
@@ -285,7 +282,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.RepositoryId))
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Repository identifier must be populated. Cannot get branches.";
@@ -293,7 +291,6 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            string repoId = request.RepositoryId;
             if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
             {
                 response.IsErrorResponse = true;
@@ -302,9 +299,17 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository localGitRepository))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = $"No repository found in cache for {repoId}. Cannot get branches.";
+                logger.LogError("No repository was found for repo identifier {repoId}. Sending error response.", repoId);
+                return BadRequest(response);
+            }
+
             try
             {
-                List<string> branchNames = applicationControlService.GetAllBranchesForRepository(workingDirectory);
+                List<string> branchNames = applicationControlService.GetAllBranchesForRepository(workingDirectory, localGitRepository);
                 response.BranchNames.AddRange(branchNames);
                 logger.LogInformation("Successfully retrieved branches for repo: {repoId}", repoId);
                 return Ok(response);

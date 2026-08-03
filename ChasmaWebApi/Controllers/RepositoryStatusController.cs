@@ -136,6 +136,7 @@ namespace ChasmaWebApi.Controllers
             response.CommitHash = summary.CommitHash;
             response.PullRequests = summary.PullRequests;
             response.LastUpdated = summary.LastUpdated;
+            response.IsUnborn = summary.IsUnborn;
             return Ok(response);
         }
 
@@ -617,7 +618,7 @@ namespace ChasmaWebApi.Controllers
             bool isSkippingBuildRetrieval = request.SkipBuildRetrieval;
             List<BranchSyncStatus> branchSyncStatuses = applicationControlService.GetBranchSyncStatuses(branchName, isSkippingBuildRetrieval, syncSpecifiedBranch, user);
             logger.LogInformation("Successfully retrieved branch sync status for branch: {branch}", branchName);
-            response.BranchSyncStatuses = branchSyncStatuses;
+            response.BranchSyncStatuses = branchSyncStatuses.OrderByDescending(i => i.BranchExists).ToList();
             return Ok(response);
         }
 

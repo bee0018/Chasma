@@ -1,4 +1,6 @@
-﻿using ChasmaWebApi.Data.Objects.Application;
+﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
+using ChasmaWebApi.Core.Services.Infrastructure;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using LibGit2Sharp;
 using NGitLab;
@@ -146,6 +148,88 @@ namespace ChasmaWebApi.Util
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets the fetch options for the specified local git repository, using the provided encryption service to decrypt the API token for authentication.
+        /// </summary>
+        /// <param name="repository">The local git repository.</param>
+        /// <param name="encryptionService">The encryption service.</param>
+        /// <returns>The fetch options.</returns>
+        public static FetchOptions GetFetchOptions(LocalGitRepository repository, IEncryptionService encryptionService)
+        {
+            string token = GetApiToken(repository.HostPlatform);
+            string decryptedToken = encryptionService.DecryptString(token);
+            string username = GetRemoteHostUsername(repository);
+            return new FetchOptions
+            {
+                CredentialsProvider = (url, user, credentials) =>
+                    new UsernamePasswordCredentials
+                    {
+                        Username = username,
+                        Password = decryptedToken
+                    }
+            };
+        }
+
+        /// <summary>
+        /// Gets the push options for the specified local git repository, using the provided encryption service to decrypt the API token for authentication.
+        /// </summary>
+        /// <param name="repository">The local git repository.</param>
+        /// <param name="encryptionService">The encryption service.</param>
+        /// <returns>The push options.</returns>
+        public static PushOptions GetPushOptions(LocalGitRepository repository, IEncryptionService encryptionService)
+        {
+            string token = GetApiToken(repository.HostPlatform);
+            string decryptedToken = encryptionService.DecryptString(token);
+            string username = GetRemoteHostUsername(repository);
+            return new PushOptions
+            {
+                CredentialsProvider = (url, user, credentials) =>
+                    new UsernamePasswordCredentials
+                    {
+                        Username = username,
+                        Password = decryptedToken
+                    }
+            };
+        }
+
+        /// <summary>
+        /// Gets the pull options for the specified local git repository, using the provided encryption service to decrypt the API token for authentication.
+        /// </summary>
+        /// <param name="repository">The local git repository.</param>
+        /// <param name="encryptionService">The encryption service.</param>
+        /// <returns>The pull options.</returns>
+        public static PullOptions GetPullOptions(LocalGitRepository repository, IEncryptionService encryptionService)
+        {
+            FetchOptions fetchOptions = GetFetchOptions(repository, encryptionService);
+            return new PullOptions { FetchOptions = fetchOptions };
+        }
+
+        /// <summary>
+        /// Gets the repository owner from the repository push URL.
+        /// </summary>
+        /// <param name="pushUrl">The push URL.</param>
+        /// <returns>The repository owner.</returns>
+        public static string GetRepositoryOwner(string pushUrl)
+        {
+            string repositoryOwner;
+            if (pushUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                // HTTPS: https://github.com/OWNER/REPO.git
+                Uri pushUri = new(pushUrl);
+                string[] httpParts = pushUri.AbsolutePath.Trim('/').Split('/');
+                repositoryOwner = httpParts[0];
+            }
+            else
+            {
+                // SSH: git@github.com:OWNER/REPO.git
+                string path = pushUrl.Split(':')[1];
+                string[] sshParts = path.Split('/');
+                repositoryOwner = sshParts[0];
+            }
+
+            return repositoryOwner;
         }
     }
 }

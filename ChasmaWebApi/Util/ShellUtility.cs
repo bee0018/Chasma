@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 
 namespace ChasmaWebApi.Util
 {
@@ -69,7 +70,10 @@ namespace ChasmaWebApi.Util
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
-            return new() { StartInfo = processInfo };
+            Process process = new() { StartInfo = processInfo };
+            process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+            process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
+            return process;
         }
 
         /// <summary>

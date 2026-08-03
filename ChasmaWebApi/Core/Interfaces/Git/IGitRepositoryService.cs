@@ -128,5 +128,24 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// <param name="workingDirectory">The working directory.</param>
         /// <returns>True if manifest files are going to pulled in; false otherwise.</returns>
         bool AreManifestFilesInChangeset(string workingDirectory);
+
+        /// <summary>
+        /// Tries to initialize a new git repository in the specified working directory with the provided commit message and head branch name.
+        /// </summary>
+        /// <param name="template">The template containing the initialization parameters.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <remarks>This will only initialize the repository if the repository is in an unborn state.</remarks>
+        /// <returns>True if the repository is initialized successfully; false otherwise.</returns>
+        bool TryInitializeRepository(InitializedRepositoryTemplate template, out string errorMessage);
+
+        /// <summary>
+        /// Connects the initialized repository to the remote repository with the provided remote URL and head branch name.
+        /// </summary>
+        /// <param name="template">The template containing the connection parameters.</param>
+        /// <param name="headBranchName">The name of the head branch.</param>
+        /// <param name="remoteUrl">The URL of the remote repository.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>The updated remote repository.</returns>
+        LocalGitRepository ConnectRemoteRepository(InitializedRepositoryTemplate template, string headBranchName, string remoteUrl, out string errorMessage);
     }
 }

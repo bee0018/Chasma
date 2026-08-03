@@ -52,11 +52,10 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// </summary>
         /// <param name="workingDirectory">The working directory of the repository.</param>
         /// <param name="branchName">The branch name to be added.</param>
-        /// <param name="username">The username for authentication to the repository.</param>
-        /// <param name="token">The token for authentication to the repository.</param>
+        /// <param name="repository">The local git repository.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the branch was created; false otherwise.</returns>
-        bool TryAddNewBranch(string workingDirectory, string branchName, string username, string token, out string errorMessage);
+        bool TryAddNewBranch(string workingDirectory, string branchName, LocalGitRepository repository, out string errorMessage);
 
         /// <summary>
         /// Trieds to delete a branch from the specified repository.
@@ -83,8 +82,9 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// Gets the list of all branches in the specified repository.
         /// </summary>
         /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="repository">The repository.</param>
         /// <returns>List of all local and remote branches in the repository.</returns>
-        List<string> GetAllBranchesForRepository(string workingDirectory);
+        List<string> GetAllBranchesForRepository(string workingDirectory, LocalGitRepository repository);
 
         /// <summary>
         /// Tries to merge the specified source branch into the current branch.
@@ -405,5 +405,23 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="executionOutput">The execution output.</param>
         /// <returns>True if the synchronization step passes; false otherwise.</returns>
         bool TryPerformSynchronizationStep(string workingDirectory, LocalGitRepository repository, SynchronizationStep syncStep, BranchCheckoutMode branchCheckoutMode, ApplicationUser user, out string executionOutput);
+
+        /// <summary>
+        /// Tries to initialize a new git repository in the specified working directory with the provided commit message and head branch name.
+        /// </summary>
+        /// <param name="template">The template containing the initialization parameters.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the repository is initialized successfully; false otherwise.</returns>
+        bool TryInitializeRepository(InitializedRepositoryTemplate template, out string errorMessage);
+
+        /// <summary>
+        /// Connects the initialized repository to the remote repository with the provided remote URL and head branch name.
+        /// </summary>
+        /// <param name="template">The template containing the connection parameters.</param>
+        /// <param name="headBranchName">The name of the head branch.</param>
+        /// <param name="remoteUrl">The URL of the remote repository.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>The updated remote repository.</returns>
+        LocalGitRepository ConnectRemoteRepository(InitializedRepositoryTemplate template, string headBranchName, string remoteUrl, out string errorMessage);
     }
 }

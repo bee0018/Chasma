@@ -52,5 +52,10 @@ namespace ChasmaWebApi.Data.Responses.Status
         /// Gets or sets the last time this repository was updated.
         /// </summary>
         public string LastUpdated { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the repository is in an unborn state (i.e., has no commits yet).
+        /// </summary>
+        public bool IsUnborn { get; set; }
     }
 }

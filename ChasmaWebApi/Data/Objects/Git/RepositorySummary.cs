@@ -51,5 +51,10 @@ namespace ChasmaWebApi.Data.Objects.Git
         /// Gets or sets a value indicating when the branch was last updated.
         /// </summary>
         public string LastUpdated { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the repository is in an unborn state (i.e., has no commits yet).
+        /// </summary>
+        public bool IsUnborn { get; set; }
     }
 }

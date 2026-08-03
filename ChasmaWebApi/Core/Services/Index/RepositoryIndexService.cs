@@ -1,4 +1,5 @@
-﻿using ChasmaWebApi.Core.Interfaces.Index;
+﻿using ChasmaWebApi.Core.Interfaces.Git;
+using ChasmaWebApi.Core.Interfaces.Index;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
@@ -25,7 +26,12 @@ namespace ChasmaWebApi.Core.Services.Index
         /// <summary>
         /// The internal API encryption service.
         /// </summary>
-        private readonly IEncryptionService encryptionService;
+        private readonly IEncryptionService EncryptionService;
+
+        /// <summary>
+        /// The internal API git repository service.
+        /// </summary>
+        private readonly IGitRepositoryService GitRepositoryService;
 
         /// <summary>
         /// The lock object used for concurrency.
@@ -39,12 +45,14 @@ namespace ChasmaWebApi.Core.Services.Index
         /// </summary>
         /// <param name="logger">The logger for this service.</param>
         /// <param name="cacheManager">The internal API cache manager.</param>
-        /// <param name="apiEncryptionService">The internal API encryption service.</param>
-        public RepositoryIndexService(ILogger<RepositoryIndexService> logger, ICacheManager cacheManager, IEncryptionService apiEncryptionService)
+        /// <param name="encryptionService">The internal API encryption service.</param>
+        /// <param name="gitRepositoryService">The internal API git repository service.</param>
+        public RepositoryIndexService(ILogger<RepositoryIndexService> logger, ICacheManager cacheManager, IEncryptionService encryptionService, IGitRepositoryService gitRepositoryService)
         {
             Logger = logger;
             CacheManager = cacheManager;
-            encryptionService = apiEncryptionService;
+            EncryptionService = encryptionService;
+            GitRepositoryService = gitRepositoryService;
         }
 
         #endregion
@@ -183,125 +191,12 @@ namespace ChasmaWebApi.Core.Services.Index
         #region Private Methods
 
         /// <summary>
-        /// Searches for git repositories on the logical drives on the machine running this application.
-        /// </summary>
-        /// <returns>The list of valid git repositories.</returns>
-        private List<Repository> SearchLogicalDrivesForGitRepos()
-        {
-            Stack<string> stack = new();
-            List<string> roots = Directory.GetLogicalDrives().ToList();
-            roots.ForEach(stack.Push);
-            List<string> unvalidatedGitPaths = new();
-            while (stack.Count > 0)
-            {
-                string path = stack.Pop();
-                string gitPath = Path.Combine(path, ".git");
-                try
-                {
-                    if (File.Exists(gitPath) || Directory.Exists(gitPath))
-                    {
-                        unvalidatedGitPaths.Add(path);
-                        continue;
-                    }
-
-                    List<string> subDirectories = Directory.EnumerateDirectories(path).ToList();
-                    subDirectories.ForEach(stack.Push);
-                }
-                catch
-                {
-                    // Ignore access errors
-                }
-            }
-
-            List<Repository> validRepositories = GetValidatedRepositories(unvalidatedGitPaths);
-            return validRepositories;
-        }
-
-        /// <summary>
-        /// Gets the validated git repositories.
-        /// </summary>
-        /// <param name="unvalidatedGitPaths">The list of unvalidated repository paths.</param>
-        /// <returns>The list of validated repositories.</returns>
-        private List<Repository> GetValidatedRepositories(IEnumerable<string> unvalidatedGitPaths)
-        {
-            List<Repository> validatedRepositories = new();
-            foreach (string gitPath in unvalidatedGitPaths)
-            {
-                try
-                {
-                    if (!Repository.IsValid(gitPath))
-                    {
-                        continue;
-                    }
-
-                    Repository repository = new(gitPath);
-                    validatedRepositories.Add(repository);
-                }
-                catch (Exception e)
-                {
-                    Logger.LogWarning("The git path {path} could not be added due to an error, so it will be skipped: {error}. ", gitPath, e);
-                }
-            }
-
-            return validatedRepositories;
-        }
-
-        /// <summary>
-        /// Determines if two repositories are duplicates of each other.
-        /// </summary>
-        /// <param name="incomingRepo">The newly created repository.</param>
-        /// <param name="existingRepo">The existing cached repository.</param>
-        /// <param name="incomingWorkingDirectory">The incoming working directory.</param>
-        /// <returns>True if the repositories match; false otherwise.</returns>
-        private bool IsDuplicateRepository(LocalGitRepository incomingRepo, LocalGitRepository existingRepo, string incomingWorkingDirectory)
-        {
-            if (incomingRepo.Id == existingRepo.Id)
-            {
-                return true;
-            }
-
-            string existingWorkingDirectory = CacheManager.WorkingDirectories[existingRepo.Id];
-            if (incomingWorkingDirectory == existingWorkingDirectory)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// Gets the name of the repository directory from the specified repository path, excluding the ".git" suffix if
         /// present.
         /// </summary>
         /// <param name="repoPath">The full file system path to the repository directory.</param>
         /// <returns>The name of the repository directory with the ".git" suffix removed if present.</returns>
         private static string? GetRepositoryName(string repoPath) => new DirectoryInfo(repoPath).Name?.Replace(".git", "");
-
-        /// <summary>
-        /// Gets the repository owner from the repository push URL.
-        /// </summary>
-        /// <param name="pushUrl">The push URL.</param>
-        /// <returns>The repository owner.</returns>
-        private static string GetRepositoryOwner(string pushUrl)
-        {
-            string repositoryOwner;
-            if (pushUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            {
-                // HTTPS: https://github.com/OWNER/REPO.git
-                Uri pushUri = new(pushUrl);
-                string[] httpParts = pushUri.AbsolutePath.Trim('/').Split('/');
-                repositoryOwner = httpParts[0];
-            }
-            else
-            {
-                // SSH: git@github.com:OWNER/REPO.git
-                string path = pushUrl.Split(':')[1];
-                string[] sshParts = path.Split('/');
-                repositoryOwner = sshParts[0];
-            }
-
-            return repositoryOwner;
-        }
 
         /// <summary>
         /// Registers the addition of a new repository by validating the repository path, extracting necessary information, and adding it to the cache if valid.
@@ -358,27 +253,41 @@ namespace ChasmaWebApi.Core.Services.Index
             }
 
             string pushUrl;
+            RemoteHostPlatform platform;
+            string repositoryOwner;
             try
             {
                 using Repository repository = new(repoPath);
                 LibGit2Sharp.Remote? remoteRepository = repository.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
                 if (remoteRepository == null)
                 {
-                    Logger.LogError("Failed to find remote repository in {repoPath}, so it cannot be added to cache when trying to add repository.", repoPath);
-                    result.RepositoryName = repositoryName;
-                    result.IsSuccessful = false;
-                    result.Reason = $"Failed to find remote repository in {repoPath}.";
-                    return result;
+                    Logger.LogWarning("Failed to find remote repository in {repoPath}, so it will be registered to the system as Local.", repoPath);
+                    platform = RemoteHostPlatform.Local;
+                    pushUrl = string.Empty;
+                    repositoryOwner = repository.Config.GetValueOrDefault("user.name", "Unknown Owner");
                 }
-
-                pushUrl = remoteRepository.PushUrl;
-                if (string.IsNullOrEmpty(pushUrl))
+                else
                 {
-                    Logger.LogError("Failed to find push url for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
-                    result.RepositoryName = repositoryName;
-                    result.IsSuccessful = false;
-                    result.Reason = $"Failed to find push url for {repositoryName}.";
-                    return result;
+                    pushUrl = remoteRepository.PushUrl;
+                    if (string.IsNullOrEmpty(pushUrl))
+                    {
+                        Logger.LogError("Failed to find push url for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
+                        result.RepositoryName = repositoryName;
+                        result.IsSuccessful = false;
+                        result.Reason = $"Failed to find push url for {repositoryName}.";
+                        return result;
+                    }
+
+                    platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
+                    repositoryOwner = RemoteHelper.GetRepositoryOwner(pushUrl);
+                    if (string.IsNullOrEmpty(repositoryOwner))
+                    {
+                        Logger.LogError("Failed to find repository owner for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
+                        result.RepositoryName = repositoryName;
+                        result.IsSuccessful = false;
+                        result.Reason = $"Failed to find repository owner for {repositoryName}.";
+                        return result;
+                    }
                 }
             }
             catch (Exception e)
@@ -390,17 +299,6 @@ namespace ChasmaWebApi.Core.Services.Index
                 return result;
             }
 
-            string? repositoryOwner = GetRepositoryOwner(pushUrl);
-            if (string.IsNullOrEmpty(repositoryOwner))
-            {
-                Logger.LogError("Failed to find repository owner for {repoName}, so it cannot be added to cache when trying to add repository.", repositoryName);
-                result.RepositoryName = repositoryName;
-                result.IsSuccessful = false;
-                result.Reason = $"Failed to find repository owner for {repositoryName}.";
-                return result;
-            }
-
-            RemoteHostPlatform platform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
             string repoCacheKey = Guid.NewGuid().ToString();
             LocalGitRepository localGitRepository = new()
             {
@@ -505,12 +403,12 @@ namespace ChasmaWebApi.Core.Services.Index
             if (remoteHostPlatform == RemoteHostPlatform.GitHub)
             {
                 remotePlatformUsername = apiConfiguration.GitHubUsername;
-                apiAccessToken = encryptionService.DecryptString(apiConfiguration.GitHubApiToken);
+                apiAccessToken = EncryptionService.DecryptString(apiConfiguration.GitHubApiToken);
             }
             else if (remoteHostPlatform == RemoteHostPlatform.GitLab)
             {
                 remotePlatformUsername = apiConfiguration.GitLabUsername;
-                apiAccessToken = encryptionService.DecryptString(apiConfiguration.GitLabApiToken);
+                apiAccessToken = EncryptionService.DecryptString(apiConfiguration.GitLabApiToken);
             }
             
             try

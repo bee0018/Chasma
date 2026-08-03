@@ -24,5 +24,10 @@
         /// Bitbucket remote host platform.
         /// </summary>
         Bitbucket,
+
+        /// <summary>
+        /// Offline repository disconnected from a remote host.
+        /// </summary>
+        Local,
     }
 }

@@ -37,6 +37,7 @@ import { Virtuoso } from "react-virtuoso";
 import PullModal from "../modals/PullModal";
 import RepositoryStatusSwitcher from "../modals/RepositoryStatusSwitcher";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
+import InitializeRepositoryModal from "../modals/InitializeRepositoryModal";
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -188,6 +189,12 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets a value indicating whether the stashes and automation actions tab is open. */
     const [isStashesAndAutomationOptionsOpen, setIsStashesAndAutomationOptionsOpen] = useState<boolean>(false);
 
+    /** Gets or sets a value indicating whether the repository is unborn. */
+    const [repoIsUnborn, setRepoIsUnborn] = useState<boolean | undefined>(false);
+
+    /** Gets or sets a value indicating whether the user is initializing a new repository. */
+    const [isInitializingRepository, setIsInitializingRepository] = useState<boolean>(false);
+
     useEffect(() => {
         setSelectedFile(null);
         setSelectedFiles(new Set());
@@ -199,6 +206,7 @@ const RepositoryStatusPage: React.FC = () => {
         setCommitsBehind(0);
         setOpenPullRequests(undefined);
         cleanUpSimulationResults();
+        setRepoIsUnborn(undefined);
     }, [repoId]);
 
     /** Load git status every 2.5s **/
@@ -245,6 +253,7 @@ const RepositoryStatusPage: React.FC = () => {
             setCommitHash(response.commitHash);
             setOpenPullRequests(response.pullRequests);
             setLastUpdated(response.lastUpdated);
+            setRepoIsUnborn(response.isUnborn);
         } catch (e) {
             if (e instanceof TypeError) {
                 // Not going to handle non-API/nswag related exceptions.
@@ -453,7 +462,7 @@ const RepositoryStatusPage: React.FC = () => {
     };
 
     /** Defines the maximum raw diff size. 2MB. */
-    const MAX_RAW_DIFF_SIZE = 2_000_000; // 2MB, adjust as needed
+    const MAX_RAW_DIFF_SIZE = 2_000_000;
 
     /** The parsed unified diff. */
     const parsedDiff = useMemo(() => {
@@ -570,6 +579,20 @@ const RepositoryStatusPage: React.FC = () => {
         setIsSwitchingStatusPages(false);
     };
 
+    /** Handles the event when the user successfully initializes a new repository. */
+    const handleIntializedRepositorySuccess = () => {
+        setRepoIsUnborn(false);
+        handleSelectFile(null, false);
+    };
+
+    /** Handles the event when the user selects the Custom Shell Commands Tab. */
+    const handleCustomShellCommandsTabSelected = () => {
+        handleTabClick("shell");
+        handleSelectFile(null, false);
+        const emptySet = new Set<string>();
+        setSelectedFiles(emptySet);
+    };
+
     useEffect(() => {
         const closeMenu = () => setContextMenu(null);
         window.addEventListener("click", closeMenu);
@@ -614,9 +637,8 @@ const RepositoryStatusPage: React.FC = () => {
                     className={`tab ${activeTab === "home" ? "active" : ""}`}
                     onClick={() => handleTabClick("home")}
                 >
-                    Repo Status 📊
+                    Repo Status 📊 
                 </div>
-
                 <div
                     className="sidebar-section-header"
                     onClick={() => setIsRepoActionsOpen(!isRepoActionsOpen)}
@@ -626,13 +648,16 @@ const RepositoryStatusPage: React.FC = () => {
                 </div>
                 {isRepoActionsOpen && (
                     <div className="sidebar-section-content">
-                        <div
-                            className="tab"
-                            onClick={() => setIsPullingChanges(true)}
-                        >
-                            Pull ⬇️
-                        </div>
-
+                        {selectedRepo && selectedRepo.hostPlatform !== RemoteHostPlatform.Local &&
+                            <>
+                                <div
+                                    className="tab"
+                                    onClick={() => setIsPullingChanges(true)}
+                                >
+                                    Pull ⬇️
+                                </div>
+                            </>
+                        }
                         {!isSafeMode &&
                             <>
                                 <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
@@ -681,62 +706,65 @@ const RepositoryStatusPage: React.FC = () => {
                                 </div>
                                 <div
                                     className={`tab ${activeTab === "shell" ? "active" : ""}`}
-                                    onClick={() => handleTabClick("shell")}>
+                                    onClick={handleCustomShellCommandsTabSelected}>
                                     Custom Shell Commands🖥️
                                 </div>
                             </>
                         }
                     </div>
                 )}
-
-                <div
-                    className="sidebar-section-header"
-                    onClick={() => setIsRemoteOptionsOpen(!isRemoteOptionsOpen)}
-                >
-                    <span>Remote Actions</span>
-                    <span className={`arrow ${isRemoteOptionsOpen ? "open" : ""}`}>▶</span>
-                </div>
-                {isRemoteOptionsOpen && !isSafeMode &&
+                {selectedRepo && selectedRepo.hostPlatform !== RemoteHostPlatform.Local &&
                     <>
-                        {user?.permissions
-                            && user.permissions.isUsingGitHubApi
-                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
-                            <div
-                                className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
-                                onClick={() => handleTabClick("pullRequest")}
-                                style={{ marginTop: "20px" }}
-                            >
-                                Create Pull Request📥
-                            </div>
-                        }
-                        {user?.permissions
-                            && user.permissions.isUsingGitLabApi
-                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
-                            <div
-                                className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
-                                onClick={() => handleTabClick("pullRequest")}
-                                style={{ marginTop: "20px" }}
-                            >
-                                Create Merge Request📥
-                            </div>
-                        }
-                        {user?.permissions
-                            && user.permissions.isUsingGitHubApi
-                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
-                            <div
-                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
-                                onClick={() => handleTabClick("issues")}>
-                                Create GitHub Issue🐛
-                            </div>
-                        }
-                        {user?.permissions
-                            && user.permissions.isUsingGitLabApi
-                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
-                            <div
-                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
-                                onClick={() => handleTabClick("issues")}>
-                                Create GitLab Issue🐛
-                            </div>
+                        <div
+                            className="sidebar-section-header"
+                            onClick={() => setIsRemoteOptionsOpen(!isRemoteOptionsOpen)}
+                        >
+                            <span>Remote Actions</span>
+                            <span className={`arrow ${isRemoteOptionsOpen ? "open" : ""}`}>▶</span>
+                        </div>
+                        {isRemoteOptionsOpen && !isSafeMode &&
+                            <>
+                                {user?.permissions
+                                    && user.permissions.isUsingGitHubApi
+                                    && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
+                                    <div
+                                        className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
+                                        onClick={() => handleTabClick("pullRequest")}
+                                        style={{ marginTop: "20px" }}
+                                    >
+                                        Create Pull Request📥
+                                    </div>
+                                }
+                                {user?.permissions
+                                    && user.permissions.isUsingGitLabApi
+                                    && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
+                                    <div
+                                        className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
+                                        onClick={() => handleTabClick("pullRequest")}
+                                        style={{ marginTop: "20px" }}
+                                    >
+                                        Create Merge Request📥
+                                    </div>
+                                }
+                                {user?.permissions
+                                    && user.permissions.isUsingGitHubApi
+                                    && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
+                                    <div
+                                        className={`tab ${activeTab === "issues" ? "active" : ""}`}
+                                        onClick={() => handleTabClick("issues")}>
+                                        Create GitHub Issue🐛
+                                    </div>
+                                }
+                                {user?.permissions
+                                    && user.permissions.isUsingGitLabApi
+                                    && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
+                                    <div
+                                        className={`tab ${activeTab === "issues" ? "active" : ""}`}
+                                        onClick={() => handleTabClick("issues")}>
+                                        Create GitLab Issue🐛
+                                    </div>
+                                }
+                            </>
                         }
                     </>
                 }
@@ -750,11 +778,22 @@ const RepositoryStatusPage: React.FC = () => {
                             <div className="panel-card">
                                 <div className="panel-header">
                                     <h2 className="page-description">Repository Summary</h2>
-                                    <Checkbox
-                                        label={"Safe Mode"}
-                                        onBoxChecked={setIsSafeMode}
-                                        tooltip={"When safe mode is enabled, no actual git execution will be performed. It will be all simulated."}
-                                    />
+                                    {repoIsUnborn && !isSafeMode &&
+                                        <button
+                                            className="stage-button stage"
+                                            onClick={() => setIsInitializingRepository(true)}
+                                            style={{ background: "green", fontWeight: "bold", color: "white" }}
+                                        >
+                                            Initialize Now🚀
+                                        </button>
+                                    }
+                                    {!repoIsUnborn &&
+                                        <Checkbox
+                                            label={"Safe Mode"}
+                                            onBoxChecked={setIsSafeMode}
+                                            tooltip={"When safe mode is enabled, no actual git execution will be performed. It will be all simulated."}
+                                        />
+                                    }
                                 </div>
                                 <div className="repo-summary" onClick={handleNavigateToBranchUrl}>
                                     <div className="repo-summary-item">
@@ -1230,7 +1269,7 @@ const RepositoryStatusPage: React.FC = () => {
             }
             {isPushingChanges &&
                 <PushModal
-                    repositoryId={repoId}
+                    repository={selectedRepo}
                     onClose={() => setIsPushingChanges(false)}
                     onSuccess={() => handleSelectFile(null, false)} />
             }
@@ -1321,6 +1360,14 @@ const RepositoryStatusPage: React.FC = () => {
                     repositoryId={repoId}
                     isSafeMode={isSafeMode}
                     user={user} />
+            }
+            {isInitializingRepository &&
+                <InitializeRepositoryModal
+                    onClose={() => setIsInitializingRepository(false)}
+                    repositoryId={repoId}
+                    userId={user?.userId}
+                    onSuccess={handleIntializedRepositorySuccess}
+                />
             }
             {isSwitchingStatusPages &&
                 <RepositoryStatusSwitcher

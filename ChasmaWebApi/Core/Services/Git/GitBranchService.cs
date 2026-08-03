@@ -1,6 +1,5 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Git;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
-using ChasmaWebApi.Core.Services.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Util;
@@ -65,9 +64,9 @@ namespace ChasmaWebApi.Core.Services.Git
         #endregion
 
         // <inheritdoc/>
-        public bool TryAddBranch(string workingDirectory, string branchName, string username, string token, out string errorMessage)
+        public bool TryAddBranch(string workingDirectory, string branchName, LocalGitRepository repository, out string errorMessage)
         {
-            if (TryAddBranchAutomatically(workingDirectory, branchName, username, token, out errorMessage))
+            if (TryAddBranchAutomatically(workingDirectory, branchName, repository, out errorMessage))
             {
                 return true;
             }
@@ -133,12 +132,21 @@ namespace ChasmaWebApi.Core.Services.Git
         }
 
         // <inheritdoc />
-        public List<string> GetAllBranches(string workingDirectory)
+        public List<string> GetAllBranches(string workingDirectory, LocalGitRepository repository)
         {
             using Repository repo = new(workingDirectory);
+            if (repository.HostPlatform == RemoteHostPlatform.Local)
+            {
+                return repo.Branches
+                    .Select(i => i.FriendlyName)
+                    .OrderBy(i => i)
+                    .ToList();
+            }
+
             try
             {
-                Commands.Fetch(repo, repo.Head.RemoteName, [], new FetchOptions(), null);
+                FetchOptions fetchOptions = RemoteHelper.GetFetchOptions(repository, EncryptionService);
+                Commands.Fetch(repo, repo.Head.RemoteName, [], fetchOptions, null);
             }
             catch (Exception e)
             {
@@ -165,7 +173,7 @@ namespace ChasmaWebApi.Core.Services.Git
             }
 
             Logger.LogWarning("Automatic merge failed for branch {sourceBranchName} into {destinationBranchName}. Reason: {errorMessage}", sourceBranchName, destinationBranchName, errorMessage);
-            return TryMergeBranchManually(workingDirectory, destinationBranchName, sourceBranchName, out errorMessage);
+            return TryMergeBranchManually(workingDirectory, destinationBranchName, sourceBranchName, localGitRepository, out errorMessage);
         }
 
         // <inheritdoc />
@@ -322,7 +330,13 @@ namespace ChasmaWebApi.Core.Services.Git
                     return false;
                 }
 
-                Commands.Fetch(repo, sourceBranch.RemoteName, [], new FetchOptions(), null);
+                if (localGitRepository.HostPlatform != RemoteHostPlatform.Local)
+                {
+                    // Fetch the latest changes if the repository is hosted on a remote platform.
+                    FetchOptions fetchOptions = RemoteHelper.GetFetchOptions(localGitRepository, EncryptionService);
+                    Commands.Fetch(repo, sourceBranch.RemoteName, [], fetchOptions, null);
+                }
+                
                 Commands.Checkout(repo, destinationBranch);
                 Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
                 MergeOptions options = new()
@@ -342,26 +356,19 @@ namespace ChasmaWebApi.Core.Services.Git
                     return false;
                 }
 
-                string username = RemoteHelper.GetRemoteHostUsername(localGitRepository);
-                string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform);
-                string decryptedToken = EncryptionService.DecryptString(token);
-                PushOptions pushOptions = new()
+                if (localGitRepository.HostPlatform != RemoteHostPlatform.Local)
                 {
-                    CredentialsProvider = (url, usernameFromUrl, types) =>
-                        new UsernamePasswordCredentials
-                        {
-                            Username = username,
-                            Password = decryptedToken,
-                        }
-                };
+                    // Push the merged changes if the repository is hosted on a remote platform.
+                    PushOptions pushOptions = RemoteHelper.GetPushOptions(localGitRepository, EncryptionService);
+                    repo.Network.Push(destinationBranch, pushOptions);
+                }
 
-                repo.Network.Push(destinationBranch, pushOptions);
                 return true;
             }
             catch (Exception e)
             {
                 errorMessage = $"Failed to merge branch {sourceBranchName} into {destinationBranchName} for repository at {workingDirectory}. Check server logs for more information.";
-                Logger.LogError(e, errorMessage);
+                Logger.LogError("Error when trying to merge {source} into {destination} for repository {repo} at {dir} because: {error}", sourceBranchName, destinationBranchName, localGitRepository.GetDisplayName(), workingDirectory, e);
                 return false;
             }
         }
@@ -374,8 +381,9 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <param name="destinationBranch">The branch to merge changes in.</param>
         /// <param name="sourceBranch">The changes to merge changes from.</param>
         /// <param name="errorMessage">The error message.</param>
+        /// <param name="localGitRepository">The local git repository that is performing merges.</param>
         /// <returns>True if the branch is merged; false otherwise.</returns>
-        private bool TryMergeBranchManually(string workingDirectory, string destinationBranch, string sourceBranch, out string errorMessage)
+        private bool TryMergeBranchManually(string workingDirectory, string destinationBranch, string sourceBranch, LocalGitRepository localGitRepository, out string errorMessage)
         {
             if (!ShellUtility.TryExecuteShellCommand("git fetch", workingDirectory, out errorMessage))
             {
@@ -395,7 +403,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 return false;
             }
 
-            if (!ShellUtility.TryExecuteShellCommand("git push", workingDirectory, out errorMessage))
+            if (localGitRepository.HostPlatform != RemoteHostPlatform.Local && !ShellUtility.TryExecuteShellCommand("git push", workingDirectory, out errorMessage))
             {
                 Logger.LogError(errorMessage);
                 return false;
@@ -409,11 +417,10 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         /// <param name="workingDirectory">The working directory.</param>
         /// <param name="branchName">The branch to be created.</param>
-        /// <param name="username">The user name of the user creating branch.</param>
-        /// <param name="token">The GitHub API token.</param>
+        /// <param name="localGitRepository">The local git repository.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the branch is added; false otherwise.</returns>
-        private bool TryAddBranchAutomatically(string workingDirectory, string branchName, string username, string token, out string errorMessage)
+        private bool TryAddBranchAutomatically(string workingDirectory, string branchName, LocalGitRepository localGitRepository, out string errorMessage)
         {
             errorMessage = string.Empty;
             Repository repository = null;
@@ -436,6 +443,11 @@ namespace ChasmaWebApi.Core.Services.Git
                     return false;
                 }
 
+                if (localGitRepository.HostPlatform == RemoteHostPlatform.Local)
+                {
+                    return true;
+                }
+
                 LibGit2Sharp.Remote remoteOrigin = repository.Network.Remotes.FirstOrDefault(i => i.Name == "origin");
                 if (remoteOrigin == null)
                 {
@@ -445,15 +457,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 }
 
                 repository.Branches.Update(newBranch, b => b.Remote = remoteOrigin.Name, b => b.UpstreamBranch = newBranch.CanonicalName);
-                PushOptions pushOptions = new()
-                {
-                    CredentialsProvider = (url, usernameFromUrl, types) =>
-                        new UsernamePasswordCredentials
-                        {
-                            Username = username,
-                            Password = token
-                        }
-                };
+                PushOptions pushOptions = RemoteHelper.GetPushOptions(localGitRepository, EncryptionService);
                 repository.Network.Push(newBranch, pushOptions);
                 Logger.LogInformation("Successfully created branch {branchName} in repository at {repoPath}.", branchName, workingDirectory);
                 return true;
@@ -552,6 +556,10 @@ namespace ChasmaWebApi.Core.Services.Git
             else if (repository.HostPlatform == RemoteHostPlatform.GitLab)
             {
                 CacheManager.GitLabMergeRequests.RemoveWhere(i => i.Value.BranchName == branchName);
+            }
+            else if (repository.HostPlatform == RemoteHostPlatform.Local)
+            {
+                Logger.LogInformation("No pull requests to stop tracking because {repo} is Local", repository.GetDisplayName());
             }
             else
             {
