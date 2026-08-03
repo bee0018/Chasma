@@ -949,6 +949,70 @@
         }
       }
     },
+    "/api/RepositoryConfiguration/initializeNewRepository": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_InitializeNewRepository",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitializeRepositoryRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitializeRepositoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RepositoryConfiguration/connectRemoteRepository": {
+      "post": {
+        "tags": [
+          "RepositoryConfiguration"
+        ],
+        "operationId": "RepositoryConfiguration_ConnectRemoteRepository",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectRemoteRepositoryRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectRemoteRepositoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/RepositoryStatus/gitStatus": {
       "post": {
         "tags": [
@@ -3131,13 +3195,15 @@
           "Unknown",
           "GitHub",
           "GitLab",
-          "Bitbucket"
+          "Bitbucket",
+          "Local"
         ],
         "enum": [
           0,
           1,
           2,
-          3
+          3,
+          4
         ]
       },
       "GetIgnoredRepositoriesMessage": {
@@ -3405,6 +3471,74 @@
           }
         }
       },
+      "InitializeRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "InitializeRepositoryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "repositoryId": {
+            "type": "string"
+          },
+          "commitMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "headBranchName": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ConnectRemoteRepositoryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repository": {
+                "$ref": "#/components/schemas/LocalGitRepository"
+              }
+            }
+          }
+        ]
+      },
+      "ConnectRemoteRepositoryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "url": {
+            "type": "string"
+          },
+          "headBranchName": {
+            "type": "string",
+            "nullable": true
+          },
+          "repositoryId": {
+            "type": "string"
+          }
+        }
+      },
       "GitStatusResponse": {
         "allOf": [
           {
@@ -3448,6 +3582,9 @@
               },
               "lastUpdated": {
                 "type": "string"
+              },
+              "isUnborn": {
+                "type": "boolean"
               }
             }
           }

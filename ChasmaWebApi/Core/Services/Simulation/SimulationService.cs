@@ -253,29 +253,35 @@ namespace ChasmaWebApi.Core.Services.Simulation
                 string clonedBranchPath = Path.Combine(mergeSimulationPath, Guid.NewGuid().ToString("N"));
                 try
                 {
-                    if (!ShellUtility.TryExecuteShellCommand($"git fetch --prune origin", workingDirectory, out string errorMessage))
+                    if (repository.HostPlatform != RemoteHostPlatform.Local && !ShellUtility.TryExecuteShellCommand($"git fetch --prune origin", workingDirectory, out string errorMessage))
                     {
                         Logger.LogError("Could not fetch latest changes in repository {id}.", repoId);
-                        DryRunHelper.FailSimulationResult(simulatedMergeResult, "Failed to create worktree because latest changes could not be retrieved.");
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, "Failed to create simulation workspace because latest changes could not be retrieved.");
                         dryRunResults.Add(simulatedMergeResult);
                         continue;
                     }
 
-                    Branch sourceBranch = repo.Branches[$"origin/{sourceBranchName}"];
+                    string resolvedSourceBranchName = repository.HostPlatform != RemoteHostPlatform.Local
+                        ? $"origin/{sourceBranchName}"
+                        : sourceBranchName;
+                    Branch sourceBranch = repo.Branches[resolvedSourceBranchName];
                     if (sourceBranch?.Tip == null)
                     {
-                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Source branch origin/{sourceBranchName} does not exist. Merge cannot be performed.");
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Source branch {resolvedSourceBranchName} does not exist. Merge cannot be performed.");
                         dryRunResults.Add(simulatedMergeResult);
-                        Logger.LogError("Source branch {sourceBranchName} does not exist. Sending error response.", sourceBranchName);
+                        Logger.LogError("Source branch {sourceBranchName} does not exist. Sending error response.", resolvedSourceBranchName);
                         continue;
                     }
 
-                    Branch destinationBranch = repo.Branches[$"origin/{destinationBranchName}"];
+                    string resolvedDestinationBranchName = repository.HostPlatform != RemoteHostPlatform.Local
+                        ? $"origin/{destinationBranchName}"
+                        : destinationBranchName;
+                    Branch destinationBranch = repo.Branches[resolvedDestinationBranchName];
                     if (destinationBranch?.Tip == null)
                     {
-                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Destination branch origin/{destinationBranchName} does not exist. Merge cannot be performed.");
+                        DryRunHelper.FailSimulationResult(simulatedMergeResult, $"Destination branch {resolvedDestinationBranchName} does not exist. Merge cannot be performed.");
                         dryRunResults.Add(simulatedMergeResult);
-                        Logger.LogError("Destination branch {destinationBranchName} does not exist. Sending error response.", destinationBranchName);
+                        Logger.LogError("Destination branch {destinationBranchName} does not exist. Sending error response.", resolvedDestinationBranchName);
                         continue;
                     }
 

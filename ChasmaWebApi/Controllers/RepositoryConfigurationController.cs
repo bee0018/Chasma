@@ -3,9 +3,12 @@ using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data;
 using ChasmaWebApi.Data.Messages;
 using ChasmaWebApi.Data.Models;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Requests.Configuration;
+using ChasmaWebApi.Data.Requests.Remote;
 using ChasmaWebApi.Data.Responses.Configuration;
+using ChasmaWebApi.Data.Responses.Remote;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -363,8 +366,185 @@ public class RepositoryConfigurationController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Initializes a new repository with the specified request data.
+    /// </summary>
+    /// <param name="request">The request to initialize a new repository.</param>
+    /// <returns>The response containing the result of the initialization attempt.</returns>
+    [HttpPost]
+    [Route("initializeNewRepository")]
+    public ActionResult<InitializeRepositoryResponse> InitializeNewRepository([FromBody] InitializeRepositoryRequest request)
+    {
+        string requestName = nameof(InitializeRepositoryRequest);
+        InitializeRepositoryResponse response = new();
+        if (request == null)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Null request was received. Cannot initialize repository.";
+            logger.LogError("Invalid {request} received to initialize repository. Sending error response.", requestName);
+            return BadRequest(response);
+        }
+
+        string repoId = request.RepositoryId;
+        if (string.IsNullOrEmpty(repoId))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Repository identifier is required.";
+            logger.LogError("Invalid {request} received to initialize repository because the repository identifier was null or empty. Sending error response.", requestName);
+            return Ok(response);
+        }
+
+        int userId = request.UserId;
+        if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Could not find user.";
+            logger.LogError("Invalid {request} received to initialize repository because user with id {userId} does not exist. Sending error response.", requestName, userId);
+            return Ok(response);
+        }
+
+        if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository localGitRepository))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "No repository was found in cache with the specified identifier.";
+            logger.LogError("No repository was found in cache with an identifier: {repoId}. Cannot initialize repository. Sending error response.", repoId);
+            return Ok(response);
+        }
+
+        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "No working directory was found in cache with the specified identifier.";
+            logger.LogError("No working directory was found in cache with an identifier: {repoId}. Cannot initialize repository. Sending error response.", repoId);
+            return Ok(response);
+        }
+
+        string commitMessage = request.CommitMessage ?? "Initial commit";
+        string headBranchName = request.HeadBranchName ?? "main";
+        InitializedRepositoryTemplate template = new()
+        {
+            User = user,
+            Repository = localGitRepository,
+            WorkingDirectory = workingDirectory,
+            CommitMessage = commitMessage,
+            HeadBranchName = headBranchName
+        };
+        if (!applicationControlService.TryInitializeRepository(template, out string errorMessage))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = errorMessage;
+            logger.LogError("Failed to initialize repository with identifier {repoId}. Sending error response.", repoId);
+            return Ok(response);
+        }
+
+        logger.LogInformation("Successfully initialized repository with identifier {repoId}.", repoId);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Connects the specified local repository to a remote repository using the provided URL and head branch name.
+    /// </summary>
+    /// <param name="request">The request to connect a remote repository.</param>
+    /// <returns>The response to connecting a remote repository.</returns>
+    [HttpPost]
+    [Route("connectRemoteRepository")]
+    public async Task<ActionResult<ConnectRemoteRepositoryResponse>> ConnectRemoteRepository([FromBody] ConnectRemoteRepositoryRequest request)
+    {
+        string requestName = nameof(ConnectRemoteRepositoryRequest);
+        ConnectRemoteRepositoryResponse response = new();
+        if (request == null)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Null request was received. Cannot connect to remote repository.";
+            logger.LogError("Invalid {request} received to connect to remote repository. Sending error response.", requestName);
+            return BadRequest(response);
+        }
+
+        string repoId = request.RepositoryId;
+        if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository localGitRepository))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "No repository was found in cache with the specified identifier.";
+            logger.LogError("No repository was found in cache with an identifier: {repoId}. Cannot connect to remote repository. Sending error response.", repoId);
+            return Ok(response);
+        }
+
+        string url = request.Url;
+        if (string.IsNullOrEmpty(url))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Remote repository URL is required.";
+            logger.LogError("Invalid {request} received to connect to remote repository because the URL was null or empty. Sending error response.", requestName);
+            return Ok(response);
+        }
+
+        int userId = request.UserId;
+        if (!cacheManager.Users.TryGetValue(userId, out ApplicationUser user))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "Invalid request. Could not find user.";
+            logger.LogError("Invalid {request} received to connect remote repository because user with id {userId} does not exist. Sending error response.", requestName, userId);
+            return Ok(response);
+        }
+
+        if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "No working directory was found in cache with the specified identifier.";
+            logger.LogError("No working directory was found in cache with an identifier: {repoId}. Cannot connect remote repository. Sending error response.", repoId);
+            return Ok(response);
+        }
+
+        RepositoryModel repositoryModel = await applicationDbContext.Repositories.FirstOrDefaultAsync(i => i.Id == repoId);
+        if (repositoryModel == null)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "No repository was found in the database with the specified identifier.";
+            logger.LogError("No repository was found in the database with an identifier: {repoId}. Cannot connect to remote repository. Sending error response.", repoId);
+            return Ok(response);
+        }
+
+        string headBranchName = !string.IsNullOrEmpty(request.HeadBranchName) ? request.HeadBranchName : "main";
+        InitializedRepositoryTemplate template = new()
+        {
+            User = user,
+            Repository = localGitRepository,
+            WorkingDirectory = workingDirectory,
+            CommitMessage = "Initial commit",
+            HeadBranchName = headBranchName
+        };
+        LocalGitRepository connectedRepository = applicationControlService.ConnectRemoteRepository(template, headBranchName, url, out string errorMessage);
+        if (connectedRepository == null)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = errorMessage;
+            logger.LogError("Failed to connect to remote repository for repository {repo} with identifier {repoId}. Sending error response.", localGitRepository.GetDisplayName(), repoId);
+            return Ok(response);
+        }
+
+        localGitRepository = connectedRepository;
+        try
+        {
+            repositoryModel.HostPlatform = localGitRepository.HostPlatform;
+            repositoryModel.Url = localGitRepository.Url;
+            repositoryModel.Owner = localGitRepository.Owner;
+            await applicationDbContext.SaveChangesAsync();
+
+            logger.LogInformation("Successfully connected to remote repository for repository {repo} with identifier {repoId}.", localGitRepository.GetDisplayName(), repoId);
+            response.Repository = localGitRepository;
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            response.IsErrorResponse = true;
+            response.ErrorMessage = "An exception was thrown while attempting to update the repository in the database. Check server logs for more information.";
+            logger.LogError(ex, "An exception was thrown while attempting to update the repository in the database for repository {repo} with identifier {repoId}. Sending error response.", localGitRepository.GetDisplayName(), repoId);
+            return Ok(response);
+        }
+    }
+
     #region Private Methods
-    
+
     /// <summary>
     /// Adds the specified repositories to the database.
     /// </summary>

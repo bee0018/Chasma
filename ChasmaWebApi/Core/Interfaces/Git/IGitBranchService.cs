@@ -13,11 +13,10 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// </summary>
         /// <param name="workingDirectory">The working directory of the repository.</param>
         /// <param name="branchName">The branch name to be added.</param>
-        /// <param name="username">The username for authentication to the repository.</param>
-        /// <param name="token">The token for authentication to the repository.</param>
+        /// <param name="repository">The local git repository.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the branch was created; false otherwise.</returns>
-        bool TryAddBranch(string workingDirectory, string branchName, string username, string token, out string errorMessage);
+        bool TryAddBranch(string workingDirectory, string branchName, LocalGitRepository repository, out string errorMessage);
 
         /// <summary>
         /// Trieds to delete a branch from the specified repository.
@@ -44,8 +43,9 @@ namespace ChasmaWebApi.Core.Interfaces.Git
         /// Gets the list of all branches in the specified repository.
         /// </summary>
         /// <param name="workingDirectory">The working directory of the repository.</param>
+        /// <param name="repository">The local git repository.</param>
         /// <returns>List of all local and remote branches in the repository.</returns>
-        List<string> GetAllBranches(string workingDirectory);
+        List<string> GetAllBranches(string workingDirectory, LocalGitRepository repository);
 
         /// <summary>
         /// Tries to merge the specified source branch into the current branch.

@@ -1,20 +1,19 @@
-import React, {useState} from "react";
-import {GitCommitRequest} from "../../API/ChasmaWebApiClient";
-import {statusClient} from "../../managers/ApiClientManager";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
+import { InitializeRepositoryRequest } from "../../API/ChasmaWebApiClient";
+import { configClient } from "../../managers/ApiClientManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 
-/** The properties to handle commit messages. **/
-interface ICommitModalProps {
+/**
+ * Interface defining the members of the IntializeRepositoryModal.
+ */
+interface IInitializeRepositoryModal {
     /** The confirmation action of the close function. **/
     onClose: () => void;
 
     /** The repository identifier. **/
     repositoryId: string | undefined;
-
-    /** The logged-in user's email. **/
-    email: string | undefined;
 
     /** The logged-in user's identifier. **/
     userId: number | undefined;
@@ -24,78 +23,85 @@ interface ICommitModalProps {
 }
 
 /**
- * Initializes a new CommitModal class.
- * @param props The properties to handle committing changes.
+ * Initializes a new InitializeRepositoryModal class.
+ * @param props The properties to initialize new repository.
  * @constructor
  */
-const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
-    /** Gets or sets the commit message the user has input. **/
-    const [commitMessage, setCommitMessage] = useState<string | undefined>(undefined);
+const InitializeRepositoryModal: React.FC<IInitializeRepositoryModal> = (props: IInitializeRepositoryModal) => {
 
     /** Gets or sets the modal title. **/
-    const [title, setTitle] = useState<string>("Commit Changes");
+    const [title, setTitle] = useState<string>("Initialize Repository");
 
-    /** Gets or sets the error message. **/
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+    /** Gets or sets the commit message for the intialize commit. */
+    const [commitMessage, setCommitMessage] = useState<string | undefined>(undefined);
 
-    /** Gets or sets a value indicating whether the commit response was successful. **/
-    const [successfullyCommitted, setSuccessfullyCommitted] = useState<boolean | undefined>(undefined);
-
-    /** Gets or sets a value indicating whether the commit request was sent. **/
-    const [commitRequestSent, setCommitRequestSent] = useState<boolean>(false);
+    /** Gets or sets the head branch name of the repository. */
+    const [headBranchName, setHeadBranchName] = useState<string | undefined>(undefined);
 
     /** Gets or sets the flag indicating whether to disable the send button. */
     const [disabledSendButton, setDisableSendButton] = useState(false);
 
+    /** Gets or sets the error message. **/
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+
+    /** Gets or sets a value indicating whether the initialize response was successful. **/
+    const [successfullyInitialized, setSuccessfullyInitialized] = useState<boolean | undefined>(undefined);
+
+    /** Gets or sets a value indicating whether the intialize request was sent. **/
+    const [initializeRequestSent, setInitializeRequestSent] = useState<boolean>(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
-    /** Handles the request to commit local changes. **/
-    async function handleCommitChangesRequest() {
-        setTitle("Attempting to commit changes...");
+    /** Handles the request to initialize repository request. **/
+    async function handleInitializeRepositoryRequest() {
+        if (disabledSendButton) {
+            return;
+        }
+
         setDisableSendButton(true);
+        setTitle("Attempting to initialize repository...");
         try {
-            const request = new GitCommitRequest();
-            request.repositoryId = props.repositoryId;
+            const request = new InitializeRepositoryRequest();
             request.userId = props.userId;
-            request.email = props.email;
+            request.repositoryId = props.repositoryId;
+            request.headBranchName = headBranchName;
             request.commitMessage = commitMessage;
-            const response = await statusClient.commitChanges(request);
+            const response = await configClient.initializeNewRepository(request);
             if (response.isErrorResponse) {
-                setTitle("Error committing changes!")
+                setTitle("Failed to initialize repository!");
                 setErrorMessage(response.errorMessage);
-                setSuccessfullyCommitted(false);
+                setSuccessfullyInitialized(false);
                 return;
             }
 
             setErrorMessage(undefined);
-            setTitle("Successfully committed changes!");
-            setSuccessfullyCommitted(true);
+            setTitle("Successfully initialized repository!");
+            setSuccessfullyInitialized(true);
             props.onSuccess();
-        }
-        catch (e) {
-            setTitle("Error committing changes!")
+        } catch (error) {
+            setTitle("Error initializing repository!")
             setErrorMessage("Check server logs for more information.");
-            setSuccessfullyCommitted(false);
-            const errorNotification = await handleApiError(e, navigate, "Error committing changes!", "Check server logs for more information.");
+            setSuccessfullyInitialized(false);
+            const errorNotification = await handleApiError(error, navigate, "Error initializing repository!", "Check server logs for more information.");
             setNotification(errorNotification);
         }
         finally {
-            setCommitRequestSent(true);
+            setInitializeRequestSent(true);
             setCommitMessage(undefined);
             setDisableSendButton(false);
         }
-    }
+    };
 
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
                 <div className="modal" onClick={(e) => e.stopPropagation()}>
                     <div className="modal-icon-container">
-                        {!errorMessage && !successfullyCommitted && (
+                        {!errorMessage && !successfullyInitialized && (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
@@ -108,7 +114,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
                                 <rect x="11" y="7" width="2" height="2" fill="#ffffff" />
                             </svg>
                         )}
-                        {!errorMessage && successfullyCommitted && (
+                        {!errorMessage && successfullyInitialized && (
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
@@ -143,23 +149,28 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
                     </div>
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
+                    <input className="modal-input-field"
+                        placeholder="Enter HEAD branch name (Optional)"
+                        value={headBranchName}
+                        onChange={(e) => setHeadBranchName(e.target.value)} />
+                    <br />
                     <textarea className="modal-input-area"
-                              placeholder="Enter commit message:"
-                              value={commitMessage}
-                              onChange={(e) => setCommitMessage(e.target.value)} />
-                    <br/>
+                        placeholder="Enter commit message (Optional)"
+                        value={commitMessage}
+                        onChange={(e) => setCommitMessage(e.target.value)} />
+                    <br />
                     <div className="modal-actions">
-                        {!commitRequestSent &&
+                        {!initializeRequestSent &&
                             <button
                                 className="modal-button primary"
                                 disabled={disabledSendButton}
-                                onClick={handleCommitChangesRequest}
+                                onClick={handleInitializeRepositoryRequest}
                             >
-                                Commit
+                                Initialize
                             </button>
                         }
                         <button className="modal-button secondary"
-                                onClick={props.onClose}
+                            onClick={props.onClose}
                         >
                             Close
                         </button>
@@ -170,4 +181,5 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
     )
 }
 
-export default CommitModal;
+
+export default InitializeRepositoryModal;

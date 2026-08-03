@@ -128,18 +128,22 @@ namespace ChasmaWebApi.Core.Services.Git
 
                 Logger.LogDebug("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
                 BranchMetrics branchMetrics = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, localGitRepository);
-                string remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
+                string remoteUrl = string.Empty;
                 string commitHash = GetCommitHash(repo.Head, Logger);
-                List<RemotePullRequest> remotePullRequests;
-                LibGit2Sharp.Remote? remoteOriginBranch = repo.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
-                if (remoteOriginBranch == null)
+                List<RemotePullRequest> remotePullRequests = [];
+                if (localGitRepository.HostPlatform != RemoteHostPlatform.Local)
                 {
-                    Logger.LogWarning("Failed to find remote orign branch in {repoPath}, remote pull requests cannot be tracked.", workingDirectory);
-                    remotePullRequests = new();
-                }
-                else
-                {
-                    remotePullRequests = GetRemotePullRequests(remoteOriginBranch.PushUrl, branchMetrics.BranchName);
+                    remoteUrl = GetRemoteUrl(repo.Head, repo.Network.Remotes, workingDirectory) ?? string.Empty;
+                    LibGit2Sharp.Remote? remoteOriginBranch = repo.Network.Remotes.FirstOrDefault(remote => remote.Name == "origin");
+                    if (remoteOriginBranch == null)
+                    {
+                        Logger.LogWarning("Failed to find remote orign branch in {repoPath}, remote pull requests cannot be tracked.", workingDirectory);
+                        remotePullRequests = new();
+                    }
+                    else
+                    {
+                        remotePullRequests = GetRemotePullRequests(remoteOriginBranch.PushUrl, branchMetrics.BranchName, repoKey);
+                    }
                 }
 
                 RepositorySummary repositorySummary = new()
@@ -153,6 +157,7 @@ namespace ChasmaWebApi.Core.Services.Git
                     CommitHash = commitHash,
                     PullRequests = remotePullRequests,
                     LastUpdated = branchMetrics.LastUpdated,
+                    IsUnborn = repo.Info.IsHeadUnborn,
                 };
                 return repositorySummary;
             }
@@ -272,19 +277,7 @@ namespace ChasmaWebApi.Core.Services.Git
 
             try
             {
-                string username = RemoteHelper.GetRemoteHostUsername(repository);
-                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
-                string decryptedToken = EncryptionService.DecryptString(token);
-                PushOptions options = new()
-                {
-                    CredentialsProvider = (url, usernameFromUrl, types) =>
-                        new UsernamePasswordCredentials
-                        {
-                            Username = username,
-                            Password = decryptedToken,
-                        }
-                };
-
+                PushOptions options = RemoteHelper.GetPushOptions(repository, EncryptionService);
                 repo.Network.Push(branch, options);
                 return true;
             }
@@ -307,26 +300,11 @@ namespace ChasmaWebApi.Core.Services.Git
         public bool TryPullChanges(string workingDirectory, ApplicationUser user, LocalGitRepository localGitRepository, out string errorMessage)
         {
             errorMessage = string.Empty;
-            using Repository repo = new(workingDirectory);
-            string username = RemoteHelper.GetRemoteHostUsername(localGitRepository);
-            Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
-            string token = RemoteHelper.GetApiToken(localGitRepository.HostPlatform);
-            string decryptedToken = EncryptionService.DecryptString(token);
-            PullOptions options = new()
-            {
-                FetchOptions = new FetchOptions
-                {
-                    CredentialsProvider = (url, usernameFromUrl, types) =>
-                        new UsernamePasswordCredentials
-                        {
-                            Username = username,
-                            Password = decryptedToken,
-                        }
-                }
-            };
-
             try
             {
+                using Repository repo = new(workingDirectory);
+                Signature author = new(user.Name, user.Email, DateTimeOffset.Now);
+                PullOptions options = RemoteHelper.GetPullOptions(localGitRepository, EncryptionService);
                 Commands.Pull(repo, author, options);
                 return true;
             }
@@ -713,8 +691,8 @@ namespace ChasmaWebApi.Core.Services.Git
                 };
                 List<PullSimulationEntry> simulationEntries = [pullSimulationEntry];
                 List<SimulatedGitPullResult> simulationResults = SimulationService.SimulateGitPull(simulationEntries);
-                pullSimulationResult = simulationResults[0];
-                if (!pullSimulationResult.IsSuccessful)
+                pullSimulationResult = simulationResults.FirstOrDefault();
+                if (pullSimulationResult != null && !pullSimulationResult.IsSuccessful)
                 {
                     behindPenaltyWeight = 40;
                     dirtyFilesPenaltyWeight = 12;
@@ -734,6 +712,7 @@ namespace ChasmaWebApi.Core.Services.Git
 
             int dirtyFilesPenalty = repositoryMetrics.StatusElements.Count * 2;
             healthScore.Score -= Math.Min(dirtyFilesPenalty, dirtyFilesPenaltyWeight);
+
             healthScore.Score = Math.Clamp(healthScore.Score, 0, 100);
             healthScore.ScoreCategory = GetHealthScoreTierName(healthScore.Score);
             healthScore.Description = GetHealthScoreDescription(healthScore.Score, buildHasFailed, repositoryMetrics, pullSimulationResult);
@@ -785,6 +764,101 @@ namespace ChasmaWebApi.Core.Services.Git
             {
                 Logger.LogError(e, "Failed to check for manifest files in changeset for repository at {workingDirectory}.", workingDirectory);
                 return false;
+            }
+        }
+
+        // <inheritdoc/>
+        public bool TryInitializeRepository(InitializedRepositoryTemplate template, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                using Repository repository = new(template.WorkingDirectory);
+                if (!repository.Info.IsHeadUnborn)
+                {
+                    errorMessage = $"The repository is not in an unborn state and cannot be initialized.";
+                    Logger.LogError("The repository at {workingDirectory} is not in an unborn state and cannot be initialized.", template.WorkingDirectory);
+                    return false;
+                }
+
+                if (!ShellUtility.TryExecuteShellCommand($"git branch -m {template.HeadBranchName}", template.WorkingDirectory, out errorMessage))
+                {
+                    Logger.LogError("Failed to rename the default branch to {headBranchName} for repository at {workingDirectory} because: {error}.", template.HeadBranchName, template.WorkingDirectory, errorMessage);
+                    return false;
+                }
+
+                RepositorySummary? summary = GetRepositoryStatus(template.Repository.Id);
+                if (summary == null)
+                {
+                    errorMessage = "Failed to retrieve repository summary for the repository.";
+                    Logger.LogError("Failed to retrieve repository summary for repository with id {repoId} when trying to initialize the repository.", template.Repository.Id);
+                    return false;
+                }
+
+                if (summary.StatusElements.Count == 0)
+                {
+                    string repoName = template.Repository.GetDisplayName();
+                    CreateIntialReadMeFile(template.WorkingDirectory, repoName);
+                }
+
+                Commands.Stage(repository, "*");
+                Signature author = new(template.User.Name, template.User.Email, DateTimeOffset.Now);
+                repository.Commit(template.CommitMessage, author, author);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = "An error occurred while trying to initialize the repository. Review server logs for more information.";
+                Logger.LogError("An error occurred while trying to initialize the repository at {workingDirectory}: {error}.", template.WorkingDirectory, e);
+                return false;
+            }
+        }
+
+        // <inheritdoc/>
+        public LocalGitRepository ConnectRemoteRepository(InitializedRepositoryTemplate template, string headBranchName, string remoteUrl, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                using Repository repo = new(template.WorkingDirectory);
+                if (repo.Info.IsHeadUnborn && !TryInitializeRepository(template, out errorMessage))
+                {
+                    Logger.LogError("Failed to initialize the repository {repo} at {workingDirectory} when trying to connect to the remote repository because: {error}.", template.Repository.GetDisplayName(), template.WorkingDirectory, errorMessage);
+                    return null;
+                }
+
+                if (!ShellUtility.TryExecuteShellCommand($"git branch -M {headBranchName}", template.WorkingDirectory, out errorMessage))
+                {
+                    errorMessage = "Failed to rename the default branch.";
+                    Logger.LogError("Failed to rename the default branch to {headBranchName} for repository at {workingDirectory} because: {error}.", headBranchName, template.WorkingDirectory, errorMessage);
+                    return null;
+                }
+
+                if (!ShellUtility.TryExecuteShellCommand($"git remote add origin {remoteUrl}", template.WorkingDirectory, out errorMessage))
+                {
+                    errorMessage = "Failed to add the remote repository.";
+                    Logger.LogError("Failed to add the remote repository at {remoteUrl} for repository at {workingDirectory} because: {error}.", remoteUrl, template.WorkingDirectory, errorMessage);
+                    return null;
+                }
+
+                if (!ShellUtility.TryExecuteShellCommand($"git push -u origin {headBranchName}", template.WorkingDirectory, out errorMessage))
+                {
+                    errorMessage = "Failed to push the initial commit to the remote repository.";
+                    Logger.LogError("Failed to push the initial commit to the remote repository at {remoteUrl} for repository at {workingDirectory} because: {error}.", remoteUrl, template.WorkingDirectory, errorMessage);
+                    return null;
+                }
+
+                Logger.LogInformation("Successfully connected to remote repository for repository {repo} with identifier {repoId}.", template.Repository.GetDisplayName(), template.Repository.Id);
+                template.Repository.Url = remoteUrl;
+                template.Repository.HostPlatform = RemoteHelper.GetRemoteHostPlatform(remoteUrl);
+                template.Repository.Owner = RemoteHelper.GetRepositoryOwner(remoteUrl);
+                return template.Repository;
+            }
+            catch (Exception e)
+            {
+                errorMessage = "An error occurred while trying to connect to the remote repository. Review server logs for more information.";
+                Logger.LogError("An error occurred while trying to connect to the remote repository {repo} at {workingDirectory}: {error}.", template.Repository.GetDisplayName(), template.WorkingDirectory, e);
+                return null;
             }
         }
 
@@ -914,18 +988,19 @@ namespace ChasmaWebApi.Core.Services.Git
         /// </summary>
         /// <param name="pushUrl">The push URL of the repository.</param>
         /// <param name="branchName">The name of the branch that has a pull request created for it.</param>
+        /// <param name="repoId">The repository identifier.</param>
         /// <returns>The list of pull request information for the specified branch.</returns>
-        private List<RemotePullRequest> GetRemotePullRequests(string pushUrl, string branchName)
+        private List<RemotePullRequest> GetRemotePullRequests(string pushUrl, string branchName, string repoId)
         {
             RemoteHostPlatform hostPlatform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
             if (hostPlatform == RemoteHostPlatform.GitHub)
             {
-                return CacheManager.GitHubPullRequests.Values.Where(i => i.BranchName == branchName).ToList();
+                return CacheManager.GitHubPullRequests.Values.Where(i => i.BranchName == branchName && i.RepositoryId == repoId).ToList();
             }
 
             if (hostPlatform == RemoteHostPlatform.GitLab)
             {
-                return CacheManager.GitLabMergeRequests.Values.Where(i => i.BranchName == branchName).ToList();
+                return CacheManager.GitLabMergeRequests.Values.Where(i => i.BranchName == branchName && i.RepositoryId == repoId).ToList();
             }
 
             Logger.LogWarning("Could not get remote pull requests because the remote host platform {platform} is not supported.", hostPlatform);
@@ -995,7 +1070,7 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <param name="repositoryMetrics">The repository metrics.</param>
         /// <param name="simulatedPullResult">The simulated git pull results.</param>
         /// <returns>The generated health score description.</returns>
-        private static List<string> GetHealthScoreDescription(int score, bool buildFailed, RepositorySummary repositoryMetrics, SimulatedGitPullResult simulatedPullResult = null)
+        private static List<string> GetHealthScoreDescription(int score, bool buildFailed, RepositorySummary repositoryMetrics, SimulatedGitPullResult simulatedPullResult)
         {
             List<string> healthScoreDescription = [];
             if (score == 100)
@@ -1031,7 +1106,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 healthScoreDescription.Add("There are commits ahead of the base and you need to your push changes to be fully up to date.");
             }
 
-            if (repositoryMetrics?.StatusElements.Count > 0)
+            if (repositoryMetrics.StatusElements.Count > 0)
             {
                 healthScoreDescription.Add("There are uncommitted files in the working directory/index.");
             }
@@ -1048,72 +1123,87 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <returns>The number of local branch name, commits ahead, behind, and last updated.</returns>
         private BranchMetrics GetBranchDiversionCalculation(string workingDirectory, string branchName, LocalGitRepository repository)
         {
-            BranchMetrics branchMetrics = new()
-            {
-                BranchName = string.Empty,
-                LastUpdated = string.Empty,
-            };
+            BranchMetrics branchMetrics = new();
             using Repository repo = new(workingDirectory);
-            Branch branch = repo.Branches.FirstOrDefault(i => i.FriendlyName == branchName);
-            if (branch == null)
+            if (repo.Info.IsHeadUnborn)
             {
-                Logger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", repo.Info.WorkingDirectory);
-                return branchMetrics;
+                branchMetrics.BranchName = $"Unborn HEAD: {repo.Head.FriendlyName}";
+                branchMetrics.LastUpdated = string.Empty;
             }
-
-            if (repo.Info.IsHeadDetached)
+            else
             {
-                Logger.LogWarning("Cannot get branch diversion calculation. The HEAD is in a detached state for repository at {path}.", repo.Info.WorkingDirectory);
-                return branchMetrics;
-            }
-
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
-            string decryptedToken = EncryptionService.DecryptString(token);
-            RemoteHelper.FetchLatestChanges(workingDirectory, branch, repository, Logger, decryptedToken);
-            string localBranchName = branch.FriendlyName;
-            if (string.IsNullOrEmpty(localBranchName))
-            {
-                Logger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", repo.Info.WorkingDirectory, localBranchName);
-                return branchMetrics;
-            }
-
-            string lastHeadUpdateTimestamp = repo.Head.Commits
+                string lastHeadUpdateTimestamp = repo.Head.Commits
                 .Max(i => i.Author.When)
                 .ToLocalTime()
                 .ToString("g");
-            string repoHeadLastUpdated = $"From HEAD: {lastHeadUpdateTimestamp}";
-            branchMetrics.BranchName = localBranchName;
-            branchMetrics.LastUpdated = repoHeadLastUpdated;
-            if (branch.TrackedBranch == null)
-            {
-                Logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
-                return branchMetrics;
+                branchMetrics.LastUpdated = $"From HEAD: {lastHeadUpdateTimestamp}";
+                branchMetrics.BranchName = (!repo.Branches.Any() ? "No HEAD branch has been set yet." : repo.Head?.FriendlyName) ?? string.Empty;
+                Branch branch = repo.Branches.FirstOrDefault(i => i.FriendlyName == branchName);
+                if (branch == null)
+                {
+                    Logger.LogError("Cannot get branch diversion calculation. Failed to get branch information for repository at {path}.", workingDirectory);
+                    return branchMetrics;
+                }
+
+                if (repo.Info.IsHeadDetached)
+                {
+                    Logger.LogWarning("Cannot get detailed branch diversion calculation. The HEAD is in a detached state for repository at {path}.", workingDirectory);
+                    string commitHash = GetCommitHash(branch, Logger);
+                    branchMetrics.BranchName = $"(Detached HEAD at {commitHash})";
+                    branchMetrics.LastUpdated = branch.Tip?.Committer.When.ToLocalTime().ToString("g") ?? "Unknown";
+                    return branchMetrics;
+                }
+
+                string localBranchName = branch.FriendlyName;
+                if (string.IsNullOrEmpty(localBranchName))
+                {
+                    Logger.LogError("Cannot get branch diversion calculation. No local branch found for repository at {path} with the branch name {branchName}.", workingDirectory, localBranchName);
+                    return branchMetrics;
+                }
+
+                branchMetrics.BranchName = localBranchName;
+                if (repository.HostPlatform == RemoteHostPlatform.Local)
+                {
+                    branchMetrics.LastUpdated = branch.Tip?.Committer.When.ToLocalTime().ToString("g") ?? "Unknown";
+                }
+                else
+                {
+                    if (branch.TrackedBranch == null)
+                    {
+                        Logger.LogWarning("Cannot get branch diversion calculation. Could not find the tracked branch for the local branch {branchName}.", localBranchName);
+                        return branchMetrics;
+                    }
+
+                    string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                    string decryptedToken = EncryptionService.DecryptString(token);
+                    RemoteHelper.FetchLatestChanges(workingDirectory, branch, repository, Logger, decryptedToken);
+                    string upstreamBranchName = branch.TrackedBranch.FriendlyName;
+                    Branch localBranch = repo.Branches[localBranchName];
+                    Branch upstreamBranch = repo.Branches[upstreamBranchName];
+                    if (localBranch == null)
+                    {
+                        Logger.LogError("Cannot get detailed branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
+                        return branchMetrics;
+                    }
+
+                    if (upstreamBranch == null)
+                    {
+                        Logger.LogError("Cannot get detailed branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
+                        return branchMetrics;
+                    }
+
+                    string lastUpdated = upstreamBranch.Tip.Committer.When.ToLocalTime().ToString("g");
+                    HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
+                    branchMetrics = new()
+                    {
+                        BranchName = localBranchName,
+                        AheadCount = divergence.AheadBy ?? 0,
+                        BehindCount = divergence.BehindBy ?? 0,
+                        LastUpdated = lastUpdated,
+                    };
+                }
             }
 
-            string upstreamBranchName = branch.TrackedBranch.FriendlyName;
-            Branch localBranch = repo.Branches[localBranchName];
-            Branch upstreamBranch = repo.Branches[upstreamBranchName];
-            if (localBranch == null)
-            {
-                Logger.LogError("Cannot get branch diversion calculation. No local branch with name {branchName} found.", localBranchName);
-                return branchMetrics;
-            }
-
-            if (upstreamBranch == null)
-            {
-                Logger.LogError("Cannot get branch diversion calculation. No upstream branch with name {branchName} found.", upstreamBranchName);
-                return branchMetrics;
-            }
-
-            string lastUpdated = upstreamBranch.Tip.Committer.When.ToLocalTime().ToString("g");
-            HistoryDivergence divergence = repo.ObjectDatabase.CalculateHistoryDivergence(localBranch.Tip, upstreamBranch.Tip);
-            branchMetrics = new()
-            {
-                BranchName = localBranchName,
-                AheadCount = divergence.AheadBy ?? 0,
-                BehindCount = divergence.BehindBy ?? 0,
-                LastUpdated = lastUpdated,
-            };
             return branchMetrics;
         }
 
@@ -1167,6 +1257,37 @@ namespace ChasmaWebApi.Core.Services.Git
                 ".ebextensions",
                 ".project",
             };
+        }
+
+        /// <summary>
+        /// Creates an initial README.md file in the specified working directory with a basic template if it doesn't already exist.
+        /// </summary>
+        /// <param name="workingDirectory">The working directory where the README.md file will be created.</param>
+        /// <param name="repositoryName">The name of the repository.</param>
+        private void CreateIntialReadMeFile(string workingDirectory, string repositoryName)
+        {
+            string readmeFilePath = Path.Combine(workingDirectory, "README.md");
+            if (!File.Exists(readmeFilePath))
+            {
+                string readmeContent = $"""
+                    
+                    # {repositoryName}
+                    
+                    A short description of your project.
+
+                    ## Getting Started
+                    
+                    1. Clone the repository.
+                    2. Build and run.
+                    
+                    """;
+                File.WriteAllText(readmeFilePath, readmeContent);
+                Logger.LogInformation("Created initial README.md file for repository {repositoryName} at {readmeFilePath}.", repositoryName, readmeFilePath);
+            }
+            else
+            {
+                Logger.LogInformation("README.md file already exists for repository {repositoryName} at {readmeFilePath}. No action taken.", repositoryName, readmeFilePath);
+            }
         }
 
         #endregion
