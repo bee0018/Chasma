@@ -8,6 +8,25 @@ namespace ChasmaWebApi.Util
     /// </summary>
     public static class ShellUtility
     {
+        #region Environment Variables
+
+        /// <summary>
+        /// Gets the environment variable name for Git terminal prompt.
+        /// </summary>
+        private static string GitTerminalPrompt = "GIT_TERMINAL_PROMPT";
+
+        /// <summary>
+        /// Gets the environment variable name for Git editor.
+        /// </summary>
+        private static string GitEditor = "GIT_EDITOR";
+
+        /// <summary>
+        /// Gets the environment variable name for Git optional locks.
+        /// </summary>
+        private static string GitOptionalLocks = "GIT_OPTIONAL_LOCKS";
+
+        #endregion
+
         /// <summary>
         /// Gets the process to execute standard shell commands based on the operating system.
         /// </summary>
@@ -34,8 +53,15 @@ namespace ChasmaWebApi.Util
                 WorkingDirectory = workingDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                RedirectStandardInput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
+                EnvironmentVariables =
+                {
+                    [GitTerminalPrompt] = "0",
+                    [GitEditor] = "true",
+                    [GitOptionalLocks] = "0"
+                },
             };
             return new() { StartInfo = processInfo };
         }
@@ -67,8 +93,15 @@ namespace ChasmaWebApi.Util
                 WorkingDirectory = workingDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                RedirectStandardInput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
+                EnvironmentVariables =
+                {
+                    [GitTerminalPrompt] = "0",
+                    [GitEditor] = "true",
+                    [GitOptionalLocks] = "0"
+                },
             };
             Process process = new() { StartInfo = processInfo };
             process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
