@@ -47,6 +47,9 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
     /** Gets or sets the flag indicating whether to disable the send button. */
     const [disabledSendButton, setDisableSendButton] = useState(false);
 
+    /** Gets or sets a value indicating whether to disable commit message editing. */
+    const [disableCommitEditing, setDisableCommitEditing] = useState(false);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -57,6 +60,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
     async function handleCommitChangesRequest() {
         setTitle("Attempting to commit changes...");
         setDisableSendButton(true);
+        setDisableCommitEditing(true);
         try {
             const request = new GitCommitRequest();
             request.repositoryId = props.repositoryId;
@@ -68,12 +72,14 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
                 setTitle("Error committing changes!")
                 setErrorMessage(response.errorMessage);
                 setSuccessfullyCommitted(false);
+                setDisableCommitEditing(false);
                 return;
             }
 
             setErrorMessage(undefined);
             setTitle("Successfully committed changes!");
             setSuccessfullyCommitted(true);
+            setDisableCommitEditing(true);
             props.onSuccess();
         }
         catch (e) {
@@ -146,6 +152,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
                     <textarea className="modal-input-area"
                               placeholder="Enter commit message:"
                               value={commitMessage}
+                              disabled={disableCommitEditing}
                               onChange={(e) => setCommitMessage(e.target.value)} />
                     <br/>
                     <div className="modal-actions">
