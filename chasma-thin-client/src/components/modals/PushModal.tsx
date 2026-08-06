@@ -128,7 +128,7 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
             if (response.repository) {
                 useCacheStore.getState().updateLocalGitRepository(response.repository);
             }
-            
+
             props.onSuccess();
         } catch (error) {
             setTitle("Could not connect to remote repository!");
@@ -202,20 +202,24 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
                     </div>
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
-                    <input
-                        type="text"
-                        className="modal-input-field"
-                        placeholder="Enter remote URL: (Required)"
-                        value={remoteGitUrl}
-                        onChange={(e) => setRemoteGitUrl(e.target.value)}
-                    />
-                    <input
-                        type="text"
-                        className="modal-input-field"
-                        placeholder="Enter HEAD branch name: (Optional)"
-                        value={headBranchName}
-                        onChange={(e) => setHeadBranchName(e.target.value)}
-                    />
+                    {props.repository?.hostPlatform === RemoteHostPlatform.Local &&
+                        <>
+                            <input
+                                type="text"
+                                className="modal-input-field"
+                                placeholder="Enter remote URL: (Required)"
+                                value={remoteGitUrl}
+                                onChange={(e) => setRemoteGitUrl(e.target.value)}
+                            />
+                            <input
+                                type="text"
+                                className="modal-input-field"
+                                placeholder="Enter HEAD branch name: (Optional)"
+                                value={headBranchName}
+                                onChange={(e) => setHeadBranchName(e.target.value)}
+                            />
+                        </>
+                    }
                     <div className="modal-actions">
                         <button
                             className="modal-button primary"
