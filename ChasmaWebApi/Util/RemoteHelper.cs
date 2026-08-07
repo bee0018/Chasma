@@ -75,7 +75,7 @@ namespace ChasmaWebApi.Util
                 return cloudPlatform;
             }
 
-            bool isValidUrl = Uri.TryCreate(remoteUrl, UriKind.Absolute, out Uri uri) 
+            bool isValidUrl = Uri.TryCreate(remoteUrl, UriKind.Absolute, out Uri uri)
                 && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == "git" || uri.Scheme == "ssh");
             bool isValidSsh = normalizedRemoteUrl.StartsWith("git@") && normalizedRemoteUrl.Contains(':');
             return (isValidUrl || isValidSsh)
