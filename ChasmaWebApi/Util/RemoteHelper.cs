@@ -53,23 +53,34 @@ namespace ChasmaWebApi.Util
         /// <returns>The remote host platform.</returns>
         public static RemoteHostPlatform GetRemoteHostPlatform(string remoteUrl)
         {
-            string url = remoteUrl.ToLower();
-            if (url.Contains("github.com"))
-            {
-                return RemoteHostPlatform.GitHub;
-            }
-            else if (url.Contains("gitlab.com"))
-            {
-                return RemoteHostPlatform.GitLab;
-            }
-            else if (url.Contains("bitbucket.org"))
-            {
-                return RemoteHostPlatform.Bitbucket;
-            }
-            else
+            if (string.IsNullOrEmpty(remoteUrl))
             {
                 return RemoteHostPlatform.Unknown;
             }
+
+            string normalizedRemoteUrl = remoteUrl.Trim().ToLowerInvariant();
+            RemoteHostPlatform cloudPlatform = normalizedRemoteUrl switch
+            {
+                string url when url.Contains("github.com") => RemoteHostPlatform.GitHub,
+                string url when url.Contains("gitlab.com") => RemoteHostPlatform.GitLab,
+                string url when url.Contains("bitbucket.org") => RemoteHostPlatform.Bitbucket,
+                string url when url.Contains("azure.com") || url.Contains("dev.azure.com") || url.Contains("visualstudio.com") => RemoteHostPlatform.AzureDevOps,
+                string url when url.Contains("amazonaws.com") => RemoteHostPlatform.AWSCodeCommit,
+                string url when url.Contains("launchpad.net") => RemoteHostPlatform.LaunchPad,
+                _ => RemoteHostPlatform.Unknown
+            };
+
+            if (cloudPlatform != RemoteHostPlatform.Unknown)
+            {
+                return cloudPlatform;
+            }
+
+            bool isValidUrl = Uri.TryCreate(remoteUrl, UriKind.Absolute, out Uri uri) 
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == "git" || uri.Scheme == "ssh");
+            bool isValidSsh = normalizedRemoteUrl.StartsWith("git@") && normalizedRemoteUrl.Contains(':');
+            return (isValidUrl || isValidSsh)
+                ? RemoteHostPlatform.Custom
+                : RemoteHostPlatform.Unknown;
         }
 
         /// <summary>

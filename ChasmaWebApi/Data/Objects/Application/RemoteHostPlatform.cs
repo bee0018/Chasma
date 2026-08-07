@@ -29,5 +29,25 @@
         /// Offline repository disconnected from a remote host.
         /// </summary>
         Local,
+
+        /// <summary>
+        /// Azure DevOps remote host platform.
+        /// </summary>
+        AzureDevOps,
+
+        /// <summary>
+        /// AWS CodeCommit remote host platform.
+        /// </summary>
+        AWSCodeCommit,
+
+        /// <summary>
+        /// LaunchPad remote host platform.
+        /// </summary>
+        LaunchPad,
+        
+        /// <summary>
+        /// Custom-hosted remote host platform.
+        /// </summary>
+        Custom,
     }
 }
