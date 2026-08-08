@@ -1,0 +1,3 @@
+PROPRIETARY SOFTWARE LICENSE: All rights reserved. 
+This software is licensed, not sold, for use strictly as-is by authorized users.
+Modification, reverse engineering, redistribution, resale, or sharing of this code is strictly prohibited.
