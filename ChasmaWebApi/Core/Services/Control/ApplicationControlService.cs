@@ -511,20 +511,20 @@ namespace ChasmaWebApi.Core.Services.Control
                 if (!gitBranchService.TryHandleWorkingDirectoryChanges(workingDirectory, repositoryMetrics.BranchName, branchCheckoutMode, stashMessage, out string fileHandlingError, user))
                 {
                     logger.LogError("Error occurred while handling working directory changes in {repositoryName}: {errorMessage}", repository.GetDisplayName(), fileHandlingError);
-                    executionOutput = $"{fileHandlingError}";
+                    executionOutput = fileHandlingError;
                     return false;
                 }
 
                 bool manifestFileExists = gitRepositoryService.AreManifestFilesInChangeset(workingDirectory);
                 if (!gitRepositoryService.TryPullChanges(workingDirectory, user, repository, out string errorMessage))
                 {
-                    executionOutput = $"Error occurred while pulling changes in {repository.GetDisplayName()}: {errorMessage}";
+                    executionOutput = errorMessage;
                     return false;
                 }
 
                 if (branchCheckoutMode == BranchCheckoutMode.KeepChanges && !gitStashService.TryPopStash(workingDirectory, out string stashApplyError))
                 {
-                    executionOutput = $"Error occurred while applying stashed changes in {repository.GetDisplayName()}: {stashApplyError}";
+                    executionOutput = stashApplyError;
                     return false;
                 }
 
