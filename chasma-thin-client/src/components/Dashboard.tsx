@@ -127,6 +127,12 @@ const Dashboard: React.FC = () => {
                             Global 🌍
                         </div>
                         <div
+                            className={`tab ${isActive("health")}`}
+                            onClick={() => navigate("health")}
+                        >
+                            Health 🏥
+                        </div>
+                        <div
                             className={`tab ${isActive("repoSync")}`}
                             onClick={() => navigate("repoSync")}
                         >
