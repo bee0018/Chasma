@@ -585,14 +585,6 @@ const RepositoryStatusPage: React.FC = () => {
         handleSelectFile(null, false);
     };
 
-    /** Handles the event when the user selects the Custom Shell Commands Tab. */
-    const handleCustomShellCommandsTabSelected = () => {
-        handleTabClick("shell");
-        handleSelectFile(null, false);
-        const emptySet = new Set<string>();
-        setSelectedFiles(emptySet);
-    };
-
     useEffect(() => {
         const closeMenu = () => setContextMenu(null);
         window.addEventListener("click", closeMenu);
@@ -609,6 +601,17 @@ const RepositoryStatusPage: React.FC = () => {
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
     }, []);
+
+    /**
+     * Handles the event when the user selects the specified tab.
+     * @param statusTab The status tab name.
+     */
+    const handleSelectedNewTabView = (statusTab: string) => {
+        handleTabClick(statusTab);
+        handleSelectFile(null, false);
+        const emptySet = new Set<string>();
+        setSelectedFiles(emptySet);
+    };
 
     return (
         <div className="dashboard-container">
@@ -637,7 +640,7 @@ const RepositoryStatusPage: React.FC = () => {
                     className={`tab ${activeTab === "home" ? "active" : ""}`}
                     onClick={() => handleTabClick("home")}
                 >
-                    Repo Status 📊 
+                    Repo Status 📊
                 </div>
                 <div
                     className="sidebar-section-header"
@@ -700,13 +703,13 @@ const RepositoryStatusPage: React.FC = () => {
                             <>
                                 <div
                                     className={`tab ${activeTab === "stashes" ? "active" : ""}`}
-                                    onClick={() => handleTabClick("stashes")}
+                                    onClick={() => handleSelectedNewTabView("stashes")}
                                 >
                                     Stashes🗄️
                                 </div>
                                 <div
                                     className={`tab ${activeTab === "shell" ? "active" : ""}`}
-                                    onClick={handleCustomShellCommandsTabSelected}>
+                                    onClick={() => handleSelectedNewTabView("shell")}>
                                     Custom Shell Commands🖥️
                                 </div>
                             </>
@@ -729,7 +732,7 @@ const RepositoryStatusPage: React.FC = () => {
                                     && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
                                     <div
                                         className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
-                                        onClick={() => handleTabClick("pullRequest")}
+                                        onClick={() => handleSelectedNewTabView("pullRequest")}
                                         style={{ marginTop: "20px" }}
                                     >
                                         Create Pull Request📥
@@ -740,7 +743,7 @@ const RepositoryStatusPage: React.FC = () => {
                                     && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
                                     <div
                                         className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
-                                        onClick={() => handleTabClick("pullRequest")}
+                                        onClick={() => handleSelectedNewTabView("pullRequest")}
                                         style={{ marginTop: "20px" }}
                                     >
                                         Create Merge Request📥
@@ -751,7 +754,7 @@ const RepositoryStatusPage: React.FC = () => {
                                     && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
                                     <div
                                         className={`tab ${activeTab === "issues" ? "active" : ""}`}
-                                        onClick={() => handleTabClick("issues")}>
+                                        onClick={() => handleSelectedNewTabView("issues")}>
                                         Create GitHub Issue🐛
                                     </div>
                                 }
@@ -760,7 +763,7 @@ const RepositoryStatusPage: React.FC = () => {
                                     && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
                                     <div
                                         className={`tab ${activeTab === "issues" ? "active" : ""}`}
-                                        onClick={() => handleTabClick("issues")}>
+                                        onClick={() => handleSelectedNewTabView("issues")}>
                                         Create GitLab Issue🐛
                                     </div>
                                 }
