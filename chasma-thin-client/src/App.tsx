@@ -32,6 +32,7 @@ import { apiBaseUrl } from './environmentConstants';
 import ReportBugsPage from './components/pages/ReportBugsPage';
 import RepositorySynchronizationTab from './components/dashboardTabs/RepositorySynchronizationTab';
 import KeyedRepositoryStatusPage from './components/pages/KeyedRepositoryStatusPage';
+import RepositoryHealthTab from './components/dashboardTabs/RepositoryHealthTab';
 
 function App() {
     /** The notification modal to display in the application. */
@@ -189,6 +190,7 @@ function App() {
                     <Route path="setup" element={<AppSetupPage />} />
                     <Route path="report-bugs" element={<ReportBugsPage />} />
                     <Route path="repoSync" element={<RepositorySynchronizationTab />} />
+                    <Route path="health" element={<RepositoryHealthTab />} />
                 </Route>
                 <Route path="/help" element={<HelpPage />}>
                     <Route path="config" element={<HelpConfigXmlPage />} />
