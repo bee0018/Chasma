@@ -142,7 +142,7 @@ namespace ChasmaWebApi.Core.Services.Git
                     }
                     else
                     {
-                        remotePullRequests = GetRemotePullRequests(remoteOriginBranch.PushUrl, branchMetrics.BranchName, repoKey);
+                        remotePullRequests = GetRemotePullRequests(localGitRepository.HostPlatform, branchMetrics.BranchName, repoKey);
                     }
                 }
 
@@ -986,13 +986,12 @@ namespace ChasmaWebApi.Core.Services.Git
         /// <summary>
         /// Gets the remote pull request information for the specified branch.
         /// </summary>
-        /// <param name="pushUrl">The push URL of the repository.</param>
+        /// <param name="hostPlatform">The remote host platform.</param>
         /// <param name="branchName">The name of the branch that has a pull request created for it.</param>
         /// <param name="repoId">The repository identifier.</param>
         /// <returns>The list of pull request information for the specified branch.</returns>
-        private List<RemotePullRequest> GetRemotePullRequests(string pushUrl, string branchName, string repoId)
+        private List<RemotePullRequest> GetRemotePullRequests(RemoteHostPlatform hostPlatform, string branchName, string repoId)
         {
-            RemoteHostPlatform hostPlatform = RemoteHelper.GetRemoteHostPlatform(pushUrl);
             if (hostPlatform == RemoteHostPlatform.GitHub)
             {
                 return CacheManager.GitHubPullRequests.Values.Where(i => i.BranchName == branchName && i.RepositoryId == repoId).ToList();

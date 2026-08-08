@@ -58,7 +58,7 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         bool TryAddNewBranch(string workingDirectory, string branchName, LocalGitRepository repository, out string errorMessage);
 
         /// <summary>
-        /// Trieds to delete a branch from the specified repository.
+        /// Tries to delete a branch from the specified repository.
         /// </summary>
         /// <param name="repositoryId">The repository identifier.</param>
         /// <param name="branchName">The friendly branch name.</param>
@@ -111,7 +111,7 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="repoId">The repository identifier.</param>
         /// <param name="fileNames">The files to be staged.</param>
         /// <param name="stagingFile">Flag indicating whether the files are being staged/unstaged.</param>
-        /// <returns>The updatd repository elements.</returns>
+        /// <returns>The updated repository elements.</returns>
         List<RepositoryStatusElement>? ApplyBulkStagingAction(string repoId, IEnumerable<string> fileNames, bool stagingFile);
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// Tries to create a pull request in the specified repository.
         /// </summary>
         /// <param name="pullRequest">The pull request to be created.</param>
-        /// <param name="pullRequestId">The identtifier of the pull request.</param>
+        /// <param name="pullRequestId">The identifier of the pull request.</param>
         /// <param name="prUrl">The pull request url.</param>
         /// <param name="timestamp">The timestamp of when the pull request was created.</param>
         /// <param name="errorMessage">The error message.</param>
@@ -287,7 +287,7 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="buildResults">The build results.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the pipeline jobs were retrieved; false otherwise.</returns>
-        public bool TryGetPipelineJobResults(LocalGitRepository cachedRepo, out List<WorkflowRunResult> buildResults, out string errorMessage);
+        bool TryGetPipelineJobResults(LocalGitRepository cachedRepo, out List<WorkflowRunResult> buildResults, out string errorMessage);
 
         /// <summary>
         /// Tries to create a GitLab issue for the specified repository.
