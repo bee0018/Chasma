@@ -9,7 +9,7 @@ import { useCacheStore } from "../../managers/CacheManager";
  * @constructor
  */
 const ApiStatusTab: React.FC = () => {
-    useDocumentTitle("Server Status");
+    useDocumentTitle("Emryce Status");
 
     /** Gets or sets the heartbeat status. **/
     const [heartbeat, setHeartbeat] = useState<HeartbeatStatus | undefined>(undefined);
@@ -40,7 +40,7 @@ const ApiStatusTab: React.FC = () => {
         if (isRestarting) return "Emryce services are recycling. Reconnecting momentarily...";
         if (isStopping) return "Services terminated. Safe to close dashboard view.";
         if (heartbeat === undefined) return "Checking server heartbeat...";
-        if (heartbeat === HeartbeatStatus.Ok) return "Emryce server is online and responding.";
+        if (heartbeat === HeartbeatStatus.Ok) return "Emryce is online and responding.";
         return "Emryce server is currently offline.";
     }
 
@@ -123,7 +123,7 @@ const ApiStatusTab: React.FC = () => {
             {/* Top: Server Status Module */}
             <div className="dashboard-card api-status-card">
                 <div className="card-header">
-                    <h2 className="card-title">Server Status</h2>
+                    <h2 className="card-title">Emryce Status</h2>
                     <span className={`status-pill ${getHeartbeatStatusClass()}`}>
                         {heartbeat === HeartbeatStatus.Ok ? "Online" : heartbeat === undefined ? "Checking" : "Offline"}
                     </span>
@@ -136,12 +136,6 @@ const ApiStatusTab: React.FC = () => {
                     </div>
 
                     <div className="status-inputs">
-                        <input
-                            className="api-status-input-field"
-                            type="text"
-                            disabled
-                            value={getHeartbeatDisplayText()}
-                        />
                         <input
                             className="api-status-input-field subtle"
                             type="text"
@@ -177,7 +171,7 @@ const ApiStatusTab: React.FC = () => {
                                     disabled={isRestarting || isStopping}
                                     className="btn-power btn-power-restart"
                                 >
-                                    🔄 Restart Emryce Server
+                                    🔄 Restart Emryce
                                 </button>
 
                                 <button
@@ -186,7 +180,7 @@ const ApiStatusTab: React.FC = () => {
                                     disabled={isRestarting || isStopping}
                                     className="btn-power btn-power-stop"
                                 >
-                                    🛑 Stop Emryce Server
+                                    🛑 Power Off Emryce
                                 </button>
                             </div>
 
