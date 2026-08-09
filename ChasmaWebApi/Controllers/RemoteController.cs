@@ -233,7 +233,7 @@ namespace ChasmaWebApi.Controllers
                 string title = request.PullRequestTitle;
                 string headBranch = request.WorkingBranchName;
                 string baseBranch = request.DestinationBranchName;
-                string body = request.PullRequestBody;
+                string body = request.PullRequestBody ?? string.Empty;
                 string repoName = request.RepositoryName;
                 PreparedGitHubPullRequest pullRequest = new()
                 {
@@ -628,7 +628,7 @@ namespace ChasmaWebApi.Controllers
                     Assignee = request.Assignee,
                     AdditonalAssignees = request.AdditionalAssignees,
                     Reviewers = request.Reviewers,
-                    Description = request.Description,
+                    Description = request.Description ?? string.Empty,
                     RemoveSourceBranch = request.RemoveSourceBranch,
                     Squash = request.Squash,
                     AllowCollaboration = request.AllowCollaboration,

@@ -47,7 +47,7 @@ namespace ChasmaWebApi.Data.Requests.Remote
         /// <summary>
         /// Gets or sets the description of the merge request.
         /// </summary>
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to remove the source branch once merged.
