@@ -29,7 +29,7 @@
         /// <summary>
         /// Gets or sets the pull request body message.
         /// </summary>
-        public string PullRequestBody { get; set; }
+        public string? PullRequestBody { get; set; }
 
         /// <summary>
         /// Gets or sets the repository name.
