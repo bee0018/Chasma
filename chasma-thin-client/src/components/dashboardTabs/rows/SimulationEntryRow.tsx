@@ -156,9 +156,10 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
             setBranchesList(response.branchNames);
             if (response.branchNames && response.branchNames.length > 0) {
                 const firstBranch = response.branchNames[0];
-                setBranchToAdd(prev => prev ?? firstBranch);
-                setBaseBranchName(prev => prev ?? firstBranch);
-                setDestinationBranch(prev => prev ?? firstBranch);
+                setBranchToAdd(prev => !isBlankOrUndefined(prev) ? prev : firstBranch);
+                setBaseBranchName(prev => !isBlankOrUndefined(prev) ? prev : firstBranch);
+                setDestinationBranch(prev => !isBlankOrUndefined(prev) ? prev : firstBranch);
+                setBranchToPull(prev => !isBlankOrUndefined(prev) ? prev : firstBranch);
             }
         }
         catch (e) {
@@ -237,7 +238,7 @@ const SimulationEntryRow: React.FC<ISimulationEntryRow> = (props) => {
                 {simulationCase === "Pull" && branchesList && branchesList.length > 0 && (
                     <select
                         value={branchToAdd}
-                        onChange={(e) => setBranchToAdd(e.target.value)}
+                        onChange={(e) => setBranchToPull(e.target.value)}
                         className="modal-input-field"
                     >
                         {branchesList.map((branch) => (

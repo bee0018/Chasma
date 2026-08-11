@@ -102,7 +102,6 @@ const RegisterPage: React.FC = () => {
             addUserRequest.secondSecurityAnswer = secondSecurityAnswer;
             addUserRequest.thirdSecurityQuestion = thirdSecurityQuestion;
             addUserRequest.thirdSecurityAnswer = thirdSecurityAnswer;
-            console.log(addUserRequest);
             const response = await userClient.addUserAccount(addUserRequest);
             if (response.isErrorResponse || response.user === undefined) {
                 setNotification({
