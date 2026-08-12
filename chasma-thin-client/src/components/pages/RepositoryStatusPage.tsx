@@ -195,6 +195,9 @@ const RepositoryStatusPage: React.FC = () => {
     /** Gets or sets a value indicating whether the user is initializing a new repository. */
     const [isInitializingRepository, setIsInitializingRepository] = useState<boolean>(false);
 
+    /** Gets or sets a value indicating whether the user has successfully retrieved repository status data from the server. */
+    const [dataRetrieved, setDataRetrieved] = useState<boolean>(false);
+
     useEffect(() => {
         setSelectedFile(null);
         setSelectedFiles(new Set());
@@ -254,6 +257,7 @@ const RepositoryStatusPage: React.FC = () => {
             setOpenPullRequests(response.pullRequests);
             setLastUpdated(response.lastUpdated);
             setRepoIsUnborn(response.isUnborn);
+            setDataRetrieved(true);
         } catch (e) {
             if (e instanceof TypeError) {
                 // Not going to handle non-API/nswag related exceptions.
@@ -801,42 +805,54 @@ const RepositoryStatusPage: React.FC = () => {
                                 <div className="repo-summary" onClick={handleNavigateToBranchUrl}>
                                     <div className="repo-summary-item">
                                         <span className="repo-summary-label">Branch:</span>
-                                        <span className="repo-summary-value">{branchName}</span>
+                                        {dataRetrieved ? <span className="repo-summary-value">{branchName}</span> : <span className="repo-summary-skeleton" />}
                                     </div>
                                     <div className="repo-summary-item">
                                         <span className="repo-summary-label">Last Updated:</span>
-                                        <span className="repo-summary-value">{lastUpdated}</span>
+                                        {dataRetrieved ? <span className="repo-summary-value">{lastUpdated}</span> : <span className="repo-summary-skeleton" />}
                                     </div>
                                     <div className="repo-summary-item">
                                         <span className="repo-summary-label">Current Commit:</span>
-                                        <span className="repo-summary-value">{commitHash}</span>
+                                        {dataRetrieved ? <span className="repo-summary-value">{commitHash}</span> : <span className="repo-summary-skeleton" />}
                                     </div>
                                     <div className="repo-summary-item">
                                         <span className="repo-summary-label">Commits Ahead:</span>
-                                        <span
-                                            className="repo-summary-value"
-                                            style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "#aaaaaa" }}
-                                        >
-                                            {commitsAhead}
-                                        </span>
+                                        {dataRetrieved ? (
+                                            <span
+                                                className="repo-summary-value"
+                                                style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "#aaaaaa" }}
+                                            >
+                                                {commitsAhead}
+                                            </span>
+                                        ) : (
+                                            <span className="repo-summary-skeleton" />
+                                        )}
+
                                     </div>
                                     <div className="repo-summary-item">
                                         <span className="repo-summary-label">Commits Behind:</span>
-                                        <span
-                                            className="repo-summary-value"
-                                            style={{ color: commitsBehind && commitsBehind > 0 ? "red" : "#aaaaaa" }}
-                                        >
-                                            {commitsBehind}
-                                        </span>
+                                        {dataRetrieved ? (
+                                            <span
+                                                className="repo-summary-value"
+                                                style={{ color: commitsBehind && commitsBehind > 0 ? "red" : "#aaaaaa" }}
+                                            >
+                                                {commitsBehind}
+                                            </span>
+                                        ) : (
+                                            <span className="repo-summary-skeleton" />
+                                        )}
                                     </div>
                                     <div className="repo-summary-item">
                                         <span className="repo-summary-label">Push State:</span>
-                                        <span
-                                            className="repo-summary-value"
-                                            style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "white" }}
-                                        >
-                                            {getPushStatePhrase(commitsAhead)}
-                                        </span>
+                                        {dataRetrieved ? (
+                                            <span
+                                                className="repo-summary-value"
+                                                style={{ color: commitsAhead && commitsAhead > 0 ? "green" : "white" }}
+                                            >
+                                                {getPushStatePhrase(commitsAhead)}
+                                            </span>) : (
+                                            <span className="repo-summary-skeleton" />
+                                        )}
                                     </div>
                                     <br />
                                     {openPullRequests && openPullRequests.length > 0 && (

@@ -589,3 +589,28 @@
     box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.25);
     background-color: rgba(34, 211, 238, 0.04);
 }
+
+.repo-summary-skeleton {
+  display: inline-block;
+  width: 32px;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    #2b2b2b 25%,
+    #3a3a3a 50%,
+    #2b2b2b 75%
+  );
+  background-size: 200% 100%;
+  animation: repo-shimmer 1.5s infinite linear;
+  align-self: center;
+}
+
+@keyframes repo-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
