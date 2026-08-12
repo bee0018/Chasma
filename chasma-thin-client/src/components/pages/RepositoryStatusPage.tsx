@@ -231,7 +231,7 @@ const RepositoryStatusPage: React.FC = () => {
 
         try {
             const request = new GitStatusRequest();
-            request.repositoryId = repoId;
+            request.repositoryId = selectedRepo?.id;
             request.userId = user?.userId
             const response = await statusClient.getRepoStatus(request);
             if (response.isErrorResponse) {

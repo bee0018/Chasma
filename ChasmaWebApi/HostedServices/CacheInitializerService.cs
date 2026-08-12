@@ -5,7 +5,6 @@ using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
-using LibGit2Sharp;
 using Microsoft.EntityFrameworkCore;
 using NGitLab;
 using NGitLab.Models;
