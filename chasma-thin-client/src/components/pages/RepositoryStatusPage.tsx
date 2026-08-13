@@ -600,6 +600,10 @@ const RepositoryStatusPage: React.FC = () => {
             if (e.key === "Escape") {
                 setSelectedFiles(new Set());
             }
+
+            if (e.ctrlKey && e.key === "Enter") {
+                setIsEditingCommitMessage(true);
+            }
         };
 
         window.addEventListener("keydown", handler);
@@ -694,82 +698,86 @@ const RepositoryStatusPage: React.FC = () => {
                     </div>
                 )}
 
-                <div
-                    className="sidebar-section-header"
-                    onClick={() => setIsStashesAndAutomationOptionsOpen(!isStashesAndAutomationOptionsOpen)}
-                >
-                    <span>Stashes & Automation</span>
-                    <span className={`arrow ${isStashesAndAutomationOptionsOpen ? "open" : ""}`}>▶</span>
-                </div>
-                {isStashesAndAutomationOptionsOpen && (
-                    <div className="sidebar-section-content">
-                        {!isSafeMode &&
-                            <>
-                                <div
-                                    className={`tab ${activeTab === "stashes" ? "active" : ""}`}
-                                    onClick={() => handleSelectedNewTabView("stashes")}
-                                >
-                                    Stashes🗄️
-                                </div>
-                                <div
-                                    className={`tab ${activeTab === "shell" ? "active" : ""}`}
-                                    onClick={() => handleSelectedNewTabView("shell")}>
-                                    Custom Shell Commands🖥️
-                                </div>
-                            </>
-                        }
-                    </div>
-                )}
-                {selectedRepo && selectedRepo.hostPlatform !== RemoteHostPlatform.Local &&
+                {!isSafeMode &&
                     <>
                         <div
                             className="sidebar-section-header"
-                            onClick={() => setIsRemoteOptionsOpen(!isRemoteOptionsOpen)}
+                            onClick={() => setIsStashesAndAutomationOptionsOpen(!isStashesAndAutomationOptionsOpen)}
                         >
-                            <span>Remote Actions</span>
-                            <span className={`arrow ${isRemoteOptionsOpen ? "open" : ""}`}>▶</span>
+                            <span>Stashes & Automation</span>
+                            <span className={`arrow ${isStashesAndAutomationOptionsOpen ? "open" : ""}`}>▶</span>
                         </div>
-                        {isRemoteOptionsOpen && !isSafeMode &&
+                        {isStashesAndAutomationOptionsOpen && (
+                            <div className="sidebar-section-content">
+                                {!isSafeMode &&
+                                    <>
+                                        <div
+                                            className={`tab ${activeTab === "stashes" ? "active" : ""}`}
+                                            onClick={() => handleSelectedNewTabView("stashes")}
+                                        >
+                                            Stashes🗄️
+                                        </div>
+                                        <div
+                                            className={`tab ${activeTab === "shell" ? "active" : ""}`}
+                                            onClick={() => handleSelectedNewTabView("shell")}>
+                                            Custom Shell Commands🖥️
+                                        </div>
+                                    </>
+                                }
+                            </div>
+                        )}
+                        {selectedRepo && selectedRepo.hostPlatform !== RemoteHostPlatform.Local &&
                             <>
-                                {user?.permissions
-                                    && user.permissions.isUsingGitHubApi
-                                    && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
-                                    <div
-                                        className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
-                                        onClick={() => handleSelectedNewTabView("pullRequest")}
-                                        style={{ marginTop: "20px" }}
-                                    >
-                                        Create Pull Request📥
-                                    </div>
-                                }
-                                {user?.permissions
-                                    && user.permissions.isUsingGitLabApi
-                                    && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
-                                    <div
-                                        className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
-                                        onClick={() => handleSelectedNewTabView("pullRequest")}
-                                        style={{ marginTop: "20px" }}
-                                    >
-                                        Create Merge Request📥
-                                    </div>
-                                }
-                                {user?.permissions
-                                    && user.permissions.isUsingGitHubApi
-                                    && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
-                                    <div
-                                        className={`tab ${activeTab === "issues" ? "active" : ""}`}
-                                        onClick={() => handleSelectedNewTabView("issues")}>
-                                        Create GitHub Issue🐛
-                                    </div>
-                                }
-                                {user?.permissions
-                                    && user.permissions.isUsingGitLabApi
-                                    && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
-                                    <div
-                                        className={`tab ${activeTab === "issues" ? "active" : ""}`}
-                                        onClick={() => handleSelectedNewTabView("issues")}>
-                                        Create GitLab Issue🐛
-                                    </div>
+                                <div
+                                    className="sidebar-section-header"
+                                    onClick={() => setIsRemoteOptionsOpen(!isRemoteOptionsOpen)}
+                                >
+                                    <span>Remote Actions</span>
+                                    <span className={`arrow ${isRemoteOptionsOpen ? "open" : ""}`}>▶</span>
+                                </div>
+                                {isRemoteOptionsOpen && !isSafeMode &&
+                                    <>
+                                        {user?.permissions
+                                            && user.permissions.isUsingGitHubApi
+                                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
+                                            <div
+                                                className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
+                                                onClick={() => handleSelectedNewTabView("pullRequest")}
+                                                style={{ marginTop: "20px" }}
+                                            >
+                                                Create Pull Request📥
+                                            </div>
+                                        }
+                                        {user?.permissions
+                                            && user.permissions.isUsingGitLabApi
+                                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
+                                            <div
+                                                className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
+                                                onClick={() => handleSelectedNewTabView("pullRequest")}
+                                                style={{ marginTop: "20px" }}
+                                            >
+                                                Create Merge Request📥
+                                            </div>
+                                        }
+                                        {user?.permissions
+                                            && user.permissions.isUsingGitHubApi
+                                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
+                                            <div
+                                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
+                                                onClick={() => handleSelectedNewTabView("issues")}>
+                                                Create GitHub Issue🐛
+                                            </div>
+                                        }
+                                        {user?.permissions
+                                            && user.permissions.isUsingGitLabApi
+                                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
+                                            <div
+                                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
+                                                onClick={() => handleSelectedNewTabView("issues")}>
+                                                Create GitLab Issue🐛
+                                            </div>
+                                        }
+                                    </>
                                 }
                             </>
                         }
