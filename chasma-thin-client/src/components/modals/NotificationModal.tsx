@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import "../../styles/modals/modal.css"
 
 /**
@@ -89,6 +89,17 @@ function getModalIcon(props: INotificationModalProps) {
  * @constructor Initializes a new instance of the NotificationModal.
  */
 const NotificationModal: React.FC<INotificationModalProps> = (props: INotificationModalProps) => {
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
+
     return (
         <div className="modal-backdrop" onClick={props.onClose}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>

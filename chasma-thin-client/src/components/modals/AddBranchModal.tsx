@@ -1,4 +1,4 @@
-﻿import React, {useState} from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
     AddBranchSimulationEntry,
     AddNewBranchRequest,
@@ -6,7 +6,7 @@ import {
     SimulatedAddBranchResult
 } from "../../API/ChasmaWebApiClient";
 import Checkbox from "../Checkbox";
-import {branchClient, dryRunClient} from "../../managers/ApiClientManager";
+import { branchClient, dryRunClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -56,8 +56,8 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /**
      * Handles the event when the user wants to add branches.
@@ -145,6 +145,17 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
         }
     }
 
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
+
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
@@ -205,10 +216,10 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
                         />
                     }
                     <input className="modal-input-field"
-                              placeholder="Enter branch name:"
-                              value={branchName}
-                              onChange={(e) => setBranchName(e.target.value)} />
-                    <br/>
+                        placeholder="Enter branch name:"
+                        value={branchName}
+                        onChange={(e) => setBranchName(e.target.value)} />
+                    <br />
                     <div className="modal-actions">
                         {!successfullyAdded &&
                             <button
@@ -220,10 +231,10 @@ const AddBranchModal: React.FC<IAddBranchModalProps> = (props: IAddBranchModalPr
                             </button>
                         }
                         <button
-                                className="modal-button secondary"
-                                onClick={props.onClose}
-                            >
-                                Close
+                            className="modal-button secondary"
+                            onClick={props.onClose}
+                        >
+                            Close
                         </button>
                     </div>
                 </div>

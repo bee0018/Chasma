@@ -1,6 +1,6 @@
-import React, {useState} from "react";
-import {ApplicationUser, GitPullRequest, PullSimulationEntry, SimulatedGitPullResult, SimulateGitPullRequest} from "../../API/ChasmaWebApiClient";
-import {dryRunClient, statusClient} from "../../managers/ApiClientManager";
+import React, { useEffect, useState } from "react";
+import { ApplicationUser, GitPullRequest, PullSimulationEntry, SimulatedGitPullResult, SimulateGitPullRequest } from "../../API/ChasmaWebApiClient";
+import { dryRunClient, statusClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -47,8 +47,8 @@ const PullModal: React.FC<IPullModalProps> = (props: IPullModalProps) => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /**
      * Handles the event when the user wants to pull changes.
@@ -129,6 +129,17 @@ const PullModal: React.FC<IPullModalProps> = (props: IPullModalProps) => {
             setNotification(errorNotification);
         }
     }
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
 
     return (
         <>

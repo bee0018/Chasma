@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCacheStore } from "../../managers/CacheManager";
 import { LocalGitRepository } from "../../API/ChasmaWebApiClient";
 
@@ -52,6 +52,17 @@ const RepositoryStatusSwitcher: React.FC<IRepositoryStatusSwitcher> = (props: IR
 
         props.onSwitch(`/status/${selectedRepository?.name}/${selectedRepository?.id}`);
     };
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
 
     return (
         <>

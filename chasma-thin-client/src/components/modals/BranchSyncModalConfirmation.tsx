@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
 /**
@@ -26,7 +27,18 @@ const BranchSyncModalConfirmationModal: React.FC<IBranchSyncModalConfirmationPro
         props.onSelected(isSkipping);
     }
 
-    return  createPortal(
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
+
+    return createPortal(
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
                 <div className="modal" onClick={(e) => e.stopPropagation()}>

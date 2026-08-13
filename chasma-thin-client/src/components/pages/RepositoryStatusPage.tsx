@@ -604,6 +604,11 @@ const RepositoryStatusPage: React.FC = () => {
             if (e.ctrlKey && e.key === "Enter") {
                 setIsEditingCommitMessage(true);
             }
+
+            if (e.ctrlKey && e.shiftKey && e.key === "P") {
+                e.preventDefault();
+                setIsPushingChanges(true);
+            }
         };
 
         window.addEventListener("keydown", handler);

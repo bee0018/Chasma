@@ -1,4 +1,4 @@
-﻿import React, {useEffect, useState} from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
     GitBranchRequest,
     GitMergeRequest,
@@ -6,7 +6,7 @@ import {
     SimulateBranchMergeRequest,
     SimulatedMergeResult
 } from "../../API/ChasmaWebApiClient";
-import {branchClient, dryRunClient} from "../../managers/ApiClientManager";
+import { branchClient, dryRunClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -18,7 +18,7 @@ interface IMergeModal {
 
     /** The repository identifier. **/
     repositoryId: string | undefined;
-    
+
     /** The user identifier. **/
     userId: number | undefined;
 
@@ -59,10 +59,10 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
-   /** Gets or sets the flag indicating whether to disable the send button. */
+    /** Gets or sets the flag indicating whether to disable the send button. */
     const [disabledSendButton, setDisableSendButton] = useState(false);
 
     /**
@@ -168,7 +168,7 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
             }
 
             setBranchesList(response.branchNames);
-            if (response.branchNames && response.branchNames.length > 0){
+            if (response.branchNames && response.branchNames.length > 0) {
                 const branch = response.branchNames[0];
                 setWorkingBranchName(branch);
                 setDestinationBranch(branch);
@@ -183,6 +183,17 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
 
     useEffect(() => {
         fetchAssociatedBranches().catch(e => console.error(e));
+    }, []);
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
     }, []);
 
     return (
@@ -241,26 +252,26 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {branchesList && branchesList.length > 0 && (
                         <div hidden={successfullyMerged}>
-                            <label style={{float: "left", marginTop: "30px"}}>Choose source branch:</label>
+                            <label style={{ float: "left", marginTop: "30px" }}>Choose source branch:</label>
                             <select value={workingBranchName}
-                                    onChange={(e) => setWorkingBranchName(e.target.value)}
-                                    className="modal-input-field"
+                                onChange={(e) => setWorkingBranchName(e.target.value)}
+                                className="modal-input-field"
                             >
                                 {branchesList.map((branch) => (
                                     <option key={branch} value={branch}>{branch}</option>
                                 ))}
                             </select>
-                            <br/>
-                            <label style={{float: "left"}}>Choose destination branch to merge into:</label>
+                            <br />
+                            <label style={{ float: "left" }}>Choose destination branch to merge into:</label>
                             <select value={destinationBranch}
-                                    onChange={(e) => setDestinationBranch(e.target.value)}
-                                    className="modal-input-field"
+                                onChange={(e) => setDestinationBranch(e.target.value)}
+                                className="modal-input-field"
                             >
                                 {branchesList.map((branch) => (
                                     <option key={branch} value={branch}>{branch}</option>
                                 ))}
                             </select>
-                            <br/>
+                            <br />
                             {props.isSafeMode &&
                                 <input
                                     type="text"
@@ -274,14 +285,14 @@ const MergeModal: React.FC<IMergeModal> = (props: IMergeModal) => {
                     )}
                     <div className="modal-actions">
                         <button className="modal-button primary"
-                                hidden={successfullyMerged}
-                                disabled={disabledSendButton}
-                                onClick={handleMergeOperation}
+                            hidden={successfullyMerged}
+                            disabled={disabledSendButton}
+                            onClick={handleMergeOperation}
                         >
-                            {props.isSafeMode ? "Simulate ": ""}Merge
+                            {props.isSafeMode ? "Simulate " : ""}Merge
                         </button>
                         <button className="modal-button secondary"
-                                onClick={props.onClose}
+                            onClick={props.onClose}
                         >
                             Close
                         </button>

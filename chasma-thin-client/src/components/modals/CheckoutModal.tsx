@@ -39,8 +39,8 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
     /** Gets or sets the modal title. **/
     const [title, setTitle] = useState<string>(
         props.targetedBranch === undefined
-        ? "Select branch to checkout: "
-        : `Checkout branch ${props.targetedBranch}?`
+            ? "Select branch to checkout: "
+            : `Checkout branch ${props.targetedBranch}?`
     );
 
     /** Gets or sets the remote branches to checkout. **/
@@ -146,7 +146,19 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
             fetchAssociatedBranches().catch(e => console.error(e));
         }
     }, [props.targetedBranch]);
-    return createPortal (
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
+
+    return createPortal(
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
                 <div className="modal" onClick={(e) => e.stopPropagation()}>

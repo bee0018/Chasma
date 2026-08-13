@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChangeRepositoryDisplayNameRequest, LocalGitRepository } from "../../API/ChasmaWebApiClient";
 import { configClient } from "../../managers/ApiClientManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -89,6 +89,17 @@ const ChangeRepositoryDisplayNameModal: React.FC<IChangeRepositoryDisplayNameMod
             setDisableSendButton(false);
         }
     };
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
 
     return createPortal(
         <div className="modal-backdrop" onClick={props.onClose}>

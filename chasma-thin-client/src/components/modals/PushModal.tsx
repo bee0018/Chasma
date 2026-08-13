@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ConnectRemoteRepositoryRequest, GitPushRequest, LocalGitRepository, RemoteHostPlatform } from "../../API/ChasmaWebApiClient";
 import { configClient, statusClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
@@ -148,7 +148,19 @@ const PushModal: React.FC<IPushModalProps> = (props: IPushModalProps) => {
         }
 
         await handlePushChangesRequest();
-    }
+    };
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
+
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>

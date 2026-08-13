@@ -1,6 +1,6 @@
-import React, {useState} from "react";
-import {GitCommitRequest} from "../../API/ChasmaWebApiClient";
-import {statusClient} from "../../managers/ApiClientManager";
+import React, { useEffect, useState } from "react";
+import { GitCommitRequest } from "../../API/ChasmaWebApiClient";
+import { statusClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -53,8 +53,8 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** Handles the request to commit local changes. **/
     async function handleCommitChangesRequest() {
@@ -95,6 +95,17 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
             setDisableSendButton(false);
         }
     }
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
 
     return (
         <>
@@ -150,11 +161,11 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     <textarea className="modal-input-area"
-                              placeholder="Enter commit message:"
-                              value={commitMessage}
-                              disabled={disableCommitEditing}
-                              onChange={(e) => setCommitMessage(e.target.value)} />
-                    <br/>
+                        placeholder="Enter commit message:"
+                        value={commitMessage}
+                        disabled={disableCommitEditing}
+                        onChange={(e) => setCommitMessage(e.target.value)} />
+                    <br />
                     <div className="modal-actions">
                         {!commitRequestSent &&
                             <button
@@ -166,7 +177,7 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
                             </button>
                         }
                         <button className="modal-button secondary"
-                                onClick={props.onClose}
+                            onClick={props.onClose}
                         >
                             Close
                         </button>

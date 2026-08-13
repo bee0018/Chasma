@@ -1,7 +1,7 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import Checkbox from "../Checkbox";
-import {GitResetRequest, ResetMode,} from "../../API/ChasmaWebApiClient";
-import {statusClient} from "../../managers/ApiClientManager";
+import { GitResetRequest, ResetMode, } from "../../API/ChasmaWebApiClient";
+import { statusClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -47,8 +47,8 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** Handles the event when the user wants to reset to the current changes. **/
     const handleGitResetRequest = async () => {
@@ -81,6 +81,18 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
             setNotification(errorNotification);
         }
     };
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
+
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
@@ -135,7 +147,7 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {currentRevision && <h3 className="modal-message">Successfully reset back to: {currentRevision}</h3>}
-                    <div style={{justifySelf: "left", display: "grid",  rowGap: "8px", marginBottom: "8px"}}>
+                    <div style={{ justifySelf: "left", display: "grid", rowGap: "8px", marginBottom: "8px" }}>
                         <Checkbox
                             label={"Soft"}
                             onBoxChecked={() => setResetMode(ResetMode.Soft)}
@@ -155,7 +167,7 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
                             tooltip="Moves the branch pointed to by HEAD to the specified commit object, resets the index to the tree recorded by the commit and updates the working directory to match the content of the index."
                         />
                     </div>
-                    <br/>
+                    <br />
                     <input
                         type="text"
                         className="modal-input-field"
@@ -165,14 +177,14 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
                     />
                     <div className="modal-actions">
                         <button className="modal-button primary"
-                                hidden={successfullyReset}
-                                disabled={disabledSendButton}
-                                onClick={handleGitResetRequest}
+                            hidden={successfullyReset}
+                            disabled={disabledSendButton}
+                            onClick={handleGitResetRequest}
                         >
                             Reset
                         </button>
                         <button className="modal-button secondary"
-                                onClick={props.onClose}
+                            onClick={props.onClose}
                         >
                             Close
                         </button>

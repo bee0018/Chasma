@@ -1,10 +1,10 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import Checkbox from "../Checkbox";
 import {
     ApplyStashRequest,
     StashApplyModifiers,
 } from "../../API/ChasmaWebApiClient";
-import {stashClient} from "../../managers/ApiClientManager";
+import { stashClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -50,8 +50,8 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** Handles the event when the user wants to apply the stash to the current changes. **/
     const handleApplyStashRequest = async () => {
@@ -84,6 +84,18 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
             setNotification(errorNotification);
         }
     };
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
+
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
@@ -137,7 +149,7 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
                     </div>
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
-                    <div style={{justifySelf: "left", display: "grid",  rowGap: "8px", marginBottom: "8px"}}>
+                    <div style={{ justifySelf: "left", display: "grid", rowGap: "8px", marginBottom: "8px" }}>
                         <Checkbox
                             label={"Default"}
                             onBoxChecked={() => setApplyStashOption(StashApplyModifiers.Default)}
@@ -153,14 +165,14 @@ const ApplyStashModal: React.FC<IApplyStashModalProps> = (props: IApplyStashModa
                     </div>
                     <div className="modal-actions">
                         <button className="modal-button primary"
-                                hidden={successfullyAppliedStashed}
-                                disabled={disabledSendButton}
-                                onClick={handleApplyStashRequest}
+                            hidden={successfullyAppliedStashed}
+                            disabled={disabledSendButton}
+                            onClick={handleApplyStashRequest}
                         >
                             Apply
                         </button>
                         <button className="modal-button secondary"
-                                onClick={props.onClose}
+                            onClick={props.onClose}
                         >
                             Close
                         </button>

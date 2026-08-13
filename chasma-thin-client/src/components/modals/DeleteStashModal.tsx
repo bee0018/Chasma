@@ -1,6 +1,6 @@
-﻿import React, { useState } from "react";
-import {DeleteStashRequest} from "../../API/ChasmaWebApiClient";
-import {stashClient} from "../../managers/ApiClientManager";
+﻿import React, { useEffect, useState } from "react";
+import { DeleteStashRequest } from "../../API/ChasmaWebApiClient";
+import { stashClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -43,8 +43,8 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** Handles the event when the user wants to delete the specified stash. **/
     const handleDeleteStashRequest = async () => {
@@ -76,6 +76,17 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
             setNotification(errorNotification);
         }
     };
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
@@ -131,14 +142,14 @@ const DeleteStashModal: React.FC<IDeleteStashModalProps> = (props: IDeleteStashM
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     <div className="modal-actions">
                         <button className="modal-button primary"
-                                disabled={disabledSendButton}
-                                hidden={successfullyDeletedStashed}
-                                onClick={handleDeleteStashRequest}
+                            disabled={disabledSendButton}
+                            hidden={successfullyDeletedStashed}
+                            onClick={handleDeleteStashRequest}
                         >
                             Delete
                         </button>
                         <button className="modal-button secondary"
-                                onClick={props.onClose}
+                            onClick={props.onClose}
                         >
                             Close
                         </button>

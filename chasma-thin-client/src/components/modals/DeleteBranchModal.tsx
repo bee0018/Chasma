@@ -2,8 +2,8 @@
     DeleteBranchRequest,
     GitBranchRequest,
 } from "../../API/ChasmaWebApiClient";
-import React, {useEffect, useState} from "react";
-import {branchClient} from "../../managers/ApiClientManager";
+import React, { useEffect, useState } from "react";
+import { branchClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -45,8 +45,8 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** Fetches the branches associated with this repository. **/
     async function fetchAssociatedBranches() {
@@ -101,6 +101,17 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
 
     useEffect(() => {
         fetchAssociatedBranches().catch(e => console.error(e));
+    }, []);
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
     }, []);
 
     return (
@@ -158,15 +169,15 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {branchesList && branchesList.length > 0 && (
                         <select value={branchName}
-                                onChange={(e) => setBranchName(e.target.value)}
-                                className="modal-input-field"
+                            onChange={(e) => setBranchName(e.target.value)}
+                            className="modal-input-field"
                         >
                             {branchesList.map((branch) => (
                                 <option key={branch} value={branch}>{branch}</option>
                             ))}
                         </select>
                     )}
-                    <br/>
+                    <br />
                     <div className="modal-actions">
                         <button
                             className="modal-button primary"
@@ -176,7 +187,7 @@ const DeleteBranchModal: React.FC<IDeleteBranchModalProps> = (props: IDeleteBran
                             Delete
                         </button>
                         <button className="modal-button secondary"
-                                onClick={props.onClose}
+                            onClick={props.onClose}
                         >
                             Close
                         </button>

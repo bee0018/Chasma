@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -38,11 +38,11 @@ const LogoutModal: React.FC<ILogoutModalProps> = (props: ILogoutModalProps) => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
-   /** Gets the user that is currently logged in. */
-   const user = useCacheStore(state => state.user);
+    /** Gets the user that is currently logged in. */
+    const user = useCacheStore(state => state.user);
 
     /**
      * Handles the logout changes request.
@@ -77,6 +77,18 @@ const LogoutModal: React.FC<ILogoutModalProps> = (props: ILogoutModalProps) => {
             setNotification(errorNotification);
         }
     };
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
+
     return (
         <>
             <div className="modal-backdrop" onClick={props.onClose}>

@@ -1,5 +1,5 @@
 import { BranchCheckoutMode } from "../../API/ChasmaWebApiClient";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Checkbox from "../Checkbox";
 import { createPortal } from "react-dom";
 
@@ -11,7 +11,7 @@ interface ISmartSyncConfirmationModalProps {
     onClose: () => void;
 
     /** Function to call when the checkout mode has been confirmed. */
-    onSelected: (checkoutMode : BranchCheckoutMode) => void,
+    onSelected: (checkoutMode: BranchCheckoutMode) => void,
 }
 
 /**
@@ -22,22 +22,34 @@ interface ISmartSyncConfirmationModalProps {
 const SmartSyncConfirmationModal: React.FC<ISmartSyncConfirmationModalProps> = (props: ISmartSyncConfirmationModalProps) => {
     /** Gets or sets the branch checkout mode. */
     const [branchCheckoutMode, setBranchCheckoutMode] = useState<BranchCheckoutMode>(BranchCheckoutMode.Default);
-    return createPortal (
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
+
+    return createPortal(
         <>
             <div className="modal-backdrop" onClick={props.onClose}>
                 <div className="modal" onClick={(e) => e.stopPropagation()}>
                     <div className="modal-icon-container">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                width="48"
-                                height="48"
-                                fill="none"
-                            >
-                                <circle cx="12" cy="12" r="10" fill="#00bfff" />
-                                <rect x="11" y="10" width="2" height="7" fill="#ffffff" />
-                                <rect x="11" y="7" width="2" height="2" fill="#ffffff" />
-                            </svg>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            width="48"
+                            height="48"
+                            fill="none"
+                        >
+                            <circle cx="12" cy="12" r="10" fill="#00bfff" />
+                            <rect x="11" y="10" width="2" height="7" fill="#ffffff" />
+                            <rect x="11" y="7" width="2" height="2" fill="#ffffff" />
+                        </svg>
                     </div>
                     <h2 className="modal-title">Choose what you would like to do with the current changes in your working directories</h2>
                     <div style={{ justifySelf: "left", display: "grid", rowGap: "8px", marginBottom: "8px" }}>

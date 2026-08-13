@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { InitializeRepositoryRequest } from "../../API/ChasmaWebApiClient";
@@ -95,6 +95,17 @@ const InitializeRepositoryModal: React.FC<IInitializeRepositoryModal> = (props: 
             setDisableSendButton(false);
         }
     };
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                props.onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, []);
 
     return (
         <>
