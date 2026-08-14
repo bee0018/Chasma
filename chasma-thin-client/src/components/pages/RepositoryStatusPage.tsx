@@ -38,6 +38,7 @@ import PullModal from "../modals/PullModal";
 import RepositoryStatusSwitcher from "../modals/RepositoryStatusSwitcher";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
 import InitializeRepositoryModal from "../modals/InitializeRepositoryModal";
+import { useKeyPress } from "../../util/useKeyPress";
 
 /**
  * Initializes a new instance of the Repository Status Page class.
@@ -614,6 +615,7 @@ const RepositoryStatusPage: React.FC = () => {
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
     }, []);
+    useKeyPress("Escape", () => setSelectedFiles(new Set()));
 
     /**
      * Handles the event when the user selects the specified tab.

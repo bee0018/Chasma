@@ -4,6 +4,7 @@ import { dryRunClient, statusClient } from "../../managers/ApiClientManager";
 import { useNavigate } from "react-router-dom";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
+import { useKeyPress } from "../../util/useKeyPress";
 
 /**
  * Defines the properties/members of the pull modal props.
@@ -130,16 +131,8 @@ const PullModal: React.FC<IPullModalProps> = (props: IPullModalProps) => {
         }
     }
 
-    useEffect(() => {
-        const handler = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-                props.onClose();
-            }
-        };
-
-        window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
-    }, []);
+    useKeyPress("Escape", () => props.onClose());
+    useKeyPress("Enter", () => handlePullRequestOperation());
 
     return (
         <>
