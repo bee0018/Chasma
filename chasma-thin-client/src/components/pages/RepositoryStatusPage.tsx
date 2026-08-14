@@ -605,7 +605,7 @@ const RepositoryStatusPage: React.FC = () => {
                 setIsEditingCommitMessage(true);
             }
 
-            if (e.ctrlKey && e.shiftKey && e.key === "P") {
+            if (e.ctrlKey && e.shiftKey && (e.key.toUpperCase() === "P")) {
                 e.preventDefault();
                 setIsPushingChanges(true);
             }
