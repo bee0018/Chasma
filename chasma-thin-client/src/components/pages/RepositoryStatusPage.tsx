@@ -676,8 +676,20 @@ const RepositoryStatusPage: React.FC = () => {
                         }
                         {!isSafeMode &&
                             <>
-                                <div className="tab" onClick={() => setIsEditingCommitMessage(true)}>Commit 📌</div>
-                                <div className="tab" onClick={() => setIsPushingChanges(true)}>Push ⬆️</div>
+                                <div
+                                    className="tab"
+                                    onClick={() => setIsEditingCommitMessage(true)}
+                                    title="Ctrl + ENTER"
+                                    >
+                                        Commit 📌
+                                </div>
+                                <div
+                                    className="tab"
+                                    onClick={() => setIsPushingChanges(true)}
+                                    title="Ctrl + Shift + P"
+                                    >
+                                        Push ⬆️
+                                </div>
                                 <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>
                             </>
                         }
