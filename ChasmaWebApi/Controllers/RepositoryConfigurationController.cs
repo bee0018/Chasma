@@ -169,7 +169,8 @@ public class RepositoryConfigurationController : ControllerBase
             return BadRequest(response);
         }
 
-        if (string.IsNullOrEmpty(request.RepositoryId))
+        string repoId = request.RepositoryId;
+        if (string.IsNullOrEmpty(repoId))
         {
             response.IsErrorResponse = true;
             response.ErrorMessage = "Invalid request. Repository identifier is required.";
@@ -177,17 +178,17 @@ public class RepositoryConfigurationController : ControllerBase
             return BadRequest(response);
         }
 
-        logger.LogInformation("Attempting to delete repository with key {repoKey} from cache.", request.RepositoryId);
-        if (!applicationControlService.TryDeleteRepository(request.RepositoryId, request.UserId, out List<LocalGitRepository> localGitRepositories, out string errorMessage))
+        logger.LogInformation("Attempting to delete repository with key {repoKey} from cache.", repoId);
+        if (!applicationControlService.TryDeleteRepository(repoId, request.UserId, out List<LocalGitRepository> localGitRepositories, out string errorMessage))
         {
             response.IsErrorResponse = true;
             response.ErrorMessage = errorMessage;
-            logger.LogError("Failed to delete repository with key {repoKey} from cache. Error: {errorMessage}", request.RepositoryId, errorMessage);
+            logger.LogError("Failed to delete repository with key {repoKey} from cache. Error: {errorMessage}", repoId, errorMessage);
             return Ok(response);
         }
 
         List<RepositoryModel> reposToDelete = applicationDbContext.Repositories
-            .Where(i => i.UserId == request.UserId && i.Id == request.RepositoryId)
+            .Where(i => i.UserId == request.UserId && i.Id == repoId)
             .ToList();
         foreach (RepositoryModel repo in reposToDelete)
         {
@@ -196,7 +197,12 @@ public class RepositoryConfigurationController : ControllerBase
             applicationDbContext.WorkingDirectories.Remove(directory);
         }
 
-        await applicationDbContext.SaveChangesAsync();
+        int rowsAffected = await applicationDbContext.SaveChangesAsync();
+        if (rowsAffected > 0)
+        {
+            logger.LogInformation("Successfully deleted repository with key {repoKey} from cache and database.", repoId);
+        }
+
         response.Repositories = localGitRepositories;
         return Ok(response);
     }

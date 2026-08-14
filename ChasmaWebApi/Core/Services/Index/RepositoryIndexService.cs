@@ -1,9 +1,9 @@
-﻿using ChasmaWebApi.Core.Interfaces.Git;
-using ChasmaWebApi.Core.Interfaces.Index;
+﻿using ChasmaWebApi.Core.Interfaces.Index;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Util;
+using ChasmaWebApi.Util.Extensions;
 using LibGit2Sharp;
 
 namespace ChasmaWebApi.Core.Services.Index
@@ -29,11 +29,6 @@ namespace ChasmaWebApi.Core.Services.Index
         private readonly IEncryptionService EncryptionService;
 
         /// <summary>
-        /// The internal API git repository service.
-        /// </summary>
-        private readonly IGitRepositoryService GitRepositoryService;
-
-        /// <summary>
         /// The lock object used for concurrency.
         /// </summary>
         private readonly Lock lockObject = new();
@@ -47,12 +42,11 @@ namespace ChasmaWebApi.Core.Services.Index
         /// <param name="cacheManager">The internal API cache manager.</param>
         /// <param name="encryptionService">The internal API encryption service.</param>
         /// <param name="gitRepositoryService">The internal API git repository service.</param>
-        public RepositoryIndexService(ILogger<RepositoryIndexService> logger, ICacheManager cacheManager, IEncryptionService encryptionService, IGitRepositoryService gitRepositoryService)
+        public RepositoryIndexService(ILogger<RepositoryIndexService> logger, ICacheManager cacheManager, IEncryptionService encryptionService)
         {
             Logger = logger;
             CacheManager = cacheManager;
             EncryptionService = encryptionService;
-            GitRepositoryService = gitRepositoryService;
         }
 
         #endregion
@@ -80,6 +74,7 @@ namespace ChasmaWebApi.Core.Services.Index
                     return false;
                 }
 
+                StopTrackingRemotePullRequestsForRepository(repository);
                 localGitRepositories = CacheManager.Repositories.Values
                     .Where(i => i.UserId == userId)
                     .OrderBy(i => i.GetDisplayName())
@@ -459,6 +454,30 @@ namespace ChasmaWebApi.Core.Services.Index
                 Username = !string.IsNullOrEmpty(remotePlatformUsername) ? remotePlatformUsername : "git",
                 Password = apiAccessToken,
             };
+        }
+
+        /// <summary>
+        /// Stops remote tracking pull requests for the specified repository.
+        /// </summary>
+        /// <param name="repository">The deleted repository.</param>
+        private void StopTrackingRemotePullRequestsForRepository(LocalGitRepository repository)
+        {
+            if (repository.HostPlatform == RemoteHostPlatform.GitHub)
+            {
+                CacheManager.GitHubPullRequests.RemoveWhere(i => i.Value.RepositoryId == repository.Id);
+            }
+            else if (repository.HostPlatform == RemoteHostPlatform.GitLab)
+            {
+                CacheManager.GitLabMergeRequests.RemoveWhere(i => i.Value.RepositoryId == repository.Id);
+            }
+            else if (repository.HostPlatform == RemoteHostPlatform.Local)
+            {
+                Logger.LogInformation("No pull requests to stop tracking because {repo} is Local", repository.GetDisplayName());
+            }
+            else
+            {
+                Logger.LogWarning("Skipping pull request removal for {repo} because the remote host platform {platform} is not supported.", repository.GetDisplayName(), repository.HostPlatform);
+            }
         }
 
         #endregion
