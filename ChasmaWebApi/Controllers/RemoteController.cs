@@ -313,20 +313,12 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.Body))
-            {
-                logger.LogError("Issue description must be populated. Sending error response.");
-                response.IsErrorResponse = true;
-                response.ErrorMessage = "Issue body description must be populated. Cannot create issue.";
-                return BadRequest(response);
-            }
-
             try
             {
                 string repoName = request.RepositoryName;
                 string repoOwner = request.RepositoryOwner;
                 string title = request.Title;
-                string body = request.Body;
+                string body = request.Body ?? string.Empty;
                 ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
                 string token = webApiConfigurations.GitHubApiToken ?? string.Empty;
                 string decryptedToken = encryptionService.DecryptString(token);
@@ -456,7 +448,7 @@ namespace ChasmaWebApi.Controllers
                 MainAssignee = request.MainAssignee,
                 Contacts = request.Contacts,
                 Title = request.Title,
-                Description = request.Description,
+                Description = request.Description ?? string.Empty,
                 Confidential = request.Confidential,
             };
             try
