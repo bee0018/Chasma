@@ -126,13 +126,16 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         List<RepositoryStatusElement>? ApplyStagingAction(string repoKey, string fileName, bool isStaging, string username, string token);
 
         /// <summary>
-        /// Commits the staged changes for the specified repository.
+        /// Tries to commit the staged changes for the specified repository.
         /// </summary>
         /// <param name="filePath">The working directory of the repository.</param>
         /// <param name="fullName">The user's full name.</param>
         /// <param name="email">The user's email.</param>
         /// <param name="commitMessage">The message description of the commit.</param>
-        void CommitChanges(string filePath, string fullName, string email, string commitMessage);
+        /// <param name="repoId">The repository identifier.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the commit was successful; false otherwise.</returns>
+        bool TryCommitChanges(string filePath, string fullName, string email, string commitMessage, string repoId, out string errorMessage);
 
         /// <summary>
         /// Tries to push the committed changes to the remote repository.

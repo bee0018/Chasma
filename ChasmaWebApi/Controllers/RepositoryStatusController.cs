@@ -245,7 +245,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.CommitMessage))
+            string commitMessage = request.CommitMessage;
+            if (string.IsNullOrEmpty(commitMessage))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Commit message cannot be empty. Cannot commit changes.";
@@ -273,7 +274,14 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
-                applicationControlService.CommitChanges(workingDirectory, user.Name, request.Email, request.CommitMessage);
+                if (!applicationControlService.TryCommitChanges(workingDirectory, user.Name, user.Email, commitMessage, repoId, out string errorMessage))
+                {
+                    response.IsErrorResponse = true;
+                    response.ErrorMessage = errorMessage;
+                    logger.LogError("Failed to commit changes to repo: {repoId}: {errorMessage}", repoId, errorMessage);
+                    return Ok(response);
+                }
+
                 logger.LogInformation("Successfully committed changes to repo: {repoId}", repoId);
                 return Ok(response);
             }

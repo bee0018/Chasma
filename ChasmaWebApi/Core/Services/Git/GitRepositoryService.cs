@@ -8,6 +8,7 @@ using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
 using ChasmaWebApi.Util.Extensions;
 using LibGit2Sharp;
+using Octokit;
 using System.Diagnostics;
 using Branch = LibGit2Sharp.Branch;
 using Commit = LibGit2Sharp.Commit;
@@ -92,40 +93,8 @@ namespace ChasmaWebApi.Core.Services.Git
             Repository repo = existingRepo ?? new(workingDirectory);
             try
             {
-                List<RepositoryStatusElement> statusElements = new();
                 RepositoryStatus status = repo.RetrieveStatus();
-                foreach (StatusEntry item in status)
-                {
-                    FileStatus state = item.State;
-                    if (state == FileStatus.Ignored)
-                    {
-                        // We only care about modified, deleted, and new files for now.
-                        continue;
-                    }
-
-                    bool isStaged = IsFileStaged(state, out bool hasUnstagedChanges);
-                    RepositoryStatusElement statusElement = new()
-                    {
-                        RepositoryId = repoKey,
-                        FilePath = item.FilePath,
-                        State = item.State,
-                        IsStaged = isStaged,
-                    };
-                    statusElements.Add(statusElement);
-                    if (hasUnstagedChanges)
-                    {
-                        // Add another commitEntry for the unstaged changes.
-                        RepositoryStatusElement unstagedElement = new()
-                        {
-                            RepositoryId = repoKey,
-                            FilePath = item.FilePath,
-                            State = FileStatus.ModifiedInWorkdir,
-                            IsStaged = false,
-                        };
-                        statusElements.Add(unstagedElement);
-                    }
-                }
-
+                List<RepositoryStatusElement> statusElements = GetWorkingTreeFiles(status, repoKey);
                 Logger.LogDebug("Retrieved repository status for {repoKey} with {count} changes.", repoKey, statusElements.Count);
                 BranchMetrics branchMetrics = GetBranchDiversionCalculation(workingDirectory, repo.Head.FriendlyName, localGitRepository);
                 string remoteUrl = string.Empty;
@@ -241,11 +210,30 @@ namespace ChasmaWebApi.Core.Services.Git
         }
 
         // <inheritdoc />
-        public void CommitChanges(string filePath, string fullName, string email, string commitMessage)
+        public bool TryCommitChanges(string filePath, string fullName, string email, string commitMessage, string repoId, out string errorMessage)
         {
-            using Repository repo = new(filePath);
-            Signature author = new(fullName, email, DateTimeOffset.Now);
-            repo.Commit(commitMessage, author, author);
+            errorMessage = string.Empty;
+            try
+            {
+                using Repository repo = new(filePath);
+                RepositoryStatus status = repo.RetrieveStatus();
+                List<RepositoryStatusElement> workingTreeFiles = GetWorkingTreeFiles(status, repoId);
+                if (!workingTreeFiles.Any(i => i.IsStaged))
+                {
+                    errorMessage = "No changes to commit.";
+                    return false;
+                }
+
+                Signature author = new(fullName, email, DateTimeOffset.Now);
+                repo.Commit(commitMessage, author, author);
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = $"Failed to commit changes for repository at {filePath}: {e.Message}";
+                Logger.LogError(e, errorMessage);
+                return false;
+            }
         }
 
         // <inheritdoc />
@@ -1287,6 +1275,52 @@ namespace ChasmaWebApi.Core.Services.Git
             {
                 Logger.LogInformation("README.md file already exists for repository {repositoryName} at {readmeFilePath}. No action taken.", repositoryName, readmeFilePath);
             }
+        }
+
+        /// <summary>
+        /// Gets the list of working tree files and their statuses for the specified repository status.
+        /// </summary>
+        /// <param name="status">The repository status.</param>
+        /// <param name="repositoryId">The identifier of the repository.</param>
+        /// <returns>A list of repository status elements.</returns>
+        private static List<RepositoryStatusElement> GetWorkingTreeFiles(RepositoryStatus status, string repositoryId)
+        {
+            List<RepositoryStatusElement> statusElements = [];
+            foreach (StatusEntry item in status)
+            {
+                FileStatus state = item.State;
+                if (state == FileStatus.Ignored)
+                {
+                    // We only care about modified, deleted, and new files for now.
+                    continue;
+                }
+
+                bool isStaged = IsFileStaged(state, out bool hasUnstagedChanges);
+                RepositoryStatusElement statusElement = new()
+                {
+                    RepositoryId = repositoryId,
+                    FilePath = item.FilePath,
+                    State = item.State,
+                    IsStaged = isStaged,
+                };
+
+                statusElements.Add(statusElement);
+                if (hasUnstagedChanges)
+                {
+                    // Add another commitEntry for the unstaged changes.
+                    RepositoryStatusElement unstagedElement = new()
+                    {
+                        RepositoryId = repositoryId,
+                        FilePath = item.FilePath,
+                        State = FileStatus.ModifiedInWorkdir,
+                        IsStaged = false,
+                    };
+
+                    statusElements.Add(unstagedElement);
+                }
+            }
+
+            return statusElements;
         }
 
         #endregion

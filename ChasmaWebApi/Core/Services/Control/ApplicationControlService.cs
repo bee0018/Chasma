@@ -309,9 +309,9 @@ namespace ChasmaWebApi.Core.Services.Control
         }
 
         // <inheritdoc />
-        public void CommitChanges(string filePath, string fullName, string email, string commitMessage)
+        public bool TryCommitChanges(string filePath, string fullName, string email, string commitMessage, string repoId, out string errorMessage)
         {
-            gitRepositoryService.CommitChanges(filePath, fullName, email, commitMessage);
+            return gitRepositoryService.TryCommitChanges(filePath, fullName, email, commitMessage, repoId, out errorMessage);
         }
 
         // <inheritdoc />
