@@ -8,7 +8,6 @@ using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
 using ChasmaWebApi.Util.Extensions;
 using LibGit2Sharp;
-using Octokit;
 using System.Diagnostics;
 using Branch = LibGit2Sharp.Branch;
 using Commit = LibGit2Sharp.Commit;
