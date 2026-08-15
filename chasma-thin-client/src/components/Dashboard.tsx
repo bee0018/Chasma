@@ -82,144 +82,145 @@ const Dashboard: React.FC = () => {
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
-                <div
-                    className="sidebar-profile">
+                <div className="sidebar-profile">
                     <span className="profile-icon">👤</span>
                     <span className="username">{user?.userName}</span>
                 </div>
-                <div
-                    className={`tab ${isActive("/home")}`}
-                    onClick={() => navigate("")}
-                >
-                    Home 🏠
-                </div>
-                <div
-                    className="sidebar-section-header"
-                    onClick={() => setIsRepoActionsOpen(!isRepoActionsOpen)}
-                >
-                    <span>Repository Management</span>
-                    <span className={`arrow ${isRepoActionsOpen ? "open" : ""}`}>▶</span>
-                </div>
-                {isRepoActionsOpen && (
-                    <div className="sidebar-section-content">
-                        <div
-                            className={`tab ${isActive("cloneRepos")}`}
-                            onClick={() => navigate("cloneRepos")}
-                        >
-                            Clone 🚚
-                        </div>
-                        <div
-                            className={`tab ${isActive("addRepos")}`}
-                            onClick={() => navigate("addRepos")}
-                        >
-                            Register ➕
-                        </div>
-                        <div
-                            className={`tab ${isActive("snapshots")}`}
-                            onClick={() => navigate("snapshots")}
-                        >
-                            Snapshots 📸
-                        </div>
-                        <div
-                            className={`tab ${isActive("global")}`}
-                            onClick={() => navigate("global")}
-                        >
-                            Global 🌍
-                        </div>
-                        <div
-                            className={`tab ${isActive("health")}`}
-                            onClick={() => navigate("health")}
-                        >
-                            Health 🏥
-                        </div>
-                        <div
-                            className={`tab ${isActive("repoSync")}`}
-                            onClick={() => navigate("repoSync")}
-                        >
-                            Synchronize 🔁
-                        </div>
+                <div className="sidebar-nav">
+                    <div
+                        className={`tab ${isActive("/home")}`}
+                        onClick={() => navigate("")}
+                    >
+                        Home 🏠
                     </div>
-                )}
-                <div
-                    className="sidebar-section-header"
-                    onClick={() => setIsExecutionsOptionsOpen(!isExecutionsOptionsOpen)}
-                >
-                    <span>Execution & Automation</span>
-                    <span className={`arrow ${isExecutionsOptionsOpen ? "open" : ""}`}>▶</span>
-                </div>
-                {isExecutionsOptionsOpen && (
-                    <div className="sidebar-section-content">
-                        <div
-                            className={`tab ${isActive("batchOperations")}`}
-                            onClick={() => navigate("batchOperations")}
-                        >
-                            Batch Ops ⚡
-                        </div>
-                        <div
-                            className={`tab ${isActive("dryRun")}`}
-                            onClick={() => navigate("dryRun")}
-                        >
-                            Simulate 🧪
-                        </div>
+                    <div
+                        className="sidebar-section-header"
+                        onClick={() => setIsRepoActionsOpen(!isRepoActionsOpen)}
+                    >
+                        <span>Repository Management</span>
+                        <span className={`arrow ${isRepoActionsOpen ? "open" : ""}`}>▶</span>
                     </div>
-                )}
-                <div
-                    className="sidebar-section-header"
-                    onClick={() => setIsSystemDiagnosticsOptionsOpen(!isSystemDiagnosticsOptionsOpen)}
-                >
-                    <span>System & Diagnostics</span>
-                    <span className={`arrow ${isSystemDiagnosticsOptionsOpen ? "open" : ""}`}>▶</span>
-                </div>
-                {isSystemDiagnosticsOptionsOpen && (
-                    <div className="sidebar-section-content">
-                        <div
-                            className={`tab ${isActive("apiStatus")}`}
-                            onClick={() => navigate("apiStatus")}
-                        >
-                            System & Power 🔌
+                    {isRepoActionsOpen && (
+                        <div className="sidebar-section-content">
+                            <div
+                                className={`tab ${isActive("cloneRepos")}`}
+                                onClick={() => navigate("cloneRepos")}
+                            >
+                                Clone 🚚
+                            </div>
+                            <div
+                                className={`tab ${isActive("addRepos")}`}
+                                onClick={() => navigate("addRepos")}
+                            >
+                                Register ➕
+                            </div>
+                            <div
+                                className={`tab ${isActive("snapshots")}`}
+                                onClick={() => navigate("snapshots")}
+                            >
+                                Snapshots 📸
+                            </div>
+                            <div
+                                className={`tab ${isActive("global")}`}
+                                onClick={() => navigate("global")}
+                            >
+                                Global 🌍
+                            </div>
+                            <div
+                                className={`tab ${isActive("health")}`}
+                                onClick={() => navigate("health")}
+                            >
+                                Health 🏥
+                            </div>
+                            <div
+                                className={`tab ${isActive("repoSync")}`}
+                                onClick={() => navigate("repoSync")}
+                            >
+                                Synchronize 🔁
+                            </div>
                         </div>
+                    )}
+                    <div
+                        className="sidebar-section-header"
+                        onClick={() => setIsExecutionsOptionsOpen(!isExecutionsOptionsOpen)}
+                    >
+                        <span>Execution & Automation</span>
+                        <span className={`arrow ${isExecutionsOptionsOpen ? "open" : ""}`}>▶</span>
+                    </div>
+                    {isExecutionsOptionsOpen && (
+                        <div className="sidebar-section-content">
+                            <div
+                                className={`tab ${isActive("batchOperations")}`}
+                                onClick={() => navigate("batchOperations")}
+                            >
+                                Batch Ops ⚡
+                            </div>
+                            <div
+                                className={`tab ${isActive("dryRun")}`}
+                                onClick={() => navigate("dryRun")}
+                            >
+                                Simulate 🧪
+                            </div>
+                        </div>
+                    )}
+                    <div
+                        className="sidebar-section-header"
+                        onClick={() => setIsSystemDiagnosticsOptionsOpen(!isSystemDiagnosticsOptionsOpen)}
+                    >
+                        <span>System & Diagnostics</span>
+                        <span className={`arrow ${isSystemDiagnosticsOptionsOpen ? "open" : ""}`}>▶</span>
+                    </div>
+                    {isSystemDiagnosticsOptionsOpen && (
+                        <div className="sidebar-section-content">
+                            <div
+                                className={`tab ${isActive("apiStatus")}`}
+                                onClick={() => navigate("apiStatus")}
+                            >
+                                System & Power 🔌
+                            </div>
 
-                        <div
-                            className={`tab ${isActive("setup")}`}
-                            onClick={() => navigate('setup')}>
-                            System Settings ⚙️
+                            <div
+                                className={`tab ${isActive("setup")}`}
+                                onClick={() => navigate('setup')}>
+                                System Settings ⚙️
+                            </div>
+                            <div
+                                className="tab"
+                                onClick={handleOpenServerLogsRequest}>
+                                Open Server Logs 🔍
+                            </div>
                         </div>
-                        <div
-                            className="tab"
-                            onClick={handleOpenServerLogsRequest}>
-                            Open Server Logs 🔍
-                        </div>
+                    )}
+                    <div
+                        className="sidebar-section-header"
+                        onClick={() => setIsUserAndHelpOptionsOpen(!isUserAndHelpOptionsOpen)}
+                    >
+                        <span>User & Help</span>
+                        <span className={`arrow ${isUserAndHelpOptionsOpen ? "open" : ""}`}>▶</span>
                     </div>
-                )}
-                <div
-                    className="sidebar-section-header"
-                    onClick={() => setIsUserAndHelpOptionsOpen(!isUserAndHelpOptionsOpen)}
-                >
-                    <span>User & Help</span>
-                    <span className={`arrow ${isUserAndHelpOptionsOpen ? "open" : ""}`}>▶</span>
+                    {isUserAndHelpOptionsOpen && (
+                        <div className="sidebar-section-content">
+                            <div
+                                className={`tab ${isActive("userConfig")}`}
+                                onClick={() => navigate("userConfig")}
+                            >
+                                User Settings 🔧
+                            </div>
+                            <div
+                                className={`tab ${isActive("report-bugs")}`}
+                                onClick={() => navigate("report-bugs")}
+                            >
+                                Report Bugs 🐛
+                            </div>
+                            <div
+                                className="tab"
+                                onClick={() => window.open("/help", "_blank")}>
+                                <span className="username">Help</span>
+                                <span className="profile-icon">💡</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                {isUserAndHelpOptionsOpen && (
-                    <div className="sidebar-section-content">
-                        <div
-                            className={`tab ${isActive("userConfig")}`}
-                            onClick={() => navigate("userConfig")}
-                        >
-                            User Settings 🔧
-                        </div>
-                        <div
-                            className={`tab ${isActive("report-bugs")}`}
-                            onClick={() => navigate("report-bugs")}
-                        >
-                            Report Bugs 🐛
-                        </div>
-                        <div
-                            className="tab"
-                            onClick={() => window.open("/help", "_blank")}>
-                            <span className="username">Help</span>
-                            <span className="profile-icon">💡</span>
-                        </div>
-                    </div>
-                )}
                 <div
                     className="sidebar-help"
                     onClick={() => setIsLoggingOut(true)}>
