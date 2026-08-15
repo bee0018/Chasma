@@ -80,6 +80,9 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
             setTitle("Successfully committed changes!");
             setSuccessfullyCommitted(true);
             setDisableCommitEditing(true);
+            setCommitRequestSent(true);
+            setCommitMessage(undefined);
+            setDisableSendButton(false);
             props.onSuccess();
         }
         catch (e) {
@@ -88,11 +91,6 @@ const CommitModal: React.FC<ICommitModalProps> = (props: ICommitModalProps) => {
             setSuccessfullyCommitted(false);
             const errorNotification = await handleApiError(e, navigate, "Error committing changes!", "Check server logs for more information.");
             setNotification(errorNotification);
-        }
-        finally {
-            setCommitRequestSent(true);
-            setCommitMessage(undefined);
-            setDisableSendButton(false);
         }
     }
 
