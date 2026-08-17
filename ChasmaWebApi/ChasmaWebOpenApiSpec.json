@@ -2105,10 +2105,52 @@
             "properties": {
               "staticConfigurationsChanged": {
                 "type": "boolean"
+              },
+              "user": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ApplicationUser"
+                  }
+                ]
               }
             }
           }
         ]
+      },
+      "ApplicationUser": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ApplicationUserPermissions"
+          }
+        }
+      },
+      "ApplicationUserPermissions": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isUsingGitHubApi": {
+            "type": "boolean"
+          },
+          "isUsingGitLabApi": {
+            "type": "boolean"
+          }
+        }
       },
       "ResponseBase": {
         "type": "object",
@@ -2133,6 +2175,10 @@
         "properties": {
           "apiConfiguration": {
             "$ref": "#/components/schemas/ChasmaWebApiConfigurations"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -4544,40 +4590,6 @@
             }
           }
         ]
-      },
-      "ApplicationUser": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "userId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "name": {
-            "type": "string"
-          },
-          "userName": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/ApplicationUserPermissions"
-          }
-        }
-      },
-      "ApplicationUserPermissions": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "isUsingGitHubApi": {
-            "type": "boolean"
-          },
-          "isUsingGitLabApi": {
-            "type": "boolean"
-          }
-        }
       },
       "LoginRequest": {
         "type": "object",

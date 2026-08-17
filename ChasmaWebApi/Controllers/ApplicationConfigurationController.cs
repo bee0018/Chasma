@@ -1,4 +1,5 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
+using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Messages.Application;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Requests.Configuration;
@@ -30,6 +31,11 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         private readonly IApplicationControlService applicationControlService;
 
+        /// <summary>
+        /// The cache manager for managing caching operations within the application.
+        /// </summary>
+        private readonly ICacheManager cacheManager;
+
         #region Constructor
 
         /// <summary>
@@ -37,10 +43,12 @@ namespace ChasmaWebApi.Controllers
         /// </summary>
         /// <param name="log">The logger instance.</param>
         /// <param name="controlSerivce">The application control service instance.</param>
-        public ApplicationConfigurationController(ILogger<ApplicationConfigurationController> log, IApplicationControlService controlSerivce)
+        /// <param name="apiCacheManager">The cache manager instance.</param>
+        public ApplicationConfigurationController(ILogger<ApplicationConfigurationController> log, IApplicationControlService controlSerivce, ICacheManager apiCacheManager)
         {
             logger = log;
             applicationControlService = controlSerivce;
+            cacheManager = apiCacheManager;
         }
 
         #endregion
@@ -169,11 +177,19 @@ namespace ChasmaWebApi.Controllers
                 }
             }
 
-            response.StaticConfigurationsChanged = currentConfig.BindingPort != newConfig.BindingPort
-                || currentConfig.JwtSecretKey != newConfig.JwtSecretKey
-                || currentConfig.GlobalWorkspacePath != newConfig.GlobalWorkspacePath
-                || currentConfig.SecureBindingPort != newConfig.SecureBindingPort;
+            response.StaticConfigurationsChanged = HasStaticConfigurationsChanged(currentConfig, newConfig);
             applicationControlService.UpdateApiConfiguration(configFilePath, newConfig, currentConfig);
+            if (cacheManager.Users.TryGetValue(request.UserId, out ApplicationUser loggedInUser))
+            {
+                ChasmaWebApiConfigurations apiConfiguration = ChasmaWebApiConfigurations.GetApiConfig();
+                loggedInUser.Permissions = new()
+                {
+                    IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
+                    IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken),
+                };
+                response.User = loggedInUser;
+            }
+
             logger.LogInformation("Successfully processed {request}. Sending success response.", requestName);
             return Ok(response);
         }
@@ -290,6 +306,20 @@ namespace ChasmaWebApi.Controllers
             // For demonstration purposes, we will consider a valid JWT secret key to be at least 16 characters long.
             // In a real application, you would want to implement a more robust validation mechanism.
             return (!string.IsNullOrEmpty(jwtSecretKey) && jwtSecretKey.Length >= 16) || jwtSecretKey == ChasmaWebApiConfigurations.DefaultJwtSecretKey;
+        }
+
+        /// <summary>
+        /// Determines if the static API configurations have changed.
+        /// </summary>
+        /// <param name="currentConfig">The existing API configuration.</param>
+        /// <param name="newConfig">The new, incoming API configuration to update the system.</param>
+        /// <returns>True if the static configurations changed; false otherwise.</returns>
+        private static bool HasStaticConfigurationsChanged(ChasmaWebApiConfigurations currentConfig, ChasmaWebApiConfigurations newConfig)
+        {
+            return currentConfig.BindingPort != newConfig.BindingPort
+                || currentConfig.JwtSecretKey != newConfig.JwtSecretKey
+                || currentConfig.GlobalWorkspacePath != newConfig.GlobalWorkspacePath
+                || currentConfig.SecureBindingPort != newConfig.SecureBindingPort;
         }
 
         #endregion
