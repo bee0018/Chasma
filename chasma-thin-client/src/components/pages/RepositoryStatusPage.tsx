@@ -648,158 +648,160 @@ const RepositoryStatusPage: React.FC = () => {
                         <path d="m4.427 7.427 3.396 3.396a.25.25 0 0 0 .354 0l3.396-3.396A.25.25 0 0 0 11.396 7H4.604a.25.25 0 0 0-.177.427Z" />
                     </svg>
                 </div>
-                <div className="tab" style={{ marginTop: "20px" }} onClick={() => navigate("/home")}>Home 🏠</div>
-                <div
-                    className={`tab ${activeTab === "home" ? "active" : ""}`}
-                    onClick={() => handleTabClick("home")}
-                >
-                    Repo Status 📊
-                </div>
-                <div
-                    className="sidebar-section-header"
-                    onClick={() => setIsRepoActionsOpen(!isRepoActionsOpen)}
-                >
-                    <span>Repo Actions</span>
-                    <span className={`arrow ${isRepoActionsOpen ? "open" : ""}`}>▶</span>
-                </div>
-                {isRepoActionsOpen && (
-                    <div className="sidebar-section-content">
-                        {selectedRepo && selectedRepo.hostPlatform !== RemoteHostPlatform.Local &&
-                            <>
-                                <div
-                                    className="tab"
-                                    onClick={() => setIsPullingChanges(true)}
-                                >
-                                    Pull ⬇️
-                                </div>
-                            </>
-                        }
-                        {!isSafeMode &&
-                            <>
-                                <div
-                                    className="tab"
-                                    onClick={() => setIsEditingCommitMessage(true)}
-                                    title="Ctrl + ENTER"
+                <div className="sidebar-nav">
+                    <div className="tab" style={{ marginTop: "20px" }} onClick={() => navigate("/home")}>Home 🏠</div>
+                    <div
+                        className={`tab ${activeTab === "home" ? "active" : ""}`}
+                        onClick={() => handleTabClick("home")}
+                    >
+                        Repo Status 📊
+                    </div>
+                    <div
+                        className="sidebar-section-header"
+                        onClick={() => setIsRepoActionsOpen(!isRepoActionsOpen)}
+                    >
+                        <span>Repo Actions</span>
+                        <span className={`arrow ${isRepoActionsOpen ? "open" : ""}`}>▶</span>
+                    </div>
+                    {isRepoActionsOpen && (
+                        <div className="sidebar-section-content">
+                            {selectedRepo && selectedRepo.hostPlatform !== RemoteHostPlatform.Local &&
+                                <>
+                                    <div
+                                        className="tab"
+                                        onClick={() => setIsPullingChanges(true)}
+                                    >
+                                        Pull ⬇️
+                                    </div>
+                                </>
+                            }
+                            {!isSafeMode &&
+                                <>
+                                    <div
+                                        className="tab"
+                                        onClick={() => setIsEditingCommitMessage(true)}
+                                        title="Ctrl + ENTER"
                                     >
                                         Commit 📌
-                                </div>
-                                <div
-                                    className="tab"
-                                    onClick={() => setIsPushingChanges(true)}
-                                    title="Ctrl + Shift + P"
+                                    </div>
+                                    <div
+                                        className="tab"
+                                        onClick={() => setIsPushingChanges(true)}
+                                        title="Ctrl + Shift + P"
                                     >
                                         Push ⬆️
-                                </div>
-                                <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>
-                            </>
-                        }
-                    </div>
-                )}
-                <div
-                    className="sidebar-section-header"
-                    onClick={() => setIsBranchOptionsOpen(!isBranchOptionsOpen)}
-                >
-                    <span>Branch Actions</span>
-                    <span className={`arrow ${isBranchOptionsOpen ? "open" : ""}`}>▶</span>
-                </div>
-                {isBranchOptionsOpen && (
-                    <div className="sidebar-section-content">
-                        <div className="tab" onClick={() => setIsAddingBranch(true)}>Add Branch ➕</div>
-                        <div className="tab" onClick={() => setIsMergingBranch(true)}>Merge 🔀</div>
-                        {!isSafeMode &&
-                            <>
-                                <div className="tab" onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
-                                <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
-                            </>
-                        }
-                    </div>
-                )}
-
-                {!isSafeMode &&
-                    <>
-                        <div
-                            className="sidebar-section-header"
-                            onClick={() => setIsStashesAndAutomationOptionsOpen(!isStashesAndAutomationOptionsOpen)}
-                        >
-                            <span>Stashes & Automation</span>
-                            <span className={`arrow ${isStashesAndAutomationOptionsOpen ? "open" : ""}`}>▶</span>
+                                    </div>
+                                    <div className="tab" onClick={() => setIsResettingChanges(true)}>Reset ⏮️</div>
+                                </>
+                            }
                         </div>
-                        {isStashesAndAutomationOptionsOpen && (
-                            <div className="sidebar-section-content">
-                                {!isSafeMode &&
-                                    <>
-                                        <div
-                                            className={`tab ${activeTab === "stashes" ? "active" : ""}`}
-                                            onClick={() => handleSelectedNewTabView("stashes")}
-                                        >
-                                            Stashes🗄️
-                                        </div>
-                                        <div
-                                            className={`tab ${activeTab === "shell" ? "active" : ""}`}
-                                            onClick={() => handleSelectedNewTabView("shell")}>
-                                            Custom Shell Commands🖥️
-                                        </div>
-                                    </>
-                                }
+                    )}
+                    <div
+                        className="sidebar-section-header"
+                        onClick={() => setIsBranchOptionsOpen(!isBranchOptionsOpen)}
+                    >
+                        <span>Branch Actions</span>
+                        <span className={`arrow ${isBranchOptionsOpen ? "open" : ""}`}>▶</span>
+                    </div>
+                    {isBranchOptionsOpen && (
+                        <div className="sidebar-section-content">
+                            <div className="tab" onClick={() => setIsAddingBranch(true)}>Add Branch ➕</div>
+                            <div className="tab" onClick={() => setIsMergingBranch(true)}>Merge 🔀</div>
+                            {!isSafeMode &&
+                                <>
+                                    <div className="tab" onClick={() => setIsCheckingOut(true)}>Checkout Branch🌿</div>
+                                    <div className="tab" onClick={() => setIsDeletingBranch(true)}>Delete Branch 🗑️</div>
+                                </>
+                            }
+                        </div>
+                    )}
+
+                    {!isSafeMode &&
+                        <>
+                            <div
+                                className="sidebar-section-header"
+                                onClick={() => setIsStashesAndAutomationOptionsOpen(!isStashesAndAutomationOptionsOpen)}
+                            >
+                                <span>Stashes & Automation</span>
+                                <span className={`arrow ${isStashesAndAutomationOptionsOpen ? "open" : ""}`}>▶</span>
                             </div>
-                        )}
-                        {selectedRepo && selectedRepo.hostPlatform !== RemoteHostPlatform.Local &&
-                            <>
-                                <div
-                                    className="sidebar-section-header"
-                                    onClick={() => setIsRemoteOptionsOpen(!isRemoteOptionsOpen)}
-                                >
-                                    <span>Remote Actions</span>
-                                    <span className={`arrow ${isRemoteOptionsOpen ? "open" : ""}`}>▶</span>
+                            {isStashesAndAutomationOptionsOpen && (
+                                <div className="sidebar-section-content">
+                                    {!isSafeMode &&
+                                        <>
+                                            <div
+                                                className={`tab ${activeTab === "stashes" ? "active" : ""}`}
+                                                onClick={() => handleSelectedNewTabView("stashes")}
+                                            >
+                                                Stashes🗄️
+                                            </div>
+                                            <div
+                                                className={`tab ${activeTab === "shell" ? "active" : ""}`}
+                                                onClick={() => handleSelectedNewTabView("shell")}>
+                                                Custom Shell Commands🖥️
+                                            </div>
+                                        </>
+                                    }
                                 </div>
-                                {isRemoteOptionsOpen && !isSafeMode &&
-                                    <>
-                                        {user?.permissions
-                                            && user.permissions.isUsingGitHubApi
-                                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
-                                            <div
-                                                className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
-                                                onClick={() => handleSelectedNewTabView("pullRequest")}
-                                                style={{ marginTop: "20px" }}
-                                            >
-                                                Create Pull Request📥
-                                            </div>
-                                        }
-                                        {user?.permissions
-                                            && user.permissions.isUsingGitLabApi
-                                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
-                                            <div
-                                                className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
-                                                onClick={() => handleSelectedNewTabView("pullRequest")}
-                                                style={{ marginTop: "20px" }}
-                                            >
-                                                Create Merge Request📥
-                                            </div>
-                                        }
-                                        {user?.permissions
-                                            && user.permissions.isUsingGitHubApi
-                                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
-                                            <div
-                                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
-                                                onClick={() => handleSelectedNewTabView("issues")}>
-                                                Create GitHub Issue🐛
-                                            </div>
-                                        }
-                                        {user?.permissions
-                                            && user.permissions.isUsingGitLabApi
-                                            && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
-                                            <div
-                                                className={`tab ${activeTab === "issues" ? "active" : ""}`}
-                                                onClick={() => handleSelectedNewTabView("issues")}>
-                                                Create GitLab Issue🐛
-                                            </div>
-                                        }
-                                    </>
-                                }
-                            </>
-                        }
-                    </>
-                }
+                            )}
+                            {selectedRepo && selectedRepo.hostPlatform !== RemoteHostPlatform.Local &&
+                                <>
+                                    <div
+                                        className="sidebar-section-header"
+                                        onClick={() => setIsRemoteOptionsOpen(!isRemoteOptionsOpen)}
+                                    >
+                                        <span>Remote Actions</span>
+                                        <span className={`arrow ${isRemoteOptionsOpen ? "open" : ""}`}>▶</span>
+                                    </div>
+                                    {isRemoteOptionsOpen && !isSafeMode &&
+                                        <>
+                                            {user?.permissions
+                                                && user.permissions.isUsingGitHubApi
+                                                && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
+                                                <div
+                                                    className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
+                                                    onClick={() => handleSelectedNewTabView("pullRequest")}
+                                                    style={{ marginTop: "20px" }}
+                                                >
+                                                    Create Pull Request📥
+                                                </div>
+                                            }
+                                            {user?.permissions
+                                                && user.permissions.isUsingGitLabApi
+                                                && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
+                                                <div
+                                                    className={`tab ${activeTab === "pullRequest" ? "active" : ""}`}
+                                                    onClick={() => handleSelectedNewTabView("pullRequest")}
+                                                    style={{ marginTop: "20px" }}
+                                                >
+                                                    Create Merge Request📥
+                                                </div>
+                                            }
+                                            {user?.permissions
+                                                && user.permissions.isUsingGitHubApi
+                                                && selectedRepo?.hostPlatform === RemoteHostPlatform.GitHub &&
+                                                <div
+                                                    className={`tab ${activeTab === "issues" ? "active" : ""}`}
+                                                    onClick={() => handleSelectedNewTabView("issues")}>
+                                                    Create Issue 🐛
+                                                </div>
+                                            }
+                                            {user?.permissions
+                                                && user.permissions.isUsingGitLabApi
+                                                && selectedRepo?.hostPlatform === RemoteHostPlatform.GitLab &&
+                                                <div
+                                                    className={`tab ${activeTab === "issues" ? "active" : ""}`}
+                                                    onClick={() => handleSelectedNewTabView("issues")}>
+                                                    Create Issue 🐛
+                                                </div>
+                                            }
+                                        </>
+                                    }
+                                </>
+                            }
+                        </>
+                    }
+                </div>
             </aside>
 
             {activeTab === "home" && (
