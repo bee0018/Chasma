@@ -229,6 +229,7 @@ export const AppSetupPage: React.FC = () => {
         config.branchPruningDayThreshold = safeNumber(branchPruningThreshold);
         const request = new ModifyApiConfigRequest();
         request.apiConfiguration = config;
+        request.userId = user?.userId ? user.userId : -1;
         try {
             const response = await appConfigClient.modifyConfig(request);
             if (response.isErrorResponse) {
@@ -255,6 +256,10 @@ export const AppSetupPage: React.FC = () => {
                     message: "No system restart required.",
                     isError: false,
                 });
+            }
+
+            if (response.user) {
+                useCacheStore.getState().setUser(response.user);
             }
 
             setDisableSendButton(false);

@@ -9,5 +9,10 @@
         /// Gets or sets the newly modified API configurations to be applied.
         /// </summary>
         public ChasmaWebApiConfigurations ApiConfiguration { get; set; }
+
+        /// <summary>
+        /// Gets or sets the identifier of the user making the request.
+        /// </summary>
+        public int UserId { get; set; }
     }
 }
