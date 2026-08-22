@@ -82,7 +82,10 @@ const Dashboard: React.FC = () => {
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
-                <div className="sidebar-profile">
+                <div
+                    className="sidebar-profile"
+                    style={{cursor: "default"}}
+                >
                     <span className="profile-icon">👤</span>
                     <span className="username">{user?.userName}</span>
                 </div>
@@ -121,10 +124,10 @@ const Dashboard: React.FC = () => {
                                 Snapshots 📸
                             </div>
                             <div
-                                className={`tab ${isActive("global")}`}
-                                onClick={() => navigate("global")}
+                                className={`tab ${isActive("activePRs")}`}
+                                onClick={() => navigate("activePRs")}
                             >
-                                Global 🌍
+                                Active PRs 🌍
                             </div>
                             <div
                                 className={`tab ${isActive("health")}`}

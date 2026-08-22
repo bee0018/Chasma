@@ -184,7 +184,7 @@ function App() {
                     <Route path="dryRun" element={<MultiDryRunSimulationTab />} />
                     <Route path="cloneRepos" element={<CloneRepositoriesTab />} />
                     <Route path="addRepos" element={<RepositoryAdditionsTab />} />
-                    <Route path="global" element={<GlobalRepositoryTab />} />
+                    <Route path="activePRs" element={<GlobalRepositoryTab />} />
                     <Route path="snapshots" element={<ApplySnapshotsTab />} />
                     <Route path="apiStatus" element={<ApiStatusTab />} />
                     <Route path="setup" element={<AppSetupPage />} />

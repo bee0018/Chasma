@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import {
     GetPipelineJobsRequest,
     GetWorkflowResultsRequest,
@@ -6,9 +6,9 @@ import {
     WorkflowRunResult
 } from "../../API/ChasmaWebApiClient";
 import "../../styles/App.css"
-import {useNavigate, useParams} from "react-router-dom";
-import {remoteClient} from "../../managers/ApiClientManager";
-import {useCacheStore} from "../../managers/CacheManager";
+import { useNavigate, useParams } from "react-router-dom";
+import { remoteClient } from "../../managers/ApiClientManager";
+import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
 
@@ -18,7 +18,7 @@ import { useDocumentTitle } from "../../util/useDocumentTitle";
  */
 const WorkflowRunsPage: React.FC = () => {
     /** The repository identifier from the url. **/
-    const {repoId} = useParams<{repoId: string}>();
+    const { repoId } = useParams<{ repoId: string }>();
 
     /** Gets the selected repository. **/
     const selectedRepo = useCacheStore(state => state.repositories.find(i => i.id === repoId));
@@ -37,7 +37,7 @@ const WorkflowRunsPage: React.FC = () => {
     const navigate = useNavigate();
 
     /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** Handles the event when the user requests to get the workflow statuses. **/
     async function handleGetWorkFlowStatuses() {
@@ -148,40 +148,44 @@ const WorkflowRunsPage: React.FC = () => {
 
         return (
             <div className="workflow-table-container">
+                <div className="table-screen-warning">
+                    <p><strong>Table hidden</strong></p>
+                    <p>Please expand your browser window or switch to full screen to view this table.</p>
+                </div>
                 <table className="workflow-table">
                     <thead>
-                    <tr>
-                        <th>Result</th>
-                        <th>Branch</th>
-                        <th>Run #</th>
-                        <th>Trigger</th>
-                        <th>Commit</th>
-                        <th>Status</th>
-                        <th>Conclusion</th>
-                        <th>Created</th>
-                        <th>Updated</th>
-                        <th>Author</th>
-                    </tr>
+                        <tr>
+                            <th>Result</th>
+                            <th>Branch</th>
+                            <th>Run #</th>
+                            <th>Trigger</th>
+                            <th>Commit</th>
+                            <th>Status</th>
+                            <th>Conclusion</th>
+                            <th>Created</th>
+                            <th>Updated</th>
+                            <th>Author</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    {workflows.map((build, index) => (
-                        <tr
-                            key={index}
-                            className={build.buildConclusion === "success" ? "success" : "failure"}
-                            onClick={() => window.open(build.workflowUrl, "_blank")}
-                        >
-                            <td>{build.buildConclusion === "success" ? "✔" : "✖"}</td>
-                            <td>{build.branchName}</td>
-                            <td>{build.runNumber}</td>
-                            <td>{build.buildTrigger}</td>
-                            <td>{build.commitMessage}</td>
-                            <td>{build.buildStatus}</td>
-                            <td>{build.buildConclusion}</td>
-                            <td>{build.createdDate}</td>
-                            <td>{build.updatedDate}</td>
-                            <td>{build.authorName}</td>
-                        </tr>
-                    ))}
+                        {workflows.map((build, index) => (
+                            <tr
+                                key={index}
+                                className={build.buildConclusion === "success" ? "success" : "failure"}
+                                onClick={() => window.open(build.workflowUrl, "_blank")}
+                            >
+                                <td>{build.buildConclusion === "success" ? "✔" : "✖"}</td>
+                                <td>{build.branchName}</td>
+                                <td>{build.runNumber}</td>
+                                <td>{build.buildTrigger}</td>
+                                <td>{build.commitMessage}</td>
+                                <td>{build.buildStatus}</td>
+                                <td>{build.buildConclusion}</td>
+                                <td>{build.createdDate}</td>
+                                <td>{build.updatedDate}</td>
+                                <td>{build.authorName}</td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -225,9 +229,13 @@ const WorkflowRunsPage: React.FC = () => {
                     Table
                 </button>
             </div>
-            <br/>
+            <br />
             {viewMode === "card" ? (
                 <div className="workflow-cards-container">
+                    <div className="table-screen-warning">
+                        <p><strong>Table hidden</strong></p>
+                        <p>Please expand your browser window or switch to full screen to view this table.</p>
+                    </div>
                     {workflows && workflows.length > 0 ? workflows.map((build, index) => (
                         <div key={index} className={`workflow-card ${build.buildConclusion === "success" ? "success" : "failure"}`} onClick={() => window.open(build.workflowUrl, '_blank')}>
                             <div className="workflow-card-header">
