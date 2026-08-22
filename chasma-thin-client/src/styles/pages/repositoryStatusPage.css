@@ -36,6 +36,7 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    overflow-wrap: anywhere;
 }
 
 .status-table tbody tr:hover {

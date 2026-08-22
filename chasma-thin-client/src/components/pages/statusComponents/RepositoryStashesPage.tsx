@@ -227,7 +227,9 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
 
     return (
         <>
-            <div className="content">
+            <div
+                className="content"
+                style={{maxHeight: "stretch"}}>
                 <div className="main-layout">
                     {/* Left side: Stash entries/patch entries */}
                     <div className="left-panel">
@@ -241,8 +243,8 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                                             <th>Title</th>
                                         </tr>
                                     </thead>
-                                    {stashEntries?.map((element, index) => (
-                                        <tbody key={index}>
+                                    <tbody>
+                                        {stashEntries?.map((element) => (
                                             <tr className={selectedStashEntry?.index === element.index ? "selected" : ""}>
                                                 <td>{element.index}</td>
                                                 <td
@@ -252,8 +254,9 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                                                     {element.stashMessage}
                                                 </td>
                                             </tr>
-                                        </tbody>
-                                    ))}
+                                        ))}
+                                    </tbody>
+
                                 </table>
                             ) : <div className="empty-table">No stashes in repository.</div>}
                         </div>
@@ -267,15 +270,17 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                                             <th>File</th>
                                         </tr>
                                     </thead>
-                                    {patchEntries?.map((element, index) => (
-                                        <tbody key={index}>
-                                            <tr className={selectedPatchEntry?.filePath === element.filePath ? "selected" : ""}>
+                                    <tbody>
+                                        {patchEntries?.map((element, index) => (
+                                            <tr
+                                                key={index}
+                                                className={selectedPatchEntry?.filePath === element.filePath ? "selected" : ""}>
                                                 <td onClick={() => handleSelectedPatchEntry(element)}>
                                                     {element.filePath}
                                                 </td>
                                             </tr>
-                                        </tbody>
-                                    ))}
+                                        ))}
+                                    </tbody>
                                 </table>
                             ) : <div className="empty-table">No file changes</div>}
                         </div>
@@ -334,10 +339,10 @@ const RepositoryStashesPage: React.FC<IRepositoryStashesPageProps> = (props: IRe
                                                 return (
                                                     <div
                                                         className={`diff-line ${line.type === "add"
-                                                                ? "diff-added"
-                                                                : line.type === "remove"
-                                                                    ? "diff-removed"
-                                                                    : ""}`}>
+                                                            ? "diff-added"
+                                                            : line.type === "remove"
+                                                                ? "diff-removed"
+                                                                : ""}`}>
                                                         <span className="diff-line-number">
                                                             {line.oldLineNumber ?? ""}
                                                         </span>
