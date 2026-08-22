@@ -154,6 +154,7 @@
     border-collapse: collapse;
     color: #e0e0e0;
     font-size: 0.9rem;
+    display: table;
 }
 
 .workflow-table th, .workflow-table td {
@@ -265,4 +266,42 @@
 .workflow-actions-container .retrieve-button:hover {
     background: #0ea5e9;
     transform: translateY(-1px);
+}
+
+.workflow-table-container {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.table-screen-warning {
+    display: none;
+}
+
+@media screen and (max-width: 1024px) {
+    .workflow-table {
+        display: none !important;
+    }
+
+    .workflow-card {
+        display: none !important;
+    }
+
+    .table-screen-warning {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 32px 16px;
+        background-color: rgba(255, 255, 255, 0.03);
+        border: 1px dashed var(--color-border, #334155);
+        border-radius: 12px;
+        text-align: center;
+        color: var(--color-text-muted, #a1a1aa);
+    }
+
+    .table-screen-warning span {
+        font-size: 1.5rem;
+    }
 }

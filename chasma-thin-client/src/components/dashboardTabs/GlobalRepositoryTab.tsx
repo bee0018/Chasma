@@ -13,7 +13,7 @@ import CheckoutModal from "../modals/CheckoutModal";
  * @constructor
  */
 const GlobalRepositoryTab: React.FC = () => {
-    useDocumentTitle("Global");
+    useDocumentTitle("Active PRs");
 
     /** Gets or sets the global pull requests. */
     const [pullRequests, setPullRequests] = useState<RemotePullRequest[]>([]);
@@ -84,8 +84,8 @@ const GlobalRepositoryTab: React.FC = () => {
         <>
             <div className="workflow-page-container">
                 <div className="workflow-page-header">
-                    <h1>System-Wide Open Pull Requests</h1>
-                    <p>Your centralized hub for tracking, reviewing, and merging open pull requests with precision and control🧠</p>
+                    <h1>System-Wide Active Change Requests</h1>
+                    <p>Your centralized hub for tracking, reviewing, and merging open change requests with precision and control🧠</p>
                     <input
                         type="text"
                         placeholder="Search branches..."
@@ -97,6 +97,10 @@ const GlobalRepositoryTab: React.FC = () => {
                 {pullRequests.length === 0 && prSearchQuery === "" && <p className="no-workflows">No pull requests retrieved yet.</p>}
                 {pullRequests.length > 0 && prSearchQuery === "" &&
                     <div className="workflow-table-container">
+                        <div className="table-screen-warning">
+                            <p><strong>Table hidden</strong></p>
+                            <p>Please expand your browser window or switch to full screen to view this table.</p>
+                        </div>
                         <table className="workflow-table">
                             <thead>
                                 <tr>
@@ -147,6 +151,10 @@ const GlobalRepositoryTab: React.FC = () => {
                 }
                 {filteredBranches.length > 0 && prSearchQuery !== "" &&
                     <div className="workflow-table-container">
+                        <div className="table-screen-warning">
+                            <p><strong>Table hidden</strong></p>
+                            <p>Please expand your browser window or switch to full screen to view this table.</p>
+                        </div>
                         <table className="workflow-table">
                             <thead>
                                 <tr>

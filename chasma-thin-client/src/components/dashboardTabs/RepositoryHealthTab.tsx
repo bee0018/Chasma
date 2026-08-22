@@ -176,6 +176,10 @@ const RepositoryHealthTab: React.FC = () => {
             {branchStatuses.length === 0 && <p className="no-workflows">No branch statuses have been retrieved yet.</p>}
             {branchStatuses.length > 0 &&
                 <div className="workflow-table-container">
+                    <div className="table-screen-warning">
+                        <p><strong>Table hidden</strong></p>
+                        <p>Please expand your browser window or switch to full screen to view this table.</p>
+                    </div>
                     <table className="workflow-table">
                         <thead>
                             <tr>
