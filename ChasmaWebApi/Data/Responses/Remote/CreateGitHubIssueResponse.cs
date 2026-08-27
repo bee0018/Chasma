@@ -8,7 +8,7 @@
         /// <summary>
         /// Gets or sets the issue identifier.
         /// </summary>
-        public int IssueId { get; set; }
+        public long IssueId { get; set; }
 
         /// <summary>
         /// Gets or sets the issue URL.

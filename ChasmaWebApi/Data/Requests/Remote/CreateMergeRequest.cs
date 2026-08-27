@@ -32,17 +32,17 @@ namespace ChasmaWebApi.Data.Requests.Remote
         /// <summary>
         /// Gets or sets the assignee of the merge request.
         /// </summary>
-        public GitLabProjectMember Assignee { get; set; }
+        public RemoteProjectMember Assignee { get; set; }
 
         /// <summary>
         /// Gets or sets the additional assignees of the merge request.
         /// </summary>
-        public List<GitLabProjectMember> AdditionalAssignees { get; set; } = new();
+        public List<RemoteProjectMember> AdditionalAssignees { get; set; } = new();
 
         /// <summary>
         /// Gets or sets the reviewers of the merge request.
         /// </summary>
-        public List<GitLabProjectMember> Reviewers { get; set; } = new();
+        public List<RemoteProjectMember> Reviewers { get; set; } = new();
 
         /// <summary>
         /// Gets or sets the description of the merge request.

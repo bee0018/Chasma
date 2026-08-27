@@ -599,6 +599,38 @@
         }
       }
     },
+    "/api/Remote/retrieveRemoteLabels": {
+      "post": {
+        "tags": [
+          "Remote"
+        ],
+        "operationId": "Remote_RetrieveLabels",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetLabelsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetLabelsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Remote/getPipelineJobs": {
       "post": {
         "tags": [
@@ -663,18 +695,18 @@
         }
       }
     },
-    "/api/Remote/getGitLabProjectMembers": {
+    "/api/Remote/getRemoteProjectMembers": {
       "post": {
         "tags": [
           "Remote"
         ],
-        "operationId": "Remote_GetGitLabProjectMembers",
+        "operationId": "Remote_GetRemoteProjectMembers",
         "requestBody": {
           "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GetGitLabProjectMembersRequest"
+                "$ref": "#/components/schemas/GetRemoteProjectMembersRequest"
               }
             }
           },
@@ -687,7 +719,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetGitLabProjectMembersResponse"
+                  "$ref": "#/components/schemas/GetRemoteProjectMembersResponse"
                 }
               }
             }
@@ -2946,7 +2978,7 @@
             "properties": {
               "issueId": {
                 "type": "integer",
-                "format": "int32"
+                "format": "int64"
               },
               "issueUrl": {
                 "type": "string"
@@ -2971,6 +3003,63 @@
           "body": {
             "type": "string",
             "nullable": true
+          },
+          "assignees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RemoteProjectMember"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RemoteProjectMember": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "assigneeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "GetLabelsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResponseBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "labels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GetLabelsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryId": {
+            "type": "string"
           }
         }
       },
@@ -3012,13 +3101,13 @@
             "additionalProperties": false,
             "properties": {
               "issue": {
-                "$ref": "#/components/schemas/GitLabIssueResult"
+                "$ref": "#/components/schemas/RemoteIssueResult"
               }
             }
           }
         ]
       },
-      "GitLabIssueResult": {
+      "RemoteIssueResult": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -3039,12 +3128,18 @@
             "type": "string"
           },
           "mainAssignee": {
-            "$ref": "#/components/schemas/GitLabProjectMember"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RemoteProjectMember"
+              }
+            ]
           },
           "contacts": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/GitLabProjectMember"
+              "$ref": "#/components/schemas/RemoteProjectMember"
             }
           },
           "title": {
@@ -3056,26 +3151,16 @@
           },
           "confidential": {
             "type": "boolean"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
-      "GitLabProjectMember": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "assigneeId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "userName": {
-            "type": "string"
-          },
-          "fullName": {
-            "type": "string"
-          }
-        }
-      },
-      "GetGitLabProjectMembersResponse": {
+      "GetRemoteProjectMembersResponse": {
         "allOf": [
           {
             "$ref": "#/components/schemas/ResponseBase"
@@ -3091,14 +3176,14 @@
               "projectMembers": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/GitLabProjectMember"
+                  "$ref": "#/components/schemas/RemoteProjectMember"
                 }
               }
             }
           }
         ]
       },
-      "GetGitLabProjectMembersRequest": {
+      "GetRemoteProjectMembersRequest": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -3161,18 +3246,18 @@
             "nullable": true
           },
           "assignee": {
-            "$ref": "#/components/schemas/GitLabProjectMember"
+            "$ref": "#/components/schemas/RemoteProjectMember"
           },
           "additionalAssignees": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GitLabProjectMember"
+              "$ref": "#/components/schemas/RemoteProjectMember"
             }
           },
           "reviewers": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GitLabProjectMember"
+              "$ref": "#/components/schemas/RemoteProjectMember"
             }
           },
           "description": {

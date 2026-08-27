@@ -5,6 +5,7 @@ using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
 using NGitLab;
 using NGitLab.Models;
+using Serilog.Core;
 
 namespace ChasmaWebApi.Core.Services.Remote
 {
@@ -90,7 +91,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         }
 
         // <inheritdoc />
-        public bool TryCreateIssue(PreparedGitLabIssue issueCreation, out GitLabIssueResult issue, out string errorMessage)
+        public bool TryCreateIssue(IssueOutline issueCreation, out RemoteIssueResult issue, out string errorMessage)
         {
             errorMessage = string.Empty;
             issue = null;
@@ -121,7 +122,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         }
 
         // <inheritdoc />
-        public bool TryGetUsersInProject(LocalGitRepository repository, out List<GitLabProjectMember> projectMembers, out long projectId, out string errorMessage)
+        public bool TryGetUsersInProject(LocalGitRepository repository, out List<RemoteProjectMember> projectMembers, out long projectId, out string errorMessage)
         {
             errorMessage = string.Empty;
             projectMembers = new();
@@ -139,7 +140,7 @@ namespace ChasmaWebApi.Core.Services.Remote
 
                 foreach (Membership member in membershipResult.Value.Members)
                 {
-                    GitLabProjectMember projectMember = new()
+                    RemoteProjectMember projectMember = new()
                     {
                         AssigneeId = member.Id,
                         UserName = member.UserName,
@@ -203,6 +204,34 @@ namespace ChasmaWebApi.Core.Services.Remote
             {
                 errorMessage = $"Error when trying to create merge request. Review server logs for more information.";
                 logger.LogError("Error when trying to create GitLab merge request in {repo} project. Error: {error}", preparedMergeRequest.RepoName, e);
+                return false;
+            }
+        }
+
+        // <inheritdoc/>
+        public bool TryGetLabelsForRepository(LocalGitRepository repository, out List<string> labels, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            string repoDisplayName = repository.GetDisplayName();
+            labels = [];
+            try
+            {
+                Task<List<Label>?> retrieveLabelsTask = SendGetLabelsInProjectRequest(repository);
+                IReadOnlyList<Label> labelList = retrieveLabelsTask.Result;
+                if (labelList == null)
+                {
+                    errorMessage = $"Failed to fetch labels for {repoDisplayName}. Check server logs for more information.";
+                    return false;
+                }
+
+                labels = labelList.OrderBy(i => i.Name).Select(i => i.Name).ToList();
+                logger.LogInformation("Retrieved {count} labels from {repo} via GitLab API.", labels.Count, repoDisplayName);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to fetch labels for {repoDisplayName} due to an exception. Review server logs.";
+                logger.LogError(ex, errorMessage);
                 return false;
             }
         }
@@ -289,7 +318,6 @@ namespace ChasmaWebApi.Core.Services.Remote
                     return null;
                 }
 
-                List<GitLabProjectMember> projectMembers = new();
                 List<Membership> members = Client.Members.OfProjectAsync(project.Id, true).ToList();
                 return (members, project.Id);
             }
@@ -305,7 +333,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// </summary>
         /// <param name="issue">The issue creation details.</param>
         /// <returns>The newly created issue from GitLab.</returns>
-        private async Task<Issue?> SendCreateIssueRequest(PreparedGitLabIssue issue)
+        private async Task<Issue?> SendCreateIssueRequest(IssueOutline issue)
         {
             try
             {
@@ -323,14 +351,14 @@ namespace ChasmaWebApi.Core.Services.Remote
                 {
                     ProjectId = project.Id,
                     AssigneeId = issue.MainAssignee?.AssigneeId,
-                    AssigneeIds = issue.Contacts.Select(i => i.AssigneeId).ToArray(),
+                    AssigneeIds = issue.AdditionalAssignees?.Select(i => i.AssigneeId).ToArray(),
                     Title = issue.Title,
-                    Description = issue.Description,
+                    Description = issue.Description ?? string.Empty,
                     Confidential = issue.Confidential,
-
+                    Labels = issue.Labels != null ? string.Join(",", issue.Labels) : string.Empty,
                 };
-                Issue newIssue = await Client.Issues.CreateAsync(issueRequest);
-                return newIssue;
+
+                return await Client.Issues.CreateAsync(issueRequest);
             }
             catch (Exception e)
             {
@@ -378,6 +406,40 @@ namespace ChasmaWebApi.Core.Services.Remote
             catch (Exception e)
             {
                 logger.LogError("Failed to create merge request via the GitLab API: {error}", e);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the labels in the specified project.
+        /// </summary>
+        /// <param name="repository">The local Git repository.</param>
+        /// <returns>The list of lables that are a part of the repository.</returns>
+        private async Task<List<Label>?> SendGetLabelsInProjectRequest(LocalGitRepository repository)
+        {
+            try
+            {
+                ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                {
+                    logger.LogError("Could not get labels that are in the {repo} project. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.", repository.GetDisplayName());
+                    return null;
+                }
+
+                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
+                Project project = await Client.Projects.GetAsync($"{repository.Owner}/{repository.Name}");
+                if (project == null)
+                {
+                    logger.LogError("Could not find project on GitLab with owner: {owner} and repo {repoName}", repository.Owner, repository.GetDisplayName());
+                    return null;
+                }
+
+                return Client.Labels.ForProject(project.Id).ToList();
+            }
+            catch (Exception e)
+            {
+                logger.LogError("Failed to get labels from the GitLab API: {error}", e);
                 return null;
             }
         }

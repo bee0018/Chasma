@@ -613,6 +613,60 @@ namespace ChasmaWebApi.Core.Services.Control
 
         #endregion
 
+        #region General Remote Interactions
+
+        // <inheritdoc />
+        public bool TryCreateIssue(IssueOutline issueCreation, out RemoteIssueResult createdIssue, out string errorMessage)
+        {
+            switch (issueCreation.Platform)
+            {
+                case RemoteHostPlatform.GitHub:
+                    return gitHubService.TryCreateIssue(issueCreation, out createdIssue, out errorMessage);
+                case RemoteHostPlatform.GitLab:
+                    return gitLabService.TryCreateIssue(issueCreation, out createdIssue, out errorMessage);
+                default:
+                    createdIssue = null;
+                    errorMessage = $"Cannot create issue for remote host platform {issueCreation.Platform} because it is currently not supported.";
+                    return false;
+            }
+        }
+
+        // <inheritdoc />
+        public bool TryGetMembers(LocalGitRepository repository, out List<RemoteProjectMember> members, out long projectId, out string errorMessage)
+        {
+            switch (repository.HostPlatform)
+            {
+                case RemoteHostPlatform.GitHub:
+                    projectId = -1;
+                    return gitHubService.TryGetUsersInProject(repository, out members, out errorMessage);
+                case RemoteHostPlatform.GitLab:
+                    return gitLabService.TryGetUsersInProject(repository, out members, out projectId, out errorMessage);
+                default:
+                    projectId = -1;
+                    errorMessage = $"Cannot create get {repository.GetDisplayName} project members because this functionality for {repository.HostPlatform} is currently not supported.";
+                    members = [];
+                    return false;
+            }
+        }
+
+        // <inheritdoc />
+        public bool TryGetRepositoryLabels(LocalGitRepository repository, out List<string> labels, out string errorMessage)
+        {
+            switch (repository.HostPlatform)
+            {
+                case RemoteHostPlatform.GitHub:
+                    return gitHubService.TryGetLabelsForRepository(repository, out labels, out errorMessage);
+                case RemoteHostPlatform.GitLab:
+                    return gitLabService.TryGetLabelsForRepository(repository, out labels, out errorMessage);
+                default:
+                    errorMessage = $"Cannot create get {repository.GetDisplayName} project labels because this functionality for {repository.HostPlatform} is currently not supported.";
+                    labels = [];
+                    return false;
+            }
+        }
+
+        #endregion
+
         #region Remote Interactions - GitHub
 
         // <inheritdoc />
@@ -627,12 +681,6 @@ namespace ChasmaWebApi.Core.Services.Control
             return gitHubService.TryCreatePullRequest(pullRequest, out pullRequestId, out prUrl, out timestamp, out errorMessage);
         }
 
-        // <inheritdoc />
-        public bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage)
-        {
-            return gitHubService.TryCreateIssue(repoName, repoOwner, title, body, token, out issueId, out issueUrl, out errorMessage);
-        }
-
         #endregion
 
         #region Remote Interactions - GitLab
@@ -641,18 +689,6 @@ namespace ChasmaWebApi.Core.Services.Control
         public bool TryGetPipelineJobResults(LocalGitRepository repository, out List<WorkflowRunResult> buildResults, out string errorMessage)
         {
             return gitLabService.TryGetPipelineJobResults(repository, out buildResults, out errorMessage);
-        }
-
-        // <inheritdoc />
-        public bool TryCreateIssue(PreparedGitLabIssue issueCreation, out GitLabIssueResult issue, out string errorMessage)
-        {
-            return gitLabService.TryCreateIssue(issueCreation, out  issue, out errorMessage);
-        }
-
-        // <inheritdoc />
-        public bool TryGetMembers(LocalGitRepository repository, out List<GitLabProjectMember> members, out long projectId, out string errorMessage)
-        {
-            return gitLabService.TryGetUsersInProject(repository, out members, out projectId, out errorMessage);
         }
 
         // <inheritdoc />

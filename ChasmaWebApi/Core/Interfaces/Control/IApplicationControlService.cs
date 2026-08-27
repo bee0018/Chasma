@@ -249,18 +249,13 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         bool TryCreatePullRequest(PreparedGitHubPullRequest pullRequest, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage);
 
         /// <summary>
-        /// Tries to create a GitHub issue in the specified repository.
+        /// Tries to create a cloud provider issue in the specified repository.
         /// </summary>
-        /// <param name="repoName">The repository name.</param>
-        /// <param name="repoOwner">The repository owner.</param>
-        /// <param name="title">The issue title.</param>
-        /// <param name="body">The issue body description.</param>
-        /// <param name="token">The GitHub API token.</param>
-        /// <param name="issueId">The issue identifier.</param>
-        /// <param name="issueUrl">The issue URL.</param>
+        /// <param name="outline">The issue outline.</param>
+        /// <param name="createdIssue">The newly created repository issue.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the issue is created; false otherwise.</returns>
-        bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage);
+        bool TryCreateIssue(IssueOutline outline, out RemoteIssueResult createdIssue, out string errorMessage);
 
         /// <summary>
         /// Performs a dry run of the git pull operation for the specified repositories.
@@ -293,15 +288,6 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         bool TryGetPipelineJobResults(LocalGitRepository cachedRepo, out List<WorkflowRunResult> buildResults, out string errorMessage);
 
         /// <summary>
-        /// Tries to create a GitLab issue for the specified repository.
-        /// </summary>
-        /// <param name="issueCreation">The issue creation details.</param>
-        /// <param name="issue">The newly created repository issue.</param>
-        /// <param name="errorMessage">The error message.</param>
-        /// <returns>True if the GitLab issue was successfully created; false otherwise.</returns>
-        bool TryCreateIssue(PreparedGitLabIssue issueCreation, out GitLabIssueResult issue, out string errorMessage);
-
-        /// <summary>
         /// Tries to get the members that have access to the repository.
         /// </summary>
         /// <param name="repository">The repository in cache.</param>
@@ -309,7 +295,7 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="projectId">The project identifier that the members belong to.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the members were retrieved; false otherwise.</returns>
-        bool TryGetMembers(LocalGitRepository repository, out List<GitLabProjectMember> members, out long projectId, out string errorMessage);
+        bool TryGetMembers(LocalGitRepository repository, out List<RemoteProjectMember> members, out long projectId, out string errorMessage);
 
         /// <summary>
         /// Tries to create a merge request in the specified repository.
@@ -426,5 +412,14 @@ namespace ChasmaWebApi.Core.Interfaces.Control
         /// <param name="errorMessage">The error message.</param>
         /// <returns>The updated remote repository.</returns>
         LocalGitRepository ConnectRemoteRepository(InitializedRepositoryTemplate template, string headBranchName, string remoteUrl, out string errorMessage);
+
+        /// <summary>
+        /// Tries to get the labels for the specified repository.
+        /// </summary>
+        /// <param name="repository">The local Git repository.</param>
+        /// <param name="labels">The list of label names.</param>
+        /// <param name="errorMessage">The error message if there was a failure to retrieve labels.</param>
+        /// <returns>True if the labels were retrieved; false otherwise.</returns>
+        bool TryGetRepositoryLabels(LocalGitRepository repository, out List<string> labels, out string errorMessage);
     }
 }

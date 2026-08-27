@@ -1,12 +1,12 @@
 ﻿namespace ChasmaWebApi.Data.Requests.Remote
 {
     /// <summary>
-    /// Class representing the details to get the GitLab project members.
+    /// Represents a request to get GitHub labels for a repository.
     /// </summary>
-    public class GetGitLabProjectMembersRequest
+    public class GetLabelsRequest
     {
         /// <summary>
-        /// Gets or sets the repository identifier.
+        /// Gets or sets the repository identifier for which to retrieve labels.
         /// </summary>
         public string RepositoryId { get; set; }
     }

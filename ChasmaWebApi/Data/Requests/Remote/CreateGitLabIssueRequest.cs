@@ -15,12 +15,12 @@ namespace ChasmaWebApi.Data.Requests.Remote
         /// <summary>
         /// Gets or sets the main assignee of an issue.
         /// </summary>
-        public GitLabProjectMember MainAssignee { get; set; }
+        public RemoteProjectMember? MainAssignee { get; set; }
 
         /// <summary>
         /// Gets or sets the contacts of an issue.
         /// </summary>
-        public List<GitLabProjectMember> Contacts { get; set; } = new();
+        public List<RemoteProjectMember>? Contacts { get; set; } = new();
 
         /// <summary>
         /// Gets or sets the title of the issue.
@@ -37,5 +37,10 @@ namespace ChasmaWebApi.Data.Requests.Remote
         /// Gets or sets a value indicating whether the issue is confidential.
         /// </summary>
         public bool Confidential { get; set; }
+
+        /// <summary>
+        /// Gets or sets the labels to be applied to the issue.
+        /// </summary>
+        public List<string> Labels { get; set; } = [];
     }
 }
