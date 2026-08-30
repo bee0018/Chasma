@@ -369,6 +369,7 @@ namespace ChasmaWebApi.Core.Services.Git
                 return false;
             }
 
+            diffContent = TrimGitDiffHeader(diffContent);
             return true;
         }
 
@@ -1320,6 +1321,31 @@ namespace ChasmaWebApi.Core.Services.Git
             }
 
             return statusElements;
+        }
+
+        /// <summary>
+        /// Trms the git diff header.
+        /// </summary>
+        /// <param name="rawDiff">The raw, untrimmed diff content</param>
+        /// <returns>The filtered out diff.</returns>
+        private static string TrimGitDiffHeader(string rawDiff)
+        {
+            if (string.IsNullOrWhiteSpace(rawDiff))
+            {
+                return string.Empty;
+            }
+
+            // Locate the start of the first hunk marker "@@"
+            int hunkIndex = rawDiff.IndexOf("\n@@", StringComparison.Ordinal);
+            if (hunkIndex != -1)
+            {
+                // Skip the leading newline before the first '@@'
+                return rawDiff.Substring(hunkIndex + 1);
+            }
+
+            // If no hunk marker is found (e.g., empty diff or binary file notice), return original
+            // and handles edge case where the diff starts directly with "@@" at index 0
+            return rawDiff;
         }
 
         #endregion

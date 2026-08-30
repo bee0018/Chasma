@@ -3,9 +3,9 @@
 namespace ChasmaWebApi.Data.Responses.Remote
 {
     /// <summary>
-    /// Class representing the details of a response to a request to get the GitLab project members.
+    /// Class representing the details of a response to a request to get the cloud provider's repository project members.
     /// </summary>
-    public class GetGitLabProjectMembersResponse : ResponseBase
+    public class GetRemoteProjectMembersResponse : ResponseBase
     {
         /// <summary>
         /// Gets or sets the project identifier this group of users belong to.
@@ -15,6 +15,6 @@ namespace ChasmaWebApi.Data.Responses.Remote
         /// <summary>
         /// Gets or sets the members of the GitLab project.
         /// </summary>
-        public List<GitLabProjectMember> ProjectMembers { get; set; } = new();
+        public List<RemoteProjectMember> ProjectMembers { get; set; } = new();
     }
 }

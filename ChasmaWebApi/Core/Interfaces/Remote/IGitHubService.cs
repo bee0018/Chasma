@@ -1,4 +1,5 @@
-﻿using ChasmaWebApi.Data.Objects.Remote;
+﻿using ChasmaWebApi.Data.Objects.Git;
+using ChasmaWebApi.Data.Objects.Remote;
 
 namespace ChasmaWebApi.Core.Interfaces.Remote
 {
@@ -21,16 +22,11 @@ namespace ChasmaWebApi.Core.Interfaces.Remote
         /// <summary>
         /// Tries to create a GitHub issue in the specified repository.
         /// </summary>
-        /// <param name="repoName">The repository name.</param>
-        /// <param name="repoOwner">The repository owner.</param>
-        /// <param name="title">The issue title.</param>
-        /// <param name="body">The issue body description.</param>
-        /// <param name="token">The GitHub API token.</param>
-        /// <param name="issueId">The issue identifier.</param>
-        /// <param name="issueUrl">The issue URL.</param>
+        /// <param name="outline">The issue outline.</param>
+        /// <param name="createdIssue">The created issue result.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the issue is created; false otherwise.</returns>
-        bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage);
+        bool TryCreateIssue(IssueOutline outline, out RemoteIssueResult createdIssue, out string errorMessage);
 
         /// <summary>
         /// Tries to get the workflow run results for the repo with specified details.
@@ -42,5 +38,23 @@ namespace ChasmaWebApi.Core.Interfaces.Remote
         /// <param name="errorMessage">The error message if there was a failure to retrieve runs.</param>
         /// <returns>True if the workflow runs were retrieved; false otherwise.</returns>
         bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, out List<WorkflowRunResult> workflowRunResults, out string errorMessage);
+
+        /// <summary>
+        /// Tries to get the labels for the specified repository.
+        /// </summary>
+        /// <param name="repository">The local Git repository.</param>
+        /// <param name="labels">The list of label names.</param>
+        /// <param name="errorMessage">The error message if there was a failure to retrieve labels.</param>
+        /// <returns>True if the labels were retrieved; false otherwise.</returns>
+        bool TryGetLabelsForRepository(LocalGitRepository repository, out List<string> labels, out string errorMessage);
+
+        /// <summary>
+        /// Tries to get the users that have access to the specified project.
+        /// </summary>
+        /// <param name="repository">The repository to get members for.</param>
+        /// <param name="projectMembers">The members of the repository.</param>
+        /// <param name="errorMessage">The error message.</param>
+        /// <returns>True if the members were retrieved; false otherwise.</returns>
+        bool TryGetUsersInProject(LocalGitRepository repository, out List<RemoteProjectMember> projectMembers, out string errorMessage);
     }
 }

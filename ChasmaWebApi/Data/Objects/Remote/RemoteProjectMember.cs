@@ -3,7 +3,7 @@
     /// <summary>
     /// Class representing a member of a GitLab project.
     /// </summary>
-    public class GitLabProjectMember
+    public class RemoteProjectMember
     {
         /// <summary>
         /// Gets or sets the member identifier.
@@ -18,6 +18,6 @@
         /// <summary>
         /// Gets or sets the user's full name on GitLab.
         /// </summary>
-        public string FullName { get; set; }
+        public string? FullName { get; set; }
     }
 }

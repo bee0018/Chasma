@@ -1,9 +1,9 @@
 ﻿namespace ChasmaWebApi.Data.Objects.Remote
 {
     /// <summary>
-    /// Class representing the GitLab issue that was newly created.
+    /// Class representing the remote issue that was newly created.
     /// </summary>
-    public class GitLabIssueResult
+    public class RemoteIssueResult
     {
         /// <summary>
         /// Gets or sets the issue identifier.

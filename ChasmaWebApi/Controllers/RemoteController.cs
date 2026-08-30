@@ -1,6 +1,7 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Control;
 using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Data.Messages;
+using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Data.Requests.Remote;
@@ -289,7 +290,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.RepositoryName))
+            string repoName = request.RepositoryName;
+            if (string.IsNullOrEmpty(repoName))
             {
                 logger.LogError("Repository name must be populated. Sending error response.");
                 response.IsErrorResponse = true;
@@ -297,7 +299,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.RepositoryOwner))
+            string repoOwner = request.RepositoryOwner;
+            if (string.IsNullOrEmpty(repoOwner))
             {
                 logger.LogError("Repository owner must be populated. Sending error response.");
                 response.IsErrorResponse = true;
@@ -305,7 +308,8 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.Title))
+            string title = request.Title;
+            if (string.IsNullOrEmpty(title))
             {
                 logger.LogError("Issue title must be populated. Sending error response.");
                 response.IsErrorResponse = true;
@@ -315,15 +319,18 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
-                string repoName = request.RepositoryName;
-                string repoOwner = request.RepositoryOwner;
-                string title = request.Title;
-                string body = request.Body ?? string.Empty;
-                ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-                string token = webApiConfigurations.GitHubApiToken ?? string.Empty;
-                string decryptedToken = encryptionService.DecryptString(token);
-                bool issueIsCreated = applicationControlService.TryCreateIssue(repoName, repoOwner, title, body, decryptedToken, out int issueId, out string issueUrl, out string errorMessage);
-                if (!issueIsCreated)
+                IssueOutline outline = new()
+                {
+                    RepoOwner = repoOwner,
+                    RepoName = repoName,
+                    Title = title,
+                    Description = request.Body ?? string.Empty,
+                    AdditionalAssignees = request.Assignees,
+                    Platform = RemoteHostPlatform.GitHub,
+                    Labels = request.Labels,
+                };
+
+                if (!applicationControlService.TryCreateIssue(outline, out RemoteIssueResult createdIssue, out string errorMessage))
                 {
                     logger.LogError("Failed to create issue for {repoName}. Sending error response.", repoName);
                     response.IsErrorResponse = true;
@@ -331,9 +338,9 @@ namespace ChasmaWebApi.Controllers
                     return Ok(response);
                 }
 
-                logger.LogInformation("Successfully created issue {issueId} at {issueUrl}.", issueId, issueUrl);
-                response.IssueUrl = issueUrl;
-                response.IssueId = issueId;
+                logger.LogInformation("Successfully created issue {issueId} at {issueUrl}.", createdIssue.IssueId, createdIssue.Url);
+                response.IssueUrl = createdIssue.Url;
+                response.IssueId = createdIssue.IssueId;
                 return Ok(response);
             }
             catch (Exception ex)
@@ -343,6 +350,54 @@ namespace ChasmaWebApi.Controllers
                 response.ErrorMessage = "Exception occurred when creating GitHub issue. Check server logs for more information.";
                 return BadRequest(response);
             }
+        }
+
+        /// <summary>
+        /// Retrieves the labels for a cloud hosted repository.
+        /// </summary>
+        /// <param name="request">The request to retrieve cloud hosted repository labels.</param>
+        /// <returns>The response to the request.</returns>
+        [HttpPost]
+        [Route("retrieveRemoteLabels")]
+        public ActionResult<GetLabelsResponse> RetrieveLabels([FromBody] GetLabelsRequest request)
+        {
+            GetLabelsResponse response = new();
+            if (request == null)
+            {
+                logger.LogError("Failed to get GitHub labels because the request was null. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Request is null. Cannot get GitHub labels.";
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
+            {
+                logger.LogError("Failed to get GitHub labels because the repository identifier is empty. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository identifier was empty. Cannot get GitHub labels.";
+                return Ok(response);
+            }
+
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
+            {
+                logger.LogError("Failed to get GitHub labels because the repository cannot be found. Sending error response.");
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Repository cannot be found in cache. Cannot get GitHub labels.";
+                return Ok(response);
+            }
+
+            if (!applicationControlService.TryGetRepositoryLabels(repository, out List<string> labels, out string errorMessage))
+            {
+                logger.LogError("Failed to get GitHub labels: {error}", errorMessage);
+                response.IsErrorResponse = true;
+                response.ErrorMessage = errorMessage;
+                return Ok(response);
+            }
+
+            logger.LogInformation("Successfully retrieved labels for repository {repo}.", repository.GetDisplayName());
+            response.Labels.AddRange(labels);
+            return Ok(response);
         }
 
         #endregion
@@ -441,19 +496,21 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            PreparedGitLabIssue outline = new()
+            IssueOutline outline = new()
             {
                 RepoOwner = repository.Owner,
                 RepoName = repository.Name,
                 MainAssignee = request.MainAssignee,
-                Contacts = request.Contacts,
+                AdditionalAssignees = request.Contacts,
                 Title = request.Title,
                 Description = request.Description ?? string.Empty,
                 Confidential = request.Confidential,
+                Platform = RemoteHostPlatform.GitLab,
+                Labels = request.Labels,
             };
             try
             {
-                if (!applicationControlService.TryCreateIssue(outline, out GitLabIssueResult issue, out string errorMessage))
+                if (!applicationControlService.TryCreateIssue(outline, out RemoteIssueResult createdIssue, out string errorMessage))
                 {
                     logger.LogError("Failed to create GitLab issue for {repo} because: {error}", repository.GetDisplayName(), errorMessage);
                     response.IsErrorResponse = true;
@@ -461,8 +518,8 @@ namespace ChasmaWebApi.Controllers
                     return Ok(response);
                 }
 
-                logger.LogInformation("Successfully created GitLab issue for {repo} with number {number}", repository.GetDisplayName(), issue.IssueId);
-                response.Issue = issue;
+                logger.LogInformation("Successfully created GitLab issue for {repo} with number {number}", repository.GetDisplayName(), createdIssue.IssueId);
+                response.Issue = createdIssue;
                 return Ok(response);
             }
             catch (Exception ex)
@@ -480,14 +537,14 @@ namespace ChasmaWebApi.Controllers
         /// <param name="request">The request to get members of a repository.</param>
         /// <returns>The response containing project members of a repository.</returns>
         [HttpPost]
-        [Route("getGitLabProjectMembers")]
-        public ActionResult<GetGitLabProjectMembersResponse> GetGitLabProjectMembers([FromBody] GetGitLabProjectMembersRequest request)
+        [Route("getRemoteProjectMembers")]
+        public ActionResult<GetRemoteProjectMembersResponse> GetRemoteProjectMembers([FromBody] GetRemoteProjectMembersRequest request)
         {
-            string requestName = nameof(GetGitLabProjectMembersRequest);
-            GetGitLabProjectMembersResponse response = new();
+            string requestName = nameof(GetRemoteProjectMembersRequest);
+            GetRemoteProjectMembersResponse response = new();
             if (request == null)
             {
-                logger.LogError("Could not get GitLab project members because {request} was null", requestName);
+                logger.LogError("Could not get remote project members because {request} was null", requestName);
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Request must be populated.";
                 return BadRequest(response);
@@ -496,7 +553,7 @@ namespace ChasmaWebApi.Controllers
             string repoId = request.RepositoryId;
             if (string.IsNullOrEmpty(repoId))
             {
-                logger.LogError("Could not get GitLab project members because {request}'s repository identifier null or empty", requestName);
+                logger.LogError("Could not get remote project members because {request}'s repository identifier null or empty", requestName);
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Repository must be populated.";
                 return Ok(response);
@@ -512,9 +569,9 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
-                if (!applicationControlService.TryGetMembers(repository, out List<GitLabProjectMember> projectMembers, out long projectId, out string errorMessage))
+                if (!applicationControlService.TryGetMembers(repository, out List<RemoteProjectMember> projectMembers, out long projectId, out string errorMessage))
                 {
-                    logger.LogError("Failed to get GitLab project members for {repo} because: {error}", repository.GetDisplayName(), errorMessage);
+                    logger.LogError("Failed to get {hostPlatform} project members for {repo} because: {error}", repository.HostPlatform, repository.GetDisplayName(), errorMessage);
                     response.IsErrorResponse = true;
                     response.ErrorMessage = errorMessage;
                     return Ok(response);

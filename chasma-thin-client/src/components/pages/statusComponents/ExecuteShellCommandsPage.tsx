@@ -139,12 +139,11 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
                             </header>
                             <div className="command-row modern-input-row">
                                 {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
-                                <h2>Add Command:</h2>
                                 <button
                                     type="button"
                                     className="add-button modern-add"
                                     onClick={addCustomShellCommandRow}>
-                                    +
+                                    Add Command +
                                 </button>
                             </div>
                             <br />

@@ -24,7 +24,7 @@ namespace ChasmaWebApi.Core.Interfaces.Remote
         /// <param name="issue">The newly created repository issue.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the GitLab issue was successfully created; false otherwise.</returns>
-        public bool TryCreateIssue(PreparedGitLabIssue issueCreation, out GitLabIssueResult issue, out string errorMessage);
+        public bool TryCreateIssue(IssueOutline issueCreation, out RemoteIssueResult issue, out string errorMessage);
 
         /// <summary>
         /// Tries to get the users that have access to the specified project.
@@ -34,7 +34,7 @@ namespace ChasmaWebApi.Core.Interfaces.Remote
         /// <param name="projectId">The project identifier that the members belong to.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the members were retrieved; false otherwise.</returns>
-        bool TryGetUsersInProject(LocalGitRepository repository, out List<GitLabProjectMember> projectMembers, out long projectId, out string errorMessage);
+        bool TryGetUsersInProject(LocalGitRepository repository, out List<RemoteProjectMember> projectMembers, out long projectId, out string errorMessage);
 
         /// <summary>
         /// Tries to create a merge request in the specified repository.
@@ -44,5 +44,14 @@ namespace ChasmaWebApi.Core.Interfaces.Remote
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the merge request was created; false otherwise.</returns>
         bool TryCreateMergeRequest(PreparedGitLabMergeRequest preparedMergeRequest, out MergeRequestResult mergeResult, out string errorMessage);
+
+        /// <summary>
+        /// Tries to get the labels for the specified repository.
+        /// </summary>
+        /// <param name="repository">The local Git repository.</param>
+        /// <param name="labels">The list of label names.</param>
+        /// <param name="errorMessage">The error message if there was a failure to retrieve labels.</param>
+        /// <returns>True if the labels were retrieved; false otherwise.</returns>
+        bool TryGetLabelsForRepository(LocalGitRepository repository, out List<string> labels, out string errorMessage);
     }
 }

@@ -1,11 +1,11 @@
 import {
     CreateMergeRequest,
     CreatePRRequest,
-    GetGitLabProjectMembersRequest,
     GitBranchRequest,
-    GitLabProjectMember,
+    RemoteProjectMember,
     LocalGitRepository,
     RemoteHostPlatform,
+    GetRemoteProjectMembersRequest,
 } from "../../../API/ChasmaWebApiClient";
 import React, {useEffect, useState} from "react";
 import {branchClient, remoteClient} from "../../../managers/ApiClientManager";
@@ -54,16 +54,16 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
         const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(undefined);
 
         /** Gets or sets the GitLab project members associated with the repository. **/
-        const [gitLabProjectMembers, setGitLabProjectMembers] = useState<GitLabProjectMember[]>([]);
+        const [gitLabProjectMembers, setGitLabProjectMembers] = useState<RemoteProjectMember[]>([]);
     
         /** Gets or sets the main GitLab assignee of the issue. **/
-        const [mainGitLabAssignee, setMainGitLabAssignee] = useState<GitLabProjectMember | undefined>(undefined);
+        const [mainGitLabAssignee, setMainGitLabAssignee] = useState<RemoteProjectMember | undefined>(undefined);
     
         /** Gets or sets the selected GitLab additional merge request assignees. */
-        const [selectedAdditionalAssignees, setSelectedAdditionalAssignees] = useState<{rowId: string, member?: GitLabProjectMember}[]>([]);
+        const [selectedAdditionalAssignees, setSelectedAdditionalAssignees] = useState<{rowId: string, member?: RemoteProjectMember}[]>([]);
 
         /** Gets or sets the selected GitLab merge request reviewers. */
-        const [selectedGitLabReviewers, setSelectedGitLabReviewers] = useState<{rowId: string, member?: GitLabProjectMember}[]>([]);
+        const [selectedGitLabReviewers, setSelectedGitLabReviewers] = useState<{rowId: string, member?: RemoteProjectMember}[]>([]);
         
         /** Gets or sets the project identifier. */
         const [projectId, setProjectId] = useState<number | undefined>(undefined);
@@ -164,8 +164,8 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
             request.title = pullRequestTitle;
             request.targetProjectId = projectId;
             request.assignee = mainGitLabAssignee;
-            request.additionalAssignees = selectedAdditionalAssignees.map(i => i.member).filter((m): m is GitLabProjectMember => m !== undefined);
-            request.reviewers = selectedGitLabReviewers.map(i => i.member).filter((m): m is GitLabProjectMember => m !== undefined);
+            request.additionalAssignees = selectedAdditionalAssignees.map(i => i.member).filter((m): m is RemoteProjectMember => m !== undefined);
+            request.reviewers = selectedGitLabReviewers.map(i => i.member).filter((m): m is RemoteProjectMember => m !== undefined);
             request.description = pullRequestDescription;
             request.removeSourceBranch = isRemoveSourceBranch;
             request.squash = isSquashing;
@@ -233,9 +233,9 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
         }
 
         try {
-            const request = new GetGitLabProjectMembersRequest();
+            const request = new GetRemoteProjectMembersRequest();
             request.repositoryId = props.repository.id;
-            const response = await remoteClient.getGitLabProjectMembers(request);
+            const response = await remoteClient.getRemoteProjectMembers(request);
             if (response.isErrorResponse) {
                 setNotification({
                     title: "Error fetching project members!",

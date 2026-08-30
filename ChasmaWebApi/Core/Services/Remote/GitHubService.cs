@@ -26,6 +26,11 @@ namespace ChasmaWebApi.Core.Services.Remote
         private readonly ICacheManager CacheManager;
 
         /// <summary>
+        /// The encryption service instance for handling encryption and decryption of sensitive data, such as API tokens, when interacting with GitHub or other remote services.
+        /// </summary>
+        private readonly IEncryptionService EncryptionService;
+
+        /// <summary>
         /// Gets or sets the GitHub client instance for making API calls to GitHub. This client is initialized with the appropriate credentials when making requests to create pull requests or issues on GitHub.
         /// </summary>
         private GitHubClient Client { get; set; }
@@ -37,10 +42,12 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// </summary>
         /// <param name="logger">The internal logger instance.</param>
         /// <param name="cacheManager">The internal API cache manager.</param>
-        public GitHubService(ILogger<GitHubService> logger, ICacheManager cacheManager)
+        /// <param name="encryptionService">The encryption service instance.</param>
+        public GitHubService(ILogger<GitHubService> logger, ICacheManager cacheManager, IEncryptionService encryptionService)
         {
             Logger = logger;
             CacheManager = cacheManager;
+            EncryptionService = encryptionService;
         }
 
         #endregion
@@ -111,30 +118,47 @@ namespace ChasmaWebApi.Core.Services.Remote
         }
 
         // <inheritdoc />
-        public bool TryCreateIssue(string repoName, string repoOwner, string title, string body, string token, out int issueId, out string issueUrl, out string errorMessage)
+        public bool TryCreateIssue(IssueOutline outline, out RemoteIssueResult createdIssue, out string errorMessage)
         {
             errorMessage = string.Empty;
-            issueUrl = string.Empty;
-            issueId = -1;
+            createdIssue = null;
             try
             {
-                NewIssue newIssue = new(title) { Body = body };
-                Client = RemoteHelper.GetGitHubClient(repoName, token);
-                Task<Issue?> createIssueTask = SendCreateIssueRequest(Client, repoOwner, repoName, newIssue);
+                NewIssue newIssue = new(outline.Title) { Body = outline.Description };
+                List<string> assignees = outline.AdditionalAssignees.Select(i => i.UserName).Distinct().ToList();
+                foreach (string user in assignees)
+                {
+                    newIssue.Assignees.Add(user);
+                }
+
+                List<string> labels = outline.Labels.Distinct().ToList();
+                foreach (string label in labels)
+                {
+                    newIssue.Labels.Add(label);
+                }
+
+                ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
+                string token = webApiConfigurations.GitHubApiToken ?? string.Empty;
+                string decryptedToken = EncryptionService.DecryptString(token);
+                Client = RemoteHelper.GetGitHubClient(outline.RepoName, decryptedToken);
+                Task<Issue?> createIssueTask = SendCreateIssueRequest(Client, outline.RepoOwner, outline.RepoName, newIssue);
                 Issue? issue = createIssueTask.Result;
                 if (issue == null)
                 {
-                    errorMessage = $"Failed to create issue in {repoName}. Check server logs for more information.";
+                    errorMessage = $"Failed to create issue in {outline.RepoName}. Check server logs for more information.";
                     return false;
                 }
 
-                issueId = issue.Number;
-                issueUrl = issue.HtmlUrl;
+                createdIssue = new RemoteIssueResult
+                {
+                    IssueId = issue.Number,
+                    Url = issue.HtmlUrl
+                };
                 return true;
             }
             catch (Exception ex)
             {
-                errorMessage = $"Failed to create issue for {repoName} with title {title} due to an exception. Review server logs.";
+                errorMessage = $"Failed to create issue for {outline.RepoName} with title {outline.Title} due to an exception. Review server logs.";
                 Logger.LogError(ex, errorMessage);
                 return false;
             }
@@ -175,6 +199,73 @@ namespace ChasmaWebApi.Core.Services.Remote
 
             Logger.LogInformation("Retrieved {count} build runs from {repo} via GitHub API.", runs.Count, repoName);
             return true;
+        }
+
+        // <inheritdoc/>
+        public bool TryGetLabelsForRepository(LocalGitRepository repository, out List<string> labels, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            string repoDisplayName = repository.GetDisplayName();
+            labels = [];
+            try
+            {
+                Task<IReadOnlyList<Label>> retrieveLabelsTask = GetLabelsForRepository(repository);
+                IReadOnlyList<Label> labelList = retrieveLabelsTask.Result;
+                if (labelList == null)
+                {
+                    errorMessage = $"Failed to fetch labels for {repoDisplayName}. Check server logs for more information.";
+                    return false;
+                }
+
+                labels = labelList.OrderBy(i => i.Name).Select(i => i.Name).ToList();
+                Logger.LogInformation("Retrieved {count} labels from {repo} via GitHub API.", labels.Count, repoDisplayName);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to fetch labels for {repoDisplayName} due to an exception. Review server logs.";
+                Logger.LogError(ex, errorMessage);
+                return false;
+            }
+        }
+
+        // <inheritdoc/>
+        public bool TryGetUsersInProject(LocalGitRepository repository, out List<RemoteProjectMember> projectMembers, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            projectMembers = [];
+            string repoDisplayName = repository.GetDisplayName();
+            try
+            {
+                Task<IReadOnlyList<Collaborator>?> retrieveCollaboratorsTask = GetProjectMembersForRepository(repository);
+                IReadOnlyList<Collaborator>? collaborators = retrieveCollaboratorsTask.Result;
+                if (collaborators == null)
+                {
+                    errorMessage = $"Failed to fetch project members for {repoDisplayName}. Check server logs for more information.";
+                    return false;
+                }
+
+                foreach (Collaborator collaborator in collaborators)
+                {
+                    RemoteProjectMember member = new()
+                    {
+                        AssigneeId = collaborator.Id,
+                        UserName = collaborator.Login,
+                        FullName = collaborator.Name
+                    };
+
+                    projectMembers.Add(member);
+                }
+
+                Logger.LogInformation("Retrieved {count} project members from {repo} via GitHub API.", projectMembers.Count, repoDisplayName);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to fetch project members for {repoDisplayName} due to an exception. Review server logs.";
+                Logger.LogError(ex, errorMessage);
+                return false;
+            }
         }
 
         #region Private Methods
@@ -288,6 +379,48 @@ namespace ChasmaWebApi.Core.Services.Remote
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Retrieves the list of labels for a given GitHub repository using the GitHub API.
+        /// </summary>
+        /// <param name="repository">The repository for which to retrieve labels.</param>
+        /// <returns>A task containing the list of labels.</returns>
+        private async Task<IReadOnlyList<Label>> GetLabelsForRepository(LocalGitRepository repository)
+        {
+            try
+            {
+                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                string decryptedToken = EncryptionService.DecryptString(token);
+                Client = RemoteHelper.GetGitHubClient(repository.Name, decryptedToken);
+                return await Client.Issue.Labels.GetAllForRepository(repository.Owner, repository.Name);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Error when trying to retrieve GitHub repository labels for {repoName}: {error}", repository.GetDisplayName(), e);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the list of project members (collaborators) for a given GitHub repository using the GitHub API.
+        /// </summary>
+        /// <param name="repository">The repository for which to retrieve project members.</param>
+        /// <returns>A task containing the list of project members.</returns>
+        private async Task<IReadOnlyList<Collaborator>?> GetProjectMembersForRepository(LocalGitRepository repository)
+        {
+            try
+            {
+                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                string decryptedToken = EncryptionService.DecryptString(token);
+                Client = RemoteHelper.GetGitHubClient(repository.Name, decryptedToken);
+                return await Client.Repository.Collaborator.GetAll(repository.Owner, repository.Name);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Error when trying to retrieve GitHub project members for {repoName}: {error}", repository.GetDisplayName(), e);
+                return null;
+            }
         }
 
         #endregion

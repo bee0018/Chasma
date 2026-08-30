@@ -10,6 +10,6 @@ namespace ChasmaWebApi.Data.Responses.Remote
         /// <summary>
         /// Gets or sets the newly created issue.
         /// </summary>
-        public GitLabIssueResult Issue { get; set; }
+        public RemoteIssueResult Issue { get; set; }
     }
 }
