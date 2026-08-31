@@ -258,6 +258,15 @@ const RepositoryStatusPage: React.FC = () => {
             setLastUpdated(response.lastUpdated);
             setRepoIsUnborn(response.isUnborn);
             setDataRetrieved(true);
+
+            // Deselect the file if the changes have been reverted to the selected file in the latest status update.
+            const selectedFilePath = selectedFile?.filePath;
+            const filesInChangeset = response.statusElements?.map(i => i.filePath).filter(i => i !== undefined);
+            if (selectedFilePath === undefined || !filesInChangeset?.includes(selectedFilePath)) {
+                setSelectedFile(null);
+                const emptySet = new Set<string>();
+                setSelectedFiles(emptySet);
+            }
         } catch (e) {
             if (e instanceof TypeError) {
                 // Not going to handle non-API/nswag related exceptions.
