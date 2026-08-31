@@ -279,6 +279,26 @@ const RepositoryStatusPage: React.FC = () => {
     }
 
     /**
+     * Handles the event when the user is single/bulk staging changes.
+     * @param selectedFile The selected file to apply a staging action on
+     */
+    async function handleStagingActionRequest(selectedFile: RepositoryStatusElement) {
+        if (selectedFiles.size === 1) {
+            await handleApplyStagingActionRequest(selectedFile);
+            return;
+        }
+
+        const firstFile = selectedFiles.values().next().value
+        if (!firstFile) {
+            return;
+        }
+
+        const matchedFile = statusElements?.find(i => i.filePath === firstFile);
+        const isStaging = !matchedFile?.isStaged;
+        await handleBulkStagingActionRequest(isStaging);
+    }
+
+    /**
      * Handles the request to apply the staging action to the selected file.
      * @param selectedFile The selected file.
      */
@@ -1111,7 +1131,7 @@ const RepositoryStatusPage: React.FC = () => {
                                             <button
                                                 className="submit-button"
                                                 style={{ background: selectedFile?.isStaged ? "red" : "green" }}
-                                                onClick={() => handleApplyStagingActionRequest(selectedFile)}
+                                                onClick={() => handleStagingActionRequest(selectedFile)}
                                             >
                                                 {selectedFile?.isStaged ? "Unstage" : "Stage"}
                                             </button>
