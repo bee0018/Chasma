@@ -444,6 +444,7 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
                     <hr className="separator" />
                     {props.repository.hostPlatform === RemoteHostPlatform.GitLab &&
                         <>
+                        <h3>Main Assignee</h3>
                             <select
                                 className="repo-dropdown input-field"
                                 onChange={(e) => handleMainAssigneeChange(e.target.value)}>
@@ -452,10 +453,11 @@ const RemoteIssuesPage: React.FC<RemoteIssuesPageProps> = (props: RemoteIssuesPa
                                     <option
                                         key={member.assigneeId}
                                         value={member.assigneeId}>
-                                        {member.userName} - {member.fullName}
+                                        {isBlankOrUndefined(member.fullName) ? member.userName : `${member.userName} - ${member.fullName}`}
                                     </option>
                                 ))}
                             </select>
+                            <hr className="separator" />
                         </>
                     }
                     <div className="repository-actions">

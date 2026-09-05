@@ -247,6 +247,8 @@ namespace ChasmaWebApi.Controllers
                     BaseBranch = baseBranch,
                     Description = body,
                     Token = decryptedToken,
+                    Reviewers = request.Reviewers,
+                    Assignees = request.Assignees,
                 };
                 if (!applicationControlService.TryCreatePullRequest(pullRequest, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage))
                 {

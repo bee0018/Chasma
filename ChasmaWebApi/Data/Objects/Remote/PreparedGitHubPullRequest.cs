@@ -49,5 +49,15 @@
         /// Gets or sets the GitHub API access token.
         /// </summary>
         public string Token { get; set; }
+
+        /// <summary>
+        /// Gets or sets the reviewers of the pull request.
+        /// </summary>
+        public List<RemoteProjectMember>? Reviewers { get; set; } = [];
+
+        /// <summary>
+        /// Gets or sets the assignees of the pull request.
+        /// </summary>
+        public List<RemoteProjectMember>? Assignees { get; set; } = [];
     }
 }

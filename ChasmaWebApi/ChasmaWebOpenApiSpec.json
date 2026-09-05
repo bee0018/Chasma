@@ -2964,6 +2964,37 @@
           },
           "repositoryName": {
             "type": "string"
+          },
+          "reviewers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/RemoteProjectMember"
+            }
+          },
+          "assignees": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/RemoteProjectMember"
+            }
+          }
+        }
+      },
+      "RemoteProjectMember": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "assigneeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -3015,23 +3046,6 @@
             "items": {
               "type": "string"
             }
-          }
-        }
-      },
-      "RemoteProjectMember": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "assigneeId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "userName": {
-            "type": "string"
-          },
-          "fullName": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
@@ -3246,16 +3260,23 @@
             "nullable": true
           },
           "assignee": {
-            "$ref": "#/components/schemas/RemoteProjectMember"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RemoteProjectMember"
+              }
+            ]
           },
           "additionalAssignees": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/RemoteProjectMember"
             }
           },
           "reviewers": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/RemoteProjectMember"
             }

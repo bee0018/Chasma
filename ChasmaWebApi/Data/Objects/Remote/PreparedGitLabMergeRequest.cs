@@ -48,17 +48,17 @@
         /// <summary>
         /// Gets or sets the assignee of the merge request.
         /// </summary>
-        public RemoteProjectMember Assignee { get; set; }
+        public RemoteProjectMember? Assignee { get; set; }
 
         /// <summary>
         /// Gets or sets the additional assignees of the merge request.
         /// </summary>
-        public List<RemoteProjectMember> AdditonalAssignees { get; set; } = new();
+        public List<RemoteProjectMember>? AdditonalAssignees { get; set; } = new();
 
         /// <summary>
         /// Gets or sets the reviewers of the merge request.
         /// </summary>
-        public List<RemoteProjectMember> Reviewers { get; set; } = new();
+        public List<RemoteProjectMember>? Reviewers { get; set; } = new();
 
         /// <summary>
         /// Gets or sets the description of the merge request.

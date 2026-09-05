@@ -95,6 +95,43 @@ namespace ChasmaWebApi.Core.Services.Remote
                 return false;
             }
 
+            // Send review request to reviewers if any are specified.
+            List<string> reviewers = pullRequest.Reviewers?.Select(i => i.UserName).ToList() ?? [];
+            if (reviewers.Count > 0)
+            {
+                Logger.LogInformation("Sending pull request review request to {count} reviewers for PR {prId} in {repoName}.", reviewers.Count, createdPullRequest.Number, repository.GetDisplayName());
+                PullRequestReviewRequest reviewRequest = new(reviewers, []);
+                Task<bool> reviewTask = SendPrReviewRequest(Client, repository, createdPullRequest.Number, reviewRequest);
+                bool reviewersAssigned = reviewTask.Result;
+                if (reviewersAssigned)
+                {
+                    Logger.LogInformation("Successfully sent pull request review request to {count} reviewers for PR {prId} in {repoName}.", reviewers.Count, createdPullRequest.Number, repository.GetDisplayName());
+                }
+                else
+                {
+                    Logger.LogError("Failed to send pull request review request to reviewers for PR {prId} in {repoName}.", createdPullRequest.Number, repository.GetDisplayName());
+                }
+            }
+
+            // Send update message to GitHub API to assign assignees if any are specified.
+            List<string> assignees = pullRequest.Assignees?.Select(i => i.UserName).ToList() ?? [];
+            if (assignees.Count > 0)
+            {
+                Logger.LogInformation("Attempting to assign {count} assignees to PR {prId} in {repoName}.", assignees.Count, createdPullRequest.Number, repository.GetDisplayName());
+                IssueUpdate updatedIssue = new();
+                assignees.ForEach(i => updatedIssue.Assignees.Add(i));
+                Task<bool> updateTask = SendIssueUpdateMessage(Client, repository, createdPullRequest.Number, updatedIssue);
+                bool assigneesAssigned = updateTask.Result;
+                if (assigneesAssigned)
+                {
+                    Logger.LogInformation("Successfully assigned {count} assignees to PR {prId} in {repoName}.", assignees.Count, createdPullRequest.Number, repository.GetDisplayName());
+                }
+                else
+                {
+                    Logger.LogError("Failed to assign assignees to PR {prId} in {repoName}.", createdPullRequest.Number, repository.GetDisplayName());
+                }
+            }
+
             pullRequestId = createdPullRequest.Number;
             prUrl = createdPullRequest.HtmlUrl;
             timestamp = createdPullRequest.CreatedAt.ToLocalTime().ToString("g");
@@ -125,13 +162,13 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 NewIssue newIssue = new(outline.Title) { Body = outline.Description };
-                List<string> assignees = outline.AdditionalAssignees.Select(i => i.UserName).Distinct().ToList();
+                List<string> assignees = outline.AdditionalAssignees?.Select(i => i.UserName).Distinct().ToList() ?? [];
                 foreach (string user in assignees)
                 {
                     newIssue.Assignees.Add(user);
                 }
 
-                List<string> labels = outline.Labels.Distinct().ToList();
+                List<string> labels = outline.Labels?.Distinct().ToList() ?? [];
                 foreach (string label in labels)
                 {
                     newIssue.Labels.Add(label);
@@ -420,6 +457,50 @@ namespace ChasmaWebApi.Core.Services.Remote
             {
                 Logger.LogError("Error when trying to retrieve GitHub project members for {repoName}: {error}", repository.GetDisplayName(), e);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Sends a pull request creation review request to the GitHub API.
+        /// </summary>
+        /// <param name="client">The Ocktokit GitHub API client.</param>
+        /// <param name="repository">The repository for which to send the review request.</param>
+        /// <param name="pullRequestNumber">The pull request number.</param>
+        /// <param name="reviewRequest">The pull request review request components.</param>
+        /// <returns>True if the review request was sent successfully; false otherwise.</returns>
+        private async Task<bool> SendPrReviewRequest(GitHubClient client, LocalGitRepository repository, int pullRequestNumber, PullRequestReviewRequest reviewRequest)
+        {
+            try
+            {
+                await client.PullRequest.ReviewRequest.Create(repository.Owner, repository.Name, pullRequestNumber, reviewRequest);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Error when trying to create request to review pull requests in {repoName}: {error}", repository.GetDisplayName(), e);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sends an issue update message to the GitHub API. This will be used for things such as assigning an assignee to a pull request.
+        /// </summary>
+        /// <param name="client">The Ocktokit GitHub API client.</param>
+        /// <param name="repository">The repository for which to send the update message.</param>
+        /// <param name="pullRequestNumber">The pull request number.</param>
+        /// <param name="updatedIssue">The updated issue components.</param>
+        /// <returns>True if the update message was sent successfully; false otherwise.</returns>
+        private async Task<bool> SendIssueUpdateMessage(GitHubClient client, LocalGitRepository repository, int pullRequestNumber, IssueUpdate updatedIssue)
+        {
+            try
+            {
+                await client.Issue.Update(repository.Owner, repository.Name, pullRequestNumber, updatedIssue);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Error when trying to update issue in {repoName}: {error}", repository.GetDisplayName(), e);
+                return false;
             }
         }
 
