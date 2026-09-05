@@ -54,6 +54,8 @@
     height: 1px;
     background-color: #374151;
     margin: 20px 0;
+    width: 100%;
+    flex-shrink: 0;
 }
 
 .form-row {

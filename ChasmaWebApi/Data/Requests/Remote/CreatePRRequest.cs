@@ -1,4 +1,6 @@
-﻿namespace ChasmaWebApi.Data.Requests.Remote
+﻿using ChasmaWebApi.Data.Objects.Remote;
+
+namespace ChasmaWebApi.Data.Requests.Remote
 {
     /// <summary>
     /// Class representing a request to create a pull request.
@@ -35,5 +37,15 @@
         /// Gets or sets the repository name.
         /// </summary>
         public string RepositoryName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the reviewers of the pull request.
+        /// </summary>
+        public List<RemoteProjectMember>? Reviewers { get; set; } = [];
+
+        /// <summary>
+        /// Gets or sets the assignees of the pull request.
+        /// </summary>
+        public List<RemoteProjectMember>? Assignees { get; set; } = [];
     }
 }
