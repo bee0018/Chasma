@@ -249,6 +249,7 @@ namespace ChasmaWebApi.Controllers
                     Token = decryptedToken,
                     Reviewers = request.Reviewers,
                     Assignees = request.Assignees,
+                    Labels = request.Labels,
                 };
                 if (!applicationControlService.TryCreatePullRequest(pullRequest, out int pullRequestId, out string prUrl, out string timestamp, out string errorMessage))
                 {
@@ -683,6 +684,7 @@ namespace ChasmaWebApi.Controllers
                     RemoveSourceBranch = request.RemoveSourceBranch,
                     Squash = request.Squash,
                     AllowCollaboration = request.AllowCollaboration,
+                    Labels = request.Labels,
                 };
                 if (!applicationControlService.TryCreateMergeRequest(preparedRequest, out MergeRequestResult mergeResult, out string errorMessage))
                 {

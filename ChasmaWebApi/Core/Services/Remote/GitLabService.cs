@@ -399,6 +399,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                     RemoveSourceBranch = preparedMergeRequest.RemoveSourceBranch,
                     Squash = preparedMergeRequest.Squash,
                     AllowCollaboration = preparedMergeRequest.AllowCollaboration,
+                    Labels = preparedMergeRequest.Labels != null ? string.Join(",", preparedMergeRequest.Labels) : string.Empty,
                 };
                 MergeRequest mergeRequest = mergeRequestClient.Create(mergeRequestToCreate);
                 return mergeRequest;

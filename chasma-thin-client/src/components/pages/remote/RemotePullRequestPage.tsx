@@ -6,6 +6,7 @@ import {
     LocalGitRepository,
     RemoteHostPlatform,
     GetRemoteProjectMembersRequest,
+    GetLabelsRequest,
 } from "../../../API/ChasmaWebApiClient";
 import React, { useEffect, useState } from "react";
 import { branchClient, remoteClient } from "../../../managers/ApiClientManager";
@@ -81,6 +82,12 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
     /** Gets or sets the flag indicating whether to disable the send button. */
     const [disabledSendButton, setDisableSendButton] = useState(false);
 
+    /** Gets or sets the repository's issue labels. */
+    const [labels, setLabels] = useState<string[]>([]);
+
+    /** Gets or sets the selected project issue labels. */
+    const [selectedLabels, setSelectedLabels] = useState<{ rowId: string, label?: string }[]>([]);
+
     /** The navigation function. **/
     const navigate = useNavigate();
 
@@ -133,6 +140,13 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
         request.workingBranchName = workingBranchName;
         request.assignees = selectedAdditionalAssignees.map(i => i.member).filter((m): m is RemoteProjectMember => m !== undefined);
         request.reviewers = selectedReviewers.map(i => i.member).filter((m): m is RemoteProjectMember => m !== undefined);
+        request.labels = [];
+        selectedLabels.forEach(labelRow => {
+            if (!isBlankOrUndefined(labelRow.label)) {
+                request.labels!.push(labelRow.label!);
+            }
+        });
+
         try {
             const response = await remoteClient.createPullRequest(request);
             if (response.isErrorResponse) {
@@ -173,6 +187,13 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
         request.removeSourceBranch = isRemoveSourceBranch;
         request.squash = isSquashing;
         request.allowCollaboration = isAllowingCollaboration;
+        request.labels = [];
+        selectedLabels.forEach(labelRow => {
+            if (!isBlankOrUndefined(labelRow.label)) {
+                request.labels!.push(labelRow.label!);
+            }
+        });
+
         try {
             const response = await remoteClient.createGitLabMergeRequest(request);
             if (response.isErrorResponse) {
@@ -261,46 +282,72 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
     };
 
     /** Fetches the GitHub project members for the specified repository. **/
-        const fetchGitHubProjectMembers = async () => {
-            if (props.repository.hostPlatform !== RemoteHostPlatform.GitHub) {
+    const fetchGitHubProjectMembers = async () => {
+        if (props.repository.hostPlatform !== RemoteHostPlatform.GitHub) {
+            return;
+        }
+
+        try {
+            const request = new GetRemoteProjectMembersRequest();
+            request.repositoryId = props.repository.id;
+            const response = await remoteClient.getRemoteProjectMembers(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Error fetching project members!",
+                    message: response.errorMessage,
+                    isError: true,
+                });
                 return;
             }
-    
-            try {
-                const request = new GetRemoteProjectMembersRequest();
-                request.repositoryId = props.repository.id;
-                const response = await remoteClient.getRemoteProjectMembers(request);
-                if (response.isErrorResponse) {
-                    setNotification({
-                        title: "Error fetching project members!",
-                        message: response.errorMessage,
-                        isError: true,
-                    });
-                    return;
-                }
-    
-                if (response.projectMembers) {
-                    setProjectMembers(response.projectMembers);
-                }
+
+            if (response.projectMembers) {
+                setProjectMembers(response.projectMembers);
             }
-            catch (e) {
-                const errorNotification = await handleApiError(e, navigate, "Error fetching GitHub project members!", "Review the console logs for more information.");
-                setNotification(errorNotification);
-            }
-        };
-    
-        /** Fetches the project members from the prospective cloud provider. */
-        const fetchProjectMembers = async () => {
-            if (props.repository.hostPlatform === RemoteHostPlatform.GitLab) {
-                await fetchGitLabProjectMembers();
+        }
+        catch (e) {
+            const errorNotification = await handleApiError(e, navigate, "Error fetching GitHub project members!", "Review the console logs for more information.");
+            setNotification(errorNotification);
+        }
+    };
+
+    /** Fetches the project members from the prospective cloud provider. */
+    const fetchProjectMembers = async () => {
+        if (props.repository.hostPlatform === RemoteHostPlatform.GitLab) {
+            await fetchGitLabProjectMembers();
+            return;
+        }
+
+        if (props.repository.hostPlatform === RemoteHostPlatform.GitHub) {
+            await fetchGitHubProjectMembers();
+            return;
+        }
+    };
+
+    /** Fetches the project labels from the prospective cloud provider. */
+    const fetchLabels = async () => {
+        const request = new GetLabelsRequest();
+        request.repositoryId = props.repository.id;
+        try {
+            const response = await remoteClient.retrieveLabels(request);
+            if (response.isErrorResponse) {
+                setNotification({
+                    title: "Error fetching project labels!",
+                    message: response.errorMessage,
+                    isError: true,
+                });
+
                 return;
             }
-    
-            if (props.repository.hostPlatform === RemoteHostPlatform.GitHub) {
-                await fetchGitHubProjectMembers();
-                return;
+
+            if (response.labels) {
+                setLabels(response.labels);
             }
-        };
+        }
+        catch (e) {
+            const errorNotification = await handleApiError(e, navigate, "Error fetching GitHub project labels!", "Review the console logs for more information.");
+            setNotification(errorNotification);
+        }
+    };
 
     /** Resets the pull request template data. */
     const resetForm = () => {
@@ -310,6 +357,7 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
         setErrorMessage(undefined);
         setSelectedAdditionalAssignees([]);
         setSelectedReviewers([]);
+        setSelectedLabels([]);
     };
 
     /**
@@ -349,6 +397,18 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
     };
 
     /**
+     * Handles the label change when the user selects a new user for the specified row.
+     * @param rowId The row identifier.
+     * @param label The project label.
+     */
+    const handleSelectedLabelChange = (rowId: string, label: string) => {
+        setSelectedLabels(prev =>
+            prev.map(row =>
+                row.rowId === rowId ? { ...row, label: label } : row
+            ));
+    };
+
+    /**
      * Deletes the specified additional assignee with the row identifier.
      * @param rowId The row identifier.
      */
@@ -363,6 +423,15 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
             ...prev,
             { rowId: crypto.randomUUID(), undefined }
         ])
+    };
+
+    /** Adds the new row to add a contact for a GitLab issue. */
+    const addSelectedLabelRow = () => {
+        let label: string = "";
+        setSelectedLabels(prev => [
+            ...prev,
+            { rowId: crypto.randomUUID(), label }
+        ]);
     };
 
     /**
@@ -392,9 +461,19 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
         setSelectedReviewers(reviewers);
     }
 
+    /**
+     * Deletes the specified label with the row identifier.
+     * @param rowId The row identifier.
+     */
+    const deleteSelectedLabel = (rowId: string) => {
+        const projectLabels = selectedLabels.filter(i => i.rowId !== rowId);
+        setSelectedLabels(projectLabels);
+    }
+
     useEffect(() => {
         fetchProjectMembers().catch(console.error);
         fetchAssociatedBranches().catch(console.error)
+        fetchLabels().catch(console.error);
     }, [props.repository]);
 
     return (
@@ -554,6 +633,42 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
                                     className="remove-button modern-remove"
                                     title="Remove shell command"
                                     onClick={() => deleteGitLabReviewerRow(reviewerRow.rowId)}
+                                >
+                                    −
+                                </button>
+                            </div>
+                        </React.Fragment>
+                    ))}
+                    <hr className="separator" />
+                    <div className="repository-actions">
+                        <h3>Labels</h3>
+                        <button
+                            className="add-button modern-add"
+                            type="button"
+                            onClick={addSelectedLabelRow}>
+                            +
+                        </button>
+                    </div>
+                    {selectedLabels.map(projectIssueLabel => (
+                        <React.Fragment key={projectIssueLabel.rowId}>
+                            <div key={projectIssueLabel.rowId} className="command-row modern-input-row">
+                                <select
+                                    className="repo-dropdown input-field"
+                                    value={projectIssueLabel.label ?? ""}
+                                    onChange={(e) => handleSelectedLabelChange(projectIssueLabel.rowId, e.target.value)}>
+                                    <option value="">Select Label</option>
+                                    {labels.map(projectLabel => (
+                                        <option
+                                            key={projectLabel}
+                                            value={projectLabel}>
+                                            {projectLabel}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    className="remove-button modern-remove"
+                                    title="Remove shell command"
+                                    onClick={() => deleteSelectedLabel(projectIssueLabel.rowId)}
                                 >
                                     −
                                 </button>

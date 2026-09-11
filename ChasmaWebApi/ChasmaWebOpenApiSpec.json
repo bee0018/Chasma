@@ -2978,6 +2978,13 @@
             "items": {
               "$ref": "#/components/schemas/RemoteProjectMember"
             }
+          },
+          "labels": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -3294,6 +3301,13 @@
           "allowCollaboration": {
             "type": "boolean",
             "nullable": true
+          },
+          "labels": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
