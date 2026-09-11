@@ -127,7 +127,7 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
     }
 
     return (
-        <>
+        <div className="expandable-pane">
             <div className="content">
                 <div className="main-layout">
                     {/* Left side: Stash entries/patch entries */}
@@ -221,7 +221,7 @@ const ExecuteShellCommandsPage: React.FC<IExecuteShellCommandsPageProps> = (prop
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     )
 }
 
