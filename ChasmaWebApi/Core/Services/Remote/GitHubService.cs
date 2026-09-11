@@ -82,11 +82,7 @@ namespace ChasmaWebApi.Core.Services.Remote
             }
 
             Client = RemoteHelper.GetGitHubClient(repoName, token);
-            NewPullRequest newPullRequest = new(title, headBranch, baseBranch)
-            {
-                Body = body
-            };
-
+            NewPullRequest newPullRequest = new(title, headBranch, baseBranch) { Body = body };
             Task<PullRequest?> createPrTask = SendPrRequest(Client, owner, repoName, newPullRequest);
             PullRequest? createdPullRequest = createPrTask.Result;
             if (createdPullRequest == null)
@@ -129,6 +125,25 @@ namespace ChasmaWebApi.Core.Services.Remote
                 else
                 {
                     Logger.LogError("Failed to assign assignees to PR {prId} in {repoName}.", createdPullRequest.Number, repository.GetDisplayName());
+                }
+            }
+
+            // Send update message to GitHub API to assign label,s if any are specified.
+            List<string> labels = pullRequest.Labels?.ToList() ?? [];
+            if (labels.Count > 0)
+            {
+                Logger.LogInformation("Attempting to assign {count} labels to PR {prId} in {repoName}.", labels.Count, createdPullRequest.Number, repository.GetDisplayName());
+                IssueUpdate updatedIssue = new();
+                labels.ForEach(i => updatedIssue.AddLabel(i));
+                Task<bool> updateTask = SendIssueUpdateMessage(Client, repository, createdPullRequest.Number, updatedIssue);
+                bool labelsAssigned = updateTask.Result;
+                if (labelsAssigned)
+                {
+                    Logger.LogInformation("Successfully assigned {count} labels to PR {prId} in {repoName}.", labels.Count, createdPullRequest.Number, repository.GetDisplayName());
+                }
+                else
+                {
+                    Logger.LogError("Failed to assign labels to PR {prId} in {repoName}.", createdPullRequest.Number, repository.GetDisplayName());
                 }
             }
 

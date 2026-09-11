@@ -63,5 +63,10 @@ namespace ChasmaWebApi.Data.Requests.Remote
         /// Gets or sets a value indicating whether to allow collaboration.
         /// </summary>
         public bool? AllowCollaboration { get; set; }
+
+        /// <summary>
+        /// Gets or sets the labels to be applied to the issue.
+        /// </summary>
+        public List<string>? Labels { get; set; } = [];
     }
 }

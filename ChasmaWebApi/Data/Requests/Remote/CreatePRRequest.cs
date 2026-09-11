@@ -47,5 +47,10 @@ namespace ChasmaWebApi.Data.Requests.Remote
         /// Gets or sets the assignees of the pull request.
         /// </summary>
         public List<RemoteProjectMember>? Assignees { get; set; } = [];
+
+        /// <summary>
+        /// Gets or sets the labels to be applied to the issue.
+        /// </summary>
+        public List<string>? Labels { get; set; } = [];
     }
 }
