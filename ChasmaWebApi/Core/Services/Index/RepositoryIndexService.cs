@@ -408,11 +408,11 @@ namespace ChasmaWebApi.Core.Services.Index
             
             try
             {
-                CloneOptions cloneOptions = new()
+                FetchOptions fetchOptions = new()
                 {
-                    RecurseSubmodules = blueprint.RecurseSubmodules,
                     CredentialsProvider = (_url, _user, _cred) => GetUserPasswordCredentials(apiAccessToken, remotePlatformUsername),
                 };
+                CloneOptions cloneOptions = new(fetchOptions) { RecurseSubmodules = blueprint.RecurseSubmodules };
                 Repository.Clone(sourceUrl, workingDirectory, cloneOptions);
                 RepositoryAdditionResult additionResult = RegisterLocalRepository(workingDirectory, userId, out NewRepository clonedRepo);
                 additionResults.Add(additionResult);
