@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+# Remove the global symlink
+if [ -L "/usr/bin/emryce" ]; then
+    rm -f /usr/bin/emryce
+fi
+
+# Refresh desktop database to clean up removed desktop entries
+if [ -x "$(command -v update-desktop-database)" ]; then
+    update-desktop-database -q || true
+fi
+
+# Remove application data directory and its contents
+if [ -d "/var/lib/Emryce" ]; then
+    rm -rf /var/lib/Emryce
+fi
+
+exit 0

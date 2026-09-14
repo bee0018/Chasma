@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.emryce.app</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Proprietary</project_license>
+  <name>Emryce</name>
+  <summary>Developer productivity and Git workflow automation platform</summary>
+  <description>
+    <p>
+      Emryce provides local API orchestration, seamless Git repository workflow automation, 
+      and high-efficiency tools for modern software development environments.
+    </p>
+  </description>
+  <launchable type="desktop-id">emryce.desktop</launchable>
+  <provides>
+    <binary>emryce</binary>
+  </provides>
+</component>

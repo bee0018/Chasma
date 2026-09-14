@@ -1,7 +1,12 @@
 Package: emryce
-Version: 1.0
+Version: 1.0.0
 Section: utils
 Priority: optional
 Architecture: amd64
-Maintainer: Bryce Ellis
+Depends: libc6 (>= 2.31), libicu70 | libicu72 | libicu74, zlib1g
+Maintainer: Bryce Ellis <support@emryce.com>
+Homepage: https://emryce.com
 Description: Web application enhancing developer productivity and Git workflow automation.
+ Emryce is a developer productivity tool designed to automate Git 
+ repository workflows, manage local API instances, and streamline 
+ software development pipelines.
