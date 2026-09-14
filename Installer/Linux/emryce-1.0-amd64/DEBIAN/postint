@@ -1,13 +1,15 @@
 #!/bin/bash
 set -e
-
 if [ ! -d "/var/lib/Emryce" ]; then
     mkdir -p /var/lib/Emryce
 fi
 
 chmod 777 /var/lib/Emryce
 chmod +x /opt/emryce/ChasmaWebApi
-chmod 777 postrm
 ln -sf /opt/emryce/ChasmaWebApi /usr/bin/emryce
-update-desktop-database -q
+if [ -x "$(command -v update-desktop-database)" ]; then
+    update-desktop-database -q
+fi
+
 exit 0
+
