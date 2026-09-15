@@ -8,6 +8,7 @@ import { statusClient } from '../../managers/ApiClientManager';
 import { handleApiError } from '../../managers/TransactionHandlerManager';
 import { useNavigate } from 'react-router-dom';
 import SmartSyncConfirmationModal from '../modals/SmartSyncConfirmationModal';
+import Checkbox from '../Checkbox';
 
 /** The repository synchronization state. */
 interface RepoSyncState {
@@ -60,6 +61,9 @@ const RepositorySynchronizationTab: React.FC = () => {
 
     /** Gets or sets a value indicating whether the user is configuring the checkout mode. */
     const [isConfiguringCheckoutMode, setIsConfiguringCheckoutMode] = useState<boolean>(false);
+
+    /** Gets or sets a value indicating whether the user is selecting all repositories to execute commands. **/
+    const [isSelectingAllRepositories, setIsSelectingAllRepositories] = useState<boolean>(true);
 
     /** The number signifying the percentage of completeness of synchronization. */
     const progressPercent = Math.round((repoSyncCounter / repositories.length) * 100);
@@ -119,7 +123,7 @@ const RepositorySynchronizationTab: React.FC = () => {
                 updateRepoStep(repo.id, 'pushStatus', 'failed', pushResponse.errorMessage);
                 continue;
             }
-            
+
             updateRepoStep(repo.id, 'pushStatus', 'success', pushResponse.syncStepDescription);
             completedCount++;
             setRepoSyncCounter(completedCount);
@@ -133,7 +137,7 @@ const RepositorySynchronizationTab: React.FC = () => {
      * @param repo The local git repository to run pre-flight checks on.
      * @returns The synchronization response to running pre-flight checks.
      */
-    async function performPreFlightChecks(repo: LocalGitRepository, ): Promise<SynchronizeRepositoryResponse> {
+    async function performPreFlightChecks(repo: LocalGitRepository,): Promise<SynchronizeRepositoryResponse> {
         const request = new SynchronizeRepositoryRequest();
         request.userId = user?.userId;
         request.repositoryId = repo.id;
@@ -248,6 +252,16 @@ const RepositorySynchronizationTab: React.FC = () => {
         await executeSmartSync(checkoutMode);
     };
 
+    /**
+         * Adds a new simulation entry to edit.
+         */
+    const addSimulationEntryRow = () => {
+        // setSimulationEntries(prev => [
+        //     ...prev,
+        //     { id: crypto.randomUUID(), simCase: GitSimulationCase.Select }
+        // ])
+    };
+
     return (
         <div className='sync-workspace-background'>
             <button
@@ -264,6 +278,21 @@ const RepositorySynchronizationTab: React.FC = () => {
                 finishedMessage='Synchronization complete!'
                 displayNonErrorProgressBar={true} />
             <hr className='status-separator' />
+            <section className="command-mode-section">
+                <div className="repository-actions">
+                    <Checkbox
+                        label={"Select all repositories"}
+                        checked={isSelectingAllRepositories}
+                        onBoxChecked={setIsSelectingAllRepositories}
+                    />
+                    {!isSelectingAllRepositories && (
+                        <button className="add-repo-button"
+                            onClick={addSimulationEntryRow}>
+                            + Add Repository
+                        </button>
+                    )}
+                </div>
+            </section>
             {syncStates.map((syncState, index) => (
                 <div key={syncState.repository.id}>
                     <h3 className='repo-sync-state-header'>📦 {syncState.repository.displayName ? syncState.repository.displayName : syncState.repository.name}</h3>
