@@ -9,6 +9,7 @@ import { handleApiError } from '../../managers/TransactionHandlerManager';
 import { useNavigate } from 'react-router-dom';
 import SmartSyncConfirmationModal from '../modals/SmartSyncConfirmationModal';
 import Checkbox from '../Checkbox';
+import { getRepositoryDisplayName } from '../../stringHelperUtil';
 
 /** The repository synchronization state. */
 interface RepoSyncState {
@@ -40,21 +41,11 @@ const RepositorySynchronizationTab: React.FC = () => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
+    /** Gets sets the available repositories to select to sync. */
+    const [availableRepositories, setAvailableRepositories] = useState<LocalGitRepository[]>(repositories.map(i => i));
+
     /** Gets or sets the repository synchronization steps. */
-    const [syncStates, setSyncStates] = useState<RepoSyncState[]>(() => {
-        return repositories.map(i => {
-            const repoSyncState: RepoSyncState = {
-                repository: i,
-                preflightStatus: 'idle',
-                preflightDetails: '-',
-                pullStatus: 'idle',
-                pullDetails: '-',
-                pushStatus: 'idle',
-                pushDetails: '-'
-            };
-            return repoSyncState;
-        });
-    });
+    const [syncStates, setSyncStates] = useState<RepoSyncState[]>([]);
 
     /** Gets or sets a value indicating whether the user is syncing repositories. */
     const [isSyncing, setIsSyncing] = useState(false);
@@ -63,17 +54,20 @@ const RepositorySynchronizationTab: React.FC = () => {
     const [isConfiguringCheckoutMode, setIsConfiguringCheckoutMode] = useState<boolean>(false);
 
     /** Gets or sets a value indicating whether the user is selecting all repositories to execute commands. **/
-    const [isSelectingAllRepositories, setIsSelectingAllRepositories] = useState<boolean>(true);
+    const [isSelectingAllRepositories, setIsSelectingAllRepositories] = useState<boolean>(false);
 
     /** The number signifying the percentage of completeness of synchronization. */
-    const progressPercent = Math.round((repoSyncCounter / repositories.length) * 100);
+    const progressPercent = syncStates.length > 0
+        ? Math.round((repoSyncCounter / syncStates.length) * 100)
+        : 0;
 
     /** Reverts all sync states back to its initial state. */
     const resetSyncSteps = () => {
+        setRepoSyncCounter(0);
         setSyncStates(() => {
-            return repositories.map(i => {
+            return syncStates.map(i => {
                 const repoSyncState: RepoSyncState = {
-                    repository: i,
+                    repository: i.repository,
                     preflightStatus: 'idle',
                     preflightDetails: '-',
                     pullStatus: 'idle',
@@ -92,10 +86,10 @@ const RepositorySynchronizationTab: React.FC = () => {
      */
     const executeSmartSync = async (checkoutMode: BranchCheckoutMode) => {
         setIsSyncing(true);
-        setRepoSyncCounter(0);
         resetSyncSteps();
         let completedCount = 0;
-        for (const repo of repositories) {
+        for (const repoTarget of syncStates) {
+            const repo = repoTarget.repository;
             // --- PHASE 1: PREFLIGHT ---
             updateRepoStep(repo.id, 'preflightStatus', 'running', 'Running pre-flight checks...');
             const preflightResponse = await performPreFlightChecks(repo);
@@ -253,14 +247,111 @@ const RepositorySynchronizationTab: React.FC = () => {
     };
 
     /**
-         * Adds a new simulation entry to edit.
-         */
-    const addSimulationEntryRow = () => {
-        // setSimulationEntries(prev => [
-        //     ...prev,
-        //     { id: crypto.randomUUID(), simCase: GitSimulationCase.Select }
-        // ])
+     * Adds a sync state entry to edit.
+     * @param repository The repository to add.
+     */
+    const addRepoSyncRow = (repository: LocalGitRepository) => {
+        if (isSyncing) {
+            return;
+        }
+
+        const repoSyncState: RepoSyncState = {
+            repository: repository,
+            preflightStatus: 'idle',
+            preflightDetails: '-',
+            pullStatus: 'idle',
+            pullDetails: '-',
+            pushStatus: 'idle',
+            pushDetails: '-'
+        };
+
+        const clonedList = [...syncStates];
+        clonedList.push(repoSyncState);
+        const sortedAvailableSyncStates = clonedList.sort((a, b) => {
+            const firstDisplayName = getRepositoryDisplayName(a.repository);
+            const secondDisplayName = getRepositoryDisplayName(b.repository);
+            return firstDisplayName.localeCompare(secondDisplayName);
+        });
+
+        setSyncStates(sortedAvailableSyncStates);
+        const filteredRepos = availableRepositories.filter(i => i.id !== repository.id);
+        setAvailableRepositories(filteredRepos);
+        if (syncStates.length === repositories.length) {
+            setIsSelectingAllRepositories(true);
+        }
     };
+
+    /**
+     * Handles the event when the user wants to remove the repository from the target list.
+     * @param syncTarget The target from target list.
+     */
+    const handleRepositoryDeleteRow = (syncTarget: RepoSyncState) => {
+        if (isSyncing) {
+            return;
+        }
+
+        const filteredTargets = syncStates.filter(i => i.repository.id !== syncTarget.repository.id);
+        setSyncStates(filteredTargets);
+        if (isSelectingAllRepositories) {
+            setIsSelectingAllRepositories(false);
+        }
+
+        const clonedList = [...availableRepositories];
+        clonedList.push(syncTarget.repository);
+        const sortedTargets = clonedList.sort((a, b) => {
+            const firstDisplayName = getRepositoryDisplayName(a);
+            const secondDisplayName = getRepositoryDisplayName(b);
+            return firstDisplayName.localeCompare(secondDisplayName);
+        });
+
+        setAvailableRepositories(sortedTargets);
+    }
+
+    /**
+     * Handles the event when the user wants to clear all the repositories.
+     */
+    const handleClearAllTargetRows = () => {
+        if (isSyncing) {
+            return;
+        }
+
+        setAvailableRepositories(repositories);
+        setRepoSyncCounter(0);
+        setSyncStates([]);
+        setIsSelectingAllRepositories(false);
+    };
+
+    /**
+     * Handles the event when the user checks the "Select all repositories" option.
+     * @param isChecked Flag indicating whether the option was checked.
+     */
+    const handleSelectAllRepositories = (isChecked: boolean) => {
+        if (isSyncing) {
+            return;
+        }
+
+        setIsSelectingAllRepositories(isChecked);
+        if (isChecked) {
+            setAvailableRepositories([]);
+            const currentRepositoryIds = syncStates.map(i => i.repository.id!);
+            const targetRepositoryIds = new Set(currentRepositoryIds);
+            repositories.forEach(repo => {
+                if (!targetRepositoryIds.has(repo.id!)) {
+                    const repoSyncState: RepoSyncState = {
+                        repository: repo,
+                        preflightStatus: 'idle',
+                        preflightDetails: '-',
+                        pullStatus: 'idle',
+                        pullDetails: '-',
+                        pushStatus: 'idle',
+                        pushDetails: '-'
+                    };
+
+                    setSyncStates(prev => [...prev, repoSyncState]);
+                }
+            });
+        }
+    }
 
     return (
         <div className='sync-workspace-background'>
@@ -274,60 +365,106 @@ const RepositorySynchronizationTab: React.FC = () => {
             <br />
             <ProgressBar
                 progressPercent={progressPercent}
-                unfinishedMessage={`${repoSyncCounter} out of ${repositories.length} have been synchronized`}
+                unfinishedMessage={`${repoSyncCounter} out of ${syncStates.length} have been synchronized`}
                 finishedMessage='Synchronization complete!'
                 displayNonErrorProgressBar={true} />
-            <hr className='status-separator' />
-            <section className="command-mode-section">
-                <div className="repository-actions">
-                    <Checkbox
-                        label={"Select all repositories"}
-                        checked={isSelectingAllRepositories}
-                        onBoxChecked={setIsSelectingAllRepositories}
-                    />
-                    {!isSelectingAllRepositories && (
-                        <button className="add-repo-button"
-                            onClick={addSimulationEntryRow}>
-                            + Add Repository
+            {syncStates.length !== repositories.length &&
+                <div className='panel-card'>
+                    <h2>Available Repositories</h2>
+                    <h2 className="page-description">Select multiple repositories to prune local branches, pull, and push changes 🔄</h2>
+                    <div className="batch-header">
+                        <button
+                            className="remove-button modern-remove"
+                            title="Remove all repository targets from the list. "
+                            onClick={handleClearAllTargetRows}
+                        >
+                            Reset
                         </button>
-                    )}
-                </div>
-            </section>
-            {syncStates.map((syncState, index) => (
-                <div key={syncState.repository.id}>
-                    <h3 className='repo-sync-state-header'>📦 {syncState.repository.displayName ? syncState.repository.displayName : syncState.repository.name}</h3>
-                    <table className='sync-state-table'>
+                    </div>
+                    <br />
+                    <section className="command-mode-section">
+                        <div className="repository-actions">
+                            <Checkbox
+                                label={"Select all repositories"}
+                                checked={isSelectingAllRepositories}
+                                onBoxChecked={handleSelectAllRepositories}
+                            />
+                        </div>
+                    </section>
+                    <table className="status-table">
                         <thead>
-                            <tr>
-                                <th>Operation Step</th>
-                                <th>Execution State</th>
-                                <th>Execution Details / Step Output</th>
-                            </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td className='sync-state-table-operation-step-title'>Preflight Checks</td>
-                                <td className='sync-state-table-operation-step-status'>{getStatusBadge(syncState.preflightStatus)}</td>
-                                <td className='sync-state-table-operation-step-details'>{syncState.preflightDetails}</td>
-                            </tr>
-                            <tr>
-                                <td className='sync-state-table-operation-step-title'>Pull Changes</td>
-                                <td className='sync-state-table-operation-step-status'>{getStatusBadge(syncState.pullStatus)}</td>
-                                <td className='sync-state-table-operation-step-details'>{syncState.pullDetails}</td>
-                            </tr>
-                            <tr>
-                                <td className='sync-state-table-operation-step-title'>Push Changes</td>
-                                <td className='sync-state-table-operation-step-status'>{getStatusBadge(syncState.pushStatus)}</td>
-                                <td className='sync-state-table-operation-step-details'>{syncState.pushDetails}</td>
-                            </tr>
+                            {availableRepositories.map((repo, index) => (
+                                <tr key={index}>
+                                    <td onClick={() => addRepoSyncRow(repo)}>
+                                        {getRepositoryDisplayName(repo)}
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
-
-                    {index < syncStates.length - 1 && (
-                        <hr className='status-separator' />
-                    )}
                 </div>
-            ))}
+            }
+            <div className='panel-card'>
+                <h2>Target Repositories</h2>
+                <h2 className="page-description">These are your chosen sync targets. Selected repositories will undergo branch pruning, pulling, and pushing.</h2>
+                <div className="batch-header">
+                    <button
+                        className="remove-button modern-remove"
+                        title="Remove all repository targets from the list. "
+                        onClick={handleClearAllTargetRows}
+                    >
+                        Clear
+                    </button>
+                </div>
+                <hr className='status-separator' />
+                {syncStates.map((syncState, index) => (
+                    <div key={syncState.repository.id}>
+                        <div className="batch-header">
+                            <button
+                                className="remove-button modern-remove"
+                                title="Remove Repository"
+                                onClick={() => handleRepositoryDeleteRow(syncState)}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <h3 className='repo-sync-state-header'>📦 {getRepositoryDisplayName(syncState.repository)}</h3>
+                        <table className='sync-state-table'>
+                            <thead>
+                                <tr>
+                                    <th>Operation Step</th>
+                                    <th>Execution State</th>
+                                    <th>Execution Details / Step Output</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className='sync-state-table-operation-step-title'>Preflight Checks</td>
+                                    <td className='sync-state-table-operation-step-status'>{getStatusBadge(syncState.preflightStatus)}</td>
+                                    <td className='sync-state-table-operation-step-details'>{syncState.preflightDetails}</td>
+                                </tr>
+                                <tr>
+                                    <td className='sync-state-table-operation-step-title'>Pull Changes</td>
+                                    <td className='sync-state-table-operation-step-status'>{getStatusBadge(syncState.pullStatus)}</td>
+                                    <td className='sync-state-table-operation-step-details'>{syncState.pullDetails}</td>
+                                </tr>
+                                <tr>
+                                    <td className='sync-state-table-operation-step-title'>Push Changes</td>
+                                    <td className='sync-state-table-operation-step-status'>{getStatusBadge(syncState.pushStatus)}</td>
+                                    <td className='sync-state-table-operation-step-details'>{syncState.pushDetails}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        {index < syncStates.length - 1 && (
+                            <hr className='status-separator' />
+                        )}
+                    </div>
+                ))}
+            </div>
+
             {isConfiguringCheckoutMode &&
                 <SmartSyncConfirmationModal
                     onClose={() => setIsConfiguringCheckoutMode(false)}

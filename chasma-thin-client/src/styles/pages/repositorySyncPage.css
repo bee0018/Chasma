@@ -19,6 +19,7 @@
 
 .sync-state-table {
     width: 100%;
+    table-layout: fixed; 
     border-collapse: collapse;
     background: #1e1e1e;
     border-radius: 8px;
@@ -39,17 +40,22 @@
     border-bottom: 1px solid #2a2a2a;
 }
 
-.sync-state-table-operation-step-title {
+.sync-state-table th,
+.sync-state-table td,
+.sync-state-table-operation-step-title,
+.sync-state-table-operation-step-status,
+.sync-state-table-operation-step-details {
     padding: 12px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+}
+
+.sync-state-table-operation-step-title {
     font-weight: 500;
 }
 
-.sync-state-table-operation-step-status {
-    padding: 12px;
-}
-
 .sync-state-table-operation-step-details {
-    padding: 12px;
     color: #ccc;
 }
 
