@@ -13,6 +13,8 @@
 	<gitlabApiToken/>
 	<gitLabSshPrivateKeyPath/>
 	<selfHostedGitLabUrl/>
+	<selfHostedGitLabUsername />
+	<selfHostedGitLabApiToken />
 	<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 	<branchPruningDayThreshold>45</branchPruningDayThreshold>
 </configurations>

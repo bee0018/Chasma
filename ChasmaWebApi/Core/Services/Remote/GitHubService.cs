@@ -442,7 +442,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             try
             {
-                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                string token = RemoteHelper.GetApiToken(repository);
                 string decryptedToken = EncryptionService.DecryptString(token);
                 Client = RemoteHelper.GetGitHubClient(repository.Name, decryptedToken);
                 return await Client.Issue.Labels.GetAllForRepository(repository.Owner, repository.Name);
@@ -463,7 +463,7 @@ namespace ChasmaWebApi.Core.Services.Remote
         {
             try
             {
-                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                string token = RemoteHelper.GetApiToken(repository);
                 string decryptedToken = EncryptionService.DecryptString(token);
                 Client = RemoteHelper.GetGitHubClient(repository.Name, decryptedToken);
                 return await Client.Repository.Collaborator.GetAll(repository.Owner, repository.Name);

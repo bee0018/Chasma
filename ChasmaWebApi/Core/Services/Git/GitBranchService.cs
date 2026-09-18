@@ -183,7 +183,7 @@ namespace ChasmaWebApi.Core.Services.Git
             {
                 int numberOfPrunedBranches = 0;
                 using Repository repo = new(workingDirectory);
-                string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                string token = RemoteHelper.GetApiToken(repository);
                 string decryptedToken = EncryptionService.DecryptString(token);
                 RemoteHelper.FetchLatestChanges(workingDirectory, repo.Head, repository, Logger, decryptedToken);
                 ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();

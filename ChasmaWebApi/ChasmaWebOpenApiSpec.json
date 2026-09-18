@@ -2123,6 +2123,13 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "selfHostedGitLabUsername": {
+            "type": "string",
+            "nullable": true
+          },
+          "selfHostedGitLabApiTokenConfigured": {
+            "type": "boolean"
           }
         }
       },
@@ -2272,6 +2279,14 @@
                 "nullable": true
               },
               "selfHostedGitLabUrl": {
+                "type": "string",
+                "nullable": true
+              },
+              "selfHostedGitLabUsername": {
+                "type": "string",
+                "nullable": true
+              },
+              "selfHostedGitLabApiToken": {
                 "type": "string",
                 "nullable": true
               },

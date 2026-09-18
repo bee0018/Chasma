@@ -1,5 +1,4 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
-using ChasmaWebApi.Core.Services.Infrastructure;
 using ChasmaWebApi.Data.Objects.Application;
 using ChasmaWebApi.Data.Objects.Git;
 using LibGit2Sharp;
@@ -34,16 +33,17 @@ namespace ChasmaWebApi.Util
         /// Gets the GitLab API client.
         /// </summary>
         /// <param name="token">The GitLab API access token.</param>
+        /// <param name="isPublicHosted">Indicates whether the GitLab instance is public hosted.</param>
         /// <param name="selfHostedUrl">If provided, the self hosted URL of the GitLab instance.</param>
         /// <returns>The GitLab API client.</returns>
-        public static GitLabClient GetGitLabClient(string token, string? selfHostedUrl = null)
+        public static GitLabClient GetGitLabClient(string token, bool isPublicHosted, string? selfHostedUrl = null)
         {
-            if (!string.IsNullOrEmpty(selfHostedUrl))
+            if (isPublicHosted)
             {
-                return new GitLabClient(selfHostedUrl, token);
+                return new GitLabClient("https://gitlab.com", token);
             }
 
-            return new GitLabClient("https://gitlab.com", token);
+            return new GitLabClient(selfHostedUrl, token);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace ChasmaWebApi.Util
             RemoteHostPlatform cloudPlatform = normalizedRemoteUrl switch
             {
                 string url when url.Contains("github.com") => RemoteHostPlatform.GitHub,
-                string url when url.Contains("gitlab.com") => RemoteHostPlatform.GitLab,
+                string url when IsGitLabUrl(url) => RemoteHostPlatform.GitLab,
                 string url when url.Contains("bitbucket.org") => RemoteHostPlatform.Bitbucket,
                 string url when url.Contains("azure.com") || url.Contains("dev.azure.com") || url.Contains("visualstudio.com") => RemoteHostPlatform.AzureDevOps,
                 string url when url.Contains("amazonaws.com") => RemoteHostPlatform.AWSCodeCommit,
@@ -86,15 +86,15 @@ namespace ChasmaWebApi.Util
         /// <summary>
         /// Gets the remote host platform API token based on the repository type.
         /// </summary>
-        /// <param name="remoteHostPlatform">The repository's remote host platform.</param>
+        /// <param name="repository">The local Git repository.</param>
         /// <returns>The repository remote host platform API token.</returns>
-        public static string GetApiToken(RemoteHostPlatform remoteHostPlatform)
+        public static string GetApiToken(LocalGitRepository repository)
         {
             ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();
-            return remoteHostPlatform switch
+            return repository.HostPlatform switch
             {
                 RemoteHostPlatform.GitHub => apiConfig.GitHubApiToken,
-                RemoteHostPlatform.GitLab => apiConfig.GitLabApiToken,
+                RemoteHostPlatform.GitLab => IsGitLabInstancePublicHosted(repository.Url) ? apiConfig.GitLabApiToken : apiConfig.SelfHostedGitLabApiToken,
                 _ => string.Empty,
             };
         }
@@ -111,7 +111,7 @@ namespace ChasmaWebApi.Util
             return remoteHostPlatform switch
             {
                 RemoteHostPlatform.GitHub => apiConfig.GitHubUsername,
-                RemoteHostPlatform.GitLab => apiConfig.GitLabUsername,
+                RemoteHostPlatform.GitLab => IsGitLabInstancePublicHosted(repository.Url) ? apiConfig.GitLabUsername : apiConfig.SelfHostedGitLabUsername,
                 _ => string.Empty,
             };
         }
@@ -169,7 +169,7 @@ namespace ChasmaWebApi.Util
         /// <returns>The fetch options.</returns>
         public static FetchOptions GetFetchOptions(LocalGitRepository repository, IEncryptionService encryptionService)
         {
-            string token = GetApiToken(repository.HostPlatform);
+            string token = GetApiToken(repository);
             string decryptedToken = encryptionService.DecryptString(token);
             string username = GetRemoteHostUsername(repository);
             return new FetchOptions
@@ -191,7 +191,7 @@ namespace ChasmaWebApi.Util
         /// <returns>The push options.</returns>
         public static PushOptions GetPushOptions(LocalGitRepository repository, IEncryptionService encryptionService)
         {
-            string token = GetApiToken(repository.HostPlatform);
+            string token = GetApiToken(repository);
             string decryptedToken = encryptionService.DecryptString(token);
             string username = GetRemoteHostUsername(repository);
             return new PushOptions
@@ -241,6 +241,31 @@ namespace ChasmaWebApi.Util
             }
 
             return repositoryOwner;
+        }
+
+        /// <summary>
+        /// Determines whether the specified GitLab URL is a public hosted instance (gitlab.com).
+        /// </summary>
+        /// <param name="url">The URL.</param>
+        /// <returns>True if the URL is a public hosted GitLab instance; otherwise, false.</returns>
+        public static bool IsGitLabInstancePublicHosted(string url)
+        {
+            return url.StartsWith("https://gitlab.com/")
+                || url.StartsWith("http://gitlab.com/")
+                || url.StartsWith("git@gitlab.com:");
+        }
+
+        /// <summary>
+        /// Determines whether the specified URL is a GitLab URL.
+        /// </summary>
+        /// <param name="url">The URL.</param>
+        /// <returns>True if the URL is a GitLab URL; otherwise, false.</returns>
+        private static bool IsGitLabUrl(string url)
+        {
+            return url.StartsWith("http://gitlab")
+                || url.StartsWith("https://gitlab")
+                || url.StartsWith("git@gitlab")
+                || url.Contains("gitlab.com");
         }
     }
 }

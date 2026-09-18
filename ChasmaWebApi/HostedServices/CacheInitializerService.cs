@@ -437,7 +437,7 @@ namespace ChasmaWebApi.HostedServices
         private async Task<List<RemotePullRequest>?> GetGitLabMergeRequestAsync(LocalGitRepository repository)
         {
             ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            if (string.IsNullOrEmpty(apiConfigurations.GitLabApiToken))
+            if (string.IsNullOrEmpty(apiConfigurations.GitLabApiToken) && string.IsNullOrEmpty(apiConfigurations.SelfHostedGitLabApiToken))
             {
                 logger.LogWarning("GitLab API token is not provided. Cannot fetch merge requests for {repoName}.", repository.GetDisplayName());
                 return null;
@@ -445,8 +445,11 @@ namespace ChasmaWebApi.HostedServices
 
             try
             {
-                string decryptedToken = encryptionService.DecryptString(apiConfigurations.GitLabApiToken);
-                GitLabClient = RemoteHelper.GetGitLabClient(decryptedToken, apiConfigurations.SelfHostedGitLabUrl);
+                bool isPublicHosted = RemoteHelper.IsGitLabInstancePublicHosted(repository.Url);
+                string decryptedToken = isPublicHosted
+                    ? encryptionService.DecryptString(apiConfigurations.GitLabApiToken)
+                    : encryptionService.DecryptString(apiConfigurations.SelfHostedGitLabApiToken);
+                GitLabClient = RemoteHelper.GetGitLabClient(decryptedToken, isPublicHosted, apiConfigurations.SelfHostedGitLabUrl);
                 string owner = repository.Owner;
                 string repoName = repository.Name;
                 Project project = await GitLabClient.Projects.GetAsync($"{owner}/{repoName}");
@@ -530,7 +533,7 @@ namespace ChasmaWebApi.HostedServices
         private async Task RefreshMergeRequestsAsync(CancellationToken cancellationToken)
         {
             ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            if (string.IsNullOrEmpty(apiConfigurations.GitLabApiToken))
+            if (string.IsNullOrEmpty(apiConfigurations.GitLabApiToken) && string.IsNullOrEmpty(apiConfigurations.SelfHostedGitLabApiToken))
             {
                 return;
             }
@@ -559,7 +562,7 @@ namespace ChasmaWebApi.HostedServices
             string repoName = existingPullRequest.RepositoryName;
             long mergeRequestId = existingPullRequest.Number;
             ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
-            if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+            if (string.IsNullOrEmpty(configurations.GitLabApiToken) && string.IsNullOrEmpty(configurations.SelfHostedGitLabApiToken))
             {
                 logger.LogWarning("GitLab API token is not provided. Cannot fetch merge requests for {repoName}.", repoName);
                 return null;
@@ -567,8 +570,17 @@ namespace ChasmaWebApi.HostedServices
             
             try
             {
-                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
-                GitLabClient = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
+                if (!cacheManager.Repositories.TryGetValue(existingPullRequest.RepositoryId, out LocalGitRepository? repository))
+                {
+                    logger.LogError("Could not find repository for merge request. Cannot fetch merge request.");
+                    return null;
+                }
+
+                bool isPublicHosted = RemoteHelper.IsGitLabInstancePublicHosted(repository.Url);
+                string decryptedToken = isPublicHosted
+                    ? encryptionService.DecryptString(configurations.GitLabApiToken)
+                    : encryptionService.DecryptString(configurations.SelfHostedGitLabApiToken);
+                GitLabClient = RemoteHelper.GetGitLabClient(decryptedToken, isPublicHosted, configurations.SelfHostedGitLabUrl);
                 Project project = await GitLabClient.Projects.GetAsync($"{owner}/{repoName}", cancellationToken: cancellationToken);
                 if (project == null)
                 {
@@ -621,7 +633,7 @@ namespace ChasmaWebApi.HostedServices
         private async Task FetchOpenGitLabMergeRequestsAsync()
         {
             ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            if (string.IsNullOrEmpty(apiConfigurations.GitLabApiToken))
+            if (string.IsNullOrEmpty(apiConfigurations.GitLabApiToken) && string.IsNullOrEmpty(apiConfigurations.SelfHostedGitLabApiToken))
             {
                 logger.LogWarning("GitLab API token is not provided. Skipping GitLab network cache initialization.");
                 return;

@@ -85,6 +85,15 @@ export const AppSetupPage: React.FC = () => {
     /** Gets or sets a value indicating whether the request is ready to be sent. */
     const [disableSendButton, setDisableSendButton] = useState(false);
 
+    /** Gets or sets the user's self-hosted GitLab username. */
+    const [selfHostedGitLabUsername, setSelfHostedGitLabUsername] = useState<string | undefined>(undefined);
+
+    /** Gets or sets the self-hosted GitLab API access token. */
+    const [selfHostedGitlabApiToken, setSelfHostedGitLabApiToken] = useState<string | undefined>(undefined);
+
+    /** Gets or sets a value indicating whether the self-hosted GitLab API token is configured. */
+    const [selfHostedGitLabApiTokenIsConfigured, setSelfHostedGitLabApiTokenIsConfigured] = useState<boolean | undefined>(undefined);
+
     /** Gets the safe version of the number; undefined otherwise. */
     const safeNumber = (value?: string) => value && !isNaN(Number(value)) ? Number(value) : undefined;
 
@@ -227,6 +236,8 @@ export const AppSetupPage: React.FC = () => {
         config.gitLabUsername = gitLabUsername;
         config.globalWorkspacePath = globalWorkspacePath;
         config.branchPruningDayThreshold = safeNumber(branchPruningThreshold);
+        config.selfHostedGitLabUsername = selfHostedGitLabUsername;
+        config.selfHostedGitLabApiToken = selfHostedGitlabApiToken;
         const request = new ModifyApiConfigRequest();
         request.apiConfiguration = config;
         request.userId = user?.userId ? user.userId : -1;
@@ -365,6 +376,8 @@ export const AppSetupPage: React.FC = () => {
                 setGlobalWorkspacePath(response.globalWorkspacePath);
                 setGitHubSshPrivateKeyPath(response.gitHubSshKeyPrivateKeyPath);
                 setGitLabSshPrivateKeyPath(response.gitLabSshKeyPrivateKeyPath);
+                setSelfHostedGitLabUsername(response.selfHostedGitLabUsername);
+                setSelfHostedGitLabApiTokenIsConfigured(response.selfHostedGitLabApiTokenConfigured);
             } catch (error) {
                 console.log(error);
                 setNotification({
@@ -649,11 +662,11 @@ export const AppSetupPage: React.FC = () => {
             {/* GitLab Username */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">GitLab Username</span>
+                    <span className="xml-name">Public GitLab Username</span>
                     <span className="xml-type">Text</span>
                     <span className="xml-optional">Optional</span>
                 </div>
-                <p>Your personal or organization username on GitLab.</p>
+                <p>Your public personal or organization username on the public GitLab instance (https://gitlab.com).</p>
                 <input
                     type="text"
                     className="input-field"
@@ -681,11 +694,11 @@ export const AppSetupPage: React.FC = () => {
             {/* GitLab API Token */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">GitLab Personal Access Token</span>
+                    <span className="xml-name">Public GitLab Personal Access Token</span>
                     <span className="xml-type">Text</span>
                     <span className="xml-optional">Optional</span>
                 </div>
-                <p>Your GitLab Personal Access Token. This lets the app securely check your GitLab repositories and merge requests.</p>
+                <p>Your Personal Access Token generated on the public GitLab instance (https://gitlab.com). This lets the app securely check your gitlab.com repositories and merge requests.</p>
                 <input
                     type={gitLabApiTokenIsConfigured ? "password" : "text"}
                     className="input-field"
@@ -697,7 +710,7 @@ export const AppSetupPage: React.FC = () => {
             {/* Self-Hosted GitLab URL */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">Custom GitLab Website URL</span>
+                    <span className="xml-name">Private GitLab Website URL</span>
                     <span className="xml-type">Web Address</span>
                     <span className="xml-optional">Optional</span>
                 </div>
@@ -708,6 +721,38 @@ export const AppSetupPage: React.FC = () => {
                     placeholder="e.g., https://gitlab.mycompany.com"
                     value={selfHostedGitLabUrl}
                     onChange={(e) => setSelfHostedGitLabUrl(e.target.value)} />
+            </div>
+
+            {/* Self-Hosted GitLab Username */}
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">Private Custom GitLab Username</span>
+                    <span className="xml-type">Text</span>
+                    <span className="xml-optional">Optional</span>
+                </div>
+                <p>Your privately hosted GitLab instance username.</p>
+                <input
+                    type="text"
+                    className="input-field"
+                    placeholder="e.g., gitlab_user"
+                    value={selfHostedGitLabUsername}
+                    onChange={(e) => setSelfHostedGitLabUsername(e.target.value)} />
+            </div>
+
+            {/* Self-Hosted GitLab API Token */}
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">Private Custom GitLab Token</span>
+                    <span className="xml-type">Text</span>
+                    <span className="xml-optional">Optional</span>
+                </div>
+                <p>Your private GitLab instance Personal Access Token. This lets the app securely check your GitLab repositories and merge requests for the private GitLab server.</p>
+                <input
+                    type={selfHostedGitLabApiTokenIsConfigured ? "password" : "text"}
+                    className="input-field"
+                    placeholder={selfHostedGitLabApiTokenIsConfigured ? "Saved & Encrypted" : "Paste glpat- token here"}
+                    value={selfHostedGitlabApiToken}
+                    onChange={(e) => setSelfHostedGitLabApiToken(e.target.value)} />
             </div>
 
             {/* GitLab Merge Request Scan Interval */}

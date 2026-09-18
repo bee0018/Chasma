@@ -140,7 +140,6 @@ namespace ChasmaWebApi.Core.Services.Index
         {
             List<RepositoryAdditionResult> additionResults = [];
             newRepositories = [];
-            ChasmaWebApiConfigurations apiConfiguration = ChasmaWebApiConfigurations.GetApiConfig();
             foreach (GitCloneBlueprint blueprint in blueprints)
             {
                 try
@@ -148,11 +147,11 @@ namespace ChasmaWebApi.Core.Services.Index
                     string sourceUrl = blueprint.SourceUrl;
                     if (sourceUrl.StartsWith("git@", StringComparison.OrdinalIgnoreCase) || sourceUrl.StartsWith("ssh://", StringComparison.OrdinalIgnoreCase))
                     {
-                        CloneRepositoryUsingSshProtocol(blueprint, userId, additionResults, newRepositories, apiConfiguration);
+                        CloneRepositoryUsingSshProtocol(blueprint, userId, additionResults, newRepositories);
                     }
-                    else if (sourceUrl.StartsWith("https", StringComparison.OrdinalIgnoreCase))
+                    else if (sourceUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     {
-                        CloneRepositoryUsingHttpsProtocol(blueprint, userId, apiConfiguration, additionResults, newRepositories);
+                        CloneRepositoryUsingHttpsProtocol(blueprint, userId, additionResults, newRepositories);
                     }
                     else
                     {
@@ -160,7 +159,7 @@ namespace ChasmaWebApi.Core.Services.Index
                         RepositoryAdditionResult additionResult = new()
                         {
                             IsSuccessful = false,
-                            Reason = $"The provided repository URL {sourceUrl} is not in a recognized format for determining credentials. Supported formats are HTTPS and SSH URLs. Will have to manually clone from terminal.",
+                            Reason = $"The provided repository URL {sourceUrl} is not in a recognized format for determining credentials. Supported formats are HTTP, HTTPS and SSH URLs. Will have to manually clone from terminal.",
                             RepositoryName = Path.GetFileName(blueprint.WorkingDirectory.TrimEnd(Path.DirectorySeparatorChar)),
                         };
                         additionResults.Add(additionResult);
@@ -324,9 +323,9 @@ namespace ChasmaWebApi.Core.Services.Index
         /// <param name="userId">The user identifier.</param>
         /// <param name="additionResults">The repository addition results.</param>
         /// <param name="newRepositories">The newly added git repositories.</param>
-        /// <param name="apiConfigurations">The API configurations.</param>
-        private void CloneRepositoryUsingSshProtocol(GitCloneBlueprint blueprint, int userId, ICollection<RepositoryAdditionResult> additionResults, ICollection<NewRepository> newRepositories, ChasmaWebApiConfigurations apiConfigurations)
+        private void CloneRepositoryUsingSshProtocol(GitCloneBlueprint blueprint, int userId, List<RepositoryAdditionResult> additionResults, List<NewRepository> newRepositories)
         {
+            ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             string sourceUrl = blueprint.SourceUrl;
             RemoteHostPlatform remoteHostPlatform = RemoteHelper.GetRemoteHostPlatform(sourceUrl);
             string privateKeyPath;
@@ -385,11 +384,11 @@ namespace ChasmaWebApi.Core.Services.Index
         /// </summary>
         /// <param name="blueprint">The git cloning repository template.</param>
         /// <param name="userId">The user identifier.</param>
-        /// <param name="apiConfiguration">The API configuration.</param>
         /// <param name="additionResults">The repository addition results.</param>
         /// <param name="newRepositories">The newly added git repositories.</param>
-        private void CloneRepositoryUsingHttpsProtocol(GitCloneBlueprint blueprint, int userId, ChasmaWebApiConfigurations apiConfiguration, ICollection<RepositoryAdditionResult> additionResults, ICollection<NewRepository> newRepositories)
+        private void CloneRepositoryUsingHttpsProtocol(GitCloneBlueprint blueprint, int userId, List<RepositoryAdditionResult> additionResults, List<NewRepository> newRepositories)
         {
+            ChasmaWebApiConfigurations apiConfiguration = ChasmaWebApiConfigurations.GetApiConfig();
             string remotePlatformUsername = null;
             string apiAccessToken = null;
             string workingDirectory = blueprint.WorkingDirectory;
@@ -402,10 +401,18 @@ namespace ChasmaWebApi.Core.Services.Index
             }
             else if (remoteHostPlatform == RemoteHostPlatform.GitLab)
             {
-                remotePlatformUsername = apiConfiguration.GitLabUsername;
-                apiAccessToken = EncryptionService.DecryptString(apiConfiguration.GitLabApiToken);
+                if (RemoteHelper.IsGitLabInstancePublicHosted(sourceUrl))
+                {
+                    remotePlatformUsername = apiConfiguration.GitLabUsername;
+                    apiAccessToken = EncryptionService.DecryptString(apiConfiguration.GitLabApiToken);
+                }
+                else
+                {
+                    remotePlatformUsername = apiConfiguration.SelfHostedGitLabUsername;
+                    apiAccessToken = EncryptionService.DecryptString(apiConfiguration.SelfHostedGitLabApiToken);
+                }
             }
-            
+
             try
             {
                 FetchOptions fetchOptions = new()

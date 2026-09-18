@@ -32,6 +32,8 @@ const HelpConfigXmlPage: React.FC = () => {
 \t<gitlabApiToken>token</gitlabApiToken>
 \t<gitLabSshPrivateKeyPath>path/to/private/key</gitLabSshPrivateKeyPath>
 \t<selfHostedGitLabUrl>http://localhost:3000</selfHostedGitLabUrl>
+\t<selfHostedGitLabUsername>private-user</selfHostedGitLabUsername>
+\t<selfHostedGitLabApiToken>private-token</selfHostedGitLabApiToken>
 \t<gitLabMergeRequestScanIntervalSeconds>45</gitLabMergeRequestScanIntervalSeconds>
 \t<branchPruningDayThreshold>45</branchPruningDayThreshold>
 </configurations>`}
@@ -133,7 +135,7 @@ const HelpConfigXmlPage: React.FC = () => {
                     <span className="xml-type">string</span>
                     <span className="xml-optional">optional</span>
                 </div>
-                <p>Your GitLab user name.</p>
+                <p>Your GitLab user name on the publicly hosted instance (https://gitlab.com).</p>
                 <p className="xml-meta">Default: none</p>
             </div>
 
@@ -143,7 +145,7 @@ const HelpConfigXmlPage: React.FC = () => {
                     <span className="xml-type">string</span>
                     <span className="xml-optional">optional</span>
                 </div>
-                <p>Defines the GitLab API token that is used for access and performing operations with the NGitLab development package.</p>
+                <p>Defines the public GitLab API token that is used for access and performing operations with the public GitLab API.</p>
                 <p className="xml-meta">Default: none</p>
             </div>
 
@@ -164,6 +166,26 @@ const HelpConfigXmlPage: React.FC = () => {
                     <span className="xml-optional">optional</span>
                 </div>
                 <p>GitLab absolute URL (with or without the /api/v* path).</p>
+                <p className="xml-meta">Default: none</p>
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">selfHostedGitLabUsername</span>
+                    <span className="xml-type">string</span>
+                    <span className="xml-optional">optional</span>
+                </div>
+                <p>The privately hosted GitLab absolute URL. This is used for organizations with their own instances of GitLab hosted privately.</p>
+                <p className="xml-meta">Default: none</p>
+            </div>
+
+            <div className="xml-attr">
+                <div className="xml-attr-header">
+                    <span className="xml-name">selfHostedGitLabApiToken</span>
+                    <span className="xml-type">string</span>
+                    <span className="xml-optional">optional</span>
+                </div>
+                <p>Defines the privately GitLab API instance token that is used for access and performing operations with the public GitLab API. This is used for organizations with their own instances of GitLab hosted privately.</p>
                 <p className="xml-meta">Default: none</p>
             </div>
 

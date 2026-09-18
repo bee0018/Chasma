@@ -53,5 +53,10 @@ namespace ChasmaWebApi.Data.Objects.Remote
         /// Gets or sets the labels to be applied to the issue.
         /// </summary>
         public List<string>? Labels { get; set; } = [];
+
+        /// <summary>
+        /// Gets or sets the URL of the issue.
+        /// </summary>
+        public string? Url { get; set; }
     }
 }

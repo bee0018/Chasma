@@ -79,5 +79,15 @@
         /// Gets or sets the number of days after which branches should be pruned if they have not been updated.
         /// </summary>
         public int? BranchPruningDayThreshold { get; set; }
+
+        /// <summary>
+        /// Gets or sets the self-hosted GitLab username.
+        /// </summary>
+        public string? SelfHostedGitLabUsername { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the self-hosted GitLab API token is configured.
+        /// </summary>
+        public bool SelfHostedGitLabApiTokenConfigured { get; set; }
     }
 }
