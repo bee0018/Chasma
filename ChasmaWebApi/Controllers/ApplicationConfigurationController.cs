@@ -17,7 +17,7 @@ namespace ChasmaWebApi.Controllers
     /// Controller for handling application configuration related API endpoints.
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [EnableRateLimiting(ChasmaWebApiConfigurations.RateLimiterPolicy)]
     public class ApplicationConfigurationController : ControllerBase
     {

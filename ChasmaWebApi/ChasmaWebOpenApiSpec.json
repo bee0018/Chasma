@@ -11,7 +11,7 @@
     }
   ],
   "paths": {
-    "/api/ApplicationConfiguration/systemReady": {
+    "/api/v1/ApplicationConfiguration/systemReady": {
       "get": {
         "tags": [
           "ApplicationConfiguration"
@@ -31,7 +31,7 @@
         }
       }
     },
-    "/api/ApplicationConfiguration/getConfig": {
+    "/api/v1/ApplicationConfiguration/getConfig": {
       "get": {
         "tags": [
           "ApplicationConfiguration"
@@ -51,7 +51,7 @@
         }
       }
     },
-    "/api/ApplicationConfiguration/modifyConfig": {
+    "/api/v1/ApplicationConfiguration/modifyConfig": {
       "post": {
         "tags": [
           "ApplicationConfiguration"
@@ -83,7 +83,7 @@
         }
       }
     },
-    "/api/ApplicationConfiguration/getManifest": {
+    "/api/v1/ApplicationConfiguration/getManifest": {
       "get": {
         "tags": [
           "ApplicationConfiguration"
@@ -103,7 +103,7 @@
         }
       }
     },
-    "/api/ApplicationConfiguration/applyUpdate": {
+    "/api/v1/ApplicationConfiguration/applyUpdate": {
       "post": {
         "tags": [
           "ApplicationConfiguration"
@@ -135,7 +135,7 @@
         }
       }
     },
-    "/api/Branch/addBranch": {
+    "/api/v1/Branch/addBranch": {
       "post": {
         "tags": [
           "Branch"
@@ -167,7 +167,7 @@
         }
       }
     },
-    "/api/Branch/deleteBranch": {
+    "/api/v1/Branch/deleteBranch": {
       "delete": {
         "tags": [
           "Branch"
@@ -199,7 +199,7 @@
         }
       }
     },
-    "/api/Branch/gitCheckout": {
+    "/api/v1/Branch/gitCheckout": {
       "post": {
         "tags": [
           "Branch"
@@ -231,7 +231,7 @@
         }
       }
     },
-    "/api/Branch/gitBranch": {
+    "/api/v1/Branch/gitBranch": {
       "post": {
         "tags": [
           "Branch"
@@ -263,7 +263,7 @@
         }
       }
     },
-    "/api/Branch/gitMerge": {
+    "/api/v1/Branch/gitMerge": {
       "post": {
         "tags": [
           "Branch"
@@ -295,7 +295,7 @@
         }
       }
     },
-    "/api/DryRun/simulateGitPull": {
+    "/api/v1/DryRun/simulateGitPull": {
       "post": {
         "tags": [
           "DryRun"
@@ -327,7 +327,7 @@
         }
       }
     },
-    "/api/DryRun/simulateAddBranch": {
+    "/api/v1/DryRun/simulateAddBranch": {
       "post": {
         "tags": [
           "DryRun"
@@ -359,7 +359,7 @@
         }
       }
     },
-    "/api/DryRun/simulateMergeBranches": {
+    "/api/v1/DryRun/simulateMergeBranches": {
       "post": {
         "tags": [
           "DryRun"
@@ -391,7 +391,7 @@
         }
       }
     },
-    "/api/Health/heartbeat": {
+    "/api/v1/Health/heartbeat": {
       "get": {
         "tags": [
           "Health"
@@ -411,7 +411,7 @@
         }
       }
     },
-    "/api/Health/restart": {
+    "/api/v1/Health/restart": {
       "post": {
         "tags": [
           "Health"
@@ -431,7 +431,7 @@
         }
       }
     },
-    "/api/Health/stopApplication": {
+    "/api/v1/Health/stopApplication": {
       "post": {
         "tags": [
           "Health"
@@ -451,7 +451,7 @@
         }
       }
     },
-    "/api/Proxy/reportBugs": {
+    "/api/v1/Proxy/reportBugs": {
       "post": {
         "tags": [
           "Proxy"
@@ -483,7 +483,7 @@
         }
       }
     },
-    "/api/Remote/getGlobalPullRequestStatuses": {
+    "/api/v1/Remote/getGlobalPullRequestStatuses": {
       "get": {
         "tags": [
           "Remote"
@@ -503,7 +503,7 @@
         }
       }
     },
-    "/api/Remote/retrieveGitHubWorkflowRuns": {
+    "/api/v1/Remote/retrieveGitHubWorkflowRuns": {
       "post": {
         "tags": [
           "Remote"
@@ -535,7 +535,7 @@
         }
       }
     },
-    "/api/Remote/createGitHubPullRequest": {
+    "/api/v1/Remote/createGitHubPullRequest": {
       "post": {
         "tags": [
           "Remote"
@@ -567,7 +567,7 @@
         }
       }
     },
-    "/api/Remote/createGitHubIssue": {
+    "/api/v1/Remote/createGitHubIssue": {
       "post": {
         "tags": [
           "Remote"
@@ -599,7 +599,7 @@
         }
       }
     },
-    "/api/Remote/retrieveRemoteLabels": {
+    "/api/v1/Remote/retrieveRemoteLabels": {
       "post": {
         "tags": [
           "Remote"
@@ -631,7 +631,7 @@
         }
       }
     },
-    "/api/Remote/getPipelineJobs": {
+    "/api/v1/Remote/getPipelineJobs": {
       "post": {
         "tags": [
           "Remote"
@@ -663,7 +663,7 @@
         }
       }
     },
-    "/api/Remote/createGitLabIssue": {
+    "/api/v1/Remote/createGitLabIssue": {
       "post": {
         "tags": [
           "Remote"
@@ -695,7 +695,7 @@
         }
       }
     },
-    "/api/Remote/getRemoteProjectMembers": {
+    "/api/v1/Remote/getRemoteProjectMembers": {
       "post": {
         "tags": [
           "Remote"
@@ -727,7 +727,7 @@
         }
       }
     },
-    "/api/Remote/createGitLabMergeRequest": {
+    "/api/v1/Remote/createGitLabMergeRequest": {
       "post": {
         "tags": [
           "Remote"
@@ -759,7 +759,7 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/getLocalGitRepositories": {
+    "/api/v1/RepositoryConfiguration/getLocalGitRepositories": {
       "get": {
         "tags": [
           "RepositoryConfiguration"
@@ -790,7 +790,7 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/retrieveIgnoredRepositories": {
+    "/api/v1/RepositoryConfiguration/retrieveIgnoredRepositories": {
       "post": {
         "tags": [
           "RepositoryConfiguration"
@@ -821,7 +821,7 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/addGitRepository": {
+    "/api/v1/RepositoryConfiguration/addGitRepository": {
       "post": {
         "tags": [
           "RepositoryConfiguration"
@@ -853,7 +853,7 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/deleteRepository": {
+    "/api/v1/RepositoryConfiguration/deleteRepository": {
       "delete": {
         "tags": [
           "RepositoryConfiguration"
@@ -885,7 +885,7 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/removeFile": {
+    "/api/v1/RepositoryConfiguration/removeFile": {
       "delete": {
         "tags": [
           "RepositoryConfiguration"
@@ -917,7 +917,7 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/gitClone": {
+    "/api/v1/RepositoryConfiguration/gitClone": {
       "post": {
         "tags": [
           "RepositoryConfiguration"
@@ -949,7 +949,7 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/changeRepositoryDisplayName": {
+    "/api/v1/RepositoryConfiguration/changeRepositoryDisplayName": {
       "post": {
         "tags": [
           "RepositoryConfiguration"
@@ -981,7 +981,7 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/initializeNewRepository": {
+    "/api/v1/RepositoryConfiguration/initializeNewRepository": {
       "post": {
         "tags": [
           "RepositoryConfiguration"
@@ -1013,7 +1013,7 @@
         }
       }
     },
-    "/api/RepositoryConfiguration/connectRemoteRepository": {
+    "/api/v1/RepositoryConfiguration/connectRemoteRepository": {
       "post": {
         "tags": [
           "RepositoryConfiguration"
@@ -1045,7 +1045,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/gitStatus": {
+    "/api/v1/RepositoryStatus/gitStatus": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1077,7 +1077,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/applyStagingAction": {
+    "/api/v1/RepositoryStatus/applyStagingAction": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1109,7 +1109,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/gitCommit": {
+    "/api/v1/RepositoryStatus/gitCommit": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1141,7 +1141,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/gitPush": {
+    "/api/v1/RepositoryStatus/gitPush": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1173,7 +1173,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/gitPull": {
+    "/api/v1/RepositoryStatus/gitPull": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1205,7 +1205,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/gitDiff": {
+    "/api/v1/RepositoryStatus/gitDiff": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1237,7 +1237,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/gitReset": {
+    "/api/v1/RepositoryStatus/gitReset": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1269,7 +1269,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/applyBulkStagingAction": {
+    "/api/v1/RepositoryStatus/applyBulkStagingAction": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1301,7 +1301,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/getBranchSyncStatus": {
+    "/api/v1/RepositoryStatus/getBranchSyncStatus": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1333,7 +1333,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/restoreFile": {
+    "/api/v1/RepositoryStatus/restoreFile": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1365,7 +1365,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/addSnapshot": {
+    "/api/v1/RepositoryStatus/addSnapshot": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1397,7 +1397,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/loadSnapshot": {
+    "/api/v1/RepositoryStatus/loadSnapshot": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1429,7 +1429,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/deleteSnapshot": {
+    "/api/v1/RepositoryStatus/deleteSnapshot": {
       "delete": {
         "tags": [
           "RepositoryStatus"
@@ -1461,7 +1461,7 @@
         }
       }
     },
-    "/api/RepositoryStatus/performSyncStep": {
+    "/api/v1/RepositoryStatus/performSyncStep": {
       "post": {
         "tags": [
           "RepositoryStatus"
@@ -1493,7 +1493,7 @@
         }
       }
     },
-    "/api/Shell/executeShellCommands": {
+    "/api/v1/Shell/executeShellCommands": {
       "post": {
         "tags": [
           "Shell"
@@ -1525,7 +1525,7 @@
         }
       }
     },
-    "/api/Shell/executeBatchShellCommands": {
+    "/api/v1/Shell/executeBatchShellCommands": {
       "post": {
         "tags": [
           "Shell"
@@ -1557,7 +1557,7 @@
         }
       }
     },
-    "/api/Shell/openApiLogs": {
+    "/api/v1/Shell/openApiLogs": {
       "get": {
         "tags": [
           "Shell"
@@ -1577,7 +1577,7 @@
         }
       }
     },
-    "/api/Stash/gitStash": {
+    "/api/v1/Stash/gitStash": {
       "post": {
         "tags": [
           "Stash"
@@ -1609,7 +1609,7 @@
         }
       }
     },
-    "/api/Stash/getStashList": {
+    "/api/v1/Stash/getStashList": {
       "post": {
         "tags": [
           "Stash"
@@ -1641,7 +1641,7 @@
         }
       }
     },
-    "/api/Stash/getStashDetails": {
+    "/api/v1/Stash/getStashDetails": {
       "post": {
         "tags": [
           "Stash"
@@ -1673,7 +1673,7 @@
         }
       }
     },
-    "/api/Stash/applyStash": {
+    "/api/v1/Stash/applyStash": {
       "post": {
         "tags": [
           "Stash"
@@ -1705,7 +1705,7 @@
         }
       }
     },
-    "/api/Stash/deleteStash": {
+    "/api/v1/Stash/deleteStash": {
       "delete": {
         "tags": [
           "Stash"
@@ -1737,7 +1737,7 @@
         }
       }
     },
-    "/api/User/login": {
+    "/api/v1/User/login": {
       "post": {
         "tags": [
           "User"
@@ -1769,7 +1769,7 @@
         }
       }
     },
-    "/api/User/addUserAccount": {
+    "/api/v1/User/addUserAccount": {
       "post": {
         "tags": [
           "User"
@@ -1801,7 +1801,7 @@
         }
       }
     },
-    "/api/User/refresh": {
+    "/api/v1/User/refresh": {
       "post": {
         "tags": [
           "User"
@@ -1833,7 +1833,7 @@
         }
       }
     },
-    "/api/User/logout": {
+    "/api/v1/User/logout": {
       "post": {
         "tags": [
           "User"
@@ -1865,7 +1865,7 @@
         }
       }
     },
-    "/api/User/modifyUser": {
+    "/api/v1/User/modifyUser": {
       "post": {
         "tags": [
           "User"
@@ -1897,7 +1897,7 @@
         }
       }
     },
-    "/api/User/checkUserNameAvailability": {
+    "/api/v1/User/checkUserNameAvailability": {
       "post": {
         "tags": [
           "User"
@@ -1929,7 +1929,7 @@
         }
       }
     },
-    "/api/User/getSecurityQuestions": {
+    "/api/v1/User/getSecurityQuestions": {
       "get": {
         "tags": [
           "User"
@@ -1949,7 +1949,7 @@
         }
       }
     },
-    "/api/User/getRandomSecurityQuestion": {
+    "/api/v1/User/getRandomSecurityQuestion": {
       "post": {
         "tags": [
           "User"
@@ -1981,7 +1981,7 @@
         }
       }
     },
-    "/api/User/validateSecurityQuestionAnswer": {
+    "/api/v1/User/validateSecurityQuestionAnswer": {
       "post": {
         "tags": [
           "User"
@@ -2013,7 +2013,7 @@
         }
       }
     },
-    "/api/User/resetPassword": {
+    "/api/v1/User/resetPassword": {
       "post": {
         "tags": [
           "User"

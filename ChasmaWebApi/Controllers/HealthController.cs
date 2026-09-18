@@ -11,7 +11,7 @@ namespace ChasmaWebApi.Controllers;
 /// </summary>
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 public class HealthController : ControllerBase
 {
     /// <summary>
