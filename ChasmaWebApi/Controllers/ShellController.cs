@@ -20,7 +20,7 @@ namespace ChasmaWebApi.Controllers
     /// <param name="internalCacheManager">The internal API cache manager.</param>
     [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [EnableRateLimiting(ChasmaWebApiConfigurations.RateLimiterPolicy)]
     public class ShellController(ILogger<ShellController> internalLogger, IApplicationControlService controlService, ICacheManager internalCacheManager) : ControllerBase
     {

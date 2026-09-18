@@ -21,7 +21,7 @@ namespace ChasmaWebApi.Controllers;
 /// </summary>
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 [EnableRateLimiting(ChasmaWebApiConfigurations.RateLimiterPolicy)]
 public class RepositoryConfigurationController : ControllerBase
 {
