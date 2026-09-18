@@ -921,7 +921,7 @@ const RepositoryStatusPage: React.FC = () => {
                                                 }}
                                             >
                                                 <div className="repo-summary-item">
-                                                    <span className="repo-summary-label">PR Number:</span>
+                                                    <span className="repo-summary-label">Change Request Number:</span>
                                                     <span className="repo-summary-value">{pr.number}</span>
                                                 </div>
 

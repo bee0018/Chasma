@@ -91,6 +91,18 @@ namespace ChasmaWebApi
         public string? SelfHostedGitLabUrl { get; set; }
 
         /// <summary>
+        /// Gets or sets the self hosted GitLab username.
+        /// </summary>
+        [XmlElement("selfHostedGitLabUsername")]
+        public string? SelfHostedGitLabUsername { get; set; }
+
+        /// <summary>
+        /// Gets or sets the self hosted GitLab API token.
+        /// </summary>
+        [XmlElement("selfHostedGitLabApiToken")]
+        public string? SelfHostedGitLabApiToken { get; set; }
+
+        /// <summary>
         /// Gets or sets the interval in seconds at which GitLab merge requests are scanned for updates.
         /// </summary>
         [XmlElement("gitLabMergeRequestScanIntervalSeconds")]
@@ -183,8 +195,6 @@ namespace ChasmaWebApi
                 GlobalWorkspacePath = newConfig.GlobalWorkspacePath;
             }
 
-            
-
             if (SecureBindingPort != newConfig.SecureBindingPort)
             {
                 SecureBindingPort = newConfig.SecureBindingPort;
@@ -194,8 +204,13 @@ namespace ChasmaWebApi
             {
                 BranchPruningDayThreshold = newConfig.BranchPruningDayThreshold;
             }
+
+            if (SelfHostedGitLabUsername != newConfig.SelfHostedGitLabUsername)
+            {
+                SelfHostedGitLabUsername = newConfig.SelfHostedGitLabUsername;
+            }
         }
-        
+
         /// <summary>
         /// Gets the application's configuration file path.
         /// </summary>
@@ -242,6 +257,15 @@ namespace ChasmaWebApi
                 if (decryptedGitLabApiToken != newConfig.GitLabApiToken)
                 {
                     GitLabApiToken = encryptionService.EncryptString(newConfig.GitLabApiToken);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(newConfig.SelfHostedGitLabApiToken))
+            {
+                string decryptedSelfHostedGitLabApiToken = encryptionService.DecryptString(SelfHostedGitLabApiToken);
+                if (decryptedSelfHostedGitLabApiToken != newConfig.SelfHostedGitLabApiToken)
+                {
+                    SelfHostedGitLabApiToken = encryptionService.EncryptString(newConfig.SelfHostedGitLabApiToken);
                 }
             }
 

@@ -110,6 +110,8 @@ namespace ChasmaWebApi.Controllers
                 GitHubSshKeyPrivateKeyPath = currentConfig.GitHubSshKeyPrivateKeyPath,
                 GitLabSshKeyPrivateKeyPath = currentConfig.GitLabSshKeyPrivateKeyPath,
                 BranchPruningDayThreshold = currentConfig.BranchPruningDayThreshold,
+                SelfHostedGitLabUsername = currentConfig.SelfHostedGitLabUsername,
+                SelfHostedGitLabApiTokenConfigured = !string.IsNullOrEmpty(currentConfig.SelfHostedGitLabApiToken),
             };
             return Ok(response);
         }
@@ -185,7 +187,7 @@ namespace ChasmaWebApi.Controllers
                 loggedInUser.Permissions = new()
                 {
                     IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
-                    IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken),
+                    IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken) || !string.IsNullOrEmpty(apiConfiguration.SelfHostedGitLabApiToken),
                 };
                 response.User = loggedInUser;
             }

@@ -145,7 +145,7 @@ namespace ChasmaWebApi.Controllers
             ApplicationUserPermissions permissions = new()
             {
                 IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
-                IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken),
+                IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken) || !string.IsNullOrEmpty(apiConfiguration.SelfHostedGitLabApiToken),
             };
             ApplicationUser user = new()
             {
@@ -316,7 +316,7 @@ namespace ChasmaWebApi.Controllers
                 ApplicationUserPermissions permissions = new()
                 {
                     IsUsingGitHubApi = !string.IsNullOrEmpty(apiConfiguration.GitHubApiToken),
-                    IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken),
+                    IsUsingGitLabApi = !string.IsNullOrEmpty(apiConfiguration.GitLabApiToken) || !string.IsNullOrEmpty(apiConfiguration.SelfHostedGitLabApiToken),
                 };
                 ApplicationUser user = new()
                 {

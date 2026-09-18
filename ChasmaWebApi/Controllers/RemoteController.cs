@@ -229,7 +229,7 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
-                string token = RemoteHelper.GetApiToken(repo.HostPlatform);
+                string token = RemoteHelper.GetApiToken(repo);
                 string decryptedToken = encryptionService.DecryptString(token);
                 string title = request.PullRequestTitle;
                 string headBranch = request.WorkingBranchName;
@@ -510,6 +510,7 @@ namespace ChasmaWebApi.Controllers
                 Confidential = request.Confidential,
                 Platform = RemoteHostPlatform.GitLab,
                 Labels = request.Labels,
+                Url = repository.Url,
             };
             try
             {
@@ -626,7 +627,7 @@ namespace ChasmaWebApi.Controllers
             {
                 logger.LogError("Could not create GitLab merge request because the repository cannot be found. Sending error response.");
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Repository cannot be found in cache. Cannot creat merge request.";
+                response.ErrorMessage = "Repository cannot be found in cache. Cannot create merge request.";
                 return Ok(response);
             }
 

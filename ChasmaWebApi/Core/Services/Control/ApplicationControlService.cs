@@ -393,7 +393,7 @@ namespace ChasmaWebApi.Core.Services.Control
                     }
 
                     RemoteHostPlatform remoteHostPlatform = repository.HostPlatform;
-                    string token = RemoteHelper.GetApiToken(remoteHostPlatform);
+                    string token = RemoteHelper.GetApiToken(repository);
                     string decryptedToken = encryptionService.DecryptString(token);
                     string username = RemoteHelper.GetRemoteHostUsername(repository);
                     bool isPullRequestOpen = false;

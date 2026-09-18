@@ -5,7 +5,6 @@ using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
 using NGitLab;
 using NGitLab.Models;
-using Serilog.Core;
 
 namespace ChasmaWebApi.Core.Services.Remote
 {
@@ -54,7 +53,7 @@ namespace ChasmaWebApi.Core.Services.Remote
             buildResults = new();
             try
             {
-                Task<List<Job>?> pipelineTask = GetPipelineJobs(repository.Owner, repository.Name);
+                Task<List<Job>?> pipelineTask = GetPipelineJobs(repository);
                 List<Job>? pipelineJobs = pipelineTask.Result;
                 if (pipelineJobs == null)
                 {
@@ -102,7 +101,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 if (gitLabIssue == null)
                 {
                     errorMessage = "Failed to create issue. Review server logs for more information.";
-                    logger.LogError("Could not GitLab issue. Sending error response.");
+                    logger.LogError("Could not create GitLab issue. Sending error response.");
                     return false;
                 }
 
@@ -129,7 +128,7 @@ namespace ChasmaWebApi.Core.Services.Remote
             projectId = -1;
             try
             {
-                Task<(List<Membership> Members, long ProjectId)?> responseTask = SendGetUsersInProjectRequest(repository.Owner, repository.Name);
+                Task<(List<Membership> Members, long ProjectId)?> responseTask = SendGetUsersInProjectRequest(repository);
                 (List<Membership> Members, long ProjectId)? membershipResult = responseTask.Result;
                 if (membershipResult == null)
                 {
@@ -172,7 +171,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 if (gitLabMergeRequest == null)
                 {
                     errorMessage = "Failed to create merge request. Review server logs for more information.";
-                    logger.LogError("Could not GitLab merge request. Sending error response.");
+                    logger.LogError("Could not create GitLab merge request. Sending error response.");
                     return false;
                 }
 
@@ -241,22 +240,26 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// <summary>
         /// Gets the pipeline jobs from the GitLab API.
         /// </summary>
-        /// <param name="owner">The repository owner.</param>
-        /// <param name="repoName">The repository name.</param>
+        /// <param name="repository">The local Git repository.</param>
         /// <returns>The pipeline builds from GitLab.</returns>
-        private async Task<List<Job>?> GetPipelineJobs(string owner, string repoName)
+        private async Task<List<Job>?> GetPipelineJobs(LocalGitRepository repository)
         {
             try
             {
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
-                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken) && string.IsNullOrEmpty(configurations.SelfHostedGitLabApiToken))
                 {
-                    logger.LogError("Could not get pipeline jobs. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.");
+                    logger.LogError("Could not get pipeline jobs. GitLab API token is not configured. Please set the GitLabApiToken and/or SelfHostedGitLabApiToken in the configuration.");
                     return null;
                 }
 
-                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
-                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
+                bool isPublicHosted = RemoteHelper.IsGitLabInstancePublicHosted(repository.Url);
+                string decryptedToken = isPublicHosted
+                    ? encryptionService.DecryptString(configurations.GitLabApiToken)
+                    : encryptionService.DecryptString(configurations.SelfHostedGitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, isPublicHosted, configurations.SelfHostedGitLabUrl);
+                string owner = repository.Owner;
+                string repoName = repository.Name;
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
                 {
@@ -295,22 +298,26 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// <summary>
         /// Gets the users in the specified project.
         /// </summary>
-        /// <param name="owner">The owner of the repository.</param>
-        /// <param name="repoName">The repository name.</param>
+        /// <param name="repository">The local GitLab repository.</param>
         /// <returns>The list of users in the project member listing.</returns>
-        private async Task<(List<Membership> Members, long ProjectId)?> SendGetUsersInProjectRequest(string owner, string repoName)
+        private async Task<(List<Membership> Members, long ProjectId)?> SendGetUsersInProjectRequest(LocalGitRepository repository)
         {
             try
             {
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
-                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                string owner = repository.Owner;
+                string repoName = repository.Name;
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken) && string.IsNullOrEmpty(configurations.SelfHostedGitLabApiToken))
                 {
-                    logger.LogError("Could not get users that are in the {repo} project. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.", repoName);
+                    logger.LogError("Could not get users that are in the {repo} project. GitLab API token is not configured. Please set the GitLabApiToken and/or SelfHostedGitLabApiToken in the configuration.", repoName);
                     return null;
                 }
 
-                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
-                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
+                bool isPublicHosted = RemoteHelper.IsGitLabInstancePublicHosted(repository.Url);
+                string decryptedToken = isPublicHosted
+                    ? encryptionService.DecryptString(configurations.GitLabApiToken)
+                    : encryptionService.DecryptString(configurations.SelfHostedGitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, isPublicHosted, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{owner}/{repoName}");
                 if (project == null)
                 {
@@ -338,14 +345,17 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
-                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken) && string.IsNullOrEmpty(configurations.SelfHostedGitLabApiToken))
                 {
-                    logger.LogError("Could not create GitLab Issue for the {repo} project. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.", issue.RepoName);
+                    logger.LogError("Could not create GitLab Issue for the {repo} project. GitLab API token is not configured. Please set the GitLabApiToken and/or SelfHostedGitLabApiToken in the configuration.", issue.RepoName);
                     return null;
                 }
 
-                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
-                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
+                bool isPublicHosted = RemoteHelper.IsGitLabInstancePublicHosted(issue.Url);
+                string decryptedToken = isPublicHosted
+                    ? encryptionService.DecryptString(configurations.GitLabApiToken)
+                    : encryptionService.DecryptString(configurations.SelfHostedGitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, isPublicHosted, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{issue.RepoOwner}/{issue.RepoName}");
                 IssueCreate issueRequest = new()
                 {
@@ -377,14 +387,19 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
-                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken) && string.IsNullOrEmpty(configurations.SelfHostedGitLabApiToken))
                 {
-                    logger.LogError("Could create merge request in {repo} project. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.", preparedMergeRequest.RepoName);
+                    logger.LogError("Could create merge request in {repo} project. GitLab API token is not configured. Please set the GitLabApiToken and/or SelfHostedGitLabApiToken in the configuration.", preparedMergeRequest.RepoName);
                     return null;
                 }
 
-                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
-                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
+                // We know the repository exists in the cache because it was validated shortly before this method call.
+                LocalGitRepository repository = cacheManager.Repositories[preparedMergeRequest.RepositoryId];
+                bool isPublicHosted = RemoteHelper.IsGitLabInstancePublicHosted(repository.Url);
+                string decryptedToken = isPublicHosted
+                    ? encryptionService.DecryptString(configurations.GitLabApiToken)
+                    : encryptionService.DecryptString(configurations.SelfHostedGitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, isPublicHosted, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{preparedMergeRequest.RepoOwner}/{preparedMergeRequest.RepoName}");
                 IMergeRequestClient mergeRequestClient = Client.GetMergeRequest(project.Id);
                 MergeRequestCreate mergeRequestToCreate = new()
@@ -421,14 +436,17 @@ namespace ChasmaWebApi.Core.Services.Remote
             try
             {
                 ChasmaWebApiConfigurations configurations = ChasmaWebApiConfigurations.GetApiConfig();
-                if (string.IsNullOrEmpty(configurations.GitLabApiToken))
+                if (string.IsNullOrEmpty(configurations.GitLabApiToken) && string.IsNullOrEmpty(configurations.SelfHostedGitLabApiToken))
                 {
-                    logger.LogError("Could not get labels that are in the {repo} project. GitLab API token is not configured. Please set the GitLabApiToken in the configuration.", repository.GetDisplayName());
+                    logger.LogError("Could not get labels that are in the {repo} project. GitLab API token is not configured. Please set the GitLabApiToken and/or SelfHostedGitLabApiToken in the configuration.", repository.GetDisplayName());
                     return null;
                 }
 
-                string decryptedToken = encryptionService.DecryptString(configurations.GitLabApiToken);
-                Client = RemoteHelper.GetGitLabClient(decryptedToken, configurations.SelfHostedGitLabUrl);
+                bool isPublicHosted = RemoteHelper.IsGitLabInstancePublicHosted(repository.Url);
+                string decryptedToken = isPublicHosted
+                    ? encryptionService.DecryptString(configurations.GitLabApiToken)
+                    : encryptionService.DecryptString(configurations.SelfHostedGitLabApiToken);
+                Client = RemoteHelper.GetGitLabClient(decryptedToken, isPublicHosted, configurations.SelfHostedGitLabUrl);
                 Project project = await Client.Projects.GetAsync($"{repository.Owner}/{repository.Name}");
                 if (project == null)
                 {

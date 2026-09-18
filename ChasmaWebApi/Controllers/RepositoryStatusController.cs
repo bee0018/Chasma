@@ -192,7 +192,7 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+            string token = RemoteHelper.GetApiToken(repository);
             string decryptedToken = encryptionService.DecryptString(token);
             string username = RemoteHelper.GetRemoteHostUsername(repository);
             string fileName = applyStagingActionRequest.FileName;

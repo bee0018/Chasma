@@ -1161,7 +1161,7 @@ namespace ChasmaWebApi.Core.Services.Git
                         return branchMetrics;
                     }
 
-                    string token = RemoteHelper.GetApiToken(repository.HostPlatform);
+                    string token = RemoteHelper.GetApiToken(repository);
                     string decryptedToken = EncryptionService.DecryptString(token);
                     RemoteHelper.FetchLatestChanges(workingDirectory, branch, repository, Logger, decryptedToken);
                     string upstreamBranchName = branch.TrackedBranch.FriendlyName;
