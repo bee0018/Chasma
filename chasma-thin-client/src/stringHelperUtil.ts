@@ -1,3 +1,5 @@
+import { LocalGitRepository } from "./API/ChasmaWebApiClient";
+
 /**
  * Function that determines if a string is null, undefined, or empty.
  * @param value The string to evaluate.
@@ -43,4 +45,13 @@ export function capitalizeFirst(str: string | undefined): string {
  */
 export const validatePassword = (enteredPassword: string): boolean => {
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/.test(enteredPassword);
+};
+
+/**
+ * Gets the name to display for the specified repository.
+ * @param repository The repository.
+ * @returns The repository's display name.
+ */
+export const getRepositoryDisplayName = (repository: LocalGitRepository): string => {
+    return repository.displayName ? repository.displayName : repository.name!;
 };
