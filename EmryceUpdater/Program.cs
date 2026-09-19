@@ -1,6 +1,5 @@
 ﻿using Serilog;
 using System.Diagnostics;
-using System.Formats.Tar;
 using System.IO.Compression;
 using System.Text;
 
@@ -53,19 +52,7 @@ string extractPath = Path.Combine(zipDirectory, $"extracted_{Guid.NewGuid()}");
 try
 {
     Log.Information("Performing file extraction...");
-    if (OperatingSystem.IsWindows())
-    {
-        ZipFile.ExtractToDirectory(artifactFilePath, extractPath, overwriteFiles: true);
-    }
-    else if (OperatingSystem.IsLinux())
-    {
-        TarFile.ExtractToDirectory(artifactFilePath, extractPath, overwriteFiles: true);
-    }
-    else
-    {
-        Log.Error("OS is not supported and cannot deploy update!");
-        SafeExit(-5);
-    }
+    ZipFile.ExtractToDirectory(artifactFilePath, extractPath, overwriteFiles: true);
 
     Log.Information("Download extraction is complete. Applying file updates!");
     TotalFolderSwap(extractPath, processDirectory);

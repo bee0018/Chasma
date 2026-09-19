@@ -139,27 +139,13 @@ namespace ChasmaWebApi.Core.Services.Control
             try
             {
                 string buildArtifactPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Emryce", "Updates", systemManifest.Version);
-                IEnumerable<string> zipFiles;
                 EnumerationOptions options = new()
                 {
                     MatchCasing = MatchCasing.CaseInsensitive,
                     RecurseSubdirectories = false
                 };
-                if (OperatingSystem.IsWindows())
-                {
-                    zipFiles = Directory.EnumerateFiles(buildArtifactPath, "*.zip", options);
-                }
-                else if (OperatingSystem.IsLinux())
-                {
-                    zipFiles = Directory.EnumerateFiles(buildArtifactPath, "*.tar", options);
-                }
-                else
-                {
-                    errorMessage = "OS is not supported for deploying updates";
-                    logger.LogError("{error}. Sending error response.", errorMessage);
-                    return false;
-                }
 
+                IEnumerable<string> zipFiles = Directory.EnumerateFiles(buildArtifactPath, "*.zip", options);
                 string zipFile = zipFiles.FirstOrDefault();
                 if (string.IsNullOrEmpty(zipFile))
                 {
