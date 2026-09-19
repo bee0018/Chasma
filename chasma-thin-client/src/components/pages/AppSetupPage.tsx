@@ -516,7 +516,7 @@ export const AppSetupPage: React.FC = () => {
             {/* JWT Secret Key */}
             <div className="xml-attr">
                 <div className="xml-attr-header">
-                    <span className="xml-name">Security Security Key (JWT)</span>
+                    <span className="xml-name">JSON Security Key (JWT)</span>
                     <span className="xml-type">Text</span>
                     <span className="xml-required">Required</span>
                 </div>
