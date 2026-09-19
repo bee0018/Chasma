@@ -115,7 +115,7 @@ const RegisterPage: React.FC = () => {
 
             setNotification({
                 title: `Successfully added to the system!`,
-                message: `Welcome to Emryce Workflow Manager, ${response.user.userName}.`,
+                message: `Welcome to Emryce, ${response.user.userName}.`,
                 isError: false,
             });
             setDisableSendButton(false);
