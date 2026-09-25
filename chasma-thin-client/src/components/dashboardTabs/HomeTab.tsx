@@ -261,11 +261,11 @@ const HomeTab: React.FC<IHomeTabProps> = (props: IHomeTabProps) => {
                                 <li onClick={() => window.open(`/status/${contextMenu.repo.displayName ? contextMenu.repo.displayName : contextMenu.repo.name}/${contextMenu.repo.id}`, "_blank", "noopener,noreferrer")}>
                                     Open Status in New Tab
                                 </li>
-                                <li onClick={() => handleRepoDelete(contextMenu.repo.id)}>
-                                    Delete
-                                </li>
                                 <li onClick={() => setActiveRenameRepo(contextMenu.repo)}>
                                     Change Display Name
+                                </li>
+                                <li onClick={() => handleRepoDelete(contextMenu.repo.id)}>
+                                    Delete
                                 </li>
                             </ul>
                         </div>
