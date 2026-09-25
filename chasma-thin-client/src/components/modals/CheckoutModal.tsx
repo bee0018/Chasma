@@ -212,6 +212,7 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
                     <h2 className="modal-title">{title}</h2>
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     <div style={{ justifySelf: "left", display: "grid", rowGap: "8px", marginBottom: "8px" }}>
+                        <h3>Checkout Options:</h3>
                         <Checkbox
                             label={"Default"}
                             onBoxChecked={() => setBranchCheckoutMode(BranchCheckoutMode.Default)}

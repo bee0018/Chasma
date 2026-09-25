@@ -148,6 +148,7 @@ const ResetModal: React.FC<IResetModalProps> = (props: IResetModalProps) => {
                     {errorMessage && <h3 className="modal-message">{errorMessage}</h3>}
                     {currentRevision && <h3 className="modal-message">Successfully reset back to: {currentRevision}</h3>}
                     <div style={{ justifySelf: "left", display: "grid", rowGap: "8px", marginBottom: "8px" }}>
+                        <h3>Reset Options:</h3>
                         <Checkbox
                             label={"Soft"}
                             onBoxChecked={() => setResetMode(ResetMode.Soft)}
