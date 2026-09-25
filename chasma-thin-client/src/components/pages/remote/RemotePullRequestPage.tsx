@@ -99,6 +99,16 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
      */
     const handleRemotePullRequestOperation = async () => {
         setDisableSendButton(true);
+        if (isBlankOrUndefined(pullRequestTitle)) {
+            setNotification({
+                title: "Failed to complete operation!",
+                message: "A title is required.",
+                isError: true,
+            });
+            setDisableSendButton(false);
+            return;
+        }
+
         setNotification({
             title: "Attempting to create pull request...",
             message: "Please wait while your request is being processed.",
