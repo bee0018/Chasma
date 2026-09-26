@@ -1,5 +1,6 @@
 ﻿using ChasmaWebApi.Core.Interfaces.Infrastructure;
 using ChasmaWebApi.Core.Interfaces.Remote;
+using ChasmaWebApi.Core.Services.Infrastructure;
 using ChasmaWebApi.Data.Objects.Git;
 using ChasmaWebApi.Data.Objects.Remote;
 using ChasmaWebApi.Util;
@@ -217,16 +218,26 @@ namespace ChasmaWebApi.Core.Services.Remote
         }
 
         // <inheritdoc/>
-        public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
+        public bool TryGetWorkflowRunResults(LocalGitRepository repository, string branchName, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
         {
             errorMessage = string.Empty;
             workflowRunResults = new();
-            Client = RemoteHelper.GetGitHubClient(repoName, token);
-            Task<WorkflowRunsResponse?> workflowRunsResponseTask = GetWorkFlowRuns(Client, repoOwner, repoName);
+            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
+            Logger.LogInformation("Attempting to get workflow data for the last {threshold} builds for {repoName}.", webApiConfigurations.WorkflowRunReportThreshold ?? 30, repository.GetDisplayName());
+            string token = webApiConfigurations.GitHubApiToken;
+            string decryptedToken = EncryptionService.DecryptString(token);
+            if (string.IsNullOrEmpty(decryptedToken))
+            {
+                Logger.LogError("GitHub API token is not configured. Cannot retrieve workflow run results. Sending error response.");
+                return false;
+            }
+
+            Client = RemoteHelper.GetGitHubClient(repository.Name, decryptedToken);
+            Task<WorkflowRunsResponse?> workflowRunsResponseTask = GetWorkFlowRuns(Client, repository, branchName);
             WorkflowRunsResponse workFlowRunsResponse = workflowRunsResponseTask.Result;
             if (workFlowRunsResponse == null)
             {
-                errorMessage = $"Failed to fetch workflow runs for {repoName}. Check server logs for more information.";
+                errorMessage = $"Failed to fetch workflow runs for {repository.GetDisplayName()}. Check server logs for more information.";
                 return false;
             }
 
@@ -249,7 +260,7 @@ namespace ChasmaWebApi.Core.Services.Remote
                 workflowRunResults.Add(buildResult);
             }
 
-            Logger.LogInformation("Retrieved {count} build runs from {repo} via GitHub API.", runs.Count, repoName);
+            Logger.LogInformation("Retrieved {count} build runs from {repo} via GitHub API.", runs.Count, repository.GetDisplayName());
             return true;
         }
 
@@ -326,25 +337,31 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// Gets the workflow run for the specified repository.
         /// </summary>
         /// <param name="client">The GitHub API client.</param>
-        /// <param name="repoOwner">The repository owner.</param>
-        /// <param name="repoName">The repository name.</param>
+        /// <param name="repository">The local Git repository.</param>
+        /// <param name="branchName">The branch name for which to retrieve workflow runs.</param>
         /// <returns>Task containing the workflow run response from the API client.</returns>
-        private async Task<WorkflowRunsResponse?> GetWorkFlowRuns(GitHubClient client, string repoOwner, string repoName)
+        private async Task<WorkflowRunsResponse?> GetWorkFlowRuns(GitHubClient client, LocalGitRepository repository, string branchName)
         {
             try
             {
+                WorkflowRunsRequest workflowRunsRequest = new();
+                if (!string.IsNullOrEmpty(branchName))
+                {
+                    workflowRunsRequest.Branch = branchName;
+                }
+
                 ChasmaWebApiConfigurations apiConfig = ChasmaWebApiConfigurations.GetApiConfig();
                 ApiOptions options = new()
                 {
                     PageCount = 1,
                     PageSize = apiConfig.WorkflowRunReportThreshold ?? 30,
                 };
-                WorkflowRunsRequest workflowRunsRequest = new();
-                return await client.Actions.Workflows.Runs.List(repoOwner, repoName, workflowRunsRequest, options);
+
+                return await client.Actions.Workflows.Runs.List(repository.Owner, repository.Name, workflowRunsRequest, options);
             }
             catch (Exception e)
             {
-                Logger.LogError("Error when trying to retrieve workflow runs for {repoName}: {error}", repoName, e);
+                Logger.LogError("Error when trying to retrieve workflow runs for {repoName}: {error}", repository.GetDisplayName(), e);
                 return null;
             }
         }

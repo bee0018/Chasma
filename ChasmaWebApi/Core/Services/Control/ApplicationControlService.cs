@@ -394,7 +394,7 @@ namespace ChasmaWebApi.Core.Services.Control
                         else if (remoteHostPlatform == RemoteHostPlatform.GitHub)
                         {
                             isPullRequestOpen = cacheManager.GitHubPullRequests.Values.Any(i => i.RepositoryId == repository.Id && i.BranchName == branchToSync && !i.Merged);
-                            if (gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, decryptedToken, out List<WorkflowRunResult> gitHubResults, out _))
+                            if (gitHubService.TryGetWorkflowRunResults(repository, branchToSync, out List<WorkflowRunResult> gitHubResults, out _))
                             {
                                 buildMetrics = GetBuildStatusFromRemoteBuildResults(gitHubResults, branchToSync);
                             }
@@ -402,7 +402,7 @@ namespace ChasmaWebApi.Core.Services.Control
                         else if (remoteHostPlatform == RemoteHostPlatform.GitLab)
                         {
                             isPullRequestOpen = cacheManager.GitLabMergeRequests.Values.Any(i => i.RepositoryId == repository.Id && i.BranchName == branchToSync && !i.Merged);
-                            if (gitLabService.TryGetPipelineJobResults(repository, out List<WorkflowRunResult> gitLabResults, out _))
+                            if (gitLabService.TryGetPipelineJobResults(repository, branchToSync, out List<WorkflowRunResult> gitLabResults, out _))
                             {
                                 buildMetrics = GetBuildStatusFromRemoteBuildResults(gitLabResults, branchToSync);
                             }
@@ -656,9 +656,9 @@ namespace ChasmaWebApi.Core.Services.Control
         #region Remote Interactions - GitHub
 
         // <inheritdoc />
-        public bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
+        public bool TryGetWorkflowRunResults(LocalGitRepository repository, string branchName, out List<WorkflowRunResult> workflowRunResults, out string errorMessage)
         {
-            return gitHubService.TryGetWorkflowRunResults(repoName, repoOwner, token, out workflowRunResults, out errorMessage);
+            return gitHubService.TryGetWorkflowRunResults(repository, branchName, out workflowRunResults, out errorMessage);
         }
 
         // <inheritdoc />
@@ -672,9 +672,9 @@ namespace ChasmaWebApi.Core.Services.Control
         #region Remote Interactions - GitLab
 
         // <inheritdoc />
-        public bool TryGetPipelineJobResults(LocalGitRepository repository, out List<WorkflowRunResult> buildResults, out string errorMessage)
+        public bool TryGetPipelineJobResults(LocalGitRepository cachedRepo, string branchName, out List<WorkflowRunResult> buildResults, out string errorMessage)
         {
-            return gitLabService.TryGetPipelineJobResults(repository, out buildResults, out errorMessage);
+            return gitLabService.TryGetPipelineJobResults(cachedRepo, branchName, out buildResults, out errorMessage);
         }
 
         // <inheritdoc />
@@ -724,7 +724,6 @@ namespace ChasmaWebApi.Core.Services.Control
                 buildsExistForBranch = true;
             }
 
-            ChasmaWebApiConfigurations apiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
             WorkflowRunResult mostRecentBuild = orderedBuilds.FirstOrDefault(i => i.BranchName == branchName);
             if (buildsExistForBranch && mostRecentBuild == null)
             {

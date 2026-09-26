@@ -47,17 +47,18 @@ namespace ChasmaWebApi.Core.Services.Remote
         }
 
         // <inheritdoc />
-        public bool TryGetPipelineJobResults(LocalGitRepository repository, out List<WorkflowRunResult> buildResults, out string errorMessage)
+        public bool TryGetPipelineJobResults(LocalGitRepository repository, string branchName, out List<WorkflowRunResult> buildResults, out string errorMessage)
         {
             errorMessage = string.Empty;
             buildResults = new();
             try
             {
-                Task<List<Job>?> pipelineTask = GetPipelineJobs(repository);
+                Task<List<Job>?> pipelineTask = GetPipelineJobs(repository, branchName);
                 List<Job>? pipelineJobs = pipelineTask.Result;
                 if (pipelineJobs == null)
                 {
-                    errorMessage = $"Failed to fetch pipeline jobs for {repository.GetDisplayName()}. Check server logs for more information.";
+                    string branchPhrase = string.IsNullOrEmpty(branchName) ? "latest pipeline" : $"branch {branchName}";
+                    errorMessage = $"Failed to fetch pipeline jobs for {branchPhrase} in {repository.GetDisplayName()}. Check server logs for more information.";
                     return false;
                 }
 
@@ -241,8 +242,9 @@ namespace ChasmaWebApi.Core.Services.Remote
         /// Gets the pipeline jobs from the GitLab API.
         /// </summary>
         /// <param name="repository">The local Git repository.</param>
+        /// <param name="branchName">The branch name to retrieve pipeline jobs for.</param>
         /// <returns>The pipeline builds from GitLab.</returns>
-        private async Task<List<Job>?> GetPipelineJobs(LocalGitRepository repository)
+        private async Task<List<Job>?> GetPipelineJobs(LocalGitRepository repository, string branchName)
         {
             try
             {
@@ -267,26 +269,50 @@ namespace ChasmaWebApi.Core.Services.Remote
                     return null;
                 }
 
+                int jobRetrievalLimit = configurations.WorkflowRunReportThreshold ?? 30;
                 IPipelineClient pipelineClient = Client.GetPipelines(project.Id);
-                PipelineBasic? latestPipeline = pipelineClient.All
-                                   .OrderByDescending(p => p.Id)
-                                   .FirstOrDefault();
-                if (latestPipeline == null)
+                if (string.IsNullOrEmpty(branchName))
                 {
-                    logger.LogError("Could not get latest pipeline for repo: {repo}", repoName);
+                    // If no branch name is provided, get the latest pipeline and its jobs
+                    PipelineBasic? latestPipeline = pipelineClient.All
+                        .OrderByDescending(p => p.Id)
+                        .FirstOrDefault();
+                    if (latestPipeline == null)
+                    {
+                        logger.LogError("Could not get latest pipeline for repo: {repo}", repoName);
+                        return null;
+                    }
+
+                    JobQuery query = new()
+                    {
+                        Scope = JobScopeMask.All,
+                        PerPage = jobRetrievalLimit,
+                    };
+
+                    IJobClient jobClient = Client.GetJobs(project.Id);
+                    return jobClient.GetJobs(query)
+                        .Where(i => i.Pipeline.Id == latestPipeline.Id)
+                        .ToList();
+                }
+
+                Pipeline pipeline = await pipelineClient.GetLatestAsync(branchName);
+                if (pipeline == null)
+                {
+                    logger.LogError("Could not find pipeline for branch: {branch} in repo: {repo}", branchName, repoName);
                     return null;
                 }
 
-                IJobClient jobClient = Client.GetJobs(project.Id);
-                JobQuery query = new()
+                PipelineJobQuery pipelineJobQuery = new() { PipelineId = pipeline.Id };
+                GitLabCollectionResponse<Job> jobResponse = pipelineClient.GetJobsAsync(pipelineJobQuery);
+                if (jobResponse == null)
                 {
-                    Scope = JobScopeMask.All,
-                    PerPage = configurations.WorkflowRunReportThreshold,
-                };
+                    logger.LogError("Could not get jobs for pipeline: {pipelineId} in repo: {repo}", pipeline.Id, repoName);
+                    return null;
+                }
 
-                return jobClient.GetJobs(query)
-                    .Where(i => i.Pipeline.Id == latestPipeline.Id)
-                    .ToList();
+                List<Job> jobs = await jobResponse.ToListAsync();
+                List<Job> trimmedJobList = jobs.Take(jobRetrievalLimit).ToList();
+                return trimmedJobList;
             }
             catch (Exception e)
             {

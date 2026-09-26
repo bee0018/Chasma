@@ -1,16 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     GetPipelineJobsRequest,
     GetWorkflowResultsRequest,
+    GitBranchRequest,
     RemoteHostPlatform,
     WorkflowRunResult
 } from "../../API/ChasmaWebApiClient";
 import "../../styles/App.css"
 import { useNavigate, useParams } from "react-router-dom";
-import { remoteClient } from "../../managers/ApiClientManager";
+import { branchClient, remoteClient } from "../../managers/ApiClientManager";
 import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
+import ComboboxInput from "../application/ComboboxInput";
 
 /**
  * Initializes a new instance of the WorkflowRunsPage.
@@ -32,6 +34,12 @@ const WorkflowRunsPage: React.FC = () => {
 
     /** Gets or sets the flag indicating whether to disable the send button. */
     const [disabledSendButton, setDisableSendButton] = useState(false);
+
+    /** Gets or sets the branch name to get build results for. */
+    const [branchName, setBranchName] = useState<string>("");
+
+    /** Gets or sets the remote branches to checkout. **/
+    const [branchesList, setBranchesList] = useState<string[]>([]);
 
     /** The navigation function. **/
     const navigate = useNavigate();
@@ -65,9 +73,6 @@ const WorkflowRunsPage: React.FC = () => {
         else if (selectedRepo.hostPlatform === RemoteHostPlatform.GitLab) {
             await handleGetGitLabPipelineJobResults();
         }
-        else if (selectedRepo.hostPlatform === RemoteHostPlatform.Bitbucket) {
-
-        }
         else {
             setNotification({
                 title: "Failed to retrieve build statuses!",
@@ -85,8 +90,8 @@ const WorkflowRunsPage: React.FC = () => {
     const handleGetGitHubWorkflowResults = async () => {
         try {
             const request = new GetWorkflowResultsRequest();
-            request.repositoryName = selectedRepo?.name;
-            request.repositoryOwner = selectedRepo?.owner;
+            request.repositoryId = selectedRepo?.id;
+            request.branchName = branchName;
 
             const response = await remoteClient.getGitHubWorkflowResults(request);
             if (response.isErrorResponse) {
@@ -117,6 +122,7 @@ const WorkflowRunsPage: React.FC = () => {
         try {
             const request = new GetPipelineJobsRequest();
             request.repositoryId = selectedRepo?.id
+            request.branchName = branchName;
 
             const response = await remoteClient.getPipelineJobs(request);
             if (response.isErrorResponse) {
@@ -139,6 +145,43 @@ const WorkflowRunsPage: React.FC = () => {
             setNotification(errorNotification);
         }
     }
+
+    /** Fetches the local and remote branches associated with this repository. **/
+    async function fetchAssociatedBranches() {
+        const request = new GitBranchRequest();
+        request.repositoryId = selectedRepo?.id;
+        try {
+            const response = await branchClient.getBranches(request);
+            if (response.isErrorResponse) {
+                setBranchesList([]);
+                setNotification({
+                    title: `"Cannot get branches!"`,
+                    message: response.errorMessage,
+                    isError: true,
+                });
+                return;
+            }
+
+            if (!response.branchNames) {
+                setNotification({
+                    title: "Cannot get branches!",
+                    message: "Cannot get branches for this repository. Ensure there are branches created!",
+                    isError: true,
+                });
+                return;
+            }
+
+            setBranchesList(response.branchNames);
+        }
+        catch (e) {
+            const errorNotification = await handleApiError(e, navigate, "Cannot get branches!", "Error occurred while fetching branches. Check console logs.");
+            setNotification(errorNotification);
+        }
+    }
+
+    useEffect(() => {
+            fetchAssociatedBranches().catch(e => console.error(e));
+        }, []);
 
     /** Renders the table view for workflows **/
     const renderTableView = () => {
@@ -213,6 +256,13 @@ const WorkflowRunsPage: React.FC = () => {
             <div className="workflow-page-header">
                 <h1>{selectedRepo?.hostPlatform && `${RemoteHostPlatform[selectedRepo.hostPlatform]}`} Builds Dashboard 📊</h1>
                 <p>Retrieve the most recent workflow run results below.</p>
+                <ComboboxInput
+                        itemList={branchesList}
+                        currentValue={branchName}
+                        placeholder="Enter/select branch to query"
+                        onChange={setBranchName}
+                        styling="input-field"
+                    />
             </div>
 
             <div className="command-mode-toggle">

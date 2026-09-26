@@ -368,6 +368,8 @@ const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: Remo
         setSelectedAdditionalAssignees([]);
         setSelectedReviewers([]);
         setSelectedLabels([]);
+        setSuccessfullyCreated(false);
+        setDisableSendButton(false);
     };
 
     /**
