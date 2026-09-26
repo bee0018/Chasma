@@ -316,7 +316,7 @@ const BatchOperationsTab: React.FC = () => {
                         className="run-batch-button"
                         disabled={disableSendButton}
                         onClick={executeBatchOperation}>
-                            Run Batch Git Command
+                            Execute
                     </button>
                 </div>
 
