@@ -29,7 +29,7 @@ interface RemotePullRequestPageProps {
  */
 const RemotePullRequestPage: React.FC<RemotePullRequestPageProps> = (props: RemotePullRequestPageProps) => {
     /** Gets or sets the modal title. **/
-    const [title, setTitle] = useState<string>("Create Pull Request");
+    const [title, setTitle] = useState<string>(`Create ${props.repository.hostPlatform === RemoteHostPlatform.GitLab ? "Merge" : "Pull"} Request`);
 
     /** Gets or sets the error message. **/
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
