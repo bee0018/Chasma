@@ -206,7 +206,17 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            if (string.IsNullOrEmpty(request.RepositoryId))
+            string branchName = request.BranchName;
+            if (string.IsNullOrEmpty(branchName))
+            {
+                response.IsErrorResponse = true;
+                response.ErrorMessage = "Branch name must be populated. Cannot checkout branch.";
+                logger.LogError("Null or empty branch name received. Sending error response");
+                return BadRequest(response);
+            }
+
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
             {
                 response.IsErrorResponse = true;
                 response.ErrorMessage = "Repository identifier must be populated. Cannot checkout branch.";
@@ -214,7 +224,6 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            string repoId = request.RepositoryId;
             if (!cacheManager.WorkingDirectories.TryGetValue(repoId, out string workingDirectory))
             {
                 response.IsErrorResponse = true;
@@ -244,7 +253,7 @@ namespace ChasmaWebApi.Controllers
 
             try
             {
-                if (!applicationControlService.TryCheckoutBranch(workingDirectory, request.BranchName, checkoutMode, stashMessage, user, out string errorMessage))
+                if (!applicationControlService.TryCheckoutBranch(workingDirectory, branchName, checkoutMode, stashMessage, user, out string errorMessage))
                 {
                     response.IsErrorResponse = true;
                     response.ErrorMessage = $"Failed to checkout branch to repo: {repoId}. {errorMessage}";

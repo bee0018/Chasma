@@ -6,6 +6,7 @@ import { useCacheStore } from "../../managers/CacheManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import Checkbox from "../Checkbox";
 import { createPortal } from "react-dom";
+import ComboboxInput from "../application/ComboboxInput";
 
 /**
  * The members of the checkout modal.
@@ -44,10 +45,10 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
     );
 
     /** Gets or sets the remote branches to checkout. **/
-    const [branchesList, setBranchesList] = useState<string[] | undefined>([]);
+    const [branchesList, setBranchesList] = useState<string[]>([]);
 
     /** Gets or sets the branch name. **/
-    const [branchName, setBranchName] = useState<string>("");
+    const [branchName, setBranchName] = useState<string>(props.targetedBranch !== undefined ? props.targetedBranch : "");
 
     /** Gets or sets a value indicating whether the checkout request was sent. **/
     const [checkoutRequestSent, setCheckoutRequestSent] = useState<boolean>(false);
@@ -120,17 +121,13 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
                 return;
             }
 
-            setBranchesList(response.branchNames);
             if (!response.branchNames) {
                 setErrorMessage("Cannot get branches for this repository. Ensure there are branches created!");
                 setTitle("Cannot get branches!");
                 return;
             }
 
-            if (response.branchNames.length > 0) {
-                setBranchName(response.branchNames[0]);
-            }
-
+            setBranchesList(response.branchNames);
             setErrorMessage(undefined);
         }
         catch (e) {
@@ -239,16 +236,12 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
                         />
                     </div>
                     <br />
-                    {branchesList && branchesList.length > 0 && props.targetedBranch === undefined && (
-                        <select value={branchName}
-                            onChange={(e) => setBranchName(e.target.value)}
-                            className="modal-input-field"
-                        >
-                            {branchesList.map((branch) => (
-                                <option key={branch} value={branch}>{branch}</option>
-                            ))}
-                        </select>
-                    )}
+                    <ComboboxInput
+                        itemList={branchesList}
+                        currentValue={branchName}
+                        placeholder="Enter or select a branch to checkout"
+                        onChange={setBranchName}
+                    />
                     <br />
                     {branchCheckoutMode === BranchCheckoutMode.StashOnly &&
                         <>
