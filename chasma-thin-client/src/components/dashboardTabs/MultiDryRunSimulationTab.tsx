@@ -1,4 +1,4 @@
-﻿import React, {useEffect, useState} from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
     AddBranchSimulationEntry,
     MergeSimulationEntry,
@@ -10,10 +10,9 @@ import {
     SimulatedMergeResult,
     SimulateGitPullRequest,
 } from "../../API/ChasmaWebApiClient";
-import {useCacheStore} from "../../managers/CacheManager";
-import Checkbox from "../Checkbox";
-import {GitSimulationCase, SimulationEntry} from "../types/CustomTypes";
-import {dryRunClient} from "../../managers/ApiClientManager";
+import { useCacheStore } from "../../managers/CacheManager";
+import { GitSimulationCase, SimulationEntry } from "../types/CustomTypes";
+import { dryRunClient } from "../../managers/ApiClientManager";
 import SimulationEntryRow from "./rows/SimulationEntryRow";
 import { useNavigate } from "react-router-dom";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
@@ -35,14 +34,11 @@ const MultiDryRunSimulationTab: React.FC = () => {
     /** The navigation function. **/
     const navigate = useNavigate();
 
-   /** Sets the notification modal. */
-   const setNotification = useCacheStore(state => state.setNotification);
+    /** Sets the notification modal. */
+    const setNotification = useCacheStore(state => state.setNotification);
 
     /** Gets or sets the simulation entries to conduct simulations on. **/
     const [simulationEntries, setSimulationEntries] = useState<SimulationEntry[]>([]);
-
-    /** Gets or sets a value indicating whether the user is selecting all repositories to execute commands. **/
-    const [isSelectingAllRepositories, setIsSelectingAllRepositories] = useState<boolean>(false);
 
     /** Gets or sets the simulated pull results. **/
     const [simulatedPullResults, setSimulatedPullResults] = useState<SimulatedGitPullResult[]>([]);
@@ -62,7 +58,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
     const addSimulationEntryRow = () => {
         setSimulationEntries(prev => [
             ...prev,
-            {id: crypto.randomUUID(), simCase: GitSimulationCase.Select}
+            { id: crypto.randomUUID(), simCase: GitSimulationCase.Select }
         ])
     }
 
@@ -78,7 +74,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
      * Updates a simulation row entry.
      * @param entry The simulation entry.
      */
-    const updateSimulateEntryRow = (entry : SimulationEntry) => {
+    const updateSimulateEntryRow = (entry: SimulationEntry) => {
         setSimulationEntries(prev =>
             prev.map(row =>
                 row.id === entry.id ? entry : row
@@ -249,21 +245,9 @@ const MultiDryRunSimulationTab: React.FC = () => {
     }
 
     useEffect(() => {
-        if (isSelectingAllRepositories) {
-            if (!repositories || repositories.length === 0) return;
-            setSimulationEntries(
-                repositories.map(repo => ({
-                    id: crypto.randomUUID(),
-                    simCase: GitSimulationCase.Select,
-                    repositoryId: repo.id,
-                }))
-            );
-
-        } else {
-            // Reset to one empty row when unchecked
-            setSimulationEntries([{ id: crypto.randomUUID(), simCase: GitSimulationCase.Select }]);
-        }
-    }, [isSelectingAllRepositories, repositories]);
+        // Reset to one empty row when unchecked
+        setSimulationEntries([{ id: crypto.randomUUID(), simCase: GitSimulationCase.Select }]);
+    }, [repositories]);
 
     return (
         <>
@@ -276,40 +260,34 @@ const MultiDryRunSimulationTab: React.FC = () => {
                                 <h2 className="page-description">Simulate actions without actually affecting the repositories 🥽</h2>
                             </div>
                         </div>
-                            <section className="command-mode-section">
-                                <div className="repository-actions">
-                                    <Checkbox
-                                        label={"Select all repositories"}
-                                        onBoxChecked={setIsSelectingAllRepositories}
-                                    />
-                                    {!isSelectingAllRepositories && (
-                                        <button className="add-repo-button" onClick={addSimulationEntryRow}>
-                                            + Add Simulation Case
-                                        </button>
-                                    )}
-                                </div>
-                            </section>
-
-                            <section className="custom-commands-section">
-                                {simulationEntries.map(row => (
-                                    <SimulationEntryRow
-                                        key={row.id}
-                                        id={row.id}
-                                        repositoryId={row.repositoryId}
-                                        onDelete={deleteSimulationEntry}
-                                        onUpdate={updateSimulateEntryRow}
-                                    />
-                                ))}
-                            </section>
-                            <div className="run-batch-section">
-                                <button
-                                    className="run-batch-button"
-                                    disabled={disableSendButton}
-                                    onClick={handleSimulationDryRun}
-                                >
-                                    Simulate
+                        <section className="command-mode-section">
+                            <div className="repository-actions">
+                                <button className="add-repo-button" onClick={addSimulationEntryRow}>
+                                    + Add Simulation Case
                                 </button>
                             </div>
+                        </section>
+
+                        <section className="custom-commands-section">
+                            {simulationEntries.map(row => (
+                                <SimulationEntryRow
+                                    key={row.id}
+                                    id={row.id}
+                                    repositoryId={row.repositoryId}
+                                    onDelete={deleteSimulationEntry}
+                                    onUpdate={updateSimulateEntryRow}
+                                />
+                            ))}
+                        </section>
+                        <div className="run-batch-section">
+                            <button
+                                className="run-batch-button"
+                                disabled={disableSendButton}
+                                onClick={handleSimulationDryRun}
+                            >
+                                Simulate
+                            </button>
+                        </div>
                     </div>
 
                     {/*The simulated dry run section*/}
@@ -337,7 +315,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
                                         className={`output-entry ${result.isSuccessful ? "success" : "failure"}`}
                                     >
                                         <div className="output-header-row">
-                                            <strong>{result.repositoryName}: {result.isSuccessful ? `Safe to pull ${result.branchName}!`: `'git pull' would fail for ${result.branchName}!`}</strong>
+                                            <strong>{result.repositoryName}: {result.isSuccessful ? `Safe to pull ${result.branchName}!` : `'git pull' would fail for ${result.branchName}!`}</strong>
                                             <span className="status-icon" />
                                         </div>
                                         {result.commitsToPull?.map((entry, i) => (
@@ -345,8 +323,8 @@ const MultiDryRunSimulationTab: React.FC = () => {
                                                 key={i}
                                                 className="output-command"
                                             >
-                                                        &gt; {entry.commitHash} - {entry.message}
-                                                    </span>
+                                                &gt; {entry.commitHash} - {entry.message}
+                                            </span>
                                         ))}
                                         <span className="output-stdout">{result.errorMessage}</span>
                                     </div>
@@ -357,7 +335,7 @@ const MultiDryRunSimulationTab: React.FC = () => {
                                         className={`output-entry ${result.isSuccessful ? "success" : "failure"}`}
                                     >
                                         <div className="output-header-row">
-                                            <strong>{result.repositoryName}: {result.isSuccessful ? "Safe to add branch!": "Add branch operation would fail!"}</strong>
+                                            <strong>{result.repositoryName}: {result.isSuccessful ? "Safe to add branch!" : "Add branch operation would fail!"}</strong>
                                             <span className="status-icon" />
                                         </div>
                                         <span className="output-command">&gt; {result.infoMessage ? result.infoMessage : "Branch Naming Conflict"}</span>
