@@ -90,55 +90,43 @@ namespace ChasmaWebApi.Controllers
                 return BadRequest(response);
             }
 
-            string repoName = request.RepositoryName;
-            if (string.IsNullOrEmpty(repoName))
+            string repoId = request.RepositoryId;
+            if (string.IsNullOrEmpty(repoId))
             {
-                logger.LogError("Empty repository name received when attempting to get workflow run results. Sending error response.");
+                logger.LogError("Empty repository identifier received when attempting to get workflow run results. Sending error response.");
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Invalid request. Repository name is required.";
+                response.ErrorMessage = "Invalid request. Repository ID is required.";
                 return BadRequest(response);
             }
 
-            string repoOwner = request.RepositoryOwner;
-            if (string.IsNullOrEmpty(repoOwner))
+            if (!cacheManager.Repositories.TryGetValue(repoId, out LocalGitRepository repository))
             {
-                logger.LogError("Empty repository owner received when attempting to get workflow run results. Sending error response.");
+                logger.LogError("Invalid {request}. Repository not found in cache with identifier {id} when trying to get workflow run results. Sending error response.", nameof(GetWorkflowResultsRequest), repoId);
                 response.IsErrorResponse = true;
-                response.ErrorMessage = "Invalid request. Repository owner is required.";
-                return BadRequest(response);
-            }
-
-            ChasmaWebApiConfigurations webApiConfigurations = ChasmaWebApiConfigurations.GetApiConfig();
-            logger.LogInformation("Attempting to get workflow data for the last {threshold} builds for {repoName}.", webApiConfigurations.WorkflowRunReportThreshold ?? 30, repoName);
-            string token = webApiConfigurations.GitHubApiToken;
-            string decryptedToken = encryptionService.DecryptString(token);
-            if (string.IsNullOrEmpty(decryptedToken))
-            {
-                logger.LogError("GitHub API token is not configured. Cannot retrieve workflow run results. Sending error response.");
-                response.IsErrorResponse = true;
-                response.ErrorMessage = "GitHub API token is not configured. Cannot retrieve workflow run results.";
+                response.ErrorMessage = "Could not get workflow run results. Repository could not be found.";
                 return Ok(response);
             }
 
             try
             {
-                bool runsRetrieved = applicationControlService.TryGetWorkflowRunResults(repoName, repoOwner, decryptedToken, out List<WorkflowRunResult> runResults, out string errorMessage);
-                if (!runsRetrieved && !string.IsNullOrEmpty(errorMessage))
+                string branchName = request.BranchName;
+                if (!applicationControlService.TryGetWorkflowRunResults(repository, branchName, out List<WorkflowRunResult> runResults, out string errorMessage))
                 {
                     response.IsErrorResponse = true;
                     response.ErrorMessage = errorMessage;
                     return Ok(response);
                 }
 
-                response.RepositoryName = repoName;
-                response.WorkflowRunResults.AddRange(runResults);
-                logger.LogInformation("Retrieved latest {count} build runs from {repo}.", runResults.Count, repoName);
+                IOrderedEnumerable<WorkflowRunResult> orderedBuilds = runResults.OrderByDescending(i => DateTimeOffset.Parse(i.UpdatedDate));
+                response.WorkflowRunResults.AddRange(orderedBuilds);
+                response.RepositoryName = repository.GetDisplayName();
+                logger.LogInformation("Retrieved latest {count} build runs from {repo}.", runResults.Count, repository.GetDisplayName());
                 return Ok(response);
             }
             catch
             {
                 response.IsErrorResponse = true;
-                response.ErrorMessage = $"Error fetching workflow runs from {repoName}. Check server logs for more information.";
+                response.ErrorMessage = $"Error fetching workflow runs from {repository.GetDisplayName()}. Check server logs for more information.";
                 return BadRequest(response);
             }
         }
@@ -442,7 +430,8 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            bool resultsRetrieved = applicationControlService.TryGetPipelineJobResults(repository, out List<WorkflowRunResult> buildResults, out string errorMessage);
+            string branchName = request.BranchName;
+            bool resultsRetrieved = applicationControlService.TryGetPipelineJobResults(repository, branchName, out List<WorkflowRunResult> buildResults, out string errorMessage);
             if (!resultsRetrieved)
             {
                 logger.LogError("Failed to get pipeline jobs {error}", errorMessage);
@@ -451,7 +440,8 @@ namespace ChasmaWebApi.Controllers
                 return Ok(response);
             }
 
-            response.Results = buildResults;
+            IOrderedEnumerable<WorkflowRunResult> orderedBuilds = buildResults.OrderByDescending(i => DateTimeOffset.Parse(i.UpdatedDate));
+            response.Results = orderedBuilds.ToList();
             return Ok(response);
         }
 

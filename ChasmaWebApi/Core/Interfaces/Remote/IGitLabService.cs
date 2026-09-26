@@ -12,10 +12,11 @@ namespace ChasmaWebApi.Core.Interfaces.Remote
         /// Tries to get the pipeline build results.
         /// </summary>
         /// <param name="repository">The repository in cache.</param>
+        /// <param name="branchName">The branch name to retrieve pipeline jobs for.</param>
         /// <param name="buildResults">The build results.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <returns>True if the pipeline jobs retrieval was successful; false otherwise.</returns>
-        public bool TryGetPipelineJobResults(LocalGitRepository repository, out List<WorkflowRunResult> buildResults, out string errorMessage);
+        public bool TryGetPipelineJobResults(LocalGitRepository repository, string branchName, out List<WorkflowRunResult> buildResults, out string errorMessage);
 
         /// <summary>
         /// Tries to create a GitLab issue for the specified repository.

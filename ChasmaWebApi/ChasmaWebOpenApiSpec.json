@@ -2926,10 +2926,10 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "repositoryName": {
+          "repositoryId": {
             "type": "string"
           },
-          "repositoryOwner": {
+          "branchName": {
             "type": "string"
           }
         }
@@ -3123,6 +3123,9 @@
         "additionalProperties": false,
         "properties": {
           "repositoryId": {
+            "type": "string"
+          },
+          "branchName": {
             "type": "string"
           }
         }

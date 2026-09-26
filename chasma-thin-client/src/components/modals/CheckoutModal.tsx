@@ -241,6 +241,7 @@ const CheckoutModal: React.FC<ICheckoutModalProps> = (props: ICheckoutModalProps
                         currentValue={branchName}
                         placeholder="Enter or select a branch to checkout"
                         onChange={setBranchName}
+                        styling="modal-input-field"
                     />
                     <br />
                     {branchCheckoutMode === BranchCheckoutMode.StashOnly &&
