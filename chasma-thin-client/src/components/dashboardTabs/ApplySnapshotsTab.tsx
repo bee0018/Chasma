@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { statusClient } from "../../managers/ApiClientManager";
 import { handleApiError } from "../../managers/TransactionHandlerManager";
 import { useDocumentTitle } from "../../util/useDocumentTitle";
+import { isBlankOrUndefined } from "../../stringHelperUtil";
 
 /**
  * Initializes a new ApplySnapshotsTab class.
@@ -119,8 +120,17 @@ const ApplySnapshotsTab: React.FC = () => {
     const handleSnapshotAdditionRequest = async () => {
         if (snapshotEntries.length === 0) {
             setNotification({
-                title: "Need to enter repositories.",
-                message: "Nothing to do...",
+                title: "Cannot save snapshot(s).",
+                message: "Need to enter repositories.",
+                isError: true,
+            });
+            return;
+        }
+
+        if (isBlankOrUndefined(displayName)) {
+            setNotification({
+                title: "Cannot save snapshot(s).",
+                message: "Display name is required.",
                 isError: true,
             });
             return;
