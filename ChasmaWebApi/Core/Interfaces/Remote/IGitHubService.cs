@@ -31,13 +31,12 @@ namespace ChasmaWebApi.Core.Interfaces.Remote
         /// <summary>
         /// Tries to get the workflow run results for the repo with specified details.
         /// </summary>
-        /// <param name="repoName">The repository name.</param>
-        /// <param name="repoOwner">The repository owner.</param>
-        /// <param name="token">The repository access token.</param>
+        /// <param name="repository">The local Git repository.</param>
+        /// <param name="branchName">The branch name for which to retrieve workflow runs.</param>
         /// <param name="workflowRunResults">The list of workflow run results.</param>
         /// <param name="errorMessage">The error message if there was a failure to retrieve runs.</param>
         /// <returns>True if the workflow runs were retrieved; false otherwise.</returns>
-        bool TryGetWorkflowRunResults(string repoName, string repoOwner, string token, out List<WorkflowRunResult> workflowRunResults, out string errorMessage);
+        bool TryGetWorkflowRunResults(LocalGitRepository repository, string branchName, out List<WorkflowRunResult> workflowRunResults, out string errorMessage);
 
         /// <summary>
         /// Tries to get the labels for the specified repository.

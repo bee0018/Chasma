@@ -8,10 +8,13 @@ interface IComboboxInput {
     currentValue: string;
 
     /** The placeholder text to display when there is no entry in the combo box. */
-    placeholder: string
+    placeholder: string;
 
     /** The function to invoke when there is a change. */
     onChange: (newValue: string) => void;
+
+    /** The input field styling. */
+    styling: string;
 }
 
 /**
@@ -25,7 +28,7 @@ const ComboboxInput = (props: IComboboxInput) => {
             <input
                 type="text"
                 list="custom-dropdown-options"
-                className="modal-input-field"
+                className={props.styling}
                 value={props.currentValue}
                 onChange={(e) => props.onChange(e.target.value)}
                 placeholder={props.placeholder}

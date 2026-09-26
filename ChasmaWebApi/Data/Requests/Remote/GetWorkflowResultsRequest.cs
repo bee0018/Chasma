@@ -6,12 +6,12 @@
 public class GetWorkflowResultsRequest
 {
     /// <summary>
-    /// Gets or sets the repository name.
+    /// Gets or sets the repository identifier for which to retrieve workflow runs.
     /// </summary>
-    public string RepositoryName { get; set; }
-    
+    public string RepositoryId { get; set; }
+
     /// <summary>
-    /// Gets or sets the repository owner name.
+    /// Gets or sets the branch name for which to retrieve workflow runs.
     /// </summary>
-    public string RepositoryOwner { get; set; }
+    public string BranchName { get; set; }
 }
