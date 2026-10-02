@@ -7,13 +7,34 @@ if [ -L "/usr/bin/emryce" ]; then
 fi
 
 # Refresh desktop database to clean up removed desktop entries
+CURRENT_USER="${SUDO_USER:-$(logname 2>/dev/null || true)}"
+if [ -n "$CURRENT_USER" ] && [ "$CURRENT_USER" != "root" ]; then
+    USER_HOME=$(getent passwd "$CURRENT_USER" | cut -d: -f6)
+    
+    DESKTOP_DIR=""
+    if [ -f "$USER_HOME/.config/user-dirs.dirs" ]; then
+        eval $(grep XDG_DESKTOP_DIR "$USER_HOME/.config/user-dirs.dirs")
+        DESKTOP_DIR="$XDG_DESKTOP_DIR"
+    fi
+    
+    if [ -z "$DESKTOP_DIR" ]; then
+        DESKTOP_DIR="$USER_HOME/Desktop"
+    fi
+
+    if [ -f "$DESKTOP_DIR/emryce.desktop" ]; then
+        rm -f "$DESKTOP_DIR/emryce.desktop"
+    fi
+fi
+
 if [ -x "$(command -v update-desktop-database)" ]; then
-    update-desktop-database -q || true
+    update-desktop-database -q /usr/share/applications || true
 fi
 
 # Remove application data directory and its contents
-if [ -d "/var/lib/Emryce" ]; then
-    rm -rf /var/lib/Emryce
+if [ "$1" = "purge" ]; then
+    if [ -d "/var/lib/Emryce" ]; then
+        rm -rf /var/lib/Emryce
+    fi
 fi
 
 exit 0

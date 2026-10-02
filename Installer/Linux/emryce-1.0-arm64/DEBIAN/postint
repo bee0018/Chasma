@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+
 if [ ! -d "/var/lib/Emryce" ]; then
     mkdir -p /var/lib/Emryce
 fi
@@ -8,8 +9,34 @@ chmod 775 /var/lib/Emryce
 chmod +x /opt/emryce/ChasmaWebApi
 ln -sf /opt/emryce/ChasmaWebApi /usr/bin/emryce
 if [ -x "$(command -v update-desktop-database)" ]; then
-    update-desktop-database -q
+    update-desktop-database -q /usr/share/applications || true
+fi
+
+CURRENT_USER="${SUDO_USER:-$(logname 2>/dev/null || true)}"
+if [ -n "$CURRENT_USER" ] && [ "$CURRENT_USER" != "root" ]; then
+    USER_HOME=$(getent passwd "$CURRENT_USER" | cut -d: -f6)
+    
+    DESKTOP_DIR=""
+    if [ -f "$USER_HOME/.config/user-dirs.dirs" ]; then
+        eval $(grep XDG_DESKTOP_DIR "$USER_HOME/.config/user-dirs.dirs")
+        DESKTOP_DIR="$XDG_DESKTOP_DIR"
+    fi
+    
+    if [ -z "$DESKTOP_DIR" ]; then
+        DESKTOP_DIR="$USER_HOME/Desktop"
+    fi
+
+    if [ -d "$DESKTOP_DIR" ] && [ -f "/usr/share/applications/emryce.desktop" ]; then
+        cp /usr/share/applications/emryce.desktop "$DESKTOP_DIR/emryce.desktop"
+        chown "$CURRENT_USER:$CURRENT_USER" "$DESKTOP_DIR/emryce.desktop"
+        chmod +x "$DESKTOP_DIR/emryce.desktop"
+
+        USER_ID=$(id -u "$CURRENT_USER")
+        if [ -x "$(command -v gio)" ]; then
+            sudo -u "$CURRENT_USER" DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$USER_ID/bus" \
+            gio trust "$DESKTOP_DIR/emryce.desktop" 2>/dev/null || true
+        fi
+    fi
 fi
 
 exit 0
-
