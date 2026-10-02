@@ -2,9 +2,12 @@
 <component type="desktop-application">
   <id>com.emryce.app</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>Proprietary</project_license>
+  <project_license>LicenseRef-Proprietary</project_license>
   <name>Emryce</name>
   <summary>Developer productivity and Git workflow automation platform</summary>
+  <developer>
+    <name>Bryce Ellis</name>
+  </developer>
   <description>
     <p>
       Emryce provides local API orchestration, seamless Git repository workflow automation, 
@@ -12,7 +15,13 @@
     </p>
   </description>
   <launchable type="desktop-id">emryce.desktop</launchable>
+  <url type="homepage">https://emryce.com</url>
   <provides>
     <binary>emryce</binary>
   </provides>
+  <icon type="remote" width="64" height="64">https://emryce.com/favicon.ico</icon>
+  <categories>
+    <category>Development</category>
+    <category>Utility</category>
+  </categories>
 </component>
