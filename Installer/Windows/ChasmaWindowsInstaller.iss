@@ -3,9 +3,9 @@
 ; Non-commercial use only
 
 #define MyAppName "Emryce"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.0.0"
 #define MyAppPublisher "Bryce Ellis"
-#define MyAppURL "https://github.com/bee0018/Chasma"
+#define MyAppURL "https://emryce.com"
 #define MyAppExeName "ChasmaWebApi.exe"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".myp"
